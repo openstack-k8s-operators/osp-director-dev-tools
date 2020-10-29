@@ -1,0 +1,11 @@
+alias openstack-server-list="openstack server list -c Name -c Status -c Host --long"
+
+alias openstack-compute-service-list="openstack compute service list -c Binary -c Host -c Status -c State -c 'Updated At'"
+
+alias openstack-server-create="openstack server create \
+--flavor m1.small --image cirros --network private \
+demo-scale"
+
+alias openstack-hypervisor-stats="openstack hypervisor stats show"
+
+alias openstack-network-agent-list="openstack network agent list -c 'Agent Type' -c Host -c Alive -c UP"

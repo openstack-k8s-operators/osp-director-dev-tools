@@ -1,0 +1,26 @@
+# Avoid use of yum_repository ansible module because we would
+# lose the ability to use rhos-release logic, like repo locations.
+- name: Install yum-config-manager
+  become: yes
+  retries: 3
+  delay: 5
+  package:
+    name: yum-utils
+  register: task_result
+  until: task_result is success
+
+- name: Disable OSP test repositories
+  become: yes
+  ignore_errors: yes
+  shell: |
+      yum-config-manager --disable "{{ item }}"
+  with_items: "{{ disable_repositories }}"
+  when: disable_repositories is defined
+
+- name: Enable OSP test repositories
+  become: yes
+  ignore_errors: yes
+  shell: |
+      yum-config-manager --enable "{{ item }}"
+  with_items: "{{ enable_repositories }}"
+  when: enable_repositories is defined

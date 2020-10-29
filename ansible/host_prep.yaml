@@ -1,0 +1,233 @@
+---
+- hosts: convergence_base
+  become: true
+  become_user: root
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: Remove beaker repos
+    block:
+    - name: get beaker repo files
+      find:
+        paths: /etc/yum.repos.d
+        patterns: beaker*
+      register: beaker_files_to_delete
+
+    - name: Delete beaker repo files
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ beaker_files_to_delete.files }}"
+
+  - name: Register host to subscription manager, metal3 dev scripts use subscription manager for RHEL
+    block:
+    - name: use local rhel-subscription info
+      when: secrets_repo is undefined
+      block:
+      - name: Include rhel-subscription info
+        include_vars: vars/rhel-subscription.yaml
+      rescue:
+      - fail:
+          msg: |
+            vars/rhel-subscription.yaml is not present. You must create this
+            file manually. The format of the file is:
+
+            rhel_subscription_activation_key: <activation key>
+            rhel_subscription_org_id: "xxxxxxx"
+
+    - name: Enable RH CSB repository for CA cert
+      copy:
+        dest: /etc/yum.repos.d/rhel8-csb.repo
+        content: |
+          [rhel8-csb]
+          name=RHEL8 CSB packages
+          baseurl=http://hdn.corp.redhat.com/rhel8-csb
+          enabled=1
+          gpgcheck=0
+          priority=2
+          includepkgs=redhat-internal-cert-install
+
+    - name: Install helpful packages
+      package:
+        state: installed
+        name:
+          - redhat-internal-cert-install
+
+    - name: use secrets_repo
+      when: secrets_repo is defined
+      block:
+      - set_fact:
+          secrets_repo_path: "{{ ansible_env.HOME }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
+      - name: create base dir for secrets_repo repo
+        file:
+          path: "{{ secrets_repo_path }}"
+          state: directory
+          mode: "0755"
+      - name: Clone the repo specified in secrets_repo
+        git:
+          repo: "{{ secrets_repo }}"
+          dest: "{{ secrets_repo_path }}"
+          version: "{{ secrets_branch | default('HEAD', true) }}"
+      - name: Include rhel-subscription info
+        include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
+      rescue:
+      - fail:
+          msg: |
+            rhel-subscription.yaml is not present in {{ secrets_repo }}. You must create this
+            file. The format of the file is:
+
+            rhel_subscription_activation_key: <activation key>
+            rhel_subscription_org_id: "xxxxxxx"
+
+    - name: unregister node
+      redhat_subscription:
+        state: absent
+        activationkey: "{{ rhel_subscription_activation_key }}"
+        org_id: "{{ rhel_subscription_org_id }}"
+        pool: '^(Red Hat Enterprise Server for x86_64)$'
+
+    - name: Register with activationkey and consume subscriptions matching Red Hat Enterprise Server
+      redhat_subscription:
+        state: present
+        activationkey: "{{ rhel_subscription_activation_key }}"
+        org_id: "{{ rhel_subscription_org_id }}"
+        pool: '^(Red Hat Enterprise Server for x86_64)$'
+
+    - name: enable rhel-8-for-x86_64-appstream-rpms and advanced-virt-for-rhel-8-x86_64-rpms
+      command: subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms --enable=advanced-virt-for-rhel-8-x86_64-rpms
+
+  - name: install packages and enable services
+    block:
+    - name: Install packages
+      package:
+        state: installed
+        name:
+          # Directly configured/used in this playbook
+          - chrony
+          - sysstat
+          - cronie
+          - tuned
+          - firewalld
+
+          # Required for dev-scripts
+          - libvirt-daemon-kvm
+          - libvirt-client
+          - libvirt
+          - podman
+          - buildah
+          - git
+          - make
+
+    - name: Enable helpful services
+      service: name={{ item }} enabled=yes state=started
+      with_items:
+        - crond
+        - libvirtd
+        - chronyd
+        - tuned
+        - firewalld
+
+  - name: configure time on host
+    block:
+    - name: Set timezone to GMT
+      file:
+        src: /usr/share/zoneinfo/GMT
+        dest: /etc/localtime
+        state: link
+        force: yes
+
+    - name: Install, Configure and Run Chrony
+      include_role:
+        name: chrony
+      vars:
+        chrony_role_action: all
+        chrony_ntp_servers:
+        - clock.redhat.com
+        chrony_ntp_pools:
+        - clock.redhat.com
+
+    - name: Ensure chrony has been restarted
+      meta: flush_handlers
+
+    - name: Ensure system is NTP time synced
+      command: chronyc makestep
+
+    - name: Sync HW clock
+      shell: hwclock -w
+
+  - name: Set tuned virtualization-host profile
+    shell: /usr/sbin/tuned-adm profile virtual-host
+
+  - name: enable nested virt
+    lineinfile:
+      path: /etc/modprobe.d/kvm.conf
+      regexp: '^options kvm-intel nested=.*'
+      line: options kvm-intel nested=1
+    register: kvm_conf
+
+  - name: reload kvm kernel modules
+    when: kvm_conf is changed
+    block:
+    - name: remove kernel modules
+      modprobe:
+        name: "{{ item }}"
+        state: absent
+      with_items:
+        - kvm_intel
+        - kvm
+
+    - name: load kernel modules
+      modprobe:
+        name: kvm_intel
+        state: present
+
+  - name: Remove home mount point
+    mount:
+      path: /home
+      backup: yes
+      state: absent
+    register: home_unmounted
+
+  - name: remove lvm device and resize /
+    when: home_unmounted is changed
+    block:
+    - name: get VG name
+      shell: >
+        echo $(vgs |grep rhel | awk '{print $1}')
+      register: vg
+    - name: Remove home logical volume
+      lvol:
+        vg: "{{ vg.stdout }}"
+        lv: home
+        state: absent
+        force: yes
+    - name: Extend / logical volume to consume all remaining space in the volume group
+      lvol:
+        vg: "{{ vg.stdout }}"
+        lv: root
+        size: +100%FREE
+      register: lv_resized
+    - name: resize FS on /
+      shell: >
+        /usr/sbin/xfs_growfs /
+      when: lv_resized is changed
+
+  - name: Allow 'wheel' group to have passwordless sudo
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      regexp: '^%wheel'
+      line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+      validate: 'visudo -cf %s'
+
+  - name: make sure /home is there as the mount plugin with absent removed it earlier
+    file:
+      path: /home
+      state: directory
+      mode: '0755'
+
+  - name: Configure NFS server
+    import_role:
+      name: nfs_server

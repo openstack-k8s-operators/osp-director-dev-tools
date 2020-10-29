@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openstackclient
+  namespace: openstack
+data:
+  NOVA_VERSION: "1.1"
+  COMPUTE_API_VERSION: "1.1"
+  OS_USER_DOMAIN_NAME: "Default"
+  OS_PROJECT_DOMAIN_NAME: "Default"
+  OS_NO_CACHE: "True"
+  OS_CLOUDNAME: "overcloud"
+  PYTHONWARNINGS: "ignore:Certificate has no, ignore:A true SSLContext object is not available"
+  OS_AUTH_TYPE: "password"
+  OS_AUTH_URL: "http://keystone.openstack.svc:5000"
+  OS_IDENTITY_API_VERSION: "3"
+  OS_COMPUTE_API_VERSION: "2.latest"
+  OS_IMAGE_API_VERSION: "2"
+  OS_VOLUME_API_VERSION: "3"
+  OS_REGION_NAME: "regionOne"

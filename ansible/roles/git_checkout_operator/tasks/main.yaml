@@ -1,0 +1,19 @@
+---
+- name: Set repo_dir for the {{ operator }} operator
+  set_fact:
+    repo_dir: "{{ k8s_operators_dir }}/{{ operator }}"
+
+- name: Check if {{ operator }} repo is already checked out
+  stat:
+    path: "{{ repo_dir }}"
+  register: repo_dir_out
+
+- name: Clone {{ operator }} repo if not already present
+  git:
+    repo: "{{ base_url }}/{{ operator }}.git"
+    dest: "{{ repo_dir }}"
+    version: "{{ branch }}"
+  vars:
+    base_url: "{{ openstack_k8s_operators_https_url | default('https://github.com/openstack-k8s-operators', true) }}"
+    branch: "{{ openstack_k8s_operators_cluster_branch | default('HEAD', true) }}"
+  when: not (repo_dir_out.stat.isdir is defined and repo_dir_out.stat.isdir)

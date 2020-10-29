@@ -1,0 +1,9 @@
+---
+- set_fact:
+    "{{ name }}_yaml_dir": "{{ working_yamls_dir }}/{{ name }}"
+    __yaml_dir: "{{ working_yamls_dir }}/{{ name }}"
+
+- name: Create yaml dir
+  file:
+    path: "{{ __yaml_dir }}"
+    state: directory

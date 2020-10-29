@@ -1,0 +1,5 @@
+# Secrets which should never be pushed
+/files/pull-secret
+/files/ci-token
+/vars/rhel-subscription.yaml
+/local-defaults.yaml

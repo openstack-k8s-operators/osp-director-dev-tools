@@ -1,0 +1,61 @@
+---
+- hosts: localhost
+  vars_files: "vars/default.yaml"
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: check if osp network already exists
+    shell: >
+      virsh net-list | grep ospnetwork
+    ignore_errors: true
+    register: ospnetwork_exist
+
+  - name: create osp network
+    when: ospnetwork_exist.rc == 1
+    block:
+    - name: create osp network directory
+      file:
+        path: "{{ working_dir }}/osp-network"
+        state: directory
+
+    - name: copy osp network files to {{ working_dir }}/osp-network
+      copy:
+        src:  "{{ item }}"
+        dest: "{{ working_dir }}/osp-network/"
+        mode: 0644
+      with_fileglob:
+        - files/ospnetwork.xml
+
+    - name: Define ospnetwork libvirt network
+      command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
+
+    - name: Start the osp network
+      shell: |
+        virsh net-start --network ospnetwork
+        virsh net-autostart --network ospnetwork
+
+  - name: check if worker nodes are already configured as ip-dhcp-host
+    shell: >
+      virsh net-dumpxml ospnetwork | grep '00:14:cd:2b:c8:0'
+    ignore_errors: true
+    register: ospnetwork_worker_exist
+
+  - name: register workers in osp network
+    when: ospnetwork_worker_exist.rc == 1
+    block:
+    - name: Add worker hosts to osp network
+      command: "virsh net-update ospnetwork add ip-dhcp-host --xml \"<host mac='{{ '00:14:cd:2b:c8:0%01x' | format(item) }}' ip='{{ '192.168.25.2%01x' | format(item) }}'/>\" --live --config"
+      loop: "{{ range(0, ocp_num_workers , 1)|list }}"
+
+  - name: Detach osp network interface from the OpenShift worker VM's if this is a rerun of the playbook
+    command: "virsh detach-interface {{ ocp_cluster_name }}{{ '_worker_%01x' | format(item) }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item) }} --persistent --live"
+    loop: "{{ range(0, ocp_num_workers , 1)|list }}"
+    ignore_errors: true
+
+  - name: Attach the osp network to each of the OpenShift worker VM's
+    command: "virsh attach-interface {{ ocp_cluster_name }}{{ '_worker_%01x' | format(item) }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item) }} --model virtio --persistent --live"
+    loop: "{{ range(0, ocp_num_workers , 1)|list }}"

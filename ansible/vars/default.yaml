@@ -1,0 +1,73 @@
+---
+base_path: /home/ocp
+#dev_scripts_repo: defaults to "https://github.com/openshift-metal3/dev-scripts.git"
+#dev_scripts_branch: defaults to "HEAD"
+
+# To set a specific release to install.
+ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.6.1-x86_64
+
+# private repo to read required secret files from
+# The playbooks expect secret files which can be placed in a private repo
+# Right now these are:
+# * rhel-subscription.yaml - content:
+#   rhel_subscription_activation_key: <activation key>
+#   rhel_subscription_org_id: "xxxxxxx"
+# * pull-secret
+#   obtain it from https://cloud.redhat.com/openshift/install/pull-secret
+#secrets_repo: https uri to repo, no default manual local file is expected if not present
+#secrets_branch: defaults to "HEAD"
+
+# dev scripts switched to ipv6 per default, for now switch back
+# https://github.com/openshift-metal3/dev-scripts/pull/969
+ocp_ip_stack: v4
+
+# size the OCP VM resources
+ocp_num_masters: 3
+ocp_num_workers: 5
+ocp_master_memory: 16384
+ocp_master_vcpu: 8
+ocp_master_disk: 120
+ocp_worker_memory: 30000
+ocp_worker_vcpu: 4
+ocp_worker_disk: 120
+
+# OCP cluster name
+ocp_cluster_name: ostest
+
+# Released version of the opm package from the operator-framework
+opm_version: v1.12.5
+
+# operator github url where operators repos are underneath - default https://github.com/openstack-k8s-operators
+#openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
+#openstack_k8s_operators_director_branch: defaults to "HEAD"
+
+# operator images and tag to use
+director_operator_image: quay.io/openstack-k8s-operators/nova-operator:v0.0.1
+
+# olm specific
+csv_version: 0.0.1
+
+#ocp_network_type: OVNKubernetes
+ocp_network_type: OpenShiftSDN
+
+# Tempest
+tempest_enabled: false
+
+# tempest timeout in seconds
+tempest_timeout: 3600
+
+# tempest test whitelist, if [] smoke test runs
+#tempest_whitelist: []
+tempest_whitelist:
+  - 'tempest.api.compute.servers.test_create_server.ServersTestJSON.test_list_servers'
+
+local_working_dir: "~/{{ ocp_cluster_name }}-working"
+
+# nfs export directory
+nfs_data_dir: /home/nfs/data
+nfs_export_dir: /home/nfs
+
+default_timeout: 180
+
+# worker node where openstackclient pod will run
+openstackclient_pod_worker: worker-0

@@ -1,0 +1,5 @@
+export KUBECONFIG="{{ kubeconfig }}"
+export PATH="{{ working_bin_dir }}:$PATH"
+
+STACKRC="{{ working_dir }}/stackrc"
+[ -f "${STACKRC}" ] && source ${STACKRC}

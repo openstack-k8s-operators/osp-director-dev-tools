@@ -1,0 +1,30 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Create yaml dir
+    import_role: name=working_yaml_dir
+    vars:
+      name: keystone
+
+  - name: Copy files to yaml dir
+    copy:
+      src: "{{ item }}"
+      dest: "{{ keystone_yaml_dir }}/"
+    with_fileglob:
+    - "ocp/keystone/osconfig.yaml"
+
+  - name: create keystone osconfig
+    shell: |
+      oc apply -n openstack -f "{{ keystone_yaml_dir }}"/osconfig.yaml
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: copy stackrc to working dir
+    copy:
+      src: stackrc
+      dest: "{{ working_dir }}/stackrc"

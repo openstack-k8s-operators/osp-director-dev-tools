@@ -1,0 +1,80 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local 
+
+  tasks:
+  - set_fact:
+      yaml_dir: "{{ working_yamls_dir }}/cnv"
+
+  - debug:
+      msg: "yamls will be written to {{ yaml_dir }} locally"
+
+  - name: Create local yamldir
+    file:
+      path: "{{ yaml_dir }}"
+      state: directory
+
+  - name: Copy deployment yamls to working dir
+    copy:
+      src: "{{ item }}"
+      dest: "{{ yaml_dir }}/"
+    loop:
+    - "cnv/1"
+    - "cnv/2"
+
+  - name: Create namespace, operatorgroup and subscription
+    shell: |
+      set -e
+      oc apply -f "{{ yaml_dir }}/1/"
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: wait for OpenShift Virtualization subscription installed
+    shell: |
+      oc wait pod -n openshift-cnv --for condition=Ready \
+          -l name=hyperconverged-cluster-operator \
+          --timeout={{ default_timeout }}s
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    retries: 50
+    delay: 5
+    register: result
+    until: result.rc == 0
+
+  - name: Install OpenShift Virtualization Operator
+    shell: |
+      set -e
+      oc apply -f "{{ yaml_dir }}/2/"
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: wait for OpenShift Virtualization Operator to be installed
+    shell: |
+      oc wait node -l kubevirt.io/schedulable=true --for condition=Ready \
+          --timeout={{ default_timeout }}s
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    retries: 100
+    delay: 5
+    register: result
+    until: result.rc == 0
+
+  - name: install kubevirt client
+    block:
+    - name: enable cnv-2.4-for-rhel-8-x86_64-rpms to install kubevirt-virtctl
+      become: true
+      become_user: root
+      command: subscription-manager repos --enable=cnv-2.4-for-rhel-8-x86_64-rpms
+
+    - name: Install kubevirt-virtctl package
+      become: true
+      become_user: root
+      package:
+        name:  kubevirt-virtctl
+        state: installed

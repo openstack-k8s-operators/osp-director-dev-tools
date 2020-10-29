@@ -1,0 +1,15 @@
+<network>
+  <name>ospnetwork</name>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='ospnetwork' stp='on' delay='0'/>
+  <mac address='52:54:00:7d:4c:46'/>
+  <ip address='192.168.25.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.25.2' end='192.168.25.60'/>
+    </dhcp>
+  </ip>
+</network>

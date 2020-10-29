@@ -1,0 +1,21 @@
+---
+- block:
+    - include: install-rhos-release.yaml
+      when: rhos_release_rpm_url is defined
+
+    # To set rhos_release_command fact
+    - include: check-if-rhos-release-exists.yaml
+      when: rhos_release_bin is defined
+
+    - include: execute-rhos-release.yaml
+      when: rhos_release_command is defined
+
+    - include: disable-or-enable-repositories.yaml
+      when: (enable_repositories is defined and
+            enable_repositories|length>0) or
+            (disable_repositories is defined and
+            disable_repositories|length>0)
+
+  when:
+    - ansible_os_family == 'RedHat'
+    - rhos_release_args is defined

@@ -1,0 +1,40 @@
+---
+- hosts: convergence_base
+  become: true
+  become_user: ocp
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: cleanup previous dev-script deployment
+    shell: |
+      export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+      make clean
+    args:
+      chdir: "{{ base_path }}/dev-scripts"
+
+  - debug:
+      msg: |
+        Executing dev-script. You can tail the logs at ~ocp/dev-script.log on
+        the host for progress.
+
+  - name: run dev-script
+    shell: |
+      set -o pipefail
+      export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+      make 2>&1 | tee ~/dev-script.log
+    args:
+      chdir: "{{ base_path }}/dev-scripts"
+    environment:
+      PATH: /usr/local/bin:{{ ansible_env.PATH }}
+
+  - name: To access the OCP web console
+    debug:
+      msg:
+        - "1) add the following line to your local /etc/hosts:"
+        - "   192.168.111.4   console-openshift-console.apps.{{ ocp_cluster_name }}.test.metalkube.org console openshift-authentication-openshift-authentication.apps.{{ ocp_cluster_name }}.test.metalkube.org api.{{ ocp_cluster_name }}.test.metalkube.org prometheus-k8s-openshift-monitoring.apps.{{ ocp_cluster_name }}.test.metalkube.org alertmanager-main-openshift-monitoring.apps.{{ ocp_cluster_name }}.test.metalkube.org kubevirt-web-ui.apps.{{ ocp_cluster_name }}.test.metalkube.org oauth-openshift.apps.{{ ocp_cluster_name }}.test.metalkube.org grafana-openshift-monitoring.apps.{{ ocp_cluster_name }}.test.metalkube.org"
+        - "2) run on your local system:"
+        - "   sshuttle -r <user>@{{ ansible_fqdn }} 192.168.111.0/24"
+        - "3) access:"
+        - "   https://console-openshift-console.apps.{{ ocp_cluster_name }}.test.metalkube.org"

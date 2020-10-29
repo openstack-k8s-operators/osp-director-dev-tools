@@ -1,0 +1,168 @@
+---
+- hosts: convergence_base
+  gather_facts: false
+  become: true
+
+  tasks:
+  - name: create ocp group
+    group:
+      name: ocp
+      state: present
+
+  - name: Create user to run metal3 installer dev scripts
+    user:
+      name: ocp
+      comment: ocp user
+      shell: /bin/bash
+      group: ocp
+      groups: wheel
+
+  - name: make sure /home/ocp is world readable
+    file:
+      path: /home/ocp
+      state: directory
+      mode: '0755'
+
+- hosts: convergence_base
+  gather_facts: false
+  become: true
+  become_user: ocp
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: Clone the dev-scripts repo
+    git:
+      repo: "{{ dev_scripts_repo | default('https://github.com/openshift-metal3/dev-scripts.git', true) }}"
+      dest: "{{ base_path }}/dev-scripts"
+      version: "{{ dev_scripts_branch | default('HEAD', true) }}"
+
+  - name: Copy the config_example.sh to config_$USER.sh
+    copy:
+      src: "{{ base_path }}/dev-scripts/config_example.sh"
+      dest: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      mode: 0755
+      remote_src: yes
+
+  - name: set OCP release to use
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export OPENSHIFT_RELEASE_IMAGE=.*'
+      line: "export OPENSHIFT_RELEASE_IMAGE={{ ocp_release_image }}"
+
+  - name: set WORKING_DIR in {{ base_path }}/dev-scripts/config_$USER.sh
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export WORKING_DIR='
+      line: export WORKING_DIR='{{ base_path }}'
+
+  - name: Copy pull-secret file 
+    when: secrets_repo is undefined
+    block:
+    - set_fact:
+        secrets_repo_path: "{{ base_path }}"
+    - name: Copy pull-secret
+      copy:
+        dest: "{{ base_path }}/pull-secret"
+        src: files/pull-secret
+    rescue:
+    - fail:
+        msg: |
+          files/pull-secret is not present. You must obtain it from
+          https://cloud.redhat.com/openshift/install/pull-secret and copy it
+          there manually.
+
+  - name: use secrets_repo
+    when: secrets_repo is defined
+    block:
+    - set_fact:
+        secrets_repo_path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
+    - name: create base dir for secrets_repo repo
+      file:
+        path: "{{ secrets_repo_path }}"
+        state: directory
+        mode: "0755"
+    - name: Clone the repo specified in secrets_repo
+      git:
+        repo: "{{ secrets_repo }}"
+        dest: "{{ secrets_repo_path }}"
+        version: "{{ secrets_branch | default('HEAD', true) }}"
+
+  - name: set PERSONAL_PULL_SECRET in {{ base_path }}/dev-scripts/config_$USER.sh
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export PERSONAL_PULL_SECRET='
+      line: export PERSONAL_PULL_SECRET="{{ secrets_repo_path }}/pull-secret"
+    
+  - name: set CI_TOKEN in {{ base_path }}/dev-scripts/config_$USER.sh
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export CI_TOKEN='
+      line: export CI_TOKEN="{{ ci_token }}"
+
+  - name: set IP_STACK in {{ base_path }}/dev-scripts/config_$USER.sh
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export IP_STACK='
+      line: export IP_STACK='{{ ocp_ip_stack }}'
+
+  - name: set CLUSTER_NAME in {{ base_path }}/dev-scripts/config_$USER.sh
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export CLUSTER_NAME='
+      line: export CLUSTER_NAME='{{ ocp_cluster_name }}'
+
+  - name: set OCP number of workers
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export NUM_WORKERS=.*'
+      line: "export NUM_WORKERS={{ ocp_num_workers }}"
+
+  - name: set OCP number of masters
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export NUM_MASTERS=.*'
+      line: "export NUM_MASTERS={{ ocp_num_masters | default('3', true)}}"
+
+  - name: set OCP master memory
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export MASTER_MEMORY=.*'
+      line: "export MASTER_MEMORY={{ ocp_master_memory }}"
+
+  - name: set OCP network type
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export NETWORK_TYPE=.*'
+      line: "export NETWORK_TYPE={{ ocp_network_type }}"
+
+  - name: set OCP master disk
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export MASTER_DISK=.*'
+      line: "export MASTER_DISK={{ ocp_master_disk }}"
+
+  - name: set OCP master vcpus
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export MASTER_VCPU=.*'
+      line: "export MASTER_VCPU={{ ocp_master_vcpu }}"
+
+  - name: set OCP worker memory
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export WORKER_MEMORY=.*'
+      line: "export WORKER_MEMORY={{ ocp_worker_memory }}"
+
+  - name: set OCP worker disk
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export WORKER_DISK=.*'
+      line: "export WORKER_DISK={{ ocp_worker_disk }}"
+
+  - name: set OCP worker vcpus
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export WORKER_VCPU=.*'
+      line: "export WORKER_VCPU={{ ocp_worker_vcpu }}"

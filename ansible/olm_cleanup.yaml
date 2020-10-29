@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: olm cleanup
+    command: "{{ item }}"
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    ignore_errors: true
+    with_items:
+      - "oc delete -n openstack csv openstack-cluster-operator.v{{ csv_version }}"
+      - "oc delete -n openstack subscription openstack-cluster"
+      - "oc delete -n openstack catalogsource openstack-index"
+      - "oc delete -n openstack operatorgroup openstack-group"

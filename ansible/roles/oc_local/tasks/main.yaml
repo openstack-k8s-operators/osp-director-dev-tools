@@ -1,0 +1,30 @@
+- name: Create local working directory and get its absolute path
+  shell: |
+    mkdir -p {{ local_working_dir }}
+    cd {{ local_working_dir }}
+    pwd
+  register: working_dir_out
+
+- set_fact:
+    working_dir: "{{ working_dir_out.stdout_lines[0] }}"
+
+- set_fact:
+    working_bin_dir: "{{ working_dir }}/bin"
+    working_src_dir: "{{ working_dir }}/src"
+    working_yamls_dir: "{{ working_dir }}/yamls"
+    kubeconfig: "{{ working_dir }}/kubeconfig"
+
+- set_fact:
+    oc_env_path: "{{ working_bin_dir }}:{{ ansible_env.PATH | default('') }}"
+    k8s_operators_dir: "{{ working_src_dir }}/github.com/openstack-k8s-operators"
+
+- name: Create common subdirectories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  loop:
+  - "{{ working_bin_dir }}"
+  - "{{ working_src_dir }}"
+  - "{{ working_yamls_dir }}"
+  - "{{ k8s_operators_dir }}"

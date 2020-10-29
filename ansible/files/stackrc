@@ -1,0 +1,10 @@
+export OS_AUTH_URL=http://keystone-openstack.apps.ostest.test.metalkube.org/
+export OS_PASSWORD=foobar123
+export OS_USERNAME=admin
+export OS_TENANT_NAME=admin
+export COMPUTE_API_VERSION=1.1
+export OS_NO_CACHE=True
+export OS_IDENTITY_API_VERSION=3
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
+export OS_AUTH_VERSION=3

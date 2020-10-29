@@ -1,0 +1,3 @@
+- name: chrony
+  src: https://github.com/openstack/ansible-role-chrony.git
+  version: 1.0.1
