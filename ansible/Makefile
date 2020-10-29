@@ -1,7 +1,6 @@
 default: \
   ocp_install \
-  cnv_install
-  #olm \
+  olm
   #osp_operators_install \
   #osp_tests_run
 
@@ -62,18 +61,18 @@ osp-director-operator: hosts local-defaults.yaml
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts -e @local-defaults.yaml \
-	install_namespace.yaml \
-	olm.yaml
+	install_namespace.yaml
+	#olm.yaml
 
 openstackclient: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts -e @local-defaults.yaml \
 	install_openstackclient.yaml \
 
-olm_cleanup: hosts local-defaults.yaml
-	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-v -i hosts -e @local-defaults.yaml \
-	olm_cleanup.yaml
+#olm_cleanup: hosts local-defaults.yaml
+#	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+#	-v -i hosts -e @local-defaults.yaml \
+#	olm_cleanup.yaml
 
 nfs_cleanup: hosts
 	ANSIBLE_FORCE_COLOR=true ansible -i hosts convergence_base \
