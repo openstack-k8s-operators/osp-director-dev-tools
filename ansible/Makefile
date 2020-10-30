@@ -1,5 +1,6 @@
 default: \
   ocp_install \
+  cnv_install \
   olm
   #osp_operators_install \
   #osp_tests_run
