@@ -27,7 +27,7 @@
         src:  "{{ item }}"
         dest: "{{ working_dir }}/osp-network/"
         mode: 0644
-      with_fileglob:
+      with_items:
         - files/ospnetwork.xml
 
     - name: Define ospnetwork libvirt network
