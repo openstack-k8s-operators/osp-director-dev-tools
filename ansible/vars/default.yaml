@@ -37,14 +37,20 @@ ocp_cluster_name: ostest
 # Released version of the opm package from the operator-framework
 opm_version: v1.12.5
 
+# operator-sdk version to use
+sdk_version: v1.1.0
+
+# namespace to deploy the operator to
+# Note: right now only openstack is supported as it is hardcoded in the Dockerfile
+namespace: openstack
+
 # operator github url where operators repos are underneath - default https://github.com/openstack-k8s-operators
 #openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
 #openstack_k8s_operators_director_branch: defaults to "HEAD"
 
-# operator images and tag to use
-director_operator_image: quay.io/openstack-k8s-operators/nova-operator:v0.0.1
-
-# olm specific
+# osp-director-operator image and tag to use
+director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
+director_operator_version: 0.0.1
 csv_version: 0.0.1
 
 #ocp_network_type: OVNKubernetes
@@ -71,3 +77,12 @@ default_timeout: 180
 
 # worker node where openstackclient pod will run
 openstackclient_pod_worker: worker-0
+
+# OSP controller VM sizing
+osp_controller_count: 1
+osp_controller_cores: 2
+osp_controller_memory: 12
+osp_controller_disk_size: 50
+osp_controller_base_image_url: http://download.eng.brq.redhat.com/brewroot/packages/rhel-guest-image/8.3/417/images/rhel-guest-image-8.3-417.x86_64.qcow2
+osp_controller_storage_class: host-nfs-storageclass
+

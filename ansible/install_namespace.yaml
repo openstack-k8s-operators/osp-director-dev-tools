@@ -13,12 +13,12 @@
       path: "{{ ns_yaml_dir }}"
       state: directory
 
-  - name: Copy common namespace to working dir
-    copy:
-      src: "{{ item }}"
-      dest: "{{ ns_yaml_dir }}/"
-    with_fileglob:
-    - "ocp/namespace/*"
+  - name: Render common namespace template to working dir
+    template:
+      src: "namespace/{{ item }}.j2"
+      dest: "{{ ns_yaml_dir }}/{{ item }}"
+    with_items:
+    - "namespace.yaml"
 
   - name: Deploy namespace
     shell: |

@@ -6,125 +6,70 @@
   - oc_local
 
   tasks:
-  - name: Install required packages
-    package:
-      state: installed
-      name:
-      - sqlite
-      - golang
-      - jq
-    become: yes
-    become_user: root
+  - set_fact:
+      yaml_dir: "{{ working_yamls_dir }}/osp-director-operator"
 
-  - name: Set opm dowload url suffix
-    set_fact: opm_url_suffix="latest/download"
-    when: opm_version is undefined or opm_version == "latest"
+  - name: Create yaml dir
+    file:
+      path: "{{ yaml_dir }}"
+      state: directory
 
-  - name: Set opm dowload url suffix
-    set_fact: opm_url_suffix="download/{{ opm_version }}"
-    when: opm_version is defined and opm_version != "latest"
+  - name: render all osp-director-operator templates
+    template:
+      src:  "osp-director-operator/{{ item }}.j2"
+      dest: "{{ yaml_dir }}/{{ item }}"
+    with_items:
+    - catalogsource.yaml
+    - operatorgroup.yaml
+    - subscription.yaml
 
-  - name: Download opm
-    get_url:
-      url: https://github.com/operator-framework/operator-registry/releases/{{ opm_url_suffix }}/linux-amd64-opm
-      dest: "{{ working_bin_dir }}/opm"
-      mode: 0755
-
-  - import_role: name=git_checkout_operator
-    vars:
-      operator: openstack-cluster-operator
-
-  - name: Ensure a clean build
+  - name: Deploy the catalogsource
     shell: |
-      make clean
-    args:
-      chdir: "{{ repo_dir }}"
-
-  - name: build the csv-merger
-    shell: >
-      make csv-merger
-    args:
-      chdir: "{{ repo_dir }}"
-
-  - name: build CSV manifest locally
-    command: /bin/bash "{{ repo_dir }}/scripts/build-manifests.sh"
-    args:
-      chdir: "{{ repo_dir }}"
-    environment:
-      CSV_VERSION: "{{csv_version}}"
-      OPERATOR_IMAGE: "{{cluster_operator_image}}"
-      NOVA_IMAGE: "{{nova_operator_image}}"
-      NEUTRON_IMAGE: "{{neutron_operator_image}}"
-      COMPUTE_WORKER_IMAGE: "{{compute_node_operator_image}}"
-      KEYSTONE_IMAGE: "{{keystone_operator_image}}"
-      MARIADB_IMAGE: "{{mariadb_operator_image}}"
-      GLANCE_IMAGE: "{{glance_operator_image}}"
-      PLACEMENT_IMAGE: "{{placement_operator_image}}"
-      OVN_IMAGE: "{{ovn_operator_image}}"
-      CINDER_IMAGE: "{{cinder_operator_image}}"
-      NAMESPACE: openstack
-
-  - name: switch to openstack project/namespace
-    shell: >
-      oc project openstack
-    environment:
+      oc apply -f "{{ yaml_dir }}/catalogsource.yaml"
+    environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: create and push a local bundle image to the registry
-    command: /bin/bash "{{ repo_dir }}/scripts/create-local-bundle.sh"
-    args:
-      chdir: "{{ repo_dir }}"
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-      BUNDLE_VERSION: "{{csv_version}}" # as a convention our bundle version will follow the CSV version
-
-  - name: get_image_registry_url
-    shell: >
-      oc get route -n openshift-image-registry -o json | jq ".items[0].spec.host" -r
-    register: image_registry_url
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-
-  - name: create and push a local index image to the registry
-    command: /bin/bash "{{ repo_dir }}/scripts/create-local-index.sh"
-    args:
-      chdir: "{{ repo_dir }}"
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-      INDEX_VERSION: "{{csv_version}}" # as a convention our index version will follow the CSV version
-      BUNDLE_VERSION: "{{csv_version}}" # as a convention our bundle version will follow the CSV version
-      BUNDLE_IMAGE: "{{image_registry_url.stdout}}/openstack/openstack-cluster-bundle:v{{csv_version}}"
-
-  - name: deploy operators via OLM using the index
-    command: /bin/bash "{{ repo_dir }}/scripts/deploy-with-olm.sh"
-    args:
-      chdir: "{{ repo_dir }}"
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-      CSV_VERSION: "{{csv_version}}"
-      #NOTE: we use the internal service name as this is how the catalogsource will pull this index image from the OpenShift image registry
-      INDEX_IMAGE: "image-registry.openshift-image-registry.svc:5000/openstack/openstack-operators-index:v{{csv_version}}"
-
-  - name: switch back to default project/namespace
-    shell: >
-      oc project default
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-
-  - name: Wait for the csv to complete installation
+  - name: Wait for the catalogSource to be available
     shell: |
-      oc get -n openstack "csv/openstack-cluster-operator.v{{csv_version}}" -o json | \
-          jq -r '.status.phase'
+      oc wait pod -l olm.catalogSource=osp-director-operator-index --for condition=ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: csv_object_fetch
-    until: csv_object_fetch is not failed and csv_object_fetch.stdout == 'Succeeded'
+      <<: *oc_env
+
+  - name: Waiting for packagemanifest 'osp-director-operator' to be created
+    shell: |
+      oc get -n "{{ namespace }}" packagemanifest/osp-director-operator
+    environment:
+      <<: *oc_env
+    register: packagemanifest_creation
+    until: packagemanifest_creation is not failed
     retries: "{{ (default_timeout / 5)|int }}"
     delay: 5
+
+  - name: Deploy the operatorgroup
+    shell: |
+      oc apply -f "{{ yaml_dir }}/operatorgroup.yaml"
+    environment:
+      <<: *oc_env
+
+  - name: Deploy the subscription
+    shell: |
+      oc apply -f "{{ yaml_dir }}/subscription.yaml"
+    environment:
+      <<: *oc_env
+
+  - name: Waiting for deployment 'osp-director-operator-controller-manager' to be created
+    shell: |
+      oc get -n "{{ namespace }}" deploy/osp-director-operator-controller-manager
+    environment:
+      <<: *oc_env
+    register: manager_creation
+    until: manager_creation is not failed
+    retries: "{{ (default_timeout / 5)|int }}"
+    delay: 5
+
+  - name: Waiting for osp-director-operator-controller-manager pod to be ready
+    shell: |
+      oc wait pod -l control-plane=controller-manager --for condition=ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
+    environment:
+      <<: *oc_env

@@ -1,0 +1,15 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: ControlPlane
+metadata:
+  name: overcloud
+  namespace: {{ namespace }}
+spec:
+  controller:
+    controllerCount: {{ osp_controller_count }}
+    cores: {{ osp_controller_cores }}
+    memory: {{ osp_controller_memory }}
+    diskSize: {{ osp_controller_disk_size }}
+    baseImageURL: {{ osp_controller_base_image_url }}
+    storageClass: {{ osp_controller_storage_class }}
+    networks:
+    - name: ctlplane
