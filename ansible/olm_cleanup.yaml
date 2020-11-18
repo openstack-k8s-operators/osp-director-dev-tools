@@ -12,7 +12,7 @@
       KUBECONFIG: "{{ kubeconfig }}"
     ignore_errors: true
     with_items:
-      - "oc delete -n openstack csv openstack-cluster-operator.v{{ csv_version }}"
-      - "oc delete -n openstack subscription openstack-cluster"
-      - "oc delete -n openstack catalogsource openstack-index"
-      - "oc delete -n openstack operatorgroup openstack-group"
+      - "oc delete -n {{ namespace }} csv osp-director-operator.v{{ csv_version }}"
+      - "oc delete -n {{ namespace }} subscription osp-director-operator-subscription"
+      - "oc delete -n {{ namespace }} catalogsource osp-director-operator-index"
+      - "oc delete -n {{ namespace }} operatorgroup osp-director-operator-group"

@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - set_fact:
+      ctlplane_yaml_dir: "{{ working_yamls_dir }}/ctlplane"
+
+  - debug:
+      msg: "yamls will be written to {{ ctlplane_yaml_dir }} locally"
+
+  - name: Create yaml dir
+    file:
+      path: "{{ ctlplane_yaml_dir }}"
+      state: directory
+
+  - name: Render templates to yaml dir
+    template:
+      src: "osp/ctlplane/{{ item }}.j2"
+      dest: "{{ ctlplane_yaml_dir }}/{{ item }}"
+    with_items:
+    - "osp-director_controlplane.yaml"
+
+  - name: Start ctlplane
+    shell: |
+      set -e
+      oc apply -n openstack -f "{{ ctlplane_yaml_dir }}"
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"

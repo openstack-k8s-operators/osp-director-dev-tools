@@ -43,6 +43,12 @@ cnv_install: hosts local-defaults.yaml
 	-i hosts -e @local-defaults.yaml \
 	ocp_cnv.yaml
 
+ctlplane: hosts local-defaults.yaml
+	# NOTE: requires 'make olm'
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	install_ctlplane.yaml
+
 osp_content: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
@@ -62,18 +68,18 @@ osp-director-operator: hosts local-defaults.yaml
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts -e @local-defaults.yaml \
-	install_namespace.yaml
-	#olm.yaml
+	install_namespace.yaml \
+	olm.yaml
 
 openstackclient: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts -e @local-defaults.yaml \
 	install_openstackclient.yaml \
 
-#olm_cleanup: hosts local-defaults.yaml
-#	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-#	-v -i hosts -e @local-defaults.yaml \
-#	olm_cleanup.yaml
+olm_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-v -i hosts -e @local-defaults.yaml \
+	olm_cleanup.yaml
 
 nfs_cleanup: hosts
 	ANSIBLE_FORCE_COLOR=true ansible -i hosts convergence_base \
