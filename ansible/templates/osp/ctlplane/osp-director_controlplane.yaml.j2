@@ -12,5 +12,18 @@ spec:
     diskSize: {{ osp_controller_disk_size }}
     baseImageURL: {{ osp_controller_base_image_url }}
     storageClass: {{ osp_controller_storage_class }}
-    networks:
-    - name: ctlplane
+    ospNetwork:
+      bridgeName: br-osp
+      desiredState:
+        interfaces:
+        - bridge:
+            options:
+              stp:
+                enabled: false
+            port:
+            - name: {{ osp_interface }}
+          description: Linux bridge with {{ osp_interface }} as a port
+          name: br-osp
+          state: up
+          type: linux-bridge
+      name: osp
