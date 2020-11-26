@@ -34,11 +34,14 @@ ocp_worker_disk: 120
 # OCP cluster name
 ocp_cluster_name: ostest
 
-# Released version of the opm package from the operator-framework
+# Released version of the opm package (can be set to 'latest')
 opm_version: v1.12.5
 
-# operator-sdk version to use
+# operator-sdk version to use (must be specific version)
 sdk_version: v1.1.0
+
+# kustomize version to use (must be specific version)
+kustomize_version: v3.8.6
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
