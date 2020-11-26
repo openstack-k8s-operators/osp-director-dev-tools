@@ -1,0 +1,43 @@
+resource_registry:
+  OS::TripleO::DeployedServer::ControlPlanePort: /usr/share/openstack-tripleo-heat-templates/deployed-server/deployed-neutron-port.yaml
+  OS::TripleO::Network::Ports::ControlPlaneVipPort: /usr/share/openstack-tripleo-heat-templates/deployed-server/deployed-neutron-port.yaml
+  OS::TripleO::Network::Ports::RedisVipPort: /usr/share/openstack-tripleo-heat-templates/network/ports/noop.yaml
+  OS::TripleO::Network::Ports::OVNDBsVipPort: /usr/share/openstack-tripleo-heat-templates/network/ports/noop.yaml
+
+# as understood atm, the network tags for pre-deployed servers without an undercloud are there only for compliance.
+# Lets check later if we can make the optional in t-h-t.
+
+parameter_defaults:
+  DeployedServerPortMap:
+    control_virtual_ip:
+      fixed_ips:
+        - ip_address: 192.168.25.100
+      subnets:
+        - cidr: 192.168.25.0/24
+      network:
+        tags:
+          - 192.168.25.0/24
+    controller-0-ctlplane:
+      fixed_ips:
+        - ip_address: 192.168.25.10
+      subnets:
+        - cidr: 192.168.25.0/24
+      network:
+        tags:
+          - 192.168.25.0/24
+    controller-1-ctlplane:
+      fixed_ips:
+        - ip_address: 192.168.25.11
+      subnets:
+        - cidr: 192.168.25.0/24
+      network:
+        tags:
+          - 192.168.25.0/24
+    controller-2-ctlplane:
+      fixed_ips:
+        - ip_address: 192.168.25.12
+      subnets:
+        - cidr: 192.168.25.0/24
+      network:
+        tags:
+          - 192.168.25.0/24

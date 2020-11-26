@@ -90,3 +90,4 @@ osp_controller_base_image_url: http://download.eng.brq.redhat.com/brewroot/packa
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp6s0
+osp_container_tag: 16.2_20201110.2
