@@ -1,0 +1,34 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: localhost
+  vars_files: "vars/default.yaml"
+  roles:
+  - oc_local
+
+  tasks:
+
+  - name: Set opm download url suffix
+    set_fact: opm_url_suffix="latest/download"
+    when: opm_version is undefined or opm_version == "latest"
+
+  - name: Set opm download url suffix
+    set_fact: opm_url_suffix="download/{{ opm_version }}"
+    when: opm_version is defined and opm_version != "latest"
+
+  - name: Download opm
+    get_url:
+      url: https://github.com/operator-framework/operator-registry/releases/{{ opm_url_suffix }}/linux-amd64-opm
+      dest: "{{ lookup('env', 'HOME') }}/bin/opm"
+      mode: '0755'
+
+  - name: Download operator-sdk
+    get_url:
+      url: https://github.com/operator-framework/operator-sdk/releases/download/{{ sdk_version }}/ansible-operator-{{ sdk_version }}-x86_64-linux-gnu
+      dest: "{{ lookup('env', 'HOME') }}/bin/operator-sdk"
+      mode: '0755'
+
+  - name: Download and extract kustomize
+    unarchive:
+      src: https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{ kustomize_version }}/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz
+      dest: "{{ lookup('env', 'HOME') }}/bin/"
+      remote_src: yes

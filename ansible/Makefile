@@ -16,6 +16,11 @@ local-defaults.yaml:
 local-deps:
 	ansible-galaxy install -r requirements.yml
 
+download_tools: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-v -i hosts -e @local-defaults.yaml \
+	download_tools.yaml
+
 ocp_install:
 	$(MAKE) host_prep
 	$(MAKE) dev_scripts
