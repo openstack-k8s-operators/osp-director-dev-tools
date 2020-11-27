@@ -23,7 +23,7 @@
 
   - name: Download operator-sdk
     get_url:
-      url: https://github.com/operator-framework/operator-sdk/releases/download/{{ sdk_version }}/ansible-operator-{{ sdk_version }}-x86_64-linux-gnu
+      url: https://github.com/operator-framework/operator-sdk/releases/download/{{ sdk_version }}/operator-sdk-{{ sdk_version }}-x86_64-linux-gnu
       dest: "{{ lookup('env', 'HOME') }}/bin/operator-sdk"
       mode: '0755'
 
