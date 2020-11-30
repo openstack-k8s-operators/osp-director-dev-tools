@@ -29,30 +29,37 @@ dnf install -y ansible
 
 Modify `ansible/vars/default.yaml` to meet your req.
 
-##### Create local-deaults.yaml file with personal information
+##### Create local-defaults.yaml file with personal information
 
-Create `local-deaults.yaml` file with information to `secrets_repo` which holds
-the `pull-secret` and `rhel-subscription.yaml` files. `rhel-subscription.yaml` in the
-format:
+Create `local-defaults.yaml` file with a setting for `ci_token`.
+You can get ci_token from https://api.ci.openshift.org/ by
+clicking on your name in the top right corner and coping the login
+command (the token is part of the command)
+
+`local-deaults.yaml` has the min format:
+
+```
+ci_token: <TOKEN>
+```
+
+Additionally create the following files relative to the
+project root:
+
+`vars/rhel-subscription.yaml` in the format:
 
 ```
 rhel_subscription_activation_key: xyz
 rhel_subscription_org_id: "123123123"
 ```
 
-`local-deaults.yaml` has the min format:
-
-```
-secrets_repo: https://path/to/my/repo.git
-ci_token: <TOKEN>
-```
-
-You can get this token from https://api.ci.openshift.org/ by
-clicking on your name in the top right corner and coping the login
-command (the token is part of the command)
+`files/pull-secret` which contains your OCP pull-secrets file.
 
 Any other parameter from `vars/default.yaml` can be customized using
-`local-deaults.yaml`. Add parameters to meet your req.
+`local-defaults.yaml`. Add parameters to meet your req.
+
+You may and the optionally add a `secrets_repo` setting to your `local-defaults.yaml`.
+NOTE: `secrets_repo` is optional, if unset the above files must be manually copied
+into place inside this project.
 
 ##### Install all steps using the Makefile
 
