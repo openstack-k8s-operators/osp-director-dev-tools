@@ -52,6 +52,7 @@ ctlplane: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
+	osp_tripleo_deploy.yaml \
 	install_ctlplane.yaml
 
 osp_content: hosts local-defaults.yaml

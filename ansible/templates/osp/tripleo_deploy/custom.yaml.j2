@@ -1,0 +1,5 @@
+parameter_defaults:
+  ControllerCount: {{ osp_controller_count | default(1, true) }}
+  CloudDomain: {{ ocp_cluster_name }}
+  ControllerExtraConfig:
+    nova::scheduler::discover_hosts_in_cells_interval: '120'

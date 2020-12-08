@@ -1,0 +1,13 @@
+resource_registry:
+  OS::TripleO::Controller::Net::SoftwareConfig: /config/net-config-static-bridge.yaml
+  OS::TripleO::Compute::Net::SoftwareConfig: /config/net-config-static-bridge.yaml
+
+parameter_defaults:
+  EC2MetadataIp: 192.168.25.1
+  ControlPlaneDefaultRoute: 192.168.25.1
+  NeutronPublicInterface: eth1
+  NtpServer:
+    - clock.redhat.com
+    - clock2.redhat.com
+  DnsServers:
+    - 192.168.25.1

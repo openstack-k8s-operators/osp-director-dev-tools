@@ -1,0 +1,5 @@
+parameter_defaults:
+  HostnameMap:
+    overcloud-controller-0: controller-0
+    overcloud-controller-1: controller-1
+    overcloud-controller-2: controller-2
