@@ -9,15 +9,6 @@
       ooo_yaml_dir: "{{ working_yamls_dir }}/tripleo_deploy"
       ooo_script_dir: "{{ working_yamls_dir }}/tripleo_deploy_bin"
 
-#  - name: allow traffic between ostestbm and ctlplane for tripleo_deploy container
-#    iptables:
-#      chain: FORWARD
-#      source: 192.168.111.0/24
-#      destination: 192.168.25.0/24
-#      jump: ACCEPT
-#      action: insert
-#      rule_num: 1
-
   - name: Create yaml dir
     file:
       path: "{{ item }}"
@@ -36,6 +27,7 @@
     - custom.yaml
     - glance-backend-nfs.yaml
     - containers-prepare-parameter.yaml
+    - role-counts.yaml
 
   - name: copy ooo files to yaml dir
     copy:
@@ -48,14 +40,6 @@
     copy:
       src: osp/tripleo-deploy.sh
       dest: "{{ ooo_script_dir }}/tripleo-deploy.sh"
-
-#  - name: render {{ base_path }}/tripleo-deploy-job.yaml
-#    template:
-#      src: tripleo-deploy-job.yaml.j2
-#      dest: "{{ base_path }}/tripleo-deploy-job.yaml"
-#      owner: ocp
-#    tags:
-#      - tripleo_deploy_setup
 
   - name: create tripleo-deploy-config ConfigMap
     become_user: ocp
@@ -90,65 +74,12 @@
 
   - name: Configure glance export
     lineinfile:
-      path: /etc/exports
+      path: /etc/exports.d/glance.exports
       line: "/home/nfs/{{ item }} *(rw,sync,no_root_squash)"
+      create: yes
     with_items:
       - glance
       - glance-staging
 
   - name: Export NFS share to the server
     command: "exportfs -r"
-
-
-#  - name: start tripleo deploy job
-#    become_user: ocp
-#    shell: |
-#      if oc get job tripleo-deploy; then
-#        oc delete job tripleo-deploy
-#      fi
-#      oc apply -f {{ base_path }}/tripleo-deploy-job.yaml
-#    environment:
-#      <<: *oc_env
-
-#  - name: wait up to 100m for tripleo deploy job
-#    become_user: ocp
-#    shell: |
-#      oc get job tripleo-deploy -o json | jq .status.active
-#    register: status
-#    environment:
-#      <<: *oc_env
-#    until: (status.stdout == 0 or status.stdout == "null")
-#    retries: 600
-#    delay: 10
-
-#  - name: check result of tripleo deploy job
-#    become_user: ocp
-#    shell: |
-#      oc get job tripleo-deploy -o json | jq .status.succeeded
-#    register: result
-#    failed_when: result.stdout != "1"
-#    environment:
-#      <<: *oc_env
-
-#  - name: get global_vars.yaml/etc from tripleo-deploy pod for input for operator deployment
-#    shell: |
-#      oc debug node/{{ tripleo_deploy_job_worker }} << EOF > {{ playbook_dir }}/vars/osp_{{ item | basename | lower }}
-#      cat /host/tmp/cnv-ansible/{{ item }}
-#      EOF
-#    with_items:
-#      - inventory.yaml
-#      - global_vars.yaml
-#      - Controller/global_config_settings.yaml
-#      - group_vars/Controller
-#    environment:
-#      <<: *oc_env
-
-#  - name: get clouds.yaml from tripleo-deploy.pod for input for openstackclient pod
-#    shell: |
-#      oc debug node/{{ tripleo_deploy_job_worker }} << EOF > /tmp/clouds.yaml
-#      cat /host/tmp/clouds.yaml
-#      EOF
-#    environment:
-#      <<: *oc_env
-
-# create secret with clouds.yaml and use it in openstack-client pod

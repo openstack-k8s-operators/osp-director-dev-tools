@@ -3,3 +3,5 @@ parameter_defaults:
     overcloud-controller-0: controller-0
     overcloud-controller-1: controller-1
     overcloud-controller-2: controller-2
+    overcloud-novacompute-0: ostest-worker-3
+    overcloud-novacompute-1: ostest-worker-4

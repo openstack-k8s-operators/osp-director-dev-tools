@@ -38,11 +38,30 @@
         virsh net-start --network ospnetwork
         virsh net-autostart --network ospnetwork
 
-  - name: Detach osp network interface from the OpenShift worker VM's if this is a rerun of the playbook
-    command: "virsh detach-interface {{ ocp_cluster_name }}{{ '_worker_%01x' | format(item) }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item) }} --persistent --live"
-    loop: "{{ range(0, ocp_num_workers , 1)|list }}"
+  - name: get active worker nodes
+    shell: >
+        echo $(virsh list --name | grep worker)
+    register: worker_ocp_active
+
+  - name: get inactive worker nodes
+    shell: >
+        echo $(virsh list --inactive --name | grep worker)
+    register: worker_ocp_inactive
+
+  - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
+    command: "virsh detach-interface {{ item }} bridge --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --persistent --live"
+    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
     ignore_errors: true
 
-  - name: Attach the osp network to each of the OpenShift worker VM's
-    command: "virsh attach-interface {{ ocp_cluster_name }}{{ '_worker_%01x' | format(item) }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item) }} --model virtio --persistent --live"
-    loop: "{{ range(0, ocp_num_workers , 1)|list }}"
+  - name: Detach osp network interface from INACTIVE worker VM's if this is a rerun of the playbook
+    command: "virsh detach-interface {{ item }} bridge --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --persistent"
+    with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+    ignore_errors: true
+
+  - name: Attach the osp network to ACTIVE worker VM's
+    command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --live"
+    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+
+  - name: Attach the osp network to INACTIVE worker VM's
+    command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent"
+    with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"

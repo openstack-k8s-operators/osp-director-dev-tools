@@ -1,8 +1,8 @@
 default: \
   ocp_install \
   cnv_install \
-  olm
-  #osp_operators_install \
+  olm \
+  openstack
   #osp_tests_run
 
 all: default
@@ -48,12 +48,23 @@ cnv_install: hosts local-defaults.yaml
 	-i hosts -e @local-defaults.yaml \
 	ocp_cnv.yaml
 
+openstack:
+	$(MAKE) ctlplane
+	$(MAKE) computes
+	# $(MAKE) overcloud
+
 ctlplane: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	osp_tripleo_deploy.yaml \
 	install_ctlplane.yaml
+
+computes: hosts local-defaults.yaml
+	# NOTE: requires 'make olm'
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	install_computes.yaml
 
 osp_content: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -65,22 +76,11 @@ osp_tests_run: hosts local-defaults.yaml
 	-i hosts -e @local-defaults.yaml \
 	osp_tempest_ocp.yaml
 
-osp-director-operator: hosts local-defaults.yaml
-	# NOTE: requires 'make olm'
-	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
-	install_namespace.yaml
-
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts -e @local-defaults.yaml \
 	install_namespace.yaml \
 	olm.yaml
-
-openstackclient: hosts local-defaults.yaml
-	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-v -i hosts -e @local-defaults.yaml \
-	install_openstackclient.yaml \
 
 olm_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -92,6 +92,7 @@ nfs_cleanup: hosts
 	--become -m shell -a \
 	"set -x; \
 	 rm -f /etc/exports.d/host-nfs-storageclass.exports; \
+	 rm -f /etc/exports.d/glance.exports; \
 	 exportfs -ra; \
 	 umount -d /home/nfs/pv-*; \
 	 rm -rf /home/nfs; \

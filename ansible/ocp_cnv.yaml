@@ -48,6 +48,7 @@
   - name: Install OpenShift Virtualization Operator
     shell: |
       set -e
+      sleep 10
       oc apply -f "{{ yaml_dir }}/2/"
     environment:
       PATH: "{{ oc_env_path }}"
