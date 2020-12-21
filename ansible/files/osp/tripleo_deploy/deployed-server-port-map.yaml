@@ -41,3 +41,19 @@ parameter_defaults:
       network:
         tags:
           - 192.168.25.0/24
+    ostest-worker-3-ctlplane:
+      fixed_ips:
+        - ip_address: 192.168.25.2
+      subnets:
+        - cidr: 192.168.25.0/24
+      network:
+        tags:
+          - 192.168.25.0/24
+    ostest-worker-4-ctlplane:
+      fixed_ips:
+        - ip_address: 192.168.25.3
+      subnets:
+        - cidr: 192.168.25.0/24
+      network:
+        tags:
+          - 192.168.25.0/24

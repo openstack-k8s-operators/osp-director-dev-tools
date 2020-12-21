@@ -15,6 +15,11 @@
     set_fact: opm_url_suffix="download/{{ opm_version }}"
     when: opm_version is defined and opm_version != "latest"
 
+  - name: Create $HOME/bin dir
+    file:
+      path: "{{ lookup('env', 'HOME') }}/bin"
+      state: directory
+
   - name: Download opm
     get_url:
       url: https://github.com/operator-framework/operator-registry/releases/{{ opm_url_suffix }}/linux-amd64-opm
@@ -32,3 +37,9 @@
       src: https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{ kustomize_version }}/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz
       dest: "{{ lookup('env', 'HOME') }}/bin/"
       remote_src: yes
+
+  - name: Install packages
+    package:
+      state: installed
+      name:
+        - golang

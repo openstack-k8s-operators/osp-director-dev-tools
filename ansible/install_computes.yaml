@@ -1,0 +1,63 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - set_fact:
+      compute_yaml_dir: "{{ working_yamls_dir }}/compute"
+
+  - debug:
+      msg: "yamls will be written to {{ compute_yaml_dir }} locally"
+
+  - name: Create yaml dir
+    file:
+      path: "{{ compute_yaml_dir }}"
+      state: directory
+
+  - name: register dev-tools prepared extra_hosts
+    shell: |
+      set -e
+      oc apply -f /home/ocp/dev-scripts/ocp/ostest/extra_host_manifests.yaml
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  # until the provision server can check if the provided image is compressed/not compress we'd need to gzip it
+  - name: Check if {{ osp_controller_base_image_url | basename }}.gz already exist
+    stat:
+      path: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}.gz"
+    register: stat_result
+
+  - name: Get RHEL guest base image
+    when: not stat_result.stat.exists
+    block:
+    - name: download {{ osp_controller_base_image_url }}
+      get_url:
+        url: "{{ osp_controller_base_image_url }}"
+        dest: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
+        mode: 0644
+        owner: ocp
+        group: ocp
+
+    - name: compress {{ osp_controller_base_image_url | basename }}
+      archive:
+        path: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
+        remove: True
+        owner: ocp
+        group: ocp
+     
+  - name: Render templates to yaml dir
+    template:
+      src: "osp/compute/{{ item }}.j2"
+      dest: "{{ compute_yaml_dir }}/{{ item }}"
+    with_items:
+    - "baremetalset.yaml"
+
+  - name: Start baremtalset
+    shell: |
+      set -e
+      oc apply -n openstack -f "{{ compute_yaml_dir }}"
+    environment:
+      <<: *oc_env

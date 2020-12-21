@@ -11,7 +11,7 @@ rm -rf ~/tripleo-deploy/overcloud-ansible*
 
 sudo openstack tripleo deploy \
     --templates /usr/share/openstack-tripleo-heat-templates \
-    -r /config/roles-data.yaml \
+    -r /usr/share/openstack-tripleo-heat-templates/roles_data.yaml \
     -n /usr/share/openstack-tripleo-heat-templates/network_data.yaml \
     -e /usr/share/openstack-tripleo-heat-templates/overcloud-resource-registry-puppet.yaml \
     -e /config/passwords.yaml \

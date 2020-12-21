@@ -1,0 +1,16 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: BaremetalSet
+metadata:
+  name: compute
+  namespace: openstack
+spec:
+  # How many nodes to provision
+  replicas: {{ osp_compute_count }}
+  # The image to install on the provisioned nodes
+  rhelImageUrl: http://172.22.0.1/images/{{ osp_controller_base_image_url | basename }}.gz
+  # The secret containing the SSH pub key to place on the provisioned nodes
+  deploymentSSHSecret: osp-controlplane-ssh-keys
+  # A CIDR for a management network on which to access the nodes
+  mgmtCidr: 192.168.25.0/24
+  # The interface on the nodes that will be assigned an IP from the mgmtCidr
+  mgmtInterface: eth2

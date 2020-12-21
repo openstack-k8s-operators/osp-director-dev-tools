@@ -4,7 +4,9 @@ base_path: /home/ocp
 #dev_scripts_branch: defaults to "HEAD"
 
 # To set a specific release to install.
+ocp_version: 4.6
 ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.6.1-x86_64
+ocp_release_type: ga
 
 # private repo to read required secret files from
 # The playbooks expect secret files which can be placed in a private repo
@@ -23,7 +25,10 @@ ocp_ip_stack: v4
 
 # size the OCP VM resources
 ocp_num_masters: 3
-ocp_num_workers: 5
+ocp_num_workers: 3
+# number of extra VMs to create but not deploy, used as OSP computes
+ocp_num_extra_workers: 2
+ocp_extra_workers_online_status: false
 ocp_master_memory: 16384
 ocp_master_vcpu: 8
 ocp_master_disk: 120
@@ -46,6 +51,7 @@ kustomize_version: v3.8.6
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
 namespace: openstack
+watch_namespace: openstack,openshift-machine-api
 
 # operator github url where operators repos are underneath - default https://github.com/openstack-k8s-operators
 #openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
@@ -76,7 +82,7 @@ local_working_dir: "~/{{ ocp_cluster_name }}-working"
 nfs_data_dir: /home/nfs/data
 nfs_export_dir: /home/nfs
 
-default_timeout: 180
+default_timeout: 240
 
 # worker node where openstackclient pod will run
 openstackclient_pod_worker: worker-0
@@ -86,8 +92,12 @@ osp_controller_count: 1
 osp_controller_cores: 2
 osp_controller_memory: 12
 osp_controller_disk_size: 50
-osp_controller_base_image_url: http://download.eng.brq.redhat.com/brewroot/packages/rhel-guest-image/8.3/417/images/rhel-guest-image-8.3-417.x86_64.qcow2
+# use http://download.devel.redhat.com to get the local mirror depending on where the server is
+osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.3/417/images/rhel-guest-image-8.3-417.x86_64.qcow2
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp6s0
 osp_container_tag: 16.2_20201110.2
+
+# number of OCP worker nodes should be OSP compute hosts
+osp_compute_count: 1

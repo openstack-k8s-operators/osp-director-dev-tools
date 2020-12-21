@@ -45,11 +45,23 @@
       mode: 0755
       remote_src: yes
 
-  - name: set OCP release to use
+  - name: set OCP version to use
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export OPENSHIFT_VERSION=.*'
+      line: "export OPENSHIFT_VERSION={{ ocp_version }}"
+
+  - name: set OCP release image to use
     lineinfile:
       path: "{{ base_path }}/dev-scripts/config_$USER.sh"
       regexp: '^export OPENSHIFT_RELEASE_IMAGE=.*'
       line: "export OPENSHIFT_RELEASE_IMAGE={{ ocp_release_image }}"
+
+  - name: set OCP release type to use
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export OPENSHIFT_RELEASE_TYPE=.*'
+      line: "export OPENSHIFT_RELEASE_TYPE={{ ocp_release_type }}"
 
   - name: set WORKING_DIR in {{ base_path }}/dev-scripts/config_$USER.sh
     lineinfile:
@@ -124,6 +136,18 @@
       path: "{{ base_path }}/dev-scripts/config_$USER.sh"
       regexp: '^export NUM_WORKERS=.*'
       line: "export NUM_WORKERS={{ ocp_num_workers }}"
+
+  - name: set OCP number extra workers
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export NUM_EXTRA_WORKERS=.*'
+      line: "export NUM_EXTRA_WORKERS={{ ocp_num_extra_workers }}"
+
+  - name: set OCP extra workers online status to false
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export EXTRA_WORKERS_ONLINE_STATUS=.*'
+      line: "export EXTRA_WORKERS_ONLINE_STATUS={{ ocp_extra_workers_online_status }}"
 
   - name: set OCP number of masters
     lineinfile:
