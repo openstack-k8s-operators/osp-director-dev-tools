@@ -1,6 +1,6 @@
 FROM registry.redhat.io/ubi8/ubi
 
-RUN dnf -y install http://download.lab.bos.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+RUN dnf -y install http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
 RUN rhos-release 16.2 -p passed_phase2 --without-ceph
 RUN dnf -y install python3-tripleoclient
 RUN dnf -y install sudo
@@ -8,6 +8,9 @@ RUN dnf -y install bash-completion
 RUN dnf -y install patch
 RUN dnf -y install python3-osc-placement
 RUN openstack complete | tee /etc/bash_completion.d/osc.bash_completion > /dev/null
+RUN curl -s -S -o /tmp/openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz > /dev/null
+RUN tar xfz /tmp/openshift-client-linux.tar.gz -C /usr/local/bin/
+RUN rm -f /tmp/openshift-client-linux.tar.gz
 RUN dnf -y clean all
 
 ADD hostnamectl /usr/local/bin/
