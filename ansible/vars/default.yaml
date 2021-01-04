@@ -33,7 +33,7 @@ ocp_master_memory: 16384
 ocp_master_vcpu: 8
 ocp_master_disk: 120
 ocp_worker_memory: 30000
-ocp_worker_vcpu: 4
+ocp_worker_vcpu: 8
 ocp_worker_disk: 120
 
 # OCP cluster name
@@ -89,7 +89,7 @@ openstackclient_pod_worker: worker-0
 
 # OSP controller VM sizing
 osp_controller_count: 1
-osp_controller_cores: 2
+osp_controller_cores: 6
 osp_controller_memory: 12
 osp_controller_disk_size: 50
 # use http://download.devel.redhat.com to get the local mirror depending on where the server is
