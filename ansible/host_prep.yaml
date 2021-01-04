@@ -7,19 +7,20 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
-  - name: Remove beaker repos
+  - name: Disable existing repos
     block:
-    - name: get beaker repo files
+    - name: get existing repo files
       find:
         paths: /etc/yum.repos.d
-        patterns: beaker*
-      register: beaker_files_to_delete
+        patterns: '*.repo'
+      register: repos
 
-    - name: Delete beaker repo files
-      file:
-        path: "{{ item.path }}"
-        state: absent
-      with_items: "{{ beaker_files_to_delete.files }}"
+    - name: Disable any existing repos
+      replace:
+        dest: "{{ item.path }}"
+        regexp: "enabled=1"
+        replace: "enabled=0"
+      with_items: "{{ repos.files }}"
 
   - name: Register host to subscription manager, metal3 dev scripts use subscription manager for RHEL
     block:
