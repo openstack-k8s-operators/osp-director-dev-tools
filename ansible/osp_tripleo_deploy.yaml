@@ -62,6 +62,8 @@
       <<: *oc_env
 
   - name: Create glance NFS share
+    become: true
+    become_user: root
     file:
       path: "/home/nfs/{{ item }}"
       state: directory
@@ -73,6 +75,8 @@
       - glance-staging
 
   - name: Configure glance export
+    become: true
+    become_user: root
     lineinfile:
       path: /etc/exports.d/glance.exports
       line: "/home/nfs/{{ item }} *(rw,sync,no_root_squash)"
@@ -82,4 +86,6 @@
       - glance-staging
 
   - name: Export NFS share to the server
+    become: true
+    become_user: root
     command: "exportfs -r"
