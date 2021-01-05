@@ -49,6 +49,7 @@ cnv_install: hosts local-defaults.yaml
 	ocp_cnv.yaml
 
 openstack:
+	$(MAKE) networks
 	$(MAKE) ctlplane
 	$(MAKE) computes
 	# $(MAKE) overcloud
@@ -57,6 +58,12 @@ openstack_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	openstack_cleanup.yaml
+
+networks: hosts local-defaults.yaml
+	# NOTE: requires 'make olm'
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	install_networks.yaml
 
 ctlplane: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
