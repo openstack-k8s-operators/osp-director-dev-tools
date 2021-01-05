@@ -87,8 +87,8 @@
 
   - name: Verify ci_token variable is present 
     fail:
-      msg: ci_token is not set in your vars. You must obtain it from https://api.ci.openshift.org (by clicking the upper right drop-down and selecting "Copy Login Command").
-    when: ci_token is undefined or ci_token == ""
+      msg: ci_token is not set in your vars or as environment variable. You must obtain it from https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ (by clicking the upper right drop-down and selecting "Copy Login Command").
+    when: (ci_token is undefined or (ci_token|string|length == 0)) and (lookup('env','CI_TOKEN')|length == 0)
 
   - name: use secrets_repo
     when: secrets_repo is defined
@@ -111,13 +111,20 @@
       path: "{{ base_path }}/dev-scripts/config_$USER.sh"
       regexp: '^export PERSONAL_PULL_SECRET='
       line: export PERSONAL_PULL_SECRET="{{ secrets_repo_path }}/pull-secret"
-   
- 
-  - name: set CI_TOKEN in {{ base_path }}/dev-scripts/config_$USER.sh
+
+  - name: set CI_TOKEN from ansible vars in {{ base_path }}/dev-scripts/config_$USER.sh
     lineinfile:
       path: "{{ base_path }}/dev-scripts/config_$USER.sh"
       regexp: '^export CI_TOKEN='
       line: "export CI_TOKEN={{ ci_token }}"
+    when: lookup('env','CI_TOKEN')|length == 0
+
+  - name: set CI_TOKEN from shell vars in {{ base_path }}/dev-scripts/config_$USER.sh
+    lineinfile:
+      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+      regexp: '^export CI_TOKEN='
+      line: "export CI_TOKEN={{ lookup('env','CI_TOKEN') }}"
+    when: lookup('env','CI_TOKEN')|length != 0
 
   - name: set IP_STACK in {{ base_path }}/dev-scripts/config_$USER.sh
     lineinfile:

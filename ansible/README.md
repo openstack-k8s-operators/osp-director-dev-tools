@@ -31,15 +31,24 @@ Modify `ansible/vars/default.yaml` to meet your req.
 
 ##### Create local-defaults.yaml file with personal information
 
-Create `local-defaults.yaml` file with a setting for `ci_token`.
-You can get ci_token from https://api.ci.openshift.org/ by
-clicking on your name in the top right corner and coping the login
+Create `local-defaults.yaml` file with a setting for `ci_token`
+or export CI_TOKEN shell variable in your environment.
+
+You can get ci_token from https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/
+by clicking on your name in the top right corner and coping the login
 command (the token is part of the command)
 
 `local-deaults.yaml` has the min format:
 
 ```
 ci_token: <TOKEN>
+```
+
+If using CI_TOKEN as shell variable, which has precedence over
+`local-defaults.yaml` use:
+
+```
+export CI_TOKEN: <TOKEN>
 ```
 
 Additionally create the following files relative to the
