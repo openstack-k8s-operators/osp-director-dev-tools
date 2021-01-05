@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: openstack cleanup
+    command: "{{ item }}"
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    ignore_errors: true
+    with_items:
+      - "oc delete -n openstack baremetalset compute"
+      - "oc delete -n openstack controlplane overcloud"
+      - "oc delete -n openstack overcloudipset compute"
+      - "oc delete -n openstack overcloudnet ctlplane"
