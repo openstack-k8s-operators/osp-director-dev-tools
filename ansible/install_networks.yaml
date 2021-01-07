@@ -16,14 +16,6 @@
       path: "{{ network_yaml_dir }}"
       state: directory
 
-  - name: register dev-tools prepared extra_hosts
-    shell: |
-      set -e
-      oc apply -f /home/ocp/dev-scripts/ocp/ostest/extra_host_manifests.yaml
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-
   - name: Render templates to yaml dir
     template:
       src: "osp/networks/{{ item }}.j2"
@@ -35,6 +27,9 @@
     ignore_errors: true
     shell: >
       oc get overcloudnet ctlplane
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
     register: overcloud_net_switch
 
   - name: Start networks
