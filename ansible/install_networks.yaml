@@ -1,0 +1,46 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - set_fact:
+      network_yaml_dir: "{{ working_yamls_dir }}/networks"
+
+  - debug:
+      msg: "yamls will be written to {{ network_yaml_dir }} locally"
+
+  - name: Create yaml dir
+    file:
+      path: "{{ network_yaml_dir }}"
+      state: directory
+
+  - name: register dev-tools prepared extra_hosts
+    shell: |
+      set -e
+      oc apply -f /home/ocp/dev-scripts/ocp/ostest/extra_host_manifests.yaml
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: Render templates to yaml dir
+    template:
+      src: "osp/networks/{{ item }}.j2"
+      dest: "{{ network_yaml_dir }}/{{ item }}"
+    with_items:
+    - "01-ctlplane.yaml"
+
+  - name: do the networks already exist
+    ignore_errors: true
+    shell: >
+      oc get overcloudnet ctlplane
+    register: overcloud_net_switch
+
+  - name: Start networks
+    shell: |
+      set -e
+      oc apply -n openstack -f "{{ network_yaml_dir }}"
+    environment:
+      <<: *oc_env
+    when: overcloud_net_switch.rc == 1
