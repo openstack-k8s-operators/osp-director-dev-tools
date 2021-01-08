@@ -132,34 +132,40 @@
 
   - name: configure time on host
     block:
-    - name: Set timezone to GMT
-      file:
-        src: /usr/share/zoneinfo/GMT
-        dest: /etc/localtime
-        state: link
-        force: yes
+      - name: Set timezone to GMT
+        file:
+          src: /usr/share/zoneinfo/GMT
+          dest: /etc/localtime
+          state: link
+          force: yes
 
-    - name: Install, Configure and Run Chrony
-      include_role:
-        name: chrony
-      vars:
-        chrony_role_action: all
-        chrony_ntp_servers:
-        - clock.redhat.com
-        chrony_ntp_pools:
-        - clock.redhat.com
+      - name: Install, Configure and Run Chrony
+        include_role:
+          name: chrony
+        vars:
+          chrony_role_action: all
+          chrony_ntp_servers:
+          - clock.redhat.com
+          chrony_ntp_pools:
+          - clock.redhat.com
 
-    - name: Ensure chrony has been restarted
-      meta: flush_handlers
+      - name: Ensure chrony has been restarted
+        meta: flush_handlers
 
-    - name: Ensure system is NTP time synced
-      command: chronyc makestep
+      - name: Ensure system is NTP time synced
+        command: chronyc makestep
 
-    - name: Sync HW clock
-      shell: hwclock -w
+      - name: Sync HW clock
+        command: hwclock -w
+
+  - name: Check current tuned profile
+    command: tuned-adm active
+    register: tuned_profile
+    changed_when: False
 
   - name: Set tuned virtualization-host profile
-    shell: /usr/sbin/tuned-adm profile virtual-host
+    command: /usr/sbin/tuned-adm profile virtual-host
+    when: "'Current active profile: virtual-host' not in tuned_profile.stdout"
 
   - name: enable nested virt
     lineinfile:
@@ -211,8 +217,7 @@
         size: +100%FREE
       register: lv_resized
     - name: resize FS on /
-      shell: >
-        /usr/sbin/xfs_growfs /
+      command: /usr/sbin/xfs_growfs /
       when: lv_resized is changed
 
   - name: Allow 'wheel' group to have passwordless sudo

@@ -5,7 +5,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for namespace yaml files
+    set_fact:
       ns_yaml_dir: "{{ working_yamls_dir }}/namespace"
 
   - name: Create namespace yaml dir

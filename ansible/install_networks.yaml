@@ -5,7 +5,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for networks yaml files
+    set_fact:
       network_yaml_dir: "{{ working_yamls_dir }}/networks"
 
   - debug:

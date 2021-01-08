@@ -6,7 +6,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for osp-director-operator yaml files
+    set_fact:
       yaml_dir: "{{ working_yamls_dir }}/osp-director-operator"
 
   - name: Create yaml dir

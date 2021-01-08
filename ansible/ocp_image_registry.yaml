@@ -11,7 +11,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for image-registry yaml files
+    set_fact:
       registry_yaml_dir: "{{ working_dir }}/yamls/image-registry"
 
   - name: Create yaml dir

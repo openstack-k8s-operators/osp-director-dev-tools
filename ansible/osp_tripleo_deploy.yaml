@@ -5,7 +5,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for the tripleo deployment files
+    set_fact:
       ooo_yaml_dir: "{{ working_yamls_dir }}/tripleo_deploy"
       ooo_script_dir: "{{ working_yamls_dir }}/tripleo_deploy_bin"
 
@@ -42,12 +43,13 @@
       dest: "{{ ooo_script_dir }}/tripleo-deploy.sh"
 
   - name: create tripleo-deploy-config ConfigMap
+    become: true
     become_user: ocp
     shell: |
       if oc get cm -n openstack tripleo-deploy-config; then
         oc delete cm -n openstack tripleo-deploy-config
       fi
-      oc create cm -n openstack tripleo-deploy-config --from-file={{ ooo_yaml_dir }}/ 
+      oc create cm -n openstack tripleo-deploy-config --from-file={{ ooo_yaml_dir }}/
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
@@ -67,7 +69,7 @@
     file:
       path: "/home/nfs/{{ item }}"
       state: directory
-      mode: '777'
+      mode: '0777'
       group: nobody
       owner: nobody
     with_items:

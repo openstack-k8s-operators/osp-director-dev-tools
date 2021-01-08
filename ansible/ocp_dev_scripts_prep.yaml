@@ -69,23 +69,25 @@
       regexp: '^export WORKING_DIR='
       line: export WORKING_DIR='{{ base_path }}'
 
-  - name: Copy pull-secret file 
+  - name: Copy pull-secret file
     when: secrets_repo is undefined
     block:
-    - set_fact:
+    - name: Set secrets repo path
+      set_fact:
         secrets_repo_path: "{{ base_path }}"
     - name: Copy pull-secret
       copy:
         dest: "{{ base_path }}/pull-secret"
         src: files/pull-secret
     rescue:
-    - fail:
+    - name: Fail when pull-secrets is not found
+      fail:
         msg: |
           files/pull-secret is not present. You must obtain it from
           https://cloud.redhat.com/openshift/install/pull-secret and copy it
           there manually.
 
-  - name: Verify ci_token variable is present 
+  - name: Verify ci_token variable is present
     fail:
       msg: ci_token is not set in your vars or as environment variable. You must obtain it from https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ (by clicking the upper right drop-down and selecting "Copy Login Command").
     when: (ci_token is undefined or (ci_token|string|length == 0)) and (lookup('env','CI_TOKEN')|length == 0)
@@ -93,7 +95,8 @@
   - name: use secrets_repo
     when: secrets_repo is defined
     block:
-    - set_fact:
+    - name: Set secrets_repo path
+      set_fact:
         secrets_repo_path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
     - name: create base dir for secrets_repo repo
       file:

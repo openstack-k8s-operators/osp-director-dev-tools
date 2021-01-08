@@ -88,7 +88,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for host-nfs-storageclass yaml files
+    set_fact:
       yaml_dir: "{{ working_yamls_dir }}/host-nfs-storageclass"
 
   - name: Create local yamldir
