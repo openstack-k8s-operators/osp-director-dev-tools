@@ -1,0 +1,32 @@
+pipeline {
+    agent none
+    stages {
+        stage('Pull request proposed jobs') {
+            when {
+                branch 'PR-*'
+            }
+
+            stage('osp-director-dev-tools-pr') {
+                steps {
+                    build job: 'osp-director-dev-tools-pr',
+                              parameters: [
+                                  string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
+                              ]
+                }
+            }
+        }
+
+        stage('Pull request merged jobs') {
+            when {
+                allOf {
+                    environment name: 'CHANGE_ID', value: ''
+                    branch 'master'
+                }
+            }
+
+            steps {
+                build job: 'osp-director-dev-tools-merge'
+            }
+        }
+    }
+}
