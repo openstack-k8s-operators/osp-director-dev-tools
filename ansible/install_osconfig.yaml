@@ -15,6 +15,7 @@
       copy:
         src: "{{ item }}"
         dest: "{{ keystone_yaml_dir }}/"
+        mode: '0644'
       with_fileglob:
         - "ocp/keystone/osconfig.yaml"
 
@@ -29,3 +30,4 @@
       copy:
         src: stackrc
         dest: "{{ working_dir }}/stackrc"
+        mode: '0644'

@@ -16,6 +16,7 @@
     file:
       path: "{{ compute_yaml_dir }}"
       state: directory
+      mode: '0755'
 
   - name: register dev-tools prepared extra_hosts
     shell: |
@@ -35,24 +36,22 @@
     when: not stat_result.stat.exists
     block:
     - name: download {{ osp_controller_base_image_url }}
-      become_user: ocp
-      become: true
       get_url:
         url: "{{ osp_controller_base_image_url }}"
         dest: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
-        mode: 0644
+        mode: '0644'
 
     - name: compress {{ osp_controller_base_image_url | basename }}
-      become_user: ocp
-      become: true
       archive:
         path: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
         remove: True
+        mode: '0644'
 
   - name: Render templates to yaml dir
     template:
       src: "osp/compute/{{ item }}.j2"
       dest: "{{ compute_yaml_dir }}/{{ item }}"
+      mode: '0644'
     with_items:
     - "baremetalset.yaml"
 

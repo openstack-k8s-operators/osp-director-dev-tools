@@ -10,7 +10,7 @@
         oc get -n openshift-machine-api machineset -l machine.openshift.io/cluster-api-machine-type=worker -o json | jq '.spec.deletePolicy="Newest"' | oc apply -f -
       environment: &oc_env
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-        KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+        KUBECONFIG: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: get number of ready OCP baremetal nodes
       shell: >

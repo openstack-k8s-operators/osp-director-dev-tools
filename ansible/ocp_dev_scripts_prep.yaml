@@ -75,10 +75,12 @@
     - name: Set secrets repo path
       set_fact:
         secrets_repo_path: "{{ base_path }}"
+
     - name: Copy pull-secret
       copy:
         dest: "{{ base_path }}/pull-secret"
         src: files/pull-secret
+        mode: "0644"
     rescue:
     - name: Fail when pull-secrets is not found
       fail:
@@ -163,7 +165,7 @@
     lineinfile:
       path: "{{ base_path }}/dev-scripts/config_$USER.sh"
       regexp: '^export NUM_MASTERS=.*'
-      line: "export NUM_MASTERS={{ ocp_num_masters | default('3', true)}}"
+      line: "export NUM_MASTERS={{ ocp_num_masters | default('3', true) }}"
 
   - name: set OCP master memory
     lineinfile:

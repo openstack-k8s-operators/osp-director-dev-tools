@@ -16,11 +16,13 @@
     file:
       path: "{{ ctlplane_yaml_dir }}"
       state: directory
+      mode: '0755'
 
   - name: Render templates to yaml dir
     template:
       src: "osp/ctlplane/{{ item }}.j2"
       dest: "{{ ctlplane_yaml_dir }}/{{ item }}"
+      mode: '0644'
     with_items:
     - "osp-director_controlplane.yaml"
 

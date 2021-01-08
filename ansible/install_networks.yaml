@@ -16,11 +16,13 @@
     file:
       path: "{{ network_yaml_dir }}"
       state: directory
+      mode: '0755'
 
   - name: Render templates to yaml dir
     template:
       src: "osp/networks/{{ item }}.j2"
       dest: "{{ network_yaml_dir }}/{{ item }}"
+      mode: '0644'
     with_items:
     - "01-ctlplane.yaml"
 

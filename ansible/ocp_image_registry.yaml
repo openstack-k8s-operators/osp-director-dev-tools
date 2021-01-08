@@ -8,7 +8,7 @@
   gather_facts: false
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
   - name: Set directory for image-registry yaml files
@@ -19,11 +19,13 @@
     file:
       path: "{{ registry_yaml_dir }}"
       state: directory
+      mode: '0755'
 
   - name: Copy PVC to working dir
     copy:
       src: openshift-image-registry-pvc.yaml
       dest: "{{ registry_yaml_dir }}/"
+      mode: '0644'
 
   - name: Configure image registry
     shell: |
