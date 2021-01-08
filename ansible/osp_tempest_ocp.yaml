@@ -47,6 +47,7 @@
         mode: 0644
 
     - name: create tempest-config ConfigMap
+      become: true
       become_user: ocp
       shell: |
         if oc get configmap tempest-config; then
@@ -58,6 +59,7 @@
         KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: create tempest-bin ConfigMap
+      become: true
       become_user: ocp
       shell: |
         if oc get configmap tempest-bin; then
@@ -69,6 +71,7 @@
         KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: create tempest pod
+      become: true
       become_user: ocp
       shell: |
         if oc get pod/tempest; then
@@ -80,6 +83,7 @@
         KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: wait for tempest pod in ready state
+      become: true
       become_user: ocp
       shell: |
         oc wait pod tempest --for condition=Ready --timeout="{{ tempest_timeout }}s"
@@ -90,6 +94,7 @@
       ignore_errors: true
 
     - name: get tempest result from ocp logs
+      become: true
       become_user: ocp
       shell: |
         oc logs tempest -c tempest-run

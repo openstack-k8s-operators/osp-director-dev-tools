@@ -5,7 +5,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for compute yaml files
+    set_fact:
       ctlplane_yaml_dir: "{{ working_yamls_dir }}/ctlplane"
 
   - debug:

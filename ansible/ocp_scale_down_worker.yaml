@@ -2,15 +2,15 @@
 - hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: set deletePolicy=Newest on existing worker machineset for predictable scale down
-    shell: >
-      oc get -n openshift-machine-api machineset -l machine.openshift.io/cluster-api-machine-type=worker -o json | jq '.spec.deletePolicy="Newest"' | oc apply -f -
-    environment: &oc_env
-      PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-      KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+    - name: set deletePolicy=Newest on existing worker machineset for predictable scale down
+      shell: >
+        oc get -n openshift-machine-api machineset -l machine.openshift.io/cluster-api-machine-type=worker -o json | jq '.spec.deletePolicy="Newest"' | oc apply -f -
+      environment: &oc_env
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+        KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: get number of ready OCP baremetal nodes
       shell: >
@@ -19,34 +19,34 @@
         <<: *oc_env
       register: worker_ocp_ready
 
-  - name: scale down OCP workers if there are not enough ready baremetal nodes
-    when:
-    - osp_compute_count > 0
-    - worker_ocp_ready.stdout|int != osp_compute_count|int
-    block:
-    - name: get current {{ ocp_cluster_name }}-worker-0 replicas
-      shell: >
-        oc -n openshift-machine-api get machineset -l machine.openshift.io/cluster-api-machine-type=worker -o json | jq -r .items[0].status.replicas
-      environment:
-        <<: *oc_env
-      register: worker_replicas
+    - name: scale down OCP workers if there are not enough ready baremetal nodes
+      when:
+        - osp_compute_count > 0
+        - worker_ocp_ready.stdout|int != osp_compute_count|int
+      block:
+        - name: get current {{ ocp_cluster_name }}-worker-0 replicas
+          shell: >
+            oc -n openshift-machine-api get machineset -l machine.openshift.io/cluster-api-machine-type=worker -o json | jq -r .items[0].status.replicas
+          environment:
+            <<: *oc_env
+          register: worker_replicas
 
-    - name: set fact of new replicas count
-      set_fact:
-        replicas: "{{ worker_replicas.stdout|int - osp_compute_count|int }}"
+        - name: set fact of new replicas count
+          set_fact:
+            replicas: "{{ worker_replicas.stdout|int - osp_compute_count|int }}"
 
-    - name: scale down worker machineset by {{ replicas }}
-      shell: >
-        oc -n openshift-machine-api scale machineset -l machine.openshift.io/cluster-api-machine-type=worker --replicas={{ replicas }}
-      environment:
-        <<: *oc_env
+        - name: scale down worker machineset by {{ replicas }}
+          shell: >
+            oc -n openshift-machine-api scale machineset -l machine.openshift.io/cluster-api-machine-type=worker --replicas={{ replicas }}
+          environment:
+            <<: *oc_env
 
-    - name: wait until worker got deprovisioned
-      shell: >
-        echo $(oc get -n openshift-machine-api baremetalhost | grep worker |grep ready | wc -l)
-      environment:
-        <<: *oc_env
-      register: worker_ocp_ready
-      until: worker_ocp_ready.stdout|int == osp_compute_count|int
-      delay: 30
-      retries: 60
+        - name: wait until worker got deprovisioned
+          shell: >
+            echo $(oc get -n openshift-machine-api baremetalhost | grep worker |grep ready | wc -l)
+          environment:
+            <<: *oc_env
+          register: worker_ocp_ready
+          until: worker_ocp_ready.stdout|int == osp_compute_count|int
+          delay: 30
+          retries: 60

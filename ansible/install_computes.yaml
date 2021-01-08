@@ -5,7 +5,8 @@
   - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for compute yaml files
+    set_fact:
       compute_yaml_dir: "{{ working_yamls_dir }}/compute"
 
   - debug:
@@ -47,7 +48,7 @@
       archive:
         path: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
         remove: True
-     
+
   - name: Render templates to yaml dir
     template:
       src: "osp/compute/{{ item }}.j2"

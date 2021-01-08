@@ -2,10 +2,11 @@
 - hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local 
+  - oc_local
 
   tasks:
-  - set_fact:
+  - name: Set directory for cnv yaml files
+    set_fact:
       yaml_dir: "{{ working_yamls_dir }}/cnv"
 
   - debug:
