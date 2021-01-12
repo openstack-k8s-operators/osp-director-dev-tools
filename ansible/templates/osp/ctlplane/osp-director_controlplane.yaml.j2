@@ -6,6 +6,9 @@ metadata:
 spec:
   openStackClientImageURL: quay.io/openstack-k8s-operators/tripleo-deploy
   controller:
+    networks:
+      - ctlplane
+    role: controller
     controllerCount: {{ osp_controller_count }}
     cores: {{ osp_controller_cores }}
     memory: {{ osp_controller_memory }}
