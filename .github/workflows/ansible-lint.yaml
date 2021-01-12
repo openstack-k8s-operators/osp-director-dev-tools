@@ -12,5 +12,6 @@ jobs:
       - name: Lint Ansible Playbook
         uses: ansible/ansible-lint-action@master
         with:
-          targets: ""
-          args: "-x ANSIBLE0013,ANSIBLE0012,701"
+          targets: |
+            **/*.yaml
+          args: "-x 204,301,306,701 --exclude ansible/roles/prepare_rhos_release"

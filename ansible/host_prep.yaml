@@ -49,6 +49,7 @@
           gpgcheck=0
           priority=2
           includepkgs=redhat-internal-cert-install
+        mode: '0644'
 
     - name: Install helpful packages
       package:

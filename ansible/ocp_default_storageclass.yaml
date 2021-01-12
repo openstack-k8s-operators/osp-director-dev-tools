@@ -96,6 +96,7 @@
     file:
       path: "{{ yaml_dir }}"
       state: directory
+      mode: '0755'
 
   - name: Create storageclass yaml
     copy:
@@ -116,8 +117,7 @@
     loop: "{{ exports }}"
 
   - name: Create storageclass and PVs
-    shell:
-      oc apply -f {{ yaml_dir }}
+    command: oc apply -f {{ yaml_dir }}
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"

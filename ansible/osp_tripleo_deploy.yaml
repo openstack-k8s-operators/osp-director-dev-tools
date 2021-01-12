@@ -14,6 +14,7 @@
     file:
       path: "{{ item }}"
       state: directory
+      mode: '0755'
     with_items:
     - "{{ ooo_yaml_dir }}"
     - "{{ ooo_script_dir }}"
@@ -22,6 +23,7 @@
     template:
       src: "osp/tripleo_deploy/{{ item }}.j2"
       dest: "{{ ooo_yaml_dir }}/{{ item }}"
+      mode: '0644'
     vars:
       - nfs_server: '192.168.25.1'
     with_items:
@@ -34,6 +36,7 @@
     copy:
       src: "{{ item }}"
       dest: "{{ ooo_yaml_dir }}/"
+      mode: '0644'
     with_fileglob:
     - "osp/tripleo_deploy/*.yaml"
 
@@ -41,10 +44,9 @@
     copy:
       src: osp/tripleo-deploy.sh
       dest: "{{ ooo_script_dir }}/tripleo-deploy.sh"
+      mode: '0744'
 
   - name: create tripleo-deploy-config ConfigMap
-    become: true
-    become_user: ocp
     shell: |
       if oc get cm -n openstack tripleo-deploy-config; then
         oc delete cm -n openstack tripleo-deploy-config
@@ -83,6 +85,7 @@
       path: /etc/exports.d/glance.exports
       line: "/home/nfs/{{ item }} *(rw,sync,no_root_squash)"
       create: yes
+      mode: '0644'
     with_items:
       - glance
       - glance-staging

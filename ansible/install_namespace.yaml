@@ -13,11 +13,13 @@
     file:
       path: "{{ ns_yaml_dir }}"
       state: directory
+      mode: '0755'
 
   - name: Render common namespace template to working dir
     template:
       src: "namespace/{{ item }}.j2"
       dest: "{{ ns_yaml_dir }}/{{ item }}"
+      mode: '0644'
     with_items:
     - "namespace.yaml"
 

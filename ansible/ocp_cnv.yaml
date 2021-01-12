@@ -16,11 +16,13 @@
     file:
       path: "{{ yaml_dir }}"
       state: directory
+      mode: '0755'
 
   - name: Copy deployment yamls to working dir
     copy:
       src: "{{ item }}"
       dest: "{{ yaml_dir }}/"
+      mode: '0644'
     loop:
     - "cnv/1"
     - "cnv/2"

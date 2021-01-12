@@ -23,6 +23,7 @@
       file:
         path: "{{ working_dir }}/osp-network"
         state: directory
+        mode: '0755'
 
     - name: copy osp network files to {{ working_dir }}/osp-network
       copy:

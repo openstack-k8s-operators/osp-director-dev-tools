@@ -19,6 +19,7 @@
     file:
       path: "{{ lookup('env', 'HOME') }}/bin"
       state: directory
+      mode: '0755'
 
   - name: Download opm
     get_url:

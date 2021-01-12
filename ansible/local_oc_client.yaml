@@ -20,6 +20,7 @@
     template:
       src: oc_env.sh.j2
       dest: "{{ working_dir }}/oc_env.sh"
+      mode: '0744'
 
   - name: Store local locations for fetch targets
     set_fact:

@@ -14,11 +14,13 @@
     file:
       path: "{{ yaml_dir }}"
       state: directory
+      mode: "0755"
 
   - name: render all osp-director-operator templates
     template:
       src:  "osp-director-operator/{{ item }}.j2"
       dest: "{{ yaml_dir }}/{{ item }}"
+      mode: "0644"
     with_items:
     - catalogsource.yaml
     - operatorgroup.yaml

@@ -56,7 +56,7 @@
         oc create configmap tempest-config --from-file {{ base_path }}/container_tempest_cfg
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-        KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+        KUBECONFIG: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: create tempest-bin ConfigMap
       become: true
@@ -68,7 +68,7 @@
         oc create configmap tempest-bin --from-file {{ base_path }}/container_tempest_bin
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-        KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+        KUBECONFIG: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: create tempest pod
       become: true
@@ -80,7 +80,7 @@
         oc apply -f {{ base_path }}/tempest-pod.yaml
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-        KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+        KUBECONFIG: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
     - name: wait for tempest pod in ready state
       become: true
@@ -89,7 +89,7 @@
         oc wait pod tempest --for condition=Ready --timeout="{{ tempest_timeout }}s"
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-        KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+        KUBECONFIG: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
       register: tempest_run
       ignore_errors: true
 
@@ -100,7 +100,7 @@
         oc logs tempest -c tempest-run
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-        KUBECONFIG: "{{base_path}}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+        KUBECONFIG: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
       register: tempest_result
 
     - name:
