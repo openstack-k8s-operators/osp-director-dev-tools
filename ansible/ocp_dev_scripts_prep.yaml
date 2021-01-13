@@ -4,24 +4,24 @@
   become: true
 
   tasks:
-  - name: create ocp group
-    group:
-      name: ocp
-      state: present
+    - name: create ocp group
+      group:
+        name: ocp
+        state: present
 
-  - name: Create user to run metal3 installer dev scripts
-    user:
-      name: ocp
-      comment: ocp user
-      shell: /bin/bash
-      group: ocp
-      groups: wheel
+    - name: Create user to run metal3 installer dev scripts
+      user:
+        name: ocp
+        comment: ocp user
+        shell: /bin/bash
+        group: ocp
+        groups: wheel
 
-  - name: make sure /home/ocp is world readable
-    file:
-      path: /home/ocp
-      state: directory
-      mode: '0755'
+    - name: make sure /home/ocp is world readable
+      file:
+        path: /home/ocp
+        state: directory
+        mode: '0755'
 
 - hosts: convergence_base
   gather_facts: false
@@ -29,182 +29,101 @@
   become_user: ocp
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+    - name: Include variables
+      include_vars: vars/default.yaml
 
-  - name: Clone the dev-scripts repo
-    git:
-      repo: "{{ dev_scripts_repo | default('https://github.com/openshift-metal3/dev-scripts.git', true) }}"
-      dest: "{{ base_path }}/dev-scripts"
-      version: "{{ dev_scripts_branch | default('HEAD', true) }}"
-
-  - name: Copy the config_example.sh to config_$USER.sh
-    copy:
-      src: "{{ base_path }}/dev-scripts/config_example.sh"
-      dest: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      mode: 0755
-      remote_src: yes
-
-  - name: set OCP version to use
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export OPENSHIFT_VERSION=.*'
-      line: "export OPENSHIFT_VERSION={{ ocp_version }}"
-
-  - name: set OCP release image to use
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export OPENSHIFT_RELEASE_IMAGE=.*'
-      line: "export OPENSHIFT_RELEASE_IMAGE={{ ocp_release_image }}"
-
-  - name: set OCP release type to use
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export OPENSHIFT_RELEASE_TYPE=.*'
-      line: "export OPENSHIFT_RELEASE_TYPE={{ ocp_release_type }}"
-
-  - name: set WORKING_DIR in {{ base_path }}/dev-scripts/config_$USER.sh
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export WORKING_DIR='
-      line: export WORKING_DIR='{{ base_path }}'
-
-  - name: Copy pull-secret file
-    when: secrets_repo is undefined
-    block:
-    - name: Set secrets repo path
-      set_fact:
-        secrets_repo_path: "{{ base_path }}"
-
-    - name: Copy pull-secret
-      copy:
-        dest: "{{ base_path }}/pull-secret"
-        src: files/pull-secret
-        mode: "0644"
-    rescue:
-    - name: Fail when pull-secrets is not found
-      fail:
-        msg: |
-          files/pull-secret is not present. You must obtain it from
-          https://cloud.redhat.com/openshift/install/pull-secret and copy it
-          there manually.
-
-  - name: Verify ci_token variable is present
-    fail:
-      msg: ci_token is not set in your vars or as environment variable. You must obtain it from https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ (by clicking the upper right drop-down and selecting "Copy Login Command").
-    when: (ci_token is undefined or (ci_token|string|length == 0)) and (lookup('env','CI_TOKEN')|length == 0)
-
-  - name: use secrets_repo
-    when: secrets_repo is defined
-    block:
-    - name: Set secrets_repo path
-      set_fact:
-        secrets_repo_path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
-    - name: create base dir for secrets_repo repo
-      file:
-        path: "{{ secrets_repo_path }}"
-        state: directory
-        mode: "0755"
-    - name: Clone the repo specified in secrets_repo
+    - name: Clone the dev-scripts repo
       git:
-        repo: "{{ secrets_repo }}"
-        dest: "{{ secrets_repo_path }}"
-        version: "{{ secrets_branch | default('HEAD', true) }}"
+        repo: "{{ dev_scripts_repo | default('https://github.com/openshift-metal3/dev-scripts.git', true) }}"
+        dest: "{{ base_path }}/dev-scripts"
+        version: "{{ dev_scripts_branch | default('HEAD', true) }}"
 
-  - name: set PERSONAL_PULL_SECRET in {{ base_path }}/dev-scripts/config_$USER.sh
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export PERSONAL_PULL_SECRET='
-      line: export PERSONAL_PULL_SECRET="{{ secrets_repo_path }}/pull-secret"
+    - name: Copy the config_example.sh to config_$USER.sh
+      copy:
+        src: "{{ base_path }}/dev-scripts/config_example.sh"
+        dest: "{{ base_path }}/dev-scripts/config_$USER.sh"
+        mode: 0755
+        remote_src: yes
 
-  - name: set CI_TOKEN from ansible vars in {{ base_path }}/dev-scripts/config_$USER.sh
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export CI_TOKEN='
-      line: "export CI_TOKEN={{ ci_token }}"
-    when: lookup('env','CI_TOKEN')|length == 0
+    - name: Copy pull-secret file
+      when: secrets_repo is undefined
+      block:
+      - name: Set secrets repo path
+        set_fact:
+          secrets_repo_path: "{{ base_path }}"
 
-  - name: set CI_TOKEN from shell vars in {{ base_path }}/dev-scripts/config_$USER.sh
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export CI_TOKEN='
-      line: "export CI_TOKEN={{ lookup('env','CI_TOKEN') }}"
-    when: lookup('env','CI_TOKEN')|length != 0
+      - name: Copy pull-secret
+        copy:
+          dest: "{{ base_path }}/pull-secret"
+          src: files/pull-secret
+          mode: "0644"
+      rescue:
+      - name: Fail when pull-secrets is not found
+        fail:
+          msg: |
+            files/pull-secret is not present. You must obtain it from
+            https://cloud.redhat.com/openshift/install/pull-secret and copy it
+            there manually.
 
-  - name: set IP_STACK in {{ base_path }}/dev-scripts/config_$USER.sh
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export IP_STACK='
-      line: export IP_STACK='{{ ocp_ip_stack }}'
+    - name: Verify ci_token variable is present
+      fail:
+        msg: ci_token is not set in your vars or as environment variable. You must obtain it from https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ (by clicking the upper right drop-down and selecting "Copy Login Command").
+      when: (ci_token is undefined or (ci_token|string|length == 0)) and (lookup('env','CI_TOKEN')|length == 0)
 
-  - name: set CLUSTER_NAME in {{ base_path }}/dev-scripts/config_$USER.sh
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export CLUSTER_NAME='
-      line: export CLUSTER_NAME='{{ ocp_cluster_name }}'
+    - name: use secrets_repo
+      when: secrets_repo is defined
+      block:
+      - name: Set secrets_repo path
+        set_fact:
+          secrets_repo_path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
 
-  - name: set OCP number of workers
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export NUM_WORKERS=.*'
-      line: "export NUM_WORKERS={{ ocp_num_workers }}"
+      - name: create base dir for secrets_repo repo
+        file:
+          path: "{{ secrets_repo_path }}"
+          state: directory
+          mode: "0755"
 
-  - name: set OCP number extra workers
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export NUM_EXTRA_WORKERS=.*'
-      line: "export NUM_EXTRA_WORKERS={{ ocp_num_extra_workers }}"
+      - name: Clone the repo specified in secrets_repo
+        git:
+          repo: "{{ secrets_repo }}"
+          dest: "{{ secrets_repo_path }}"
+          version: "{{ secrets_branch | default('HEAD', true) }}"
 
-  - name: set OCP extra workers online status to false
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export EXTRA_WORKERS_ONLINE_STATUS=.*'
-      line: "export EXTRA_WORKERS_ONLINE_STATUS={{ ocp_extra_workers_online_status }}"
+    - name: Set dev-scripts config values
+      lineinfile:
+        path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+        regexp: '^export {{ item.Item }}'
+        line: 'export {{ item.Value }}'
+      with_items:
+        - { Item: 'CLUSTER_NAME=', Value: 'CLUSTER_NAME={{ ocp_cluster_name }}' }
+        - { Item: 'EXTRA_WORKERS_ONLINE_STATUS=.*', Value: 'EXTRA_WORKERS_ONLINE_STATUS={{ ocp_extra_workers_online_status }}' }
+        - { Item: 'IP_STACK=', Value: 'IP_STACK={{ ocp_ip_stack }}' }
+        - { Item: 'MASTER_DISK=.*', Value: 'MASTER_DISK={{ ocp_master_disk }}' }
+        - { Item: 'MASTER_MEMORY=.*', Value: 'MASTER_MEMORY={{ ocp_master_memory }}' }
+        - { Item: 'MASTER_VCPU=.*', Value: 'MASTER_VCPU={{ ocp_master_vcpu }}' }
+        - { Item: 'NETWORK_TYPE=.*', Value: 'NETWORK_TYPE={{ ocp_network_type }}' }
+        - { Item: 'NUM_EXTRA_WORKERS=.*', Value: 'NUM_EXTRA_WORKERS={{ ocp_num_extra_workers }}' }
+        - { Item: 'NUM_MASTERS=.*', Value: 'NUM_MASTERS={{ ocp_num_masters | default(3, true) }}' }
+        - { Item: 'NUM_WORKERS=.*', Value: 'NUM_WORKERS={{ ocp_num_workers }}' }
+        - { Item: 'OPENSHIFT_RELEASE_IMAGE=.*', Value: 'OPENSHIFT_RELEASE_IMAGE={{ ocp_release_image }}' }
+        - { Item: 'OPENSHIFT_RELEASE_TYPE=.*', Value: 'OPENSHIFT_RELEASE_TYPE={{ ocp_release_type }}' }
+        - { Item: 'OPENSHIFT_VERSION=.*', Value: 'OPENSHIFT_VERSION={{ ocp_version }}' }
+        - { Item: 'PERSONAL_PULL_SECRET=', Value: 'PERSONAL_PULL_SECRET={{ secrets_repo_path }}/pull-secret' }
+        - { Item: 'WORKER_DISK=.*', Value: 'WORKER_DISK={{ ocp_worker_disk }}' }
+        - { Item: 'WORKER_MEMORY=.*', Value: 'WORKER_MEMORY={{ ocp_worker_memory }}' }
+        - { Item: 'WORKER_VCPU=.*', Value: 'WORKER_VCPU={{ ocp_worker_vcpu }}' }
+        - { Item: 'WORKING_DIR=', Value: 'WORKING_DIR={{ base_path }}' }
 
-  - name: set OCP number of masters
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export NUM_MASTERS=.*'
-      line: "export NUM_MASTERS={{ ocp_num_masters | default('3', true) }}"
+    - name: set CI_TOKEN from ansible vars in {{ base_path }}/dev-scripts/config_$USER.sh
+      lineinfile:
+        path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+        regexp: '^export CI_TOKEN='
+        line: "export CI_TOKEN={{ ci_token }}"
+      when: lookup('env','CI_TOKEN')|length == 0
 
-  - name: set OCP master memory
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export MASTER_MEMORY=.*'
-      line: "export MASTER_MEMORY={{ ocp_master_memory }}"
-
-  - name: set OCP network type
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export NETWORK_TYPE=.*'
-      line: "export NETWORK_TYPE={{ ocp_network_type }}"
-
-  - name: set OCP master disk
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export MASTER_DISK=.*'
-      line: "export MASTER_DISK={{ ocp_master_disk }}"
-
-  - name: set OCP master vcpus
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export MASTER_VCPU=.*'
-      line: "export MASTER_VCPU={{ ocp_master_vcpu }}"
-
-  - name: set OCP worker memory
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export WORKER_MEMORY=.*'
-      line: "export WORKER_MEMORY={{ ocp_worker_memory }}"
-
-  - name: set OCP worker disk
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export WORKER_DISK=.*'
-      line: "export WORKER_DISK={{ ocp_worker_disk }}"
-
-  - name: set OCP worker vcpus
-    lineinfile:
-      path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-      regexp: '^export WORKER_VCPU=.*'
-      line: "export WORKER_VCPU={{ ocp_worker_vcpu }}"
+    - name: set CI_TOKEN from shell vars in {{ base_path }}/dev-scripts/config_$USER.sh
+      lineinfile:
+        path: "{{ base_path }}/dev-scripts/config_$USER.sh"
+        regexp: '^export CI_TOKEN='
+        line: "export CI_TOKEN={{ lookup('env','CI_TOKEN') }}"
+      when: lookup('env','CI_TOKEN')|length != 0
