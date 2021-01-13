@@ -6,13 +6,11 @@ pipeline {
                 branch 'PR-*'
             }
 
-            stage('osp-director-dev-tools-pr') {
-                steps {
-                    build job: 'osp-director-dev-tools-pr',
-                              parameters: [
-                                  string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
-                              ]
-                }
+            steps {
+                build job: 'osp-director-dev-tools-pr',
+                          parameters: [
+                              string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
+                          ]
             }
         }
 
