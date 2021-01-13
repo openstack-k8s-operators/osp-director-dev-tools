@@ -19,31 +19,37 @@
       mode: '0755'
 
   - name: register dev-tools prepared extra_hosts
+    become: true
+    become_user: ocp
     shell: |
       set -e
-      oc apply -f /home/ocp/dev-scripts/ocp/ostest/extra_host_manifests.yaml
-    environment: &oc_env
+      oc apply -f "{{ base_path }}/dev-scripts/ocp/ostest/extra_host_manifests.yaml"
+    environment:
       PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      KUBECONFIG: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
 
   # until the provision server can check if the provided image is compressed/not compress we'd need to gzip it
   - name: Check if {{ osp_controller_base_image_url | basename }}.gz already exist
+    become: true
+    become_user: ocp
     stat:
-      path: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}.gz"
+      path: "{{ base_path }}/ironic/html/images/{{ osp_controller_base_image_url | basename }}.gz"
     register: stat_result
 
   - name: Get RHEL guest base image
     when: not stat_result.stat.exists
+    become: true
+    become_user: ocp
     block:
     - name: download {{ osp_controller_base_image_url }}
       get_url:
         url: "{{ osp_controller_base_image_url }}"
-        dest: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
+        dest: "{{ base_path }}/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
         mode: '0644'
 
     - name: compress {{ osp_controller_base_image_url | basename }}
       archive:
-        path: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
+        path: "{{ base_path }}/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
         remove: True
         mode: '0644'
 
@@ -60,4 +66,5 @@
       set -e
       oc apply -n openstack -f "{{ compute_yaml_dir }}"
     environment:
-      <<: *oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
