@@ -8,7 +8,7 @@
   - name: Set directory for the tripleo deployment files
     set_fact:
       ooo_yaml_dir: "{{ working_yamls_dir }}/tripleo_deploy"
-      ooo_script_dir: "{{ working_yamls_dir }}/tripleo_deploy_bin"
+      ooo_net_config_dir: "{{ working_yamls_dir }}/net_config"
 
   - name: Create yaml dir
     file:
@@ -17,7 +17,7 @@
       mode: '0755'
     with_items:
     - "{{ ooo_yaml_dir }}"
-    - "{{ ooo_script_dir }}"
+    - "{{ ooo_net_config_dir }}"
 
   - name: render templates to yaml dir
     template:
@@ -30,7 +30,6 @@
     - custom.yaml
     - glance-backend-nfs.yaml
     - containers-prepare-parameter.yaml
-    - role-counts.yaml
 
   - name: copy ooo files to yaml dir
     copy:
@@ -40,28 +39,24 @@
     with_fileglob:
     - "osp/tripleo_deploy/*.yaml"
 
-  - name: copy tripleo-deploy.sh to ooo_script_dir
-    copy:
-      src: osp/tripleo-deploy.sh
-      dest: "{{ ooo_script_dir }}/tripleo-deploy.sh"
-      mode: '0744'
-
-  - name: create tripleo-deploy-config ConfigMap
+  - name: create tripleo-deploy-config-custom ConfigMap
     shell: |
-      if oc get cm -n openstack tripleo-deploy-config; then
-        oc delete cm -n openstack tripleo-deploy-config
-      fi
-      oc create cm -n openstack tripleo-deploy-config --from-file={{ ooo_yaml_dir }}/
+      oc create configmap -n openstack tripleo-deploy-config-custom --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: create tripleo-deploy.sh ConfigMap
+  - name: copy net-config files to ooo_net_config_dir
+    copy:
+      src: "{{ item }}"
+      dest: "{{ ooo_net_config_dir }}/"
+      mode: '0644'
+    with_fileglob:
+    - "osp/net_config/*.yaml"
+
+  - name: create tripleo-net-config ConfigMap
     shell: |
-      if oc get cm -n openstack tripleo-deploy-sh; then
-        oc delete cm -n openstack tripleo-deploy-sh
-      fi
-      oc create cm -n openstack tripleo-deploy-sh --from-file {{ ooo_script_dir }}/tripleo-deploy.sh
+      oc create configmap -n openstack tripleo-net-config --from-file={{ ooo_net_config_dir }}/ --dry-run -o yaml | oc apply -f -
     environment:
       <<: *oc_env
 

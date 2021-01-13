@@ -7,7 +7,7 @@
 
 - name: Get working directory absolute path
   set_fact:
-    working_dir: "{{ lookup('env','PWD') }}/{{ working_directory.path }}"
+    working_dir: "{{ working_directory.path }}"
 
 - name: Register working directory and kubeconfig paths
   set_fact:
