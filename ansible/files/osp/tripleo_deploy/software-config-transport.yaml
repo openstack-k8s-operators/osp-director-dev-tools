@@ -1,2 +1,0 @@
-parameter_defaults:
-  SoftwareConfigTransport: POLL_SERVER_HEAT

@@ -1,6 +1,6 @@
 resource_registry:
-  OS::TripleO::Controller::Net::SoftwareConfig: /config/net-config-static-bridge.yaml
-  OS::TripleO::Compute::Net::SoftwareConfig: /config/net-config-static-bridge-compute.yaml
+  OS::TripleO::Controller::Net::SoftwareConfig: /root/net-config/net-config-static-bridge.yaml
+  OS::TripleO::Compute::Net::SoftwareConfig: /root/net-config/net-config-static-bridge-compute.yaml
 
 parameter_defaults:
   EC2MetadataIp: 192.168.25.1

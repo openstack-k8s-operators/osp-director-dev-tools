@@ -38,25 +38,6 @@
             rhel_subscription_activation_key: <activation key>
             rhel_subscription_org_id: "xxxxxxx"
 
-    - name: Enable RH CSB repository for CA cert
-      copy:
-        dest: /etc/yum.repos.d/rhel8-csb.repo
-        content: |
-          [rhel8-csb]
-          name=RHEL8 CSB packages
-          baseurl=http://hdn.corp.redhat.com/rhel8-csb
-          enabled=1
-          gpgcheck=0
-          priority=2
-          includepkgs=redhat-internal-cert-install
-        mode: '0644'
-
-    - name: Install helpful packages
-      package:
-        state: installed
-        name:
-          - redhat-internal-cert-install
-
     - name: use secrets_repo
       when: secrets_repo is defined
       block:
@@ -72,6 +53,8 @@
           repo: "{{ secrets_repo }}"
           dest: "{{ secrets_repo_path }}"
           version: "{{ secrets_branch | default('HEAD', true) }}"
+        environment:
+          GIT_SSL_NO_VERIFY: "true"
       - name: Include rhel-subscription info
         include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
       rescue:
