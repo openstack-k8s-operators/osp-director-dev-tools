@@ -14,5 +14,4 @@
     with_items:
       - "oc delete -n openstack baremetalset compute"
       - "oc delete -n openstack controlplane overcloud"
-      - "oc delete -n openstack overcloudipset compute"
       - "oc delete -n openstack overcloudnet ctlplane"
