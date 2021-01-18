@@ -5,6 +5,7 @@ metadata:
   namespace: {{ namespace }}
 spec:
   openStackClientImageURL: quay.io/openstack-k8s-operators/tripleo-deploy
+  passwordSecret: userpassword
   controller:
     networks:
       - ctlplane

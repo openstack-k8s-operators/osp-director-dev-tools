@@ -25,6 +25,7 @@
       mode: '0644'
     with_items:
     - "osp-director_controlplane.yaml"
+    - "password-secret.yaml"
 
   - name: Start ctlplane
     shell: |
