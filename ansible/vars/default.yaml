@@ -104,3 +104,16 @@ osp_container_tag: 16.2_20210215.1
 
 # number of OCP worker nodes should be OSP compute hosts
 osp_compute_count: 1
+
+# Local Storage Operator specific (only required if using local-storage operator)
+local_storage_domains:
+  - ostest_worker_0
+  - ostest_worker_1
+local_storage_workers:
+  - worker-0
+  - worker-1
+local_storage_data_dir: /home/local_storage/data
+local_storage_disks:
+  - vda
+  - vdb
+local_storage_disk_size: 50
