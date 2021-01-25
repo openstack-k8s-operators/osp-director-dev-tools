@@ -88,10 +88,12 @@ osp_tests_run: hosts local-defaults.yaml
 	-i hosts -e @local-defaults.yaml \
 	osp_tempest_ocp.yaml
 
+# FIXME: Remove install_webhooks.yaml once OLM properly deploys webhooks
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts -e @local-defaults.yaml \
 	install_namespace.yaml \
+	install_webhooks.yaml \
 	olm.yaml
 
 olm_cleanup: hosts local-defaults.yaml

@@ -1,0 +1,46 @@
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: osp-director-operator-validation-webhooks
+  namespace: {{ namespace }}
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: osp-director-operator-webhook-service
+      namespace: {{ namespace }}
+      path: /validate-osp-director-openstack-org-v1beta1-baremetalset
+  failurePolicy: Fail
+  name: vbaremetalset.kb.io
+  rules:
+  - apiGroups:
+    - osp-director.openstack.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - baremetalsets
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: osp-director-operator-webhook-service
+      namespace: {{ namespace }}
+      path: /validate-osp-director-openstack-org-v1beta1-vmset
+  failurePolicy: Fail
+  name: vvmset.kb.io
+  rules:
+  - apiGroups:
+    - osp-director.openstack.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - vmsets

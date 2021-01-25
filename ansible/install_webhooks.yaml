@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set directory for webhook yaml files
+    set_fact:
+      webhooks_yaml_dir: "{{ working_yamls_dir }}/webhooks"
+
+  - name: Create webhooks yaml dir
+    file:
+      path: "{{ webhooks_yaml_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Render common webhook templates to working dir
+    template:
+      src: "osp-director-operator/webhooks/{{ item }}.j2"
+      dest: "{{ webhooks_yaml_dir }}/{{ item }}"
+      mode: '0644'
+    with_items:
+    - "service.yaml"
+    - "validation.yaml"
+
+  - name: Deploy webhooks
+    shell: oc apply -f "{{ webhooks_yaml_dir }}"
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
