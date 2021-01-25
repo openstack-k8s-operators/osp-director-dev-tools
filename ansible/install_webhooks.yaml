@@ -25,7 +25,7 @@
     - "validation.yaml"
 
   - name: Deploy webhooks
-    shell: oc apply -f "{{ webhooks_yaml_dir }}"
+    command: oc apply -f "{{ webhooks_yaml_dir }}"
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
