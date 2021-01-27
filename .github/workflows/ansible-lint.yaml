@@ -5,11 +5,12 @@ on: [push, pull_request]
 
 jobs:
   test:
+    name: Ansible Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Lint Ansible Playbook
+      - name: Lint Ansible Playbooks
         uses: ansible/ansible-lint-action@master
         with:
           targets: |
