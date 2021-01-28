@@ -26,18 +26,6 @@
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: Check if {{ osp_controller_base_image_url | basename }} already exist
-    stat:
-      path: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
-    register: stat_result
-
-  - name: Get RHEL guest base image
-    when: not stat_result.stat.exists
-    get_url:
-      url: "{{ osp_controller_base_image_url }}"
-      dest: "/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
-      mode: '0644'
-
   - name: Render templates to yaml dir
     template:
       src: "osp/compute/{{ item }}.j2"
@@ -46,7 +34,7 @@
     with_items:
     - "baremetalset.yaml"
 
-  - name: Start baremtalset
+  - name: Start baremetalset
     shell: |
       set -e
       oc apply -n openstack -f "{{ compute_yaml_dir }}"
