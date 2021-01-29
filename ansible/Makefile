@@ -49,6 +49,7 @@ cnv_install: hosts local-defaults.yaml
 	ocp_cnv.yaml
 
 openstack:
+	$(MAKE) datavolume
 	$(MAKE) networks
 	$(MAKE) ctlplane
 	$(MAKE) computes
@@ -77,6 +78,11 @@ computes: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	install_computes.yaml
+
+datavolume: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	datavolume.yaml
 
 osp_content: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
