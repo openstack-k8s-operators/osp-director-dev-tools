@@ -21,7 +21,7 @@
   - name: register dev-tools prepared extra_hosts
     shell: |
       set -e
-      oc apply -f /home/ocp/dev-scripts/ocp/ostest/extra_host_manifests.yaml
+      oc apply -f {{ base_path }}/dev-scripts/ocp/ostest/extra_host_manifests.yaml
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"

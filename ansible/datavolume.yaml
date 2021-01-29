@@ -11,11 +11,15 @@
   # the provision server (baremetalsets). This avoids downloading
   # the same image twice.
   - name: Check if {{ osp_controller_base_image_url | basename }} already exist
+    become: true
+    become_user: ocp
     stat:
       path: "{{ base_path }}/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
     register: stat_result
 
   - name: Get RHEL guest base image
+    become: true
+    become_user: ocp
     when: not stat_result.stat.exists
     get_url:
       url: "{{ osp_controller_base_image_url }}"
@@ -33,7 +37,7 @@
 
   - name: Deploy the datavolume
     shell: |
-      virtctl image-upload dv openstack-base-img -n {{ namespace }} --size={{ osp_controller_disk_size }}G --image-path=/home/ocp/ironic/html/images/{{ osp_controller_base_image_url | basename }}
+      virtctl image-upload dv openstack-base-img -n {{ namespace }} --size={{ osp_controller_disk_size }}G --image-path={{ base_path }}/ironic/html/images/{{ osp_controller_base_image_url | basename }}
     environment:
       <<: *oc_env
     when: datavolume_switch.rc == 1
