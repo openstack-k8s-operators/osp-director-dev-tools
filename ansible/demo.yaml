@@ -6,11 +6,6 @@
 
   tasks:
 
-  #- name: install python3-passlib if needed
-  #  package:
-  #    name: python3-passlib
-  #    state: present
-
   - name: create demo directory
     file:
       path: "{{ working_dir }}/demo"
@@ -26,12 +21,11 @@
       - files/demo/*
 
   - name: create htpasswd file
-    htpasswd:
-      create: yes
-      state: present
-      name: demo
-      password: demo
+    lineinfile:
       path: "{{ working_dir }}/demo/htpasswd"
+      line: 'demo:$apr1$SeAzqzN/$UPXamQYHPy/mlyIxoyQ9b0' #password is demo
+      state: present
+      create: yes
       mode: 0644
 
   - name: create secret for htpasswd file
@@ -40,7 +34,7 @@
         oc delete secret htpass-secret -n openshift-config
       fi
       oc create secret generic htpass-secret --from-file=htpasswd={{ working_dir }}/demo/htpasswd -n openshift-config
-    environment:
+    environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
@@ -48,8 +42,7 @@
     shell: >
       oc apply -f {{ working_dir }}/demo/htpasswd-identity-provider.yaml
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      <<: *oc_env
 
   - name: create clusterrolebinding for cluster-admin to demo user
     shell: |
@@ -57,26 +50,22 @@
         oc create clusterrolebinding demo-crb --clusterrole cluster-admin --user demo
       fi
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      <<: *oc_env
 
   - name: delete OLM subscription
     shell: |
       oc delete --ignore-not-found -n openstack subscription osp-director-operator-subscription
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      <<: *oc_env
 
   - name: delete OLM operator group
     shell: |
       oc delete --ignore-not-found -n openstack operatorgroup osp-director-operator-group
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      <<: *oc_env
 
   - name: delete OLM csv
     shell: |
       oc delete --ignore-not-found -n openstack csv osp-director-operator.v{{ csv_version }}
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      <<: *oc_env
