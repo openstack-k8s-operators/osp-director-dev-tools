@@ -15,6 +15,7 @@
     file:
       path: "{{ working_dir }}/demo"
       state: directory
+      mode: 0755
 
   - name: copy demo files to {{ working_dir }}/demo
     copy:
@@ -31,6 +32,7 @@
       name: demo
       password: demo
       path: "{{ working_dir }}/demo/htpasswd"
+      mode: 0644
 
   - name: create secret for htpasswd file
     shell: |
