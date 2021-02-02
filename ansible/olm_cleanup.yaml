@@ -5,14 +5,27 @@
   - oc_local
 
   tasks:
+
+  #NOTE: operatorgroup is named differently depending if it is created via
+  # the webUI so we register the name here and delete it below by name
+  - name: set operatorgroup name
+    ignore_errors: true
+    shell: >
+      oc get operatorgroup -n {{ namespace }} -o name
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    register: operatorgroup_name
+
+
   - name: olm cleanup
     command: "{{ item }}"
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      <<: *oc_env
     ignore_errors: true
     with_items:
       - "oc delete -n {{ namespace }} csv osp-director-operator.v{{ csv_version }}"
-      - "oc delete -n {{ namespace }} subscription osp-director-operator-subscription"
+      - "oc delete -n {{ namespace }} subscription osp-director-operator"
       - "oc delete -n {{ namespace }} catalogsource osp-director-operator-index"
-      - "oc delete -n {{ namespace }} operatorgroup osp-director-operator-group"
+      - "oc delete -n {{ namespace }} {{ operatorgroup_name.stdout }}"
+
