@@ -54,13 +54,13 @@
 
   - name: delete OLM subscription
     shell: |
-      oc delete --ignore-not-found -n openstack subscription osp-director-operator-subscription
+      oc delete --ignore-not-found -n openstack subscription osp-director-operator
     environment:
       <<: *oc_env
 
   - name: delete OLM operator group
     shell: |
-      oc delete --ignore-not-found -n openstack operatorgroup osp-director-operator-group
+      oc delete --ignore-not-found -n openstack operatorgroup osp-director-operator
     environment:
       <<: *oc_env
 
