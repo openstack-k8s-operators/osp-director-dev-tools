@@ -1,0 +1,71 @@
+---
+- hosts: localhost
+  vars_files: "vars/default.yaml"
+  roles:
+  - oc_local
+
+  tasks:
+
+  - name: create demo directory
+    file:
+      path: "{{ working_dir }}/demo"
+      state: directory
+      mode: 0755
+
+  - name: copy demo files to {{ working_dir }}/demo
+    copy:
+      src:  "{{ item }}"
+      dest: "{{ working_dir }}/demo/"
+      mode: 0644
+    with_fileglob:
+      - files/demo/*
+
+  - name: create htpasswd file
+    lineinfile:
+      path: "{{ working_dir }}/demo/htpasswd"
+      line: 'demo:$apr1$SeAzqzN/$UPXamQYHPy/mlyIxoyQ9b0' #password is demo
+      state: present
+      create: yes
+      mode: 0644
+
+  - name: create secret for htpasswd file
+    shell: |
+      if oc get secret htpass-secret -n openshift-config; then
+        oc delete secret htpass-secret -n openshift-config
+      fi
+      oc create secret generic htpass-secret --from-file=htpasswd={{ working_dir }}/demo/htpasswd -n openshift-config
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: create htpasswd identity provider
+    shell: >
+      oc apply -f {{ working_dir }}/demo/htpasswd-identity-provider.yaml
+    environment:
+      <<: *oc_env
+
+  - name: create clusterrolebinding for cluster-admin to demo user
+    shell: |
+      if ! oc get clusterrolebinding demo-crb; then
+        oc create clusterrolebinding demo-crb --clusterrole cluster-admin --user demo
+      fi
+    environment:
+      <<: *oc_env
+
+  - name: delete OLM subscription
+    shell: |
+      oc delete --ignore-not-found -n openstack subscription osp-director-operator-subscription
+    environment:
+      <<: *oc_env
+
+  - name: delete OLM operator group
+    shell: |
+      oc delete --ignore-not-found -n openstack operatorgroup osp-director-operator-group
+    environment:
+      <<: *oc_env
+
+  - name: delete OLM csv
+    shell: |
+      oc delete --ignore-not-found -n openstack csv osp-director-operator.v{{ csv_version }}
+    environment:
+      <<: *oc_env
