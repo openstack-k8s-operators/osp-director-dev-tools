@@ -15,4 +15,4 @@ jobs:
         with:
           targets: |
             **/*.yaml
-          args: "-x 204,301,306,701 --exclude ansible/roles/prepare_rhos_release"
+          args: "--exclude ansible/roles/prepare_rhos_release"

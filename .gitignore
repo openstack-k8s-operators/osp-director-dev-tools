@@ -1,0 +1,6 @@
+# Python compiled
+__pycache__/
+*.py[cod]
+
+# Env for testing
+.venv-ansible-lint/
