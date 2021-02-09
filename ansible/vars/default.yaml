@@ -5,7 +5,7 @@ base_path: /home/ocp
 
 # To set a specific release to install.
 ocp_version: 4.6
-ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.6.13-x86_64
+ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.6.15-x86_64
 ocp_release_type: ga
 
 # private repo to read required secret files from
