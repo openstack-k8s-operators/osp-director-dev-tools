@@ -97,7 +97,7 @@ osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/package
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp6s0
-osp_container_tag: 16.2_20210112.4
+osp_container_tag: 16.2_20210129.1
 
 # number of OCP worker nodes should be OSP compute hosts
 osp_compute_count: 1
