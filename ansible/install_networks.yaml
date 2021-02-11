@@ -31,14 +31,15 @@
     with_items:
     - "01-ctlplane.yaml"
 
-  - name: do the networks already exist
+
+  - name: does the provisionserver already exist
     ignore_errors: true
     shell: >
-      oc get openstacknet ctlplane
+      oc get osnet -n openstack ctlplane -o json --ignore-not-found
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    register: openstack_net_switch
+    register: network_exist_switch
 
   - name: Start networks
     shell: |
@@ -46,4 +47,5 @@
       oc apply -n openstack -f "{{ network_yaml_dir }}"
     environment:
       <<: *oc_env
-    when: openstack_net_switch.rc == 1
+    when: network_exist_switch.stdout | length == 0
+
