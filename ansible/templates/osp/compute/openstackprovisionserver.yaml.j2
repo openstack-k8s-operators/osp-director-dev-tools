@@ -1,0 +1,8 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackProvisionServer
+metadata:
+  name: openstack
+  namespace: openstack
+spec:
+  port: 8080
+  baseImageUrl: http://172.22.0.1/images/{{ osp_controller_base_image_url | basename }}

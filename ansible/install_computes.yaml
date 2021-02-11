@@ -37,11 +37,28 @@
       dest: "{{ compute_yaml_dir }}/{{ item }}"
       mode: '0644'
     with_items:
+    - "openstackprovisionserver.yaml"
     - "openstackbaremetalset.yaml"
 
-  - name: Start openstackbaremetalset
+  - name: does the provisionserver already exist
+    ignore_errors: true
+    shell: >
+      oc get osprovserver openstack -o json --ignore-not-found
+    environment:
+      <<: *oc_env
+    register: provisionserver_switch
+
+  - name: Start provisionserver
     shell: |
       set -e
-      oc apply -n openstack -f "{{ compute_yaml_dir }}"
+      oc apply -n openstack -f "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
+    environment:
+      <<: *oc_env
+    when: provisionserver_switch.stdout | length == 0
+
+  - name: Start baremetalset
+    shell: |
+      set -e
+      oc apply -n openstack -f "{{ compute_yaml_dir }}/openstackbaremetalset.yaml"
     environment:
       <<: *oc_env
