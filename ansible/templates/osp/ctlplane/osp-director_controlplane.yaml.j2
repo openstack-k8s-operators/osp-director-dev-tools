@@ -4,7 +4,7 @@ metadata:
   name: overcloud
   namespace: {{ namespace }}
 spec:
-  openStackClientImageURL: quay.io/openstack-k8s-operators/tripleo-deploy:cloud-admin
+  openStackClientImageURL: {{ openstackclient_image }}
   passwordSecret: userpassword
   controller:
     networks:
