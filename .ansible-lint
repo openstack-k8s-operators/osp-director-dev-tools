@@ -1,4 +1,4 @@
-warn_list:
+skip_list:
   - '204'
   - '301'
   - '306'
