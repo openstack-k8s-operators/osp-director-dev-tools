@@ -24,7 +24,7 @@
       dest: "{{ ctlplane_yaml_dir }}/{{ item }}"
       mode: '0644'
     with_items:
-    - "osp-director_controlplane.yaml"
+    - "osp-director_openstackcontrolplane.yaml"
     - "password-secret.yaml"
 
   - name: Start ctlplane
