@@ -32,9 +32,9 @@
       dest: "{{ compute_yaml_dir }}/{{ item }}"
       mode: '0644'
     with_items:
-    - "baremetalset.yaml"
+    - "openstackbaremetalset.yaml"
 
-  - name: Start baremetalset
+  - name: Start openstackbaremetalset
     shell: |
       set -e
       oc apply -n openstack -f "{{ compute_yaml_dir }}"
