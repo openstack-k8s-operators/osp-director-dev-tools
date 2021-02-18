@@ -12,6 +12,11 @@
   - debug:
       msg: "yamls will be written to {{ ctlplane_yaml_dir }} locally"
 
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ ctlplane_yaml_dir }}/"
+
   - name: Create yaml dir
     file:
       path: "{{ ctlplane_yaml_dir }}"
