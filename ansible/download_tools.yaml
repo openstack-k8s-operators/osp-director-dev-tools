@@ -39,6 +39,12 @@
       dest: "{{ lookup('env', 'HOME') }}/bin/"
       remote_src: yes
 
+  - name: Download kuttl
+    get_url:
+      url: https://github.com/kudobuilder/kuttl/releases/download/v{{ kuttl_version }}/kubectl-kuttl_{{ kuttl_version }}_linux_x86_64
+      dest: "{{ lookup('env', 'HOME') }}/bin/kubectl-kuttl"
+      mode: '0755'
+
   - name: Install packages
     package:
       state: installed
