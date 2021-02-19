@@ -12,6 +12,11 @@
   - debug:
       msg: "yamls will be written to {{ ctlplane_yaml_dir }} locally"
 
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ ctlplane_yaml_dir }}/"
+
   - name: Create yaml dir
     file:
       path: "{{ ctlplane_yaml_dir }}"
@@ -24,7 +29,7 @@
       dest: "{{ ctlplane_yaml_dir }}/{{ item }}"
       mode: '0644'
     with_items:
-    - "osp-director_controlplane.yaml"
+    - "osp-director_openstackcontrolplane.yaml"
     - "password-secret.yaml"
 
   - name: Start ctlplane

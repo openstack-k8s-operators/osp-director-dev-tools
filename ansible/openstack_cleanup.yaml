@@ -12,6 +12,6 @@
       KUBECONFIG: "{{ kubeconfig }}"
     ignore_errors: true
     with_items:
-      - "oc delete -n openstack baremetalset compute"
-      - "oc delete -n openstack controlplane overcloud"
+      - "oc delete -n openstack openstackbaremetalset compute"
+      - "oc delete -n openstack openstackcontrolplane overcloud"
       - "oc delete -n openstack overcloudnet ctlplane"

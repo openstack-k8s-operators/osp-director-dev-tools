@@ -8,7 +8,7 @@
   tasks:
 
   # NOTE: we copy this to the Ironic images directory to reuse it for
-  # the provision server (baremetalsets). This avoids downloading
+  # the provision server (openstackbaremetalsets). This avoids downloading
   # the same image twice.
   - name: Check if {{ osp_controller_base_image_url | basename }} already exist
     become: true

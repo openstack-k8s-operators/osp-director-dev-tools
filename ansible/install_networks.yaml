@@ -12,6 +12,11 @@
   - debug:
       msg: "yamls will be written to {{ network_yaml_dir }} locally"
 
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ network_yaml_dir }}/"
+
   - name: Create yaml dir
     file:
       path: "{{ network_yaml_dir }}"

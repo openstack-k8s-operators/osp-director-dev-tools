@@ -12,6 +12,11 @@
   - debug:
       msg: "yamls will be written to {{ compute_yaml_dir }} locally"
 
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ compute_yaml_dir }}/"
+
   - name: Create yaml dir
     file:
       path: "{{ compute_yaml_dir }}"
@@ -32,9 +37,9 @@
       dest: "{{ compute_yaml_dir }}/{{ item }}"
       mode: '0644'
     with_items:
-    - "baremetalset.yaml"
+    - "openstackbaremetalset.yaml"
 
-  - name: Start baremetalset
+  - name: Start openstackbaremetalset
     shell: |
       set -e
       oc apply -n openstack -f "{{ compute_yaml_dir }}"
