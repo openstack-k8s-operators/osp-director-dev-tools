@@ -34,11 +34,11 @@
   - name: do the networks already exist
     ignore_errors: true
     shell: >
-      oc get overcloudnet ctlplane
+      oc get openstacknet ctlplane
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    register: overcloud_net_switch
+    register: openstack_net_switch
 
   - name: Start networks
     shell: |
@@ -46,4 +46,4 @@
       oc apply -n openstack -f "{{ network_yaml_dir }}"
     environment:
       <<: *oc_env
-    when: overcloud_net_switch.rc == 1
+    when: openstack_net_switch.rc == 1
