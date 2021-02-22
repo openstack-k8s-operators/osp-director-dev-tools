@@ -16,3 +16,7 @@ jobs:
           targets: |
             **/*.yaml
           args: "--exclude ansible/roles/prepare_rhos_release"
+          override-deps: |
+            ansible==2.10.7
+            ansible-base==2.10.5
+            ansible-lint==4.3.7
