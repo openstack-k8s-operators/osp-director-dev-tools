@@ -6,20 +6,12 @@ metadata:
 spec:
   openStackClientImageURL: {{ openstackclient_image }}
   passwordSecret: userpassword
-  controller:
-    networks:
-      - ctlplane
-    role: Controller
-    controllerCount: {{ osp_controller_count }}
-    cores: {{ osp_controller_cores }}
-    memory: {{ osp_controller_memory }}
-    diskSize: {{ osp_controller_disk_size }}
-    # FIXME: remove this once we make baseImageURL optional
-    baseImageURL: {{ osp_controller_base_image_url }}
-    baseImageVolumeName: openstack-base-img
-    storageClass: {{ osp_controller_storage_class }}
-    ospNetwork:
-      bridgeName: br-osp
+  ospNetwork:
+    bridgeName: br-osp
+    name: osp
+    nodeNetworkConfigurationPolicy:
+      nodeSelector:
+        node-role.kubernetes.io/worker: ""
       desiredState:
         interfaces:
         - bridge:
@@ -28,8 +20,19 @@ spec:
                 enabled: false
             port:
             - name: {{ osp_interface }}
-          description: Linux bridge with {{ osp_interface }} as a port
-          name: br-osp
+          description: Linux bridge with enp6s0 as a port
+          name: br-osp # must be same as bridgeName
           state: up
           type: linux-bridge
-      name: osp
+  virtualMachineRoles:
+  - role: Controller
+    roleCount: {{ osp_controller_count }}
+    networks:
+      - ctlplane
+    cores: {{ osp_controller_cores }}
+    memory: {{ osp_controller_memory }}
+    diskSize: {{ osp_controller_disk_size }}
+    # FIXME: remove this once we make baseImageURL optional
+    baseImageURL: {{ osp_controller_base_image_url }}
+    baseImageVolumeName: openstack-base-img
+    storageClass: {{ osp_controller_storage_class }}
