@@ -46,7 +46,7 @@ opm_version: v1.12.5
 sdk_version: v1.2.0
 
 # kustomize version to use (must be specific version)
-kustomize_version: v3.8.6
+kustomize_version: v4.0.1
 
 # kuttl version to use (must be specific version)
 kuttl_version: 0.9.0
