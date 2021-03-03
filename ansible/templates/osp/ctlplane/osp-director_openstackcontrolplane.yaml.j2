@@ -5,6 +5,10 @@ metadata:
   namespace: {{ namespace }}
 spec:
   openStackClientImageURL: {{ openstackclient_image }}
+  openStackClientNetworks:
+        - ctlplane
+        - external
+        - internalapi
   passwordSecret: userpassword
   virtualMachineRoles:
     controller:
@@ -12,6 +16,11 @@ spec:
       roleCount: {{ osp_controller_count }}
       networks:
         - ctlplane
+        - internalapi
+        - external
+        - tenant
+        - storage
+        - storagemgmt
       cores: {{ osp_controller_cores }}
       memory: {{ osp_controller_memory }}
       diskSize: {{ osp_controller_disk_size }}

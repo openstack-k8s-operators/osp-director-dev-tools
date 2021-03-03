@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# http://libvirt.org/hooks.html
+# this script will be called like this:
+# /etc/libvirt/hooks/network network_name started begin -
+
+NETWORK=$1
+ACTION=$2
+
+if [ "$NETWORK" = "ospnetwork" ]; then
+  if [ "$ACTION" = "started" ]; then
+    logger -p local3.info "qemu hook script - create OSP external network gateway interface 10.0.0.1"
+    ip link add link ospnetwork name ospnetwork.10 type vlan id 10
+    ip addr add 10.0.0.1/24 dev ospnetwork.10
+    if [ $? -eq 0 ]; then
+      logger -p local3.info "qemu hook script - external vlan interface ospnetwork.10 created successfully"
+    else
+      echo "failed to create vlan interface ospnetwork.10" >&2
+      exit 1
+    fi
+
+    ip link set ospnetwork.10 up
+    ping -c 1 -w 5 10.0.0.1 >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      logger -p local3.info "qemu hook script - external vlan interface ip 10.0.0.1 reachable"
+    else
+      echo "external vlan interface ip 10.0.0.1 NOT reachable" >&2
+      exit 1
+    fi
+
+    firewall-cmd --zone=libvirt --change-interface=ospnetwork.10
+    if [ $? -eq 0 ]; then
+      logger -p local3.info "qemu hook script - external vlan interface ospnetwork.10 successfully added to libvirt firewalld zone"
+    else
+      echo "failed to add ospnetwork.10 to libvirt firewalld zone" >&2
+      exit 1
+    fi
+    # add IPtables rules for external network
+    if  [ $? -eq 0 ]; then
+      logger -p local3.info "qemu hook script - adding masquerade OSP network nat rule"
+      iptables -I POSTROUTING 1 -t nat -s 10.0.0.0/24 ! -d  10.0.0.0/24 -j MASQUERADE
+    fi   
+ 
+    iptables -L FORWARD -n -v | egrep 'ACCEPT.*all.*10.0.0.0/24.*!10.0.0.0/24'
+    if  [ $? -eq 0 ]; then
+      logger -p local3.info "qemu hook script - adding external OSP network forward rule"
+      iptables -I FORWARD 1 -s 10.0.0.0/24 ! -d 10.0.0.0/24 -j ACCEPT
+    fi
+  fi
+fi
+
+exit 0

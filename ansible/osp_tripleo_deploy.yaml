@@ -37,7 +37,7 @@
       dest: "{{ ooo_yaml_dir }}/"
       mode: '0644'
     with_fileglob:
-    - "osp/tripleo_deploy/*.yaml"
+    - "osp/tripleo_deploy/{{ osp_network_type }}/*.yaml"
 
   - name: create tripleo-deploy-config-custom ConfigMap
     shell: |
@@ -52,7 +52,7 @@
       dest: "{{ ooo_net_config_dir }}/"
       mode: '0644'
     with_fileglob:
-    - "osp/net_config/*.yaml"
+    - "osp/net_config/{{ osp_network_type }}/*.yaml"
 
   - name: create tripleo-net-config ConfigMap
     shell: |

@@ -111,6 +111,9 @@ osp_container_tag: 16.2_20210215.1
 # number of OCP worker nodes should be OSP compute hosts
 osp_compute_count: 1
 
+# network architecture, either flat or vlan
+osp_network_type: vlan
+
 # Local Storage Operator specific (only required if using local-storage operator)
 local_storage_domains:
   - ostest_worker_0

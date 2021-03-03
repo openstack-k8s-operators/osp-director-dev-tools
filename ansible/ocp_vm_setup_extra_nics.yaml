@@ -10,6 +10,18 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
+  - name: create libvirt hooks directory
+    file:
+      path: /etc/libvirt/hooks
+      state: directory
+      mode: 0755
+
+  - name: copy libvirt network hook to /etc/libvirt/hooks/network
+    copy:
+      src:  files/qemu/network
+      dest: /etc/libvirt/hooks/network
+      mode: 0750
+
   - name: check if osp network already exists
     shell: >
       virsh net-list | grep ospnetwork
