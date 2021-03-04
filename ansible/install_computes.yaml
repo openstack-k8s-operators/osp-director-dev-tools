@@ -41,9 +41,8 @@
     - "openstackbaremetalset.yaml"
 
   - name: does the provisionserver already exist
-    ignore_errors: true
     shell: >
-      oc get osprovserver openstack -o json --ignore-not-found
+      oc get -n openstack osprovserver openstack -o json --ignore-not-found
     environment:
       <<: *oc_env
     register: provisionserver_switch
