@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  become: true
+  become_user: root
+  roles:
+  - oc_local
+
+  tasks:
+  - name: cleanup local storage volumes
+    command: "{{ item }}"
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    ignore_errors: true
+    with_items:
+      - "oc delete -n openshift-local-storage localvolume local-disks"
+
+  - name: Get local PVs
+    shell: "oc get pv | grep local | cut -f 1 -d \" \""
+    environment:
+      <<: *oc_env
+    register: local_pvs
+
+  - name: cleanup local pvs
+    command: "oc delete pv {{ item }}"
+    environment:
+      <<: *oc_env
+    ignore_errors: true
+    with_items: "{{ local_pvs.stdout_lines | list }}"
+
+  - name: Cleanup VM attached Local Storage
+    include_role:
+      name: local_storage
+      tasks_from: cleanup
+    vars:
+      domain: "{{ item }}"
+    with_items: "{{ local_storage_domains }}"
+
+  # NOTE: this can take awhile to terminate as the nodes will reboot above
+  - name: Uninstall Local Storage Operator and Namespace  (worker rebooted...)
+    environment:
+      <<: *oc_env
+    command: "oc delete project openshift-local-storage"
+    ignore_errors: true

@@ -105,6 +105,16 @@ olm_cleanup: hosts local-defaults.yaml
 	-v -i hosts -e @local-defaults.yaml \
 	olm_cleanup.yaml
 
+local_storage: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-v -i hosts -e @local-defaults.yaml \
+	local_storage.yaml
+
+local_storage_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-v -i hosts -e @local-defaults.yaml \
+	local_storage_cleanup.yaml
+
 nfs_cleanup: hosts
 	ANSIBLE_FORCE_COLOR=true ansible -i hosts convergence_base \
 	--become -m shell -a \

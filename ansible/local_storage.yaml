@@ -1,0 +1,115 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  become: true
+  become_user: root
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Create VM attached Local Storage for local-storage-operator
+    with_items: "{{ local_storage_domains }}"
+    include_role:
+      name: local_storage
+    vars:
+      domain: "{{ item }}"
+
+  - name: Lookup defaultChannel for local-storage-operator
+    shell: >
+      oc get -o json packagemanifest local-storage-operator | jq -re .status.defaultChannel
+    register: local_storage_default_channel_cmd
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: Set defaultChannel fact for local-storage-operator
+    set_fact:
+      local_storage_default_channel: "{{ local_storage_default_channel_cmd.stdout }}"
+
+  - name: Lookup currentCSV for local-storage-operator
+    shell: >
+      oc get -o json packagemanifest local-storage-operator | jq -re .status.channels[0].currentCSV
+    register: local_storage_current_csv_cmd
+    environment:
+      <<: *oc_env
+
+  - name: Set currentCsv fact for local-storage-operator
+    set_fact:
+      local_storage_current_csv: "{{ local_storage_current_csv_cmd.stdout }}"
+
+  - name: Set directory for local_storage yaml files
+    set_fact:
+      local_storage_yaml_dir: "{{ working_yamls_dir }}/local_storage_operator"
+
+  - debug:
+      msg: "Operator yamls will be written to {{ local_storage_yaml_dir }} locally"
+
+  - name: Create local yamldir for local_storage operator
+    file:
+      path: "{{ local_storage_yaml_dir }}"
+      state: directory
+      mode: '0755'
+      owner: root
+      group: root
+
+  - name: Render templates to local_storage operator yaml dir
+    template:
+      src: "local_storage/operator/{{ item }}.j2"
+      dest: "{{ local_storage_yaml_dir }}/{{ item }}"
+      mode: '0644'
+      owner: root
+      group: root
+    with_items:
+    - "namespace.yaml"
+    - "operatorgroup.yaml"
+    - "subscription.yaml"
+
+  - name: Create namespace, operatorgroup and subscription for Local Storage Operator
+    shell: |
+      set -e
+      oc apply -f "{{ local_storage_yaml_dir }}"
+    environment:
+      <<: *oc_env
+
+  - name: wait for OpenShift Local Storage Operator to be installed
+    shell: |
+      oc wait deployment.apps/local-storage-operator -n openshift-local-storage --for condition=Available --timeout={{ default_timeout }}s
+    environment:
+      <<: *oc_env
+    retries: 50
+    delay: 5
+    register: result
+    until: result.rc == 0
+
+  - name: Set directory for local_volume yaml files
+    set_fact:
+      local_storage_volume_yaml_dir: "{{ working_yamls_dir }}/local_storage_volume"
+
+  - debug:
+      msg: "Volume yamls will be written to {{ local_storage_volume_yaml_dir }} locally"
+
+  - name: Create local yamldir
+    file:
+      path: "{{ local_storage_volume_yaml_dir }}"
+      state: directory
+      mode: '0755'
+      owner: root
+      group: root
+
+  - name: Render templates to yaml dir
+    template:
+      src: "local_storage/volume/{{ item }}.j2"
+      dest: "{{ local_storage_volume_yaml_dir }}/{{ item }}"
+      mode: '0644'
+      owner: root
+      group: root
+    with_items:
+    - "storage_class.yaml"
+    - "local_disks.yaml"
+
+  - name: Creating storage class and local disks
+    shell: |
+      set -e
+      oc apply -f "{{ local_storage_volume_yaml_dir }}"
+    environment:
+      <<: *oc_env
