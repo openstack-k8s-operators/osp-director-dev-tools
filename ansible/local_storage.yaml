@@ -107,7 +107,7 @@
     - "storage_class.yaml"
     - "local_disks.yaml"
 
-  - name: Create namespace, operatorgroup and subscription
+  - name: Creating storage class and local disks
     shell: |
       set -e
       oc apply -f "{{ local_storage_volume_yaml_dir }}"
