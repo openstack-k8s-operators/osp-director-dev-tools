@@ -31,9 +31,7 @@
     with_items:
     - "01-ctlplane.yaml"
 
-
-  - name: does the provisionserver already exist
-    ignore_errors: true
+  - name: does the networks already exist
     shell: >
       oc get osnet -n openstack ctlplane -o json --ignore-not-found
     environment: &oc_env
@@ -48,4 +46,3 @@
     environment:
       <<: *oc_env
     when: network_exist_switch.stdout | length == 0
-
