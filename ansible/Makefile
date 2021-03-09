@@ -1,6 +1,7 @@
 default: \
   ocp_install \
   cnv_install \
+  sriov_install \
   olm \
   openstack
   #osp_tests_run
@@ -47,6 +48,11 @@ cnv_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	ocp_cnv.yaml
+
+sriov_install: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	ocp_sriov.yaml
 
 openstack:
 	$(MAKE) datavolume
