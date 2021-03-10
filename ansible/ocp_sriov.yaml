@@ -12,11 +12,21 @@
   - debug:
       msg: "yamls will be written to {{ yaml_dir }} locally"
 
-  - name: Copy deployment yamls to working dir
-    copy:
-      src: "sriov"
-      dest: "{{ working_yamls_dir }}"
-      mode: '0644'
+  - name: Create local yamldir
+    file:
+      path: "{{ yaml_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Render all OpenShift SRIOV Network Operator templates
+    template:
+      src:  "sriov/{{ item }}.j2"
+      dest: "{{ yaml_dir }}/{{ item }}"
+      mode: "0644"
+    with_items:
+    - namespace.yaml
+    - operatorgroup.yaml
+    - subscription.yaml
 
   - name: Create namespace, operatorgroup and subscription
     shell: |

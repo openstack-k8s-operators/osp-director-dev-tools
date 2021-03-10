@@ -51,6 +51,9 @@ kustomize_version: v4.0.1
 # kuttl version to use (must be specific version)
 kuttl_version: 0.9.0
 
+# SRIOV network operator version (usually should correspond to X.X release)
+sriov_version: 4.6
+
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
 namespace: openstack
