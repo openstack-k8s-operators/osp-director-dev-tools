@@ -12,6 +12,10 @@
       - python3-pip
     become: yes
 
+  - name: Upgrade pip
+    shell: |
+      pip3 install --upgrade pip
+
   - name: Install openstack client
     shell: |
       pip3 install --user python-openstackclient osc-placement
