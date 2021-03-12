@@ -6,6 +6,10 @@
   - oc_local
   tasks:
 
+ - name: Upgrade pip
+    shell: |
+      pip3 install --upgrade pip
+
   - name: Install pip
     yum:
       name:
