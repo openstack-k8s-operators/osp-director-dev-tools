@@ -15,6 +15,7 @@
   - name: Upgrade pip
     shell: |
       pip3 install --upgrade pip
+    become: yes
 
   - name: Install openstack client
     shell: |
