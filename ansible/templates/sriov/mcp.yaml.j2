@@ -1,0 +1,18 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfigPool
+metadata:
+  name: worker-sriov
+  namespace: openshift-machine-config-operator
+  labels:
+    custom-kubelet: cpumanager-enabled
+    machineconfiguration.openshift.io/role: worker-sriov
+spec:
+  paused: false 
+  machineConfigSelector:
+    matchExpressions:
+      - key: machineconfiguration.openshift.io/role
+        operator: In
+        values: [worker,worker-sriov]
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/worker-sriov: ""

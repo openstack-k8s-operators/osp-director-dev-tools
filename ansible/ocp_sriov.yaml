@@ -27,8 +27,9 @@
     - namespace.yaml
     - operatorgroup.yaml
     - subscription.yaml
+    - mcp.yaml
 
-  - name: Create namespace, operatorgroup and subscription
+  - name: Create namespace, operatorgroup, subscription and machine config pool
     shell: |
       set -e
       oc apply -f "{{ yaml_dir }}"

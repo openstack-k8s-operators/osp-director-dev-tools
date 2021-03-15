@@ -1,0 +1,170 @@
+---
+- hosts: convergence_base
+  gather_facts: false
+  become: true
+  user: root
+  vars_files: vars/default.yaml
+
+  tasks:
+  - name: Download and build custom QEMU
+    when: enable_virt_sriov == true
+    block:
+    - name: Enable codeready-builder-for-rhel-8-x86_64-rpms
+      command: subscription-manager repos --enable=codeready-builder-for-rhel-8-x86_64-rpms
+
+    - name: Check whether custom QEMU is already downloaded
+      stat: "path={{ base_path }}/qemu"
+      register: custom_qemu
+
+    - block:
+      - name: Clone the custom QEMU repo
+        git:
+          repo: "{{ virt_sriov_repo | default('https://github.com/marcel-apf/qemu.git', true) }}"
+          dest: "{{ base_path }}/qemu"
+
+      - name: Initialize custom QEMU repo
+        shell: |
+          git submodule init
+          git checkout igb_sriov_dev
+          git submodule update
+        args:
+          chdir: "{{ base_path }}/qemu"
+      when: not custom_qemu.stat.exists
+
+    - name: Install dependencies for custom QEMU
+      package:
+        state: installed
+        name:
+          - automake
+          - gcc
+          - glibc
+          - glibc-utils
+          - glib2-devel
+          - zlib-devel
+          - pixman-devel
+          - flex
+          - bison
+          - numad
+          - numactl-devel
+          - numactl-libs
+          - numactl
+          - libtool
+          - gnutls-utils
+          - gnutls-devel
+          - libnl3-devel
+          - libxml2-devel
+          - libtirpc-devel
+          - python3-docutils
+          - device-mapper-devel
+          - libpciaccess-devel
+          - meson
+          - ninja-build
+          - bzip2-devel
+          - bzip2
+    
+    - block:
+      - name: Create custom QEMU bin directory
+        file:
+          path: "{{ base_path }}/qemu/bin"
+          state: directory
+          mode: '0755'
+      
+      - name: Build custom QEMU binary
+        shell: |
+          ../configure --target-list=x86_64-softmmu --enable-kvm
+          make -j 8
+        args:
+          chdir: "{{ base_path }}/qemu/bin"
+        
+      - name: Copy custom QEMU binary to /usr/libexec
+        copy:
+          src: "{{ base_path }}/qemu/bin/x86_64-softmmu/qemu-system-x86_64"
+          dest: "/usr/libexec/qemu-system-x86_64"
+          mode: 0755
+          remote_src: yes
+      
+      - name: Create shared QEMU directory
+        file:
+          path: /usr/share/qemu
+          state: directory
+          mode: 0755
+
+      - name: Copy other bins and ROMs to shared QEMU directory
+        copy:
+          src: /usr/share/qemu-kvm
+          dest: /usr/share/qemu
+          mode: 0755
+          remote_src: yes
+      when: not custom_qemu.stat.exists
+    
+    - name: Set directory for Libvirt XML files
+      set_fact:
+        xml_dir: "/tmp/sriov/xml"
+
+    - name: Create local Libvirt XML directory
+      file:
+        path: "{{ xml_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy required files to Libvirt XML directory
+      copy:
+        src: "sriov/{{ item }}"
+        dest: "{{ xml_dir }}/"
+        mode: '0644'
+      loop:
+      - "usb-device.xml"
+      - "osp-interface-old.xml"
+      - "osp-interface-new.xml"
+
+    - name: Customize selected QEMU domains for virtualized SRIOV
+      include_tasks: virt_sriov_vm.yaml
+      loop: "{{ virt_sriov_domains }}"
+
+- hosts: localhost
+  gather_facts: false
+  become: true
+  user: root
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+  tasks:
+  - name: Customize SRIOV Network Operator to work with virtualized SRIOV
+    when: enable_virt_sriov == true
+    block:
+      - name: Disable SRIOV Network Operator webhook
+        shell: |
+          oc patch sriovoperatorconfig default --type=merge -n openshift-sriov-network-operator --patch '{ "spec": { "enableOperatorWebhook": false } }'
+        environment: &oc_env
+          PATH: "{{ oc_env_path }}"
+          KUBECONFIG: "{{ kubeconfig }}"
+
+      - name: Allow unsupported virtualized IGB device in SRIOV Network Operator
+        shell: |
+          oc create configmap -n openshift-sriov-network-operator unsupported-nic-ids --from-literal=IGB="8086 10c9 10ca"
+        environment:
+          <<: *oc_env
+        register: sriov_cm
+        failed_when: sriov_cm.stderr != "" and "already exists" not in sriov_cm.stderr
+
+      - name: Increase worker machineset count
+        shell: |
+          oc scale machineset $(oc get machineset -A | grep {{ ocp_cluster_name }} | awk {'print $2'}) -n openshift-machine-api --replicas={{ ocp_num_workers + (virt_sriov_domains | length) }}
+        environment:
+          <<: *oc_env
+
+      - name: Wait for worker machineset to reach desired count
+        shell: oc get nodes -l node-role.kubernetes.io/worker
+        retries: 100
+        delay: 15
+        register: nodes_ready
+        until: (nodes_ready.stdout | regex_findall('worker-\\d   Ready') | length) == ocp_num_workers + (virt_sriov_domains | length)
+        environment:
+          <<: *oc_env
+
+      - name: Label SRIOV nodes as such, in terms of role
+        shell: |
+          oc label node {{ ((item | replace(ocp_cluster_name+'_','')) | replace('_','-')) }} node-role.kubernetes.io/worker-sriov="" --overwrite=true
+        environment:
+          <<: *oc_env
+        with_items: "{{ virt_sriov_domains }}"
