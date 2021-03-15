@@ -17,12 +17,12 @@ dnf install -y git
 git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
 ```
 
-##### Install Ansible
+##### Install Dependencies
 
-If not already installed, install ansible
+If not already installed, install the required dependencies
 
 ```
-dnf install -y ansible
+dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
 ```
 
 ##### Modify the variable files
@@ -86,7 +86,7 @@ In case there is data stored on /home, make a backup!
 
 ##### When installation finished
 
-* On the local system add the required entries to your local /etc/hosts. The previous used ansible playbook also outputs the information:
+On the local system add the required entries to your local /etc/hosts. The previous used ansible playbook also outputs the information:
 
 ```
 cat <<EOF >> /etc/hosts
@@ -94,32 +94,49 @@ cat <<EOF >> /etc/hosts
 EOF
 ```
 
+##### Access OCP
 **Note**
 The cluster name is used in the hostname records, where `ostest` is the default in dev-scripts.
 Update the above example to use the cluster name set in the vars file.
 
-Run:
+To access OCP console
 
+On the local system, enable SSH proxying:
 ```
+# on Fedora
+sudo dnf install sshuttle
+
+# on RHEL
+sudo pip install sshuttle
+
 sshuttle -r <user>@<virthost> 192.168.111.0/24 192.168.25.0/24
 ```
 
 Now you can access the OCP console using your local web browser: <https://console-openshift-console.apps.ostest.test.metalkube.org>
 
 User: `kubeadmin`
-Pwd: `/home/ocp/dev-scripts/ocp/<cluster name>/auth/kubeadmin-password`
-
-You can also access the OCP console using your local web browser: <http://192.168.25.100>
-
-User: `admin`
-Pwd: The admin password can be found in the `/home/stack/cnvrc` file on the undercloud.
-
-##### Access the OCP env from cli
+Pwd: `/home/ocp/dev-scripts/ocp/ostest/auth/kubeadmin-password`
 
 ```
 su - ocp
 export KUBECONFIG=/home/ocp/dev-scripts/ocp/ostest/auth/kubeconfig
 oc get pods -n openstack
+```
+
+##### Install OSP
+
+The ansible playbook generates the scaffolding needed for tripleo to deploy OpenStack. The actual OpenStack installation need to be triggered manually
+```
+oc exec -it -n openstack openstackclient /home/cloud-admin/deploy_tripleo.sh
+```
+
+##### Access OSP
+You can also access the OSP console using your local web browser: <http://192.168.25.100>
+
+User: `admin`
+Pwd: The admin password can be found in the `/home/cloud-admin/tripleo-deploy/tripleo-overcloud-passwords.yaml` file on the `openstackclient` pod in the `openstack` namespace.
+```
+oc exec -it openstackclient -- cat /home/cloud-admin/tripleo-deploy/tripleo-overcloud-passwords.yaml | grep -w AdminPassword
 ```
 
 #### Cleanup full env:
@@ -128,7 +145,7 @@ oc get pods -n openstack
 make cleanup
 ```
 
-#### Othere possible cleanup steps
+#### Other possible cleanup steps
 
 ##### Delete ocp env only
 
