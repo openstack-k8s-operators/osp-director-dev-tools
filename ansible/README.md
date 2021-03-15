@@ -31,14 +31,23 @@ dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
 
 First create the following files relative to the project root:
 
-`vars/rhel-subscription.yaml` in the format:
+`files/pull-secret` which contains your OCP pull-secrets file.
+
+`vars/rhel-subscription.yaml` is optional. File format:
 
 ```
 rhel_subscription_activation_key: xyz
 rhel_subscription_org_id: "123123123"
 ```
 
-`files/pull-secret` which contains your OCP pull-secrets file.
+If `vars/rhel-subscription.yaml` is not specified, a subscription must have been configured manually prior to running the ansible. The manual subscription must give access to the following repositories:
+
+```
+advanced-virt-for-rhel-8-x86_64-rpms                    Advanced Virtualization for RHEL 8 x86_64 (RPMs)
+ansible-2-for-rhel-8-x86_64-rpms                        Red Hat Ansible Engine 2 for RHEL 8 x86_64 (RPMs)
+rhel-8-for-x86_64-appstream-rpms                        Red Hat Enterprise Linux 8 for x86_64 - AppStream (RPMs)
+rhel-8-for-x86_64-baseos-rpms                           Red Hat Enterprise Linux 8 for x86_64 - BaseOS (RPMs)
+```
 
 Any other parameter from `vars/default.yaml` can be customized using
 `local-defaults.yaml`. Add parameters to meet your req.
