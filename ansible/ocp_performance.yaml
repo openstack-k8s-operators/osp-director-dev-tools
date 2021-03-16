@@ -1,0 +1,50 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set directory for performance yaml files
+    set_fact:
+      yaml_dir: "{{ working_yamls_dir }}/performance"
+
+  - debug:
+      msg: "yamls will be written to {{ yaml_dir }} locally"
+
+  - name: Create local yamldir
+    file:
+      path: "{{ yaml_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Render all OpenShift Performance Addon Operator templates
+    template:
+      src:  "performance/{{ item }}.j2"
+      dest: "{{ yaml_dir }}/{{ item }}"
+      mode: "0644"
+    with_items:
+    - namespace.yaml
+    - operatorgroup.yaml
+    - subscription.yaml
+
+  - name: Create namespace, operatorgroup and subscription
+    shell: |
+      set -e
+      oc apply -f "{{ yaml_dir }}"
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: Wait for OpenShift Performance Addon Operator to be installed
+    shell: |
+      oc wait pod -n openshift-performance-addon --for condition=Ready \
+          -l name=performance-operator \
+          --timeout={{ default_timeout }}s
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    retries: 50
+    delay: 5
+    register: result
+    until: result.rc == 0
