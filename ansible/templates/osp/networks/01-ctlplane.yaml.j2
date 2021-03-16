@@ -7,3 +7,20 @@ spec:
   allocationStart: 192.168.25.100
   allocationEnd: 192.168.25.250
   gateway: 192.168.25.1
+  attachConfiguration:
+    bridgeName: br-osp
+    nodeNetworkConfigurationPolicy:
+      nodeSelector:
+        node-role.kubernetes.io/worker: ""
+      desiredState:
+        interfaces:
+        - bridge:
+            options:
+              stp:
+                enabled: false
+            port:
+            - name: {{ osp_interface }}
+          description: Linux bridge with {{ osp_interface }} as a port
+          name: br-osp
+          state: up
+          type: linux-bridge
