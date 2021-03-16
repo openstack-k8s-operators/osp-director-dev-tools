@@ -6,24 +6,6 @@ metadata:
 spec:
   openStackClientImageURL: {{ openstackclient_image }}
   passwordSecret: userpassword
-  ospNetwork:
-    bridgeName: br-osp
-    name: osp
-    nodeNetworkConfigurationPolicy:
-      nodeSelector:
-        node-role.kubernetes.io/worker: ""
-      desiredState:
-        interfaces:
-        - bridge:
-            options:
-              stp:
-                enabled: false
-            port:
-            - name: {{ osp_interface }}
-          description: Linux bridge with {{ osp_interface }} as a port
-          name: br-osp
-          state: up
-          type: linux-bridge
   virtualMachineRoles:
     controller:
       roleName: Controller
