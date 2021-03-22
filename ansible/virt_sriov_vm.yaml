@@ -2,7 +2,7 @@
 # This is separated from virt_sriov.yaml so that a loop can be used with all the tasks below
 # via an "include_tasks" task in that said file.  It is not intended to run stand-alone.
 - name: Stop {{ item }} VM
-  virt: 
+  virt:
     name: "{{ item }}"
     state: destroyed
 
