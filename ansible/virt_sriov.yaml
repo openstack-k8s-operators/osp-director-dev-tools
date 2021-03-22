@@ -7,7 +7,7 @@
 
   tasks:
   - name: Download and build custom QEMU
-    when: enable_virt_sriov == true
+    when: enable_virt_sriov | bool
     block:
     - name: Enable codeready-builder-for-rhel-8-x86_64-rpms
       command: subscription-manager repos --enable=codeready-builder-for-rhel-8-x86_64-rpms
@@ -130,7 +130,7 @@
   - oc_local
   tasks:
   - name: Customize SRIOV Network Operator to work with virtualized SRIOV
-    when: enable_virt_sriov == true
+    when: enable_virt_sriov | bool
     block:
       - name: Disable SRIOV Network Operator webhook
         shell: |
