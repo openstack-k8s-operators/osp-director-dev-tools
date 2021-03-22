@@ -21,7 +21,6 @@ The ansible playbooks can be used as any user, but this user needs to be able to
 get root privileges to the host via passwordless sudo.
 
 ```
-ssh root@<node>
 git clone https://github.com/openstack-k8s-operators/osp-director-dev-tools.git
 ```
 
@@ -54,11 +53,20 @@ export CI_TOKEN: <TOKEN>
 Additionally create the following files relative to the
 project root:
 
-`vars/rhel-subscription.yaml` is optional. If the file is not created, it will try to use your current subscription to add the corresponding repositories:
+`vars/rhel-subscription.yaml` is used to subscribe to correct repositories to use the metal3 dev scripts
 
 ```
 rhel_subscription_activation_key: xyz
 rhel_subscription_org_id: "123123123"
+```
+
+If `vars/rhel-subscription.yaml` is not specified, a subscription must have been configured manually prior to run the ansible. The manual subscription must give access to the following repositories:
+
+```
+advanced-virt-for-rhel-8-x86_64-rpms                    Advanced Virtualization for RHEL 8 x86_64 (RPMs)
+ansible-2-for-rhel-8-x86_64-rpms                        Red Hat Ansible Engine 2 for RHEL 8 x86_64 (RPMs)
+rhel-8-for-x86_64-appstream-rpms                        Red Hat Enterprise Linux 8 for x86_64 - AppStream (RPMs)
+rhel-8-for-x86_64-baseos-rpms                           Red Hat Enterprise Linux 8 for x86_64 - BaseOS (RPMs)
 ```
 
 `files/pull-secret` which contains your OCP pull-secrets file.
