@@ -154,7 +154,7 @@
           <<: *oc_env
 
       - name: Wait for worker machineset to reach desired count
-        shell: oc get nodes -l node-role.kubernetes.io/worker
+        command: oc get nodes -l node-role.kubernetes.io/worker
         retries: 100
         delay: 15
         register: nodes_ready
