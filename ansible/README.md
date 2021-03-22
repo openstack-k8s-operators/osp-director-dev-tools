@@ -135,7 +135,7 @@ oc get pods -n openstack
 
 The ansible playbook generates the scaffolding needed for tripleo to deploy OpenStack. The actual OpenStack installation need to be triggered manually
 ```
-oc exec -it -n openstack openstackclient /home/cloud-admin/deploy_tripleo.sh
+oc exec -it -n openstack openstackclient -- /home/cloud-admin/tripleo-deploy.sh
 ```
 
 ##### Access OSP
