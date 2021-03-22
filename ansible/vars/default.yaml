@@ -123,3 +123,10 @@ local_storage_disks:
   - vda
   - vdb
 local_storage_disk_size: 50
+
+# Virtualized SRIOV (for dev/test)
+enable_virt_sriov: false
+virt_sriov_repo: https://github.com/marcel-apf/qemu.git
+virt_sriov_domains:
+  - "{{ ocp_cluster_name }}_worker_3"
+  - "{{ ocp_cluster_name }}_worker_4"

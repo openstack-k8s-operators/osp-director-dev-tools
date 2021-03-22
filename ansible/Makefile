@@ -52,7 +52,8 @@ cnv_install: hosts local-defaults.yaml
 sriov_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
-	ocp_sriov.yaml
+	ocp_sriov.yaml \
+	virt_sriov.yaml
 
 perf_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
