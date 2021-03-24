@@ -63,6 +63,7 @@ perf_install: hosts local-defaults.yaml
 openstack:
 	$(MAKE) datavolume
 	$(MAKE) networks
+	$(MAKE) osp_custom_config
 	$(MAKE) ctlplane
 	$(MAKE) computes
 	# $(MAKE) overcloud
@@ -82,7 +83,6 @@ ctlplane: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
-	osp_tripleo_deploy.yaml \
 	install_ctlplane.yaml
 
 computes: hosts local-defaults.yaml
@@ -95,6 +95,11 @@ datavolume: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	datavolume.yaml
+
+osp_custom_config: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	osp_tripleo_deploy.yaml
 
 osp_content: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

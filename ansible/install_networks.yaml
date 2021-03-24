@@ -30,10 +30,15 @@
       mode: '0644'
     with_items:
     - "01-ctlplane.yaml"
+    - "02-internalapi.yaml"
+    - "03-external.yaml"
+    - "04-tenant.yaml"
+    - "05-storage.yaml"
+    - "06-storagemgmt.yaml"
 
   - name: does the networks already exist
     shell: >
-      oc get osnet -n openstack ctlplane -o json --ignore-not-found
+      oc get osnet -n openstack ctlplane internalapi --ignore-not-found
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"

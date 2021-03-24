@@ -1,0 +1,45 @@
+resource_registry:
+  OS::TripleO::Controller::Net::SoftwareConfig: /home/cloud-admin/net-config/net-config-multi-nic-controller.yaml
+  OS::TripleO::Compute::Net::SoftwareConfig: /home/cloud-admin/net-config/net-config-single-vlan-compute.yaml
+
+parameter_defaults:
+  EC2MetadataIp: 192.168.25.1
+  ControlPlaneDefaultRoute: 192.168.25.1
+  NeutronPublicInterface: eth1
+  NtpServer:
+    - clock.redhat.com
+    - clock2.redhat.com
+  DnsServers:
+    - 192.168.25.1
+  ControlPlaneSubnetCidr: '24'
+  ExternalAllocationPools:
+  -   end: 10.0.0.250
+      start: 10.0.0.4
+  ExternalInterfaceDefaultRoute: 10.0.0.1
+  ExternalNetCidr: 10.0.0.0/24
+  ExternalNetworkVlanID: 10
+  InternalApiAllocationPools:
+  -   end: 172.16.2.250
+      start: 172.16.2.4
+  InternalApiNetCidr: 172.16.2.0/24
+  InternalApiNetworkVlanID: 20
+  NeutronBridgeMappings: datacentre:br-ex,tenant:br-isolated
+  NeutronExternalNetworkBridge: br-ex
+  NeutronNetworkType: geneve
+  NeutronNetworkVLANRanges: tenant:1000:2000
+  NeutronTunnelTypes: geneve
+  StorageAllocationPools:
+  -   end: 172.16.1.250
+      start: 172.16.1.4
+  StorageMgmtAllocationPools:
+  -   end: 172.16.3.250
+      start: 172.16.3.4
+  StorageMgmtNetCidr: 172.16.4.0/24
+  StorageMgmtNetworkVlanID: 40
+  StorageNetCidr: 172.16.1.0/24
+  StorageNetworkVlanID: 30
+  TenantAllocationPools:
+  -   end: 172.16.0.250
+      start: 172.16.0.4
+  TenantNetCidr: 172.16.0.0/24
+  TenantNetworkVlanID: 50
