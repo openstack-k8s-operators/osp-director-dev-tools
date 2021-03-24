@@ -94,7 +94,7 @@ nfs_export_dir: /home/nfs
 default_timeout: 240
 
 # openstackclient container image
-openstackclient_image: quay.io/openstack-k8s-operators/tripleo-deploy:latest
+openstackclient_image: quay.io/openstack-k8s-operators/tripleo-deploy:16.2_20210309.1
 
 # OSP controller VM sizing
 osp_controller_count: 1
@@ -106,7 +106,7 @@ osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/package
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp6s0
-osp_container_tag: 16.2_20210215.1
+osp_container_tag: 16.2_20210309.1
 
 # number of OCP worker nodes should be OSP compute hosts
 osp_compute_count: 1
