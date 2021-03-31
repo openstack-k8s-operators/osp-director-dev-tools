@@ -60,7 +60,7 @@ perf_version: 4.6
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
 namespace: openstack
-watch_namespace: openstack,openshift-machine-api
+watch_namespace: openstack,openshift-machine-api,openshift-sriov-network-operator
 
 # operator github url where operators repos are underneath - default https://github.com/openstack-k8s-operators
 #openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
