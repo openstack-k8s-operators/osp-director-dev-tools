@@ -4,8 +4,8 @@ base_path: /home/ocp
 #dev_scripts_branch: defaults to "HEAD"
 
 # To set a specific release to install.
-ocp_version: 4.6
-ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.6.15-x86_64
+ocp_version: 4.7
+ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.7.4-x86_64
 ocp_release_type: ga
 
 # private repo to read required secret files from
@@ -52,10 +52,10 @@ kustomize_version: v4.0.1
 kuttl_version: 0.9.0
 
 # SRIOV network operator version (usually should correspond to X.X release)
-sriov_version: 4.6
+sriov_version: 4.7
 
 # Performance addon operator version (usually should correspond to X.X release)
-perf_version: 4.6
+perf_version: 4.7
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
