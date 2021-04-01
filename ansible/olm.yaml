@@ -33,12 +33,6 @@
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: Wait for the catalogSource to be available
-    shell: |
-      oc wait pod -l olm.catalogSource=osp-director-operator-index --for condition=ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
-    environment:
-      <<: *oc_env
-
   - name: Waiting for packagemanifest 'osp-director-operator' to be created
     shell: |
       oc get -n "{{ namespace }}" packagemanifest/osp-director-operator
