@@ -1,2 +1,7 @@
 parameter_defaults:
   CloudDomain: {{ ocp_cluster_name }}
+  CloudName: overcloud.{{ ocp_cluster_name }}
+  CloudNameInternal: overcloud.internalapi.{{ ocp_cluster_name }}
+  CloudNameStorage: overcloud.storage.{{ ocp_cluster_name }}
+  CloudNameStorageManagement: overcloud.storagemgmt.{{ ocp_cluster_name }}
+  CloudNameCtlplane: overcloud.ctlplane.{{ ocp_cluster_name }}

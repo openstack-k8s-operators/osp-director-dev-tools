@@ -15,3 +15,14 @@
       - "oc delete -n openstack openstackbaremetalset --all"
       - "oc delete -n openstack openstackcontrolplane --all"
       - "oc delete -n openstack openstacknet --all"
+
+  - name: Detach additional Ceph OSD disks
+    shell: |
+      #!/bin/bash
+      for domain in $(virsh list --inactive --name); do
+        for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
+          virsh detach-disk  ${domain} ${disk} --persistent
+          rm -f /home/ocp/pool/${domain}-ceph-disk-${disk}.qcow2
+        done
+      done
+

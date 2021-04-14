@@ -24,20 +24,18 @@
       src: "osp/tripleo_deploy/{{ item }}.j2"
       dest: "{{ ooo_yaml_dir }}/{{ item }}"
       mode: '0644'
-    vars:
-      - nfs_server: '192.168.25.1'
     with_items:
     - custom.yaml
-    - glance-backend-nfs.yaml
+    - storage-backend.yaml
     - containers-prepare-parameter.yaml
 
-  - name: copy ooo files to yaml dir
-    copy:
-      src: "{{ item }}"
-      dest: "{{ ooo_yaml_dir }}/"
+  - name: render {{ osp_network_type }} network parameter file
+    template:
+      src: "osp/tripleo_deploy/{{ osp_network_type }}/{{ item }}.j2"
+      dest: "{{ ooo_yaml_dir }}/{{ item }}"
       mode: '0644'
-    with_fileglob:
-    - "osp/tripleo_deploy/{{ osp_network_type }}/*.yaml"
+    with_items:
+    - network-environment.yaml
 
   - name: create tripleo-deploy-config-custom ConfigMap
     shell: |

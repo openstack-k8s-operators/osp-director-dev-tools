@@ -106,10 +106,20 @@ osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/package
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp6s0
-osp_container_tag: 16.2_20210309.1
+osp_container_tag: 16.2_20210420.1
+osp_ceph_image: ceph-4.2-rhel-8
 
 # number of OCP worker nodes should be OSP compute hosts
 osp_compute_count: 1
+# if false nfs is used for glance
+osp_compute_hci: false
+# number of OSD disks per compute node
+osp_compute_ceph_osd_disks:
+  - sdb
+  - sdc
+# size of OSD disk size in GB
+osp_compute_ceph_num_osd_disk_size: 20
+nfs_server: '192.168.25.1'
 
 # network architecture, either flat or vlan
 osp_network_type: vlan
