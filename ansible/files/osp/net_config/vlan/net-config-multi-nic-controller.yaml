@@ -188,7 +188,7 @@ resources:
                   list_concat_unique:
                     - get_param: ControlPlaneStaticRoutes
               - type: interface
-                name: nic6
+                name: nic5
                 mtu:
                   get_param: StorageMtu
                 use_dhcp: false
@@ -199,7 +199,7 @@ resources:
                   list_concat_unique:
                     - get_param: StorageInterfaceRoutes
               - type: interface
-                name: nic7
+                name: nic6
                 mtu:
                   get_param: StorageMgmtMtu
                 use_dhcp: false
@@ -235,7 +235,7 @@ resources:
                     - get_param: TenantInterfaceRoutes
                 members:
                 - type: interface
-                  name: nic5
+                  name: nic7
                   mtu:
                     get_param: TenantMtu
                   use_dhcp: false
