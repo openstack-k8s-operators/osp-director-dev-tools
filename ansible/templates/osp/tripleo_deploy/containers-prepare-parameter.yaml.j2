@@ -7,13 +7,14 @@ parameter_defaults:
   ContainerImagePrepare:
   - push_destination: false
     set:
+      tag: {{ osp_container_tag }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: registry-proxy.engineering.redhat.com/rh-osbs
       ceph_alertmanager_tag: v4.1
       ceph_grafana_image: rhceph-3-dashboard-rhel7
       ceph_grafana_namespace: registry.access.redhat.com/rhceph
       ceph_grafana_tag: 3
-      ceph_image: ceph-4.0-rhel-8
+      ceph_image: {{ osp_ceph_image }}
       ceph_namespace: docker-registry.upshift.redhat.com/ceph
       ceph_node_exporter_image: openshift-ose-prometheus-node-exporter
       ceph_node_exporter_namespace: registry-proxy.engineering.redhat.com/rh-osbs
@@ -27,4 +28,3 @@ parameter_defaults:
       namespace: registry-proxy.engineering.redhat.com/rh-osbs
       neutron_driver: ovn
       rhel_containers: false
-      tag: {{ osp_container_tag }}

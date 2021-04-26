@@ -1,0 +1,41 @@
+parameter_defaults:
+{% if osp_compute_hci %}
+  # CephAnsibleRepo can be removed when ceph-ansible is in official tripleoclient image
+  CephAnsibleRepo: "rhelosp-ceph-4-tools"
+  CephAnsiblePlaybookVerbosity: 3
+  CinderEnableIscsiBackend: false
+  CinderEnableRbdBackend: true
+  CinderEnableNfsBackend: false
+  NovaEnableRbdBackend: true
+  GlanceBackend: rbd
+  CinderRbdPoolName: "volumes"
+  NovaRbdPoolName: "vms"
+  GlanceRbdPoolName: "images"
+  CephPoolDefaultPgNum: 32
+  CephPoolDefaultSize: 2
+  CephAnsibleDisksConfig:
+    devices:
+{% for disk in osp_compute_ceph_osd_disks %}
+      - '/dev/{{ disk }}'
+{% endfor %}
+    osd_scenario: lvm
+    osd_objectstore: bluestore
+    journal_size: 512
+  CephAnsibleExtraConfig:
+    is_hci: true
+  CephConfigOverrides:
+    rgw_swift_enforce_content_length: true
+    rgw_swift_versioning_enabled: true
+{% else %}
+  GlanceEnabledImportMethods: web-download
+  GlanceNetappNfsEnabled: False
+  GlanceNfsOptions: _netdev,bg,intr,context=system_u:object_r:svirt_sandbox_file_t:s0
+  GlanceNfsShare: '{{ nfs_server }}:/home/nfs/glance'
+  GlanceNodeStagingUri: file:///var/lib/glance/staging
+  GlanceStagingNfsOptions: _netdev,bg,intr,context=system_u:object_r:svirt_sandbox_file_t:s0
+  GlanceStagingNfsShare: ''
+  NetappShareLocation: ''
+  GlanceBackend: file
+  GlanceNfsEnabled: True
+{% endif %}
+

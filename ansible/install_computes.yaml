@@ -23,6 +23,29 @@
       state: directory
       mode: '0755'
 
+  - name: Detach additional Ceph OSD disks
+    shell: |
+      #!/bin/bash
+      for domain in $(virsh list --inactive --name); do
+        for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
+          virsh detach-disk  ${domain} ${disk} --persistent
+          rm -f /home/ocp/pool/${domain}-ceph-disk-${disk}.qcow2
+        done
+      done
+    become: true
+    become_user: root
+
+  - name: Create additional Ceph OSD disks
+    shell: |
+      #!/bin/bash
+      for domain in $(virsh list --inactive --name); do
+        qemu-img create -f qcow2 -o preallocation=falloc /home/ocp/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp_compute_ceph_num_osd_disk_size }}G
+        virsh attach-disk ${domain} --source /home/ocp/pool/${domain}-ceph-disk-{{ item }}.qcow2 --target {{ item }} --persistent
+      done
+    with_items: "{{ osp_compute_ceph_osd_disks }}"
+    become: true
+    become_user: root
+
   - name: register dev-tools prepared extra_hosts
     shell: |
       set -e

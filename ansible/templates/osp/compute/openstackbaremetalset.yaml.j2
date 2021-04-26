@@ -1,7 +1,11 @@
 apiVersion: osp-director.openstack.org/v1beta1
 kind: OpenStackBaremetalSet
 metadata:
+{% if osp_compute_hci %}
+  name: computehci
+{% else %}
   name: compute
+{% endif %}
   namespace: openstack
 spec:
   # How many nodes to provision
@@ -19,5 +23,10 @@ spec:
     - internalapi
     - tenant
     - storage
+{% if osp_compute_hci %}
+    - storagemgmt
+  roleName: ComputeHCI
+{% else %}
   roleName: Compute
+{% endif %}
   passwordSecret: userpassword

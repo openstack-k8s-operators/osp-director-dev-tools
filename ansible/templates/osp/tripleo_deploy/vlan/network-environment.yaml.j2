@@ -1,6 +1,11 @@
 resource_registry:
   OS::TripleO::Controller::Net::SoftwareConfig: /home/cloud-admin/net-config/net-config-multi-nic-controller.yaml
+{% if osp_compute_hci %}
+  OS::TripleO::ComputeHCI::Net::SoftwareConfig: /home/cloud-admin/net-config/net-config-single-vlan-computehci.yaml
+{% else %}
   OS::TripleO::Compute::Net::SoftwareConfig: /home/cloud-admin/net-config/net-config-single-vlan-compute.yaml
+{% endif %}
+
 
 parameter_defaults:
   EC2MetadataIp: 192.168.25.1
