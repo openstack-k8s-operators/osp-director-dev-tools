@@ -9,10 +9,10 @@
 
   - name: Include AI variables
     include_vars: vars/ocp_ai.yaml
-    
+
 
   ### DNSMASQ
-    
+
   - name: Remove dnsmasq conf
     file:
       path: "/etc/dnsmasq.d/dnsmasq_ai.conf"
@@ -66,7 +66,7 @@
   - name: Reload systemd service
     systemd:
       daemon_reexec: yes
-    
+
 
   ### HTTP STORE
 
@@ -75,7 +75,7 @@
       name: httpd
       image: registry.centos.org/centos/httpd-24-centos7:latest
       state: absent
-    
+
 
   ### ASSISTED INSTALLER SERVICE SCRIPT
 

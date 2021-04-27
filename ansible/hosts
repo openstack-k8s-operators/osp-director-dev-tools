@@ -1,7 +1,7 @@
-[all:vars]
-ocp_ai=False
-
 localhost ansible_connection=local
 
 [convergence_base]
 localhost
+
+[all:vars]
+ocp_ai=False

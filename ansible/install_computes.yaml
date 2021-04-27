@@ -53,11 +53,11 @@
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    when: ocp_ai|bool == False
+    when: not (ocp_ai|bool)
 
   - name: Include AI variables
     include_vars: vars/ocp_ai.yaml
-  
+
   - name: Register assisted installer prepared extra_hosts
     shell: |
       set -e

@@ -40,7 +40,8 @@
         - 60-ingress-controller.yml
 
     - name: Apply schedule/ingress CRs
-      shell: "oc apply -f {{ ai_sched_ingress_yaml_dir }}/{{ item }}"
+      shell: |
+        oc apply -f {{ ai_sched_ingress_yaml_dir }}/{{ item }}
       environment: &oc_env
         PATH: "{{ oc_env_path }}"
         KUBECONFIG: "{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}"
@@ -70,8 +71,9 @@
         mode: '0664'
 
     - name: Apply Metal3 provisioning CR
-      shell: "oc apply -f {{ ai_metal3_yaml_dir }}/provisioning.yml"
-      environment: 
+      shell: |
+        oc apply -f {{ ai_metal3_yaml_dir }}/provisioning.yml
+      environment:
         <<: *oc_env
 
     - name: Pause for 15 seconds to allow Metal3 to begin reconciliation
@@ -79,7 +81,8 @@
         seconds: 15
 
     - name: Wait for Metal3 pods to restart
-      shell: oc wait pod --for condition=ready -n openshift-machine-api -l k8s-app=metal3 --timeout={{ default_timeout }}s
+      shell: |
+        oc wait pod --for condition=ready -n openshift-machine-api -l k8s-app=metal3 --timeout={{ default_timeout }}s
       environment:
         <<: *oc_env
 

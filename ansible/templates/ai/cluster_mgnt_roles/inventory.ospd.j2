@@ -67,6 +67,9 @@ http_store host={{ ocp_ai_bm_ip }} port={{ ocp_ai_http_store_port | default('808
 [bastions]
 bastion ansible_ssh_user=root ansible_ssh_host={{ ocp_ai_bm_ip }}
 
+[bastions:vars]
+ansible_connection=local
+
 # 3 masters nodes are mandatory, workers nodes are optional
 # each node must be identify with an unique name and the following paratmers
 # role, mac, ip, bmc_address, bmc_user, bmc_password are mandatory parameters

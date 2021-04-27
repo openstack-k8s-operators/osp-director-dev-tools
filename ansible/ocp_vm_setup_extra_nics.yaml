@@ -79,7 +79,7 @@
     shell: |
       virsh destroy {{ item }}
     with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
-    when: ocp_ai|bool == False
+    when: not (ocp_ai|bool)
 
   - name: Attach the osp network to ACTIVE worker VM's
     command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --config"
@@ -89,7 +89,7 @@
     shell: |
       virsh start {{ item }}
     with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
-    when: ocp_ai|bool == False
+    when: not (ocp_ai|bool)
 
   - name: Attach the osp network to INACTIVE worker VM's
     command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent"

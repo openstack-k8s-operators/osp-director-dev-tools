@@ -9,7 +9,7 @@
 
   - name: Include AI variables
     include_vars: vars/ocp_ai.yaml
-  
+
 
   ### ASSISTED INSTALLER CLI BINARY
 
@@ -62,20 +62,22 @@
 
     - name: Delete existing bridges (if any)
       community.general.nmcli:
-        conn_name: "{{ ocp_cluster_name }}{{ item }}"
+        conn_name: "{{ item }}"
         type: bridge
         state: absent
       with_items:
-        - bm
-        - pr
+        - "{{ ocp_cluster_name }}bm"
+        - "{{ ocp_cluster_name }}pr"
+        - "ospnetwork"
 
     - name: Make sure bridge ifcfg files are removed
       file:
-        path: "/etc/sysconfig/network-scripts/ifcfg-{{ ocp_cluster_name }}{{ item }}"
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
         state: absent
       with_items:
-        - bm
-        - pr
+        - "{{ ocp_cluster_name }}bm"
+        - "{{ ocp_cluster_name }}pr"
+        - "ospnetwork"
 
     - name: Create BM bridge
       community.general.nmcli:
@@ -87,7 +89,7 @@
         # TODO: Support any netmask?
         ip4: "{{ ocp_ai_bm_ip }}/24"
         state: present
-    
+
     - name: Create provisioning bridge
       community.general.nmcli:
         conn_name: "{{ ocp_cluster_name }}pr"
@@ -105,7 +107,7 @@
       with_items:
         - bm
         - pr
-        
+
 
   ### FIREWALL
 
@@ -113,10 +115,11 @@
     block:
     - name: Acquire default external interface
       shell: |
-        ip r | grep default | head -1 | cut -d ' ' -f 5 
+        ip r | grep default | head -1 | cut -d ' ' -f 5
       register: ocp_ai_ext_intf
 
-    - fail: 
+    - name: Fail when unable to determine external interface
+      fail:
         msg: |
           Unable to determine external interface
       when: ocp_ai_ext_intf.stdout == ""
@@ -150,12 +153,12 @@
         immediate: yes
       with_items:
         - 80
-        - 2049 
-        - 5000 
+        - 2049
+        - 5000
         - 5050
         - 6180
         - 6385
-        - 8000 
+        - 8000
         - 9999
 
     - name: Add UDP firewall rules for provisioning bridge
@@ -167,13 +170,13 @@
         immediate: yes
       with_items:
         - 53
-        - 5353 
+        - 5353
         - 546
         - 547
         - 6230-6239
-        - 67 
-        - 68   
-        - 69 
+        - 67
+        - 68
+        - 69
 
     # FIXME: Use firewalld rich-rules instead?
     - name: Add direct firewall rules for BM bridge
@@ -183,7 +186,7 @@
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" -m state --state RELATED,ESTABLISHED -j ACCEPT;
         firewall-cmd --reload
 
-  
+
   ### HTTP STORE
 
   - name: Create an HTTP server container to hold ISOs/QCOW2s
@@ -227,7 +230,7 @@
         src: "ai/dnsmasq/dnsmasq.conf.j2"
         dest: "/etc/dnsmasq.d/dnsmasq_ai.conf"
         mode: '0644'
-    
+
     - name: Create NetworkManager dnsmasq DNS conf (to disable it)
       template:
         src: "ai/dnsmasq/nm_dnsmasq.conf.j2"
@@ -281,7 +284,7 @@
       register: libvirt_default_pool
       failed_when: libvirt_default_pool.stderr != "" and "no storage pool with matching name" not in libvirt_default_pool.stderr
 
-    - name: Handle default storage pool 
+    - name: Handle default storage pool
       block:
       - name: Render libvirt default storage pool XML
         template:
@@ -297,7 +300,7 @@
               virsh pool-undefine $i
             fi
           done
-      
+
       - name: Create default storage pool
         shell: |
           virsh pool-define /tmp/storage-pool.xml
@@ -324,7 +327,7 @@
             --events on_reboot=restart \
             --print-xml > /tmp/{{ ocp_cluster_name }}-master-$((i-1)).xml
         done
-        
+
         for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
             sudo virt-install \
             --virt-type=kvm \
@@ -359,7 +362,7 @@
 
     - name: Print extra worker domain UUIDs
       shell: virsh dumpxml {{ item }} | grep uuid | cut -d '>' -f 2 | cut -d '<' -f 1
-      when: index >= {{ ocp_num_workers }}
+      when: index >= ocp_num_workers
       loop: "{{ worker_list.stdout_lines }}"
       loop_control:
         index_var: index
@@ -400,11 +403,11 @@
   - name: Install sushy-tools
     block:
     - name: Install sushy-tools via pip3
-      command: "pip3 install {{ item }}" 
+      command: "pip3 install {{ item }}"
       with_items:
-        - sushy-tools 
+        - sushy-tools
         - libvirt-python
-    
+
     - name: Create sushy-tools conf directory
       file:
         path: /opt/sushy-tools
@@ -432,7 +435,7 @@
         name: sushy-tools
         state: restarted
         enabled: yes
-    
+
 
   ### ASSISTED INSTALLER SERVICE SCRIPT
 
@@ -449,7 +452,7 @@
       file:
         path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-service', true) }}"
         state: directory
-        mode: '0755' 
+        mode: '0755'
 
     - name: Set assisted installer service storage directory
       replace:
@@ -511,7 +514,7 @@
           src: ai/cluster_mgnt_roles/50-master-scheduler.yml.j2
           dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/50-master-scheduler.yml.j2"
           mode: '0664'
-        
+
       - name: Inject schedulable-master manifest
         lineinfile:
           path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
@@ -526,7 +529,7 @@
           src: ai/cluster_mgnt_roles/60-ingress-controller.yml.j2
           dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/60-ingress-controller.yml.j2"
           mode: '0664'
-        
+
       - name: Inject ingress controller manifest
         lineinfile:
           path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
@@ -547,6 +550,3 @@
           src: ai/cluster_mgnt_roles/inventory.ospd.j2
           dest: "{{ base_path }}/cluster_mgnt_roles/inventory.ospd"
           mode: '0664'
-
-
-    

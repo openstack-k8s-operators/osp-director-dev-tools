@@ -11,7 +11,7 @@ spec:
   # How many nodes to provision
   replicas: {{ osp_compute_count }}
   # The image to install on the provisioned nodes
-{% if ocp_ai|bool == False %}
+{% if not (ocp_ai|bool) %}
   baseImageUrl: http://172.22.0.1/images/{{ osp_controller_base_image_url | basename }}
 {% else %}
   baseImageUrl: http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8080', true) }}/{{ osp_controller_base_image_url | basename }}

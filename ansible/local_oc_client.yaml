@@ -44,7 +44,7 @@
       dest: "{{ hostvars['localhost']['kubeconfig'] }}"
       src: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
       flat: true
-    when: ocp_ai|bool == False
+    when: not (ocp_ai|bool)
 
   - name: Copy kubeconfig for assisted installer
     fetch:
