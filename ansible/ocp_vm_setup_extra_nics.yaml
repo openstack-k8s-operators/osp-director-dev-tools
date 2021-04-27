@@ -24,7 +24,7 @@
 
   - name: check if osp network already exists
     shell: >
-      virsh net-list | grep ospnetwork
+      virsh net-list --all | grep ospnetwork
     ignore_errors: true
     register: ospnetwork_exist
 
@@ -48,10 +48,12 @@
     - name: Define ospnetwork libvirt network
       command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
 
-    - name: Start the osp network
-      shell: |
-        virsh net-start --network ospnetwork
-        virsh net-autostart --network ospnetwork
+  - name: Start the osp network
+    shell: |
+      virsh net-start --network ospnetwork
+      virsh net-autostart --network ospnetwork
+    register: ospnetwork_start
+    failed_when: ospnetwork_start.stderr != "" and "network is already active" not in ospnetwork_start.stderr
 
   - name: get active worker nodes
     shell: >
@@ -73,10 +75,23 @@
     with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
     ignore_errors: true
 
-  - name: Attach the osp network to ACTIVE worker VM's
-    command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --live"
+  - name: HACK to fix dev-scripts bug
+    shell: |
+      virsh destroy {{ item }}
     with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+    when: ocp_ai|bool == False
+
+  - name: Attach the osp network to ACTIVE worker VM's
+    command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --config"
+    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+
+  - name: HACK to fix dev-scripts bug
+    shell: |
+      virsh start {{ item }}
+    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+    when: ocp_ai|bool == False
 
   - name: Attach the osp network to INACTIVE worker VM's
     command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent"
     with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+    when: worker_ocp_inactive.stdout_lines != 0

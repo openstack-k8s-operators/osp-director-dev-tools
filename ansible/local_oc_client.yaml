@@ -39,11 +39,20 @@
   vars_files: vars/default.yaml
   tasks:
 
-  - name: Copy kubeconfig
+  - name: Copy kubeconfig for dev-scripts
     fetch:
       dest: "{{ hostvars['localhost']['kubeconfig'] }}"
       src: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
       flat: true
+    when: ocp_ai|bool == False
+
+  - name: Copy kubeconfig for assisted installer
+    fetch:
+      dest: "{{ hostvars['localhost']['kubeconfig'] }}"
+      src: "{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}"
+      flat: true
+      become: true
+    when: ocp_ai|bool
 
   - name: Copy oc binary
     fetch:

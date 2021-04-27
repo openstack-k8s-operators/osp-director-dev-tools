@@ -1,0 +1,8 @@
+---
+- name: Destroy the dev-scripts OCP cluster
+  import_playbook: ocp_dev_scripts_destroy.yaml
+  when: ocp_ai | bool == False
+
+- name: Destroy the assisted installer OCP cluster
+  import_playbook: ocp_ai_destroy.yaml
+  when: ocp_ai | bool

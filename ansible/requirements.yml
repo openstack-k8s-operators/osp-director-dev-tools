@@ -1,3 +1,9 @@
-- name: chrony
-  src: https://github.com/openstack/ansible-role-chrony.git
-  version: 1.0.1
+---
+roles:
+  - name: chrony
+    src: https://github.com/openstack/ansible-role-chrony.git
+    version: 1.0.1
+
+collections:
+  - name: containers.podman
+  - name: community.general

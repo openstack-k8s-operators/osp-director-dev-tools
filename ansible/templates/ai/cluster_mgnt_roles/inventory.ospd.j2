@@ -1,0 +1,104 @@
+[all:vars]
+
+###############################################################################
+# Required configuration variables for Assisted Install Installations         #
+###############################################################################
+
+# Name of the cluster, i.e. openshift
+cluster_name="{{ ocp_cluster_name }}"
+
+# Base DNS domain
+base_dns_domain="{{ ocp_domain_name | default('test.metalkube.org', true) }}"
+
+# Available subnets *
+machine_network_cidr="{{ ocp_ai_bm_bridge_cidr }}"
+
+# Allocate virtual IPs via DHCP server
+vip_dhcp_allocation=False
+
+# API virtual IP
+api_vip="{{ ocp_ai_bm_cidr_prefix }}.3"
+
+# Ingress virtual IP
+ingress_vip="{{ ocp_ai_bm_cidr_prefix }}.4"
+
+# Cluster network CIDR
+cluster_network_cidr="10.128.0.0/14"
+
+# Cluster network host prefix
+cluster_network_host_prefix=23
+
+# Service network CIDR
+service_network_cidr="172.30.0.0/16"
+
+ntp_server="clock.redhat.com"
+
+#Host SSH Public Key for troubleshooting after installation
+# Use the same host discovery SSH key
+ssh_public_key="{{ lookup('file', '/root/.ssh/id_rsa.pub') }}"
+
+# Load pull-secret file
+{% if secrets_repo is undefined %}
+pull_secret={{ lookup('file', base_path + '/pull-secret') }}
+{% else %}
+pull_secret={{ lookup('file', secrets_repo_path + '/pull-secret') }}
+{% endif %}
+
+# Load cluster file, this is generated automatically
+cluster_id="{{ '{{' }} lookup('file', './cluster.txt') {{ '}}' }}"
+
+# Version of the openshift-installer, undefined or empty results in the playbook failing.
+openshift_version="{{ ocp_version }}"
+
+# Discovery ISO
+discovery_iso_name="discovery_image_{{ ocp_cluster_name }}.iso"
+# HTTP server where the ISO is stored
+discovery_iso_server="http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8080', true) }}"
+
+# Parameters for a Restricted Network installation
+use_mirror= False
+mirror_certificate="NA"
+mirror_registry=NA:5000
+
+[services]
+assisted_installer host={{ ocp_ai_bm_ip }} port={{ ocp_ai_service_port | default('8090', true) }}
+http_store host={{ ocp_ai_bm_ip }} port={{ ocp_ai_http_store_port | default('8080', true) }}
+
+[bastions]
+bastion ansible_ssh_user=root ansible_ssh_host={{ ocp_ai_bm_ip }}
+
+# 3 masters nodes are mandatory, workers nodes are optional
+# each node must be identify with an unique name and the following paratmers
+# role, mac, ip, bmc_address, bmc_user, bmc_password are mandatory parameters
+# vendor parameter is mandatory, options include: Dell, HPE, SuperMicro, Lenovo, KVM
+# ip, mask, gateway, dns are mandatory parameters for static IP, othewise use ip=dhcp
+
+# Master nodes
+[masters]
+{% for i in range(0, ocp_num_masters) %}
+{{ ocp_cluster_name }}-master-{{ i }} bmc_address={{ ocp_ai_bm_ip }}:{{ ocp_ai_sushy_port | default('8082', true) }} mac={{ ocp_ai_bm_bridge_master_mac_prefix }}{{ i }} ip={{ ocp_ai_bm_cidr_prefix }}.1{{ i }}
+{% endfor %}
+
+[masters:vars]
+role=master
+vendor=KVM
+bmc_user=USERID
+bmc_password=PASSW0RD
+mask=24
+gateway={{ ocp_ai_bm_ip }}
+dns={{ ocp_ai_bm_ip }}
+
+# Worker nodes
+[workers]
+{% for i in range(0, ocp_num_workers) %}
+{{ ocp_cluster_name }}-worker-{{ i }} bmc_address={{ ocp_ai_bm_ip }}:{{ ocp_ai_sushy_port | default('8082', true) }} mac={{ ocp_ai_bm_bridge_worker_mac_prefix }}{{ i }} ip={{ ocp_ai_bm_cidr_prefix }}.2{{ i }}
+{% endfor %}
+
+[workers:vars]
+role=worker 
+vendor=KVM
+bmc_user=USERID
+bmc_password=PASSW0RD
+mask=24
+gateway={{ ocp_ai_bm_ip }}
+dns={{ ocp_ai_bm_ip }}

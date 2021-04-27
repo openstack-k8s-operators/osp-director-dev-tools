@@ -1,0 +1,11 @@
+---
+- name: Include and execute OCP user creation logic
+  import_playbook: ocp_user.yaml
+
+- name: Include and execute OCP dev-scripts preparation Ansible logic
+  import_playbook: ocp_dev_scripts_prep.yaml
+  when: ocp_ai | bool == False
+
+- name: Include and execute OCP assisted installer preparation Ansible logic
+  import_playbook: ocp_ai_prep.yaml
+  when: ocp_ai | bool

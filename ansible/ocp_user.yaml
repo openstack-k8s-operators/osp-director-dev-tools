@@ -1,0 +1,24 @@
+---
+- hosts: convergence_base
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: create ocp group
+      group:
+        name: ocp
+        state: present
+
+    - name: Create user to run installer dev scripts
+      user:
+        name: ocp
+        comment: ocp user
+        shell: /bin/bash
+        group: ocp
+        groups: wheel
+
+    - name: make sure /home/ocp is world readable
+      file:
+        path: /home/ocp
+        state: directory
+        mode: '0755'

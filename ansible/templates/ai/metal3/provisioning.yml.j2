@@ -1,0 +1,13 @@
+apiVersion: metal3.io/v1alpha1
+kind: Provisioning
+metadata:
+  finalizers:
+  - provisioning.metal3.io
+  name: provisioning-configuration
+spec:
+  provisioningDHCPRange: {{ ocp_ai_pr_bridge_dhcp_range }}
+  provisioningIP: {{ ((ocp_ai_pr_bridge_cidr.split('.'))[0:3])|join('.') }}.3
+  provisioningInterface: enp2s0
+  provisioningNetwork: Managed
+  provisioningNetworkCIDR: {{ ocp_ai_pr_bridge_cidr }}
+  

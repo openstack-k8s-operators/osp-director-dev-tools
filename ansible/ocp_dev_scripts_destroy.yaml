@@ -1,0 +1,15 @@
+---
+- hosts: convergence_base
+  become: true
+  become_user: ocp
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: Clean dev-scripts deployment
+    shell: |
+      export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+      make clean
+    args:
+      chdir: "{{ base_path }}/dev-scripts"

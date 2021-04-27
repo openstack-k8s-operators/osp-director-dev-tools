@@ -1,0 +1,65 @@
+# Don't use /etc/resolv.conf
+no-resolv
+
+# Don't use /etc/hosts
+no-hosts
+
+# Recursive DNS
+server={{ ocp_ai_external_dns }}
+
+# Set local domain
+domain={{ ocp_ai_full_cluster_name }}
+
+# Disable DHCP for external interface
+no-dhcp-interface={{ ocp_ai_ext_intf.stdout }}
+# Enable DHCP for baremetal bridge
+interface={{ ocp_cluster_name }}bm
+# include cni-podman0 interface that connects to assisted-installer container for DNS requests to succeed
+interface=cni-podman0
+bind-interfaces
+
+#### DHCP (dnsmasq --help dhcp)
+dhcp-range={{ ocp_ai_bm_bridge_dhcp_range }},24h
+dhcp-option=option:netmask,255.255.255.0
+dhcp-option=option:router,{{ ocp_ai_bm_ip }}
+dhcp-option=option:dns-server,{{ ocp_ai_bm_ip }}
+dhcp-option=option:ntp-server,{{ ocp_ai_bm_ip }}
+
+
+# Provisioning node
+address=/provisioning.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_ip }}
+ptr-record=1.{{ ocp_ai_bm_cidr_rev_suffix }},provisioning.{{ ocp_ai_full_cluster_name }}
+
+# Cluster ntp-server
+address=/ntp-server.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_ip }}
+ptr-record=1.{{ ocp_ai_bm_cidr_rev_suffix }},ntp-server.{{ ocp_ai_full_cluster_name }}
+
+# External API endpoint (External VIP)
+address=/api.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.3
+ptr-record=3.{{ ocp_ai_bm_cidr_rev_suffix }},api.{{ ocp_ai_full_cluster_name }}
+
+# Ingress VIP 
+address=/.apps.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.4
+#ptr-record=4.{{ ocp_ai_bm_cidr_rev_suffix }},*apps.{{ ocp_ai_full_cluster_name }}
+
+# Internal API endpoint (Internal VIP)
+address=/api-int.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.3
+ptr-record=3.{{ ocp_ai_bm_cidr_rev_suffix }},api-int.{{ ocp_ai_full_cluster_name }}
+
+{% for i in range(0, ocp_num_masters) %}
+# Master-{{ i }}
+dhcp-host={{ ocp_ai_bm_bridge_master_mac_prefix }}{{ i }},{{ ocp_ai_bm_cidr_prefix }}.1{{ i }},master-{{ i }}.{{ ocp_ai_full_cluster_name }}
+address=/master-{{ i }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.1{{ i }}
+ptr-record=1{{ i }}.{{ ocp_ai_bm_cidr_rev_suffix }},master-{{ i }}.{{ ocp_ai_full_cluster_name }}
+{% endfor %}
+
+{% for i in range(0, ocp_num_workers + ocp_num_extra_workers) %}
+# Worker-{{ i }}
+dhcp-host={{ ocp_ai_bm_bridge_worker_mac_prefix }}{{ i }},{{ ocp_ai_bm_cidr_prefix }}.2{{ i }},worker-{{ i }}.{{ ocp_ai_full_cluster_name }}
+address=/worker-{{ i }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.2{{ i }}
+ptr-record=2{{ i }}.{{ ocp_ai_bm_cidr_rev_suffix }},worker-{{ i }}.{{ ocp_ai_full_cluster_name }}
+{% endfor %}
+
+#
+# END OF FILE
+#

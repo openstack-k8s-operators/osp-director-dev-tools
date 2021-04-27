@@ -15,7 +15,10 @@ local-defaults.yaml:
 	echo -e "vars:" > $@
 
 local-deps:
-	ansible-galaxy install -r requirements.yml
+	# This should work for both roles and collections, but does not:
+	# ansible-galaxy install -r requirements.yml
+	# ...so we install requirements twice, once for roles and once for collections
+	ansible-galaxy role install -r requirements.yml && ansible-galaxy collection install -r requirements.yml
 
 download_tools: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -24,22 +27,23 @@ download_tools: hosts local-defaults.yaml
 
 ocp_install:
 	$(MAKE) host_prep
-	$(MAKE) dev_scripts
+	$(MAKE) ocp_installer
 	$(MAKE) post_install
 
 host_prep: hosts local-deps local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
 	host_prep.yaml \
-	ocp_dev_scripts_prep.yaml
+	ocp_installer_prep.yaml
 
-dev_scripts: hosts local-defaults.yaml
+ocp_installer: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
-	ocp_dev_scripts.yaml
+	ocp_installer.yaml
 
 post_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	local_oc_client.yaml \
+	ocp_ai_post_install.yaml \
 	ocp_default_storageclass.yaml \
 	ocp_image_registry.yaml \
 	ocp_vm_setup_extra_nics.yaml
@@ -146,10 +150,9 @@ nfs_cleanup: hosts
 	 cat \$$temp > /etc/fstab; \
 	 rm \$$temp"
 
-destroy_ocp: hosts
-	ANSIBLE_FORCE_COLOR=true ansible -i hosts convergence_base \
-	--become --become-user ocp \
-	-m shell -a "cd /home/ocp/dev-scripts && make clean"
+destroy_ocp: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
+	ocp_installer_destroy.yaml
 	$(MAKE) nfs_cleanup
 
 demo: hosts

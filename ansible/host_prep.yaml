@@ -83,6 +83,35 @@
     - name: enable rhel-8-for-x86_64-appstream-rpms and advanced-virt-for-rhel-8-x86_64-rpms
       command: subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms --enable=advanced-virt-for-rhel-8-x86_64-rpms
 
+    - name: validation and tweaks for assisted installer
+      block:
+      # FIXME: Here to enforce use of RHEL 8.3+ and OCP 4.7 for now
+      - fail:
+          msg: RHEL 8.3+ is required for the assisted installer deployments
+        when: ansible_distribution != "RedHat" or ansible_distribution_version|float < 8.3
+
+      - fail:
+          msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP 4.7 is currently supported for assisted installer deployments."
+        when: ocp_version != 4.7
+
+      - name: disable virt module for rhel and enable it for 8.3
+        shell: |
+          dnf module disable virt:rhel -y
+          dnf module enable virt:8.3 -y
+
+      - name: Install the latest version of qemu-kvm
+        block:
+        - name: Uninstall qemu-kvm
+          dnf:
+            name: qemu-kvm
+            state: absent
+
+        - name: Install latest qemu-kvm
+          dnf:
+            name: qemu-kvm
+            state: latest
+      when: ocp_ai|bool
+
   - name: install packages and enable services
     block:
     - name: Install packages
@@ -104,6 +133,14 @@
           - buildah
           - git
           - make
+
+          # Required for assisted installer
+          - dnsmasq
+          - libvirt-devel
+          - python3-netaddr
+          - python3-pip
+          - qemu-kvm
+          - virt-install
 
     - name: Enable helpful services
       service: name={{ item }} enabled=yes state=started

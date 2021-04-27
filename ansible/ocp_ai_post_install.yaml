@@ -1,0 +1,86 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Extra post-install steps for assisted installer
+    block:
+    - name: Include AI variables
+      include_vars: vars/ocp_ai.yaml
+
+
+    ### UN-SCHEDULABLE MASTERS
+
+    - name: Set directory for storing schedule/ingress yaml files
+      set_fact:
+        ai_sched_ingress_yaml_dir: "{{ working_yamls_dir }}/ai_schedule_ingress"
+
+    - name: Set facts to disable schedulable masters and reduce ingress replica count
+      set_fact:
+        ocp_ai_masters_schedulable: false
+        ocp_ai_ingress_replicas: 2
+
+    - name: Create local yaml dir for schedule/ingress CRs
+      file:
+        path: "{{ ai_sched_ingress_yaml_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Create schedule/ingress CRs
+      template:
+        src: ai/cluster_mgnt_roles/{{ item }}.j2
+        dest: "{{ ai_sched_ingress_yaml_dir }}/{{ item }}"
+        mode: '0664'
+      with_items:
+        - 50-master-scheduler.yml
+        - 60-ingress-controller.yml
+
+    - name: Apply schedule/ingress CRs
+      shell: "oc apply -f {{ ai_sched_ingress_yaml_dir }}/{{ item }}"
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}"
+      with_items:
+        - 50-master-scheduler.yml
+        - 60-ingress-controller.yml
+
+
+    ### PROVISIONING NETWORK
+
+    - name: Set directory for storing AI Metal3 yaml files
+      set_fact:
+        ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
+
+    - name: Create local yaml dir for Metal3 CRs
+      file:
+        path: "{{ ai_metal3_yaml_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Create Metal3 provisioning CR
+      template:
+        src: ai/metal3/provisioning.yml.j2
+        dest: "{{ ai_metal3_yaml_dir }}/provisioning.yml"
+        mode: '0664'
+
+    - name: Apply Metal3 provisioning CR
+      shell: "oc apply -f {{ ai_metal3_yaml_dir }}/provisioning.yml"
+      environment: 
+        <<: *oc_env
+
+    - name: Pause for 15 seconds to allow Metal3 to begin reconciliation
+      pause:
+        seconds: 15
+
+    - name: Wait for Metal3 pods to restart
+      shell: oc wait pod --for condition=ready -n openshift-machine-api -l k8s-app=metal3 --timeout={{ default_timeout }}s
+      environment:
+        <<: *oc_env
+
+    when: ocp_ai|bool
