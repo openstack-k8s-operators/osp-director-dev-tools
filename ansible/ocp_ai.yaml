@@ -43,9 +43,10 @@
     environment:
       ANSIBLE_HOST_KEY_CHECKING: false
 
-  - name: Download assisted installer cluster kubeconfig
+  - name: Download assisted installer cluster kubeconfig and kubeadmin password
     shell: |
       aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
+      aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
     args:
       chdir: "{{ base_path }}/cluster_mgnt_roles"
     environment:
