@@ -42,7 +42,7 @@ if [ "$NETWORK" = "ospnetwork" ]; then
     fi   
  
     iptables -L FORWARD -n -v | egrep 'ACCEPT.*all.*10.0.0.0/24.*!10.0.0.0/24'
-    if  [ $? -eq 0 ]; then
+    if  [ $? -ne 0 ]; then
       logger -p local3.info "qemu hook script - adding external OSP network forward rule"
       iptables -I FORWARD 1 -s 10.0.0.0/24 ! -d 10.0.0.0/24 -j ACCEPT
     fi
