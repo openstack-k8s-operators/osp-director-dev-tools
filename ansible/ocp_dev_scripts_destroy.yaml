@@ -13,3 +13,10 @@
       make clean
     args:
       chdir: "{{ base_path }}/dev-scripts"
+
+  - name: Remove ospnetwork libvirt network
+    shell: |
+      virsh net-destroy ospnetwork
+      virsh net-undefine ospnetwork
+    become: true
+    become_user: root
