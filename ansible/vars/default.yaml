@@ -8,6 +8,15 @@ ocp_version: 4.7
 ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.7.4-x86_64
 ocp_release_type: ga
 
+# If set to true:
+# - Assisted installer is used to install OCP instead of dev-scripts
+# - Thus, dev-scripts related variables are ignored, and ...
+# - ocp_release_image and ocp_release_type are ignored, and ocp_version must be 4.7 (for now)
+# - Other OCP AI variables are stored in vars/ocp_ai.yaml to reduce clutter in this file
+# NOTE: This variable should be set to true in local-defaults.yaml as opposed to changing it here,
+#       otherwise our playbooks seem to be flaky with executing the AI logic
+#ocp_ai: false 
+
 # private repo to read required secret files from
 # The playbooks expect secret files which can be placed in a private repo
 # Right now these are:
@@ -38,6 +47,7 @@ ocp_worker_disk: 50
 
 # OCP cluster name
 ocp_cluster_name: ostest
+#ocp_domain_name: defaults to test.metalkube.org
 
 # Released version of the opm package (can be set to 'latest')
 opm_version: v1.12.5

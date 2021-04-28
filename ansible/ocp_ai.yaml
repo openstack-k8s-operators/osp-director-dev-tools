@@ -1,0 +1,101 @@
+---
+- hosts: convergence_base
+  become: true
+  gather_facts: false
+
+  tasks:
+  - name: Include default variables
+    include_vars: vars/default.yaml
+
+  - name: Include AI variables
+    include_vars: vars/ocp_ai.yaml
+
+
+  ### EXECUTE ASSISTED INSTALLER PLAYBOOK
+
+  - name: Delete existing AI cluster (if any)
+    command: "aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} delete cluster {{ ocp_cluster_name }}"
+    environment:
+      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+    register: delete_ai_cluster
+    failed_when: delete_ai_cluster.stderr != "" and "Cluster {{ ocp_cluster_name }} not found" not in delete_ai_cluster.stderr
+
+  - name: Create assisted installer execution bash script
+    template:
+      src: ai/cluster_mgnt_roles/run_playbook.sh.j2
+      dest: "{{ base_path }}/cluster_mgnt_roles/run_playbook.sh"
+      mode: '0755'
+
+  - debug:
+      msg: |
+        Executing the assisted installer playbook. You can tail the logs at {{ base_path }}/ai.log on
+        the host for progress.  Furthermore, you can view the assisted installer console by entering the
+        URL http://{{ ocp_ai_bm_ip }}:8888/clusters/.  If you do not have direct access to that IP from
+        your browser, you can use a tool like "sshuttle" to provide connectivity like so:
+        sshuttle --dns -r <user>@<cluster host> {{ ocp_ai_bm_bridge_cidr }}.  You would then hit this
+        URL in your browser: http://<cluster host>:8888/clusters/
+
+  - name: Run the assisted installer playbook
+    shell: |
+      ./run_playbook.sh
+    args:
+      chdir: "{{ base_path }}/cluster_mgnt_roles"
+    environment:
+      ANSIBLE_HOST_KEY_CHECKING: false
+
+  - name: Download assisted installer cluster kubeconfig
+    shell: |
+      aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
+    args:
+      chdir: "{{ base_path }}/cluster_mgnt_roles"
+    environment:
+      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+  - name: Set kubeconfig fact
+    set_fact:
+      ai_kubeconfig: lookup('file', '{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}')
+
+  - name: Create assisted installer kubeconfig locally
+    block:
+    - name: Include oc_local role
+      include_role:
+        name: oc_local
+
+    - name: Include default variables
+      include_vars: vars/default.yaml
+
+    - name: Render kubeconfig
+      template:
+        src: ai/cluster_mgnt_roles/kubeconfig.j2
+        dest: "{{ working_dir }}/kubeconfig"
+        mode: '0664'
+
+    delegate_to: localhost
+
+
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  ### OC CLIENT
+
+  tasks:
+  - name: Get the ocp client tar gunzip file
+    get_url:
+      url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-{{ ocp_version }}/openshift-client-linux.tar.gz"
+      dest: "/tmp/openshift-client-linux.tar.gz"
+      mode: '0755'
+
+  - name: "Untar the openshift-client-linux.tar.gz"
+    unarchive:
+      src: "/tmp/openshift-client-linux.tar.gz"
+      dest: "/tmp"
+      mode: '0755'
+
+  - name: Copy oc binary to /usr/local/bin
+    copy:
+      src: "/tmp/oc"
+      dest: /usr/local/bin/
+      mode: '0755'
+    become: yes

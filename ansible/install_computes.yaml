@@ -46,13 +46,26 @@
     become: true
     become_user: root
 
-  - name: register dev-tools prepared extra_hosts
+  - name: register dev-scripts prepared extra_hosts
     shell: |
       set -e
       oc apply -f {{ base_path }}/dev-scripts/ocp/ostest/extra_host_manifests.yaml
-    environment: &oc_env
+    environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
+    when: not (ocp_ai|bool)
+
+  - name: Include AI variables
+    include_vars: vars/ocp_ai.yaml
+
+  - name: Register assisted installer prepared extra_hosts
+    shell: |
+      set -e
+      oc apply -f {{ working_yamls_dir }}/ai_metal3/extra_workers_bmhs.yml
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    when: ocp_ai|bool
 
   - name: Render templates to yaml dir
     template:
@@ -66,8 +79,9 @@
   - name: does the provisionserver already exist
     shell: >
       oc get -n openstack osprovserver openstack -o json --ignore-not-found
-    environment:
-      <<: *oc_env
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
     register: provisionserver_switch
 
   - name: Start provisionserver

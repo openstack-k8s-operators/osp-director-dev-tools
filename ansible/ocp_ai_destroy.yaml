@@ -1,0 +1,108 @@
+---
+- hosts: convergence_base
+  become: true
+  gather_facts: false
+
+  tasks:
+  - name: Include default variables
+    include_vars: vars/default.yaml
+
+  - name: Include AI variables
+    include_vars: vars/ocp_ai.yaml
+
+
+  ### DNSMASQ
+
+  - name: Remove dnsmasq conf
+    file:
+      path: "/etc/dnsmasq.d/dnsmasq_ai.conf"
+      state: absent
+
+  - name: Remove dnsmasq DNS conf
+    file:
+      path: "/etc/NetworkManager/conf.d/dnsmasq.conf"
+      state: absent
+
+  - name: Restart NetworkManager
+    service:
+      name: NetworkManager
+      state: restarted
+      enabled: yes
+
+  - name: Stop dnsmasq
+    service:
+      name: dnsmasq
+      state: stopped
+
+
+  ### VMs
+
+  - name: Delete VMs and disk QCOW2s
+    shell: |
+      for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
+        virsh destroy $i
+      done
+
+      for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
+        virsh undefine --nvram $i
+        rm -f /var/lib/libvirt/images/$i.qcow2
+      done
+
+
+  ### SUSHY-TOOLS
+
+  - name: Stop sushy-tools service
+    service:
+      name: sushy-tools
+      state: stopped
+      enabled: no
+    ignore_errors: true
+
+  - name: Delete sushy-tools service
+    file:
+      path: /etc/systemd/system/sushy-tools.service
+      state: absent
+
+  - name: Reload systemd service
+    systemd:
+      daemon_reexec: yes
+
+
+  ### HTTP STORE
+
+  - name: Stop and remove httpd container
+    containers.podman.podman_container:
+      name: httpd
+      image: registry.centos.org/centos/httpd-24-centos7:latest
+      state: absent
+
+
+  ### ASSISTED INSTALLER SERVICE SCRIPT
+
+  - name: Stop and remove assisted installer service container
+    shell: |
+      ./stop-assisted-service.sh
+    args:
+      chdir: "{{ base_path }}/assisted-service-onprem"
+
+
+  ### BRIDGES
+
+  - name: Delete AI bridges
+    block:
+    - name: Delete existing bridges (if any)
+      community.general.nmcli:
+        conn_name: "{{ ocp_cluster_name }}{{ item }}"
+        type: bridge
+        state: absent
+      with_items:
+        - bm
+        - pr
+
+    - name: Make sure bridge ifcfg files are removed
+      file:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ ocp_cluster_name }}{{ item }}"
+        state: absent
+      with_items:
+        - bm
+        - pr

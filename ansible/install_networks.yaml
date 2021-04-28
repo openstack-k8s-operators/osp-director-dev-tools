@@ -23,6 +23,11 @@
       state: directory
       mode: '0755'
 
+  - name: Override osp_interface for assisted installer deployments
+    set_fact:
+      osp_interface: enp8s0
+    when: ocp_ai|bool
+
   - name: Render templates to yaml dir
     template:
       src: "osp/networks/{{ item }}.j2"

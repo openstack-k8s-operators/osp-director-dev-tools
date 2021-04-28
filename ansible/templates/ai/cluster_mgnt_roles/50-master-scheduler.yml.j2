@@ -1,0 +1,12 @@
+apiVersion: config.openshift.io/v1
+kind: Scheduler
+metadata:
+  name: cluster
+spec:
+{% if ocp_ai_masters_schedulable is undefined %}
+  mastersSchedulable: true
+{% else %}
+  mastersSchedulable: {{ ocp_ai_masters_schedulable }}
+{% endif %}
+  policy:
+    name: ""

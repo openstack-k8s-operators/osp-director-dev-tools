@@ -2,30 +2,6 @@
 - hosts: convergence_base
   gather_facts: false
   become: true
-
-  tasks:
-    - name: create ocp group
-      group:
-        name: ocp
-        state: present
-
-    - name: Create user to run metal3 installer dev scripts
-      user:
-        name: ocp
-        comment: ocp user
-        shell: /bin/bash
-        group: ocp
-        groups: wheel
-
-    - name: make sure /home/ocp is world readable
-      file:
-        path: /home/ocp
-        state: directory
-        mode: '0755'
-
-- hosts: convergence_base
-  gather_facts: false
-  become: true
   become_user: ocp
 
   tasks:
@@ -45,49 +21,13 @@
         mode: 0755
         remote_src: yes
 
-    - name: Copy pull-secret file
-      when: secrets_repo is undefined
-      block:
-      - name: Set secrets repo path
-        set_fact:
-          secrets_repo_path: "{{ base_path }}"
-
-      - name: Copy pull-secret
-        copy:
-          dest: "{{ base_path }}/pull-secret"
-          src: files/pull-secret
-          mode: "0644"
-      rescue:
-      - name: Fail when pull-secrets is not found
-        fail:
-          msg: |
-            files/pull-secret is not present. You must obtain it from
-            https://cloud.redhat.com/openshift/install/pull-secret and copy it
-            there manually.
+    - name: Pull secret processing
+      include_tasks: pull-secret.yaml
 
     - name: Verify ci_token variable is present
       fail:
         msg: ci_token is not set in your vars or as environment variable. You must obtain it from https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ (by clicking the upper right drop-down and selecting "Copy Login Command").
       when: (ci_token is undefined or (ci_token|string|length == 0)) and (lookup('env','CI_TOKEN')|length == 0)
-
-    - name: use secrets_repo
-      when: secrets_repo is defined
-      block:
-      - name: Set secrets_repo path
-        set_fact:
-          secrets_repo_path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
-
-      - name: create base dir for secrets_repo repo
-        file:
-          path: "{{ secrets_repo_path }}"
-          state: directory
-          mode: "0755"
-
-      - name: Clone the repo specified in secrets_repo
-        git:
-          repo: "{{ secrets_repo }}"
-          dest: "{{ secrets_repo_path }}"
-          version: "{{ secrets_branch | default('HEAD', true) }}"
 
     - name: Set dev-scripts config values
       lineinfile:

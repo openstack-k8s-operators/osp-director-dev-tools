@@ -1,0 +1,554 @@
+---
+- hosts: convergence_base
+  become: true
+  gather_facts: false
+
+  tasks:
+  - name: Include default variables
+    include_vars: vars/default.yaml
+
+  - name: Include AI variables
+    include_vars: vars/ocp_ai.yaml
+
+
+  ### ASSISTED INSTALLER CLI BINARY
+
+  - name: Install assisted installer CLI
+    shell: |
+      pip3 install aicli
+      pip3 install --user aicli
+
+  ### ADDITIONAL SET-FACTS
+
+  - name: Set fact for full cluster name
+    set_fact:
+      ocp_ai_full_cluster_name: "{{ ocp_cluster_name }}.{{ ocp_domain_name | default('test.metalkube.org', true) }}"
+
+  # TODO: Add support for ipv6 for this and the following set_facts
+  - name: Set fact for BM CIDR prefix
+    set_fact:
+      ocp_ai_bm_cidr_prefix: "{{ ((ocp_ai_bm_bridge_cidr.split('.'))[0:3])|join('.') }}"
+
+  - name: Set fact for reverse BM CIDR suffix
+    set_fact:
+      ocp_ai_bm_cidr_rev_suffix: "{{ ((ocp_ai_bm_bridge_cidr.split('.'))[:-1]|join('.')|ipaddr('revdns'))[2:-1] }}"
+
+  - name: Set fact for provisioning CIDR prefix
+    set_fact:
+        ocp_ai_pr_cidr_prefix: "{{ ((ocp_ai_bm_bridge_cidr.split('.'))[0:3])|join('.') }}"
+
+
+  ### BRIDGES
+
+  # FIXME?: Should this task target the playbook host instead?
+  - name: Install needed network manager libs
+    package:
+      name:
+        - NetworkManager-libnm
+        - nm-connection-editor
+      state: present
+
+  - name: Create AI bridges
+    block:
+    - name: Remove lingering bridges from dev-scripts (if any)
+      shell: |
+        virsh net-destroy {{ ocp_cluster_name }}{{ item }};
+        virsh net-undefine {{ ocp_cluster_name }}{{ item }}
+      with_items:
+        - bm
+        - pr
+      register: dev_scripts_br_rm
+      failed_when: dev_scripts_br_rm.stderr != "" and "no network with matching name" not in dev_scripts_br_rm.stderr and "is not active" not in dev_scripts_br_rm.stderr
+
+    - name: Delete existing bridges (if any)
+      community.general.nmcli:
+        conn_name: "{{ item }}"
+        type: bridge
+        state: absent
+      with_items:
+        - "{{ ocp_cluster_name }}bm"
+        - "{{ ocp_cluster_name }}pr"
+        - "ospnetwork"
+
+    - name: Make sure bridge ifcfg files are removed
+      file:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
+        state: absent
+      with_items:
+        - "{{ ocp_cluster_name }}bm"
+        - "{{ ocp_cluster_name }}pr"
+        - "ospnetwork"
+
+    - name: Create BM bridge
+      community.general.nmcli:
+        conn_name: "{{ ocp_cluster_name }}bm"
+        type: bridge
+        ifname: "{{ ocp_cluster_name }}bm"
+        autoconnect: yes
+        stp: off
+        # TODO: Support any netmask?
+        ip4: "{{ ocp_ai_bm_ip }}/24"
+        state: present
+
+    - name: Create provisioning bridge
+      community.general.nmcli:
+        conn_name: "{{ ocp_cluster_name }}pr"
+        type: bridge
+        ifname: "{{ ocp_cluster_name }}pr"
+        autoconnect: yes
+        stp: off
+        # TODO: Support any netmask?
+        ip4: "{{ ocp_ai_pr_ip }}/24"
+        state: present
+
+    - name: Reload bridges
+      shell: |
+        /usr/bin/nmcli con reload {{ ocp_cluster_name }}{{ item }}; /usr/bin/nmcli con up {{ ocp_cluster_name }}{{ item }}
+      with_items:
+        - bm
+        - pr
+
+
+  ### FIREWALL
+
+  - name: Prepare firewall
+    block:
+    - name: Acquire default external interface
+      shell: |
+        ip r | grep default | head -1 | cut -d ' ' -f 5
+      register: ocp_ai_ext_intf
+
+    - name: Fail when unable to determine external interface
+      fail:
+        msg: |
+          Unable to determine external interface
+      when: ocp_ai_ext_intf.stdout == ""
+
+    - name: Add BM bridge to libvirt zone
+      command: firewall-cmd --zone libvirt --change-interface ostestbm --permanent
+
+    - name: Add TCP firewall rules for BM bridge
+      firewalld:
+        port: "{{ item }}/tcp"
+        state: enabled
+        zone: libvirt
+        permanent: yes
+        immediate: yes
+      with_items:
+        - 8000
+        - 8080
+        - 8082
+        - 8090
+        - 8888
+
+    - name: Add provisioning bridge to libvirt zone
+      command: firewall-cmd --zone libvirt --change-interface ostestpr --permanent
+
+    - name: Add TCP firewall rules for provisioning bridge
+      firewalld:
+        port: "{{ item }}/tcp"
+        state: enabled
+        zone: libvirt
+        permanent: yes
+        immediate: yes
+      with_items:
+        - 80
+        - 2049
+        - 5000
+        - 5050
+        - 6180
+        - 6385
+        - 8000
+        - 9999
+
+    - name: Add UDP firewall rules for provisioning bridge
+      firewalld:
+        port: "{{ item }}/udp"
+        state: enabled
+        zone: libvirt
+        permanent: yes
+        immediate: yes
+      with_items:
+        - 53
+        - 5353
+        - 546
+        - 547
+        - 6230-6239
+        - 67
+        - 68
+        - 69
+
+    # FIXME: Use firewalld rich-rules instead?
+    - name: Add direct firewall rules for BM bridge
+      shell: |
+        firewall-cmd --direct --permanent --add-rule ipv4 nat POSTROUTING 0 -o "{{ ocp_ai_ext_intf.stdout }}" -j MASQUERADE;
+        firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_cluster_name }}bm" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
+        firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" -m state --state RELATED,ESTABLISHED -j ACCEPT;
+        firewall-cmd --reload
+
+
+  ### HTTP STORE
+
+  - name: Create an HTTP server container to hold ISOs/QCOW2s
+    block:
+    - name: Create HTTP server storage directory
+      file:
+        path: "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}"
+        state: directory
+        mode: '0755'
+
+    - name: Stop httpd container
+      containers.podman.podman_container:
+        name: httpd
+        image: registry.centos.org/centos/httpd-24-centos7:latest
+        state: stopped
+
+    - name: Download RHEL QCOW2
+      get_url:
+        url:  "{{ osp_controller_base_image_url }}"
+        dest: "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}/{{ osp_controller_base_image_url | basename }}"
+        mode: '0644'
+        setype: httpd_sys_content_t
+
+    - name: Start httpd container
+      containers.podman.podman_container:
+        name: httpd
+        image: registry.centos.org/centos/httpd-24-centos7:latest
+        state: started
+        ports:
+          - "8080:8080"
+        volumes:
+          - "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}:/var/www/html:z"
+
+
+  ### DNSMASQ
+
+  - name: Prepare dnsmasq
+    block:
+    - name: Create dnsmasq conf
+      template:
+        src: "ai/dnsmasq/dnsmasq.conf.j2"
+        dest: "/etc/dnsmasq.d/dnsmasq_ai.conf"
+        mode: '0644'
+
+    - name: Create NetworkManager dnsmasq DNS conf (to disable it)
+      template:
+        src: "ai/dnsmasq/nm_dnsmasq.conf.j2"
+        dest: "/etc/NetworkManager/conf.d/dnsmasq.conf"
+        mode: '0644'
+
+  - name: Restart NetworkManager
+    service:
+      name: NetworkManager
+      state: restarted
+      enabled: yes
+
+  - name: Stop all libvirt networks to clear DHCP socket bindings
+    shell: |
+      #!/bin/bash
+      for i in $(virsh net-list | grep -v Autostart | grep -v "---------------" | awk {'print $1'}); do
+        virsh net-destroy $i
+      done
+
+  - name: Start dnsmasq
+    service:
+      name: dnsmasq
+      state: restarted
+      enabled: yes
+
+  - name: Configure /etc/resolv.conf
+    template:
+        src: "ai/dnsmasq/resolv.conf.j2"
+        dest: "/etc/resolv.conf"
+        mode: '0644'
+
+  ### VMs
+
+  - name: Provision VMs for use with the assisted installer
+    block:
+    - name: Delete existing VMs and disk QCOW2s (if any)
+      shell: |
+        for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
+          virsh destroy $i
+        done
+
+        for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
+          virsh undefine --nvram $i
+          rm -f /var/lib/libvirt/images/$i.qcow2
+        done
+
+    # FIXME: Sushy-tools does not allow you to specify the libvirt storage pool, and assumes
+    #        that default exists, so we need to make sure that it does
+    - name: Check if default storage pool exists
+      shell: virsh pool-list | grep default
+      register: libvirt_default_pool
+      failed_when: libvirt_default_pool.stderr != "" and "no storage pool with matching name" not in libvirt_default_pool.stderr
+
+    - name: Handle default storage pool
+      block:
+      - name: Render libvirt default storage pool XML
+        template:
+          src: ai/libvirt/storage-pool.xml.j2
+          dest: "/tmp/storage-pool.xml"
+          mode: '0664'
+
+      - name: Remove any storage pools currently using /var/lib/libvirt/images
+        shell: |
+          for i in $(virsh pool-list --all | grep -v "Autostart" | grep -v "\-\-\-\-\-\-\-\-\-" | awk {'print $1'}); do
+            if [[ -n '$(virsh pool-dumpxml $i | grep "/var/lib/libvirt/images")' ]]; then
+              virsh pool-destroy $i
+              virsh pool-undefine $i
+            fi
+          done
+
+      - name: Create default storage pool
+        shell: |
+          virsh pool-define /tmp/storage-pool.xml
+          virsh pool-autostart default
+          virsh pool-start default
+      when: libvirt_default_pool.stdout == ""
+
+    - name: Create AI OCP VM XML definitions
+      shell: |
+        for i in {1..{{ ocp_num_masters }}}; do
+            virt-install \
+            --virt-type=kvm \
+            --name "{{ ocp_cluster_name }}-master-$((i-1))" \
+            --memory {{ ocp_master_memory }} \
+            --vcpus={{ ocp_master_vcpu }} \
+            --os-variant=rhel8.2 \
+            --os-type linux \
+            --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_master_mac_prefix }}$((i-1))" \
+            --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_master_mac_prefix }}$((i-1))" \
+            --controller type=scsi,model=virtio-scsi \
+            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-master-$((i-1)).qcow2,size={{ ocp_master_disk }},bus=scsi,format=qcow2 \
+            --graphics vnc \
+            --noautoconsole --wait=-1 \
+            --boot uefi \
+            --events on_reboot=restart \
+            --print-xml > /tmp/{{ ocp_cluster_name }}-master-$((i-1)).xml
+        done
+
+        for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
+            virt-install \
+            --virt-type=kvm \
+            --name "{{ ocp_cluster_name }}-worker-$((i-1))" \
+            --memory {{ ocp_worker_memory }} \
+            --vcpus={{ ocp_worker_vcpu }} \
+            --os-variant=rhel8.2 \
+            --os-type linux \
+            --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_worker_mac_prefix }}$((i-1))" \
+            --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_worker_mac_prefix }}$((i-1))" \
+            --controller type=scsi,model=virtio-scsi \
+            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-worker-$((i-1)).qcow2,size={{ ocp_worker_disk }},bus=scsi,format=qcow2 \
+            --graphics vnc \
+            --noautoconsole --wait=-1 \
+            --boot uefi \
+            --events on_reboot=restart \
+            --print-xml > /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
+        done
+
+    - name: Create VMs
+      shell: |
+        for i in {1..{{ ocp_num_masters }}}; do
+          virsh define --file /tmp/{{ ocp_cluster_name }}-master-$((i-1)).xml
+        done
+
+        for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
+          virsh define --file /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
+        done
+
+    - name: Get worker domain names
+      shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk {'print $2'}"
+      register: worker_list
+
+    - name: Print extra worker domain UUIDs
+      shell: virsh dumpxml {{ item }} | grep uuid | cut -d '>' -f 2 | cut -d '<' -f 1
+      when: index >= ocp_num_workers
+      loop: "{{ worker_list.stdout_lines }}"
+      loop_control:
+        index_var: index
+      register: extra_worker_uuids
+
+    - name: Create Metal3 extra baremetal hosts CRs
+      block:
+      - name: Include oc_local role
+        include_role:
+          name: oc_local
+
+      - name: Include default variables
+        include_vars: vars/default.yaml
+
+      - name: Set directory for storing AI Metal3 yaml files
+        set_fact:
+          ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
+
+      - name: Create local yamldir for AI Metal3 yaml files
+        file:
+          path: "{{ ai_metal3_yaml_dir }}"
+          state: directory
+          mode: '0755'
+          owner: root
+          group: root
+
+      - name: Render Metal3 extra baremetal hosts CRs
+        template:
+          src: ai/metal3/extra_workers_bmhs.yml.j2
+          dest: "{{ ai_metal3_yaml_dir }}/extra_workers_bmhs.yml"
+          mode: '0664'
+
+      delegate_to: localhost
+
+
+  ### SUSHY-TOOLS
+
+  - name: Install sushy-tools
+    block:
+    - name: Install sushy-tools via pip3
+      command: "pip3 install {{ item }}"
+      with_items:
+        - sushy-tools
+        - libvirt-python
+
+    - name: Create sushy-tools conf directory
+      file:
+        path: /opt/sushy-tools
+        state: directory
+        mode: '0755'
+
+    - name: Create sushy-tools conf
+      template:
+        src: ai/sushy-tools/sushy-emulator.conf.j2
+        dest: /opt/sushy-tools/sushy-emulator.conf
+        mode: '0664'
+
+    - name: Create sushy-tools service
+      template:
+        src: ai/sushy-tools/sushy-tools.service.j2
+        dest: /etc/systemd/system/sushy-tools.service
+        mode: '0664'
+
+    - name: Reload systemd service
+      systemd:
+        daemon_reexec: yes
+
+    - name: Start sushy-tools service
+      service:
+        name: sushy-tools
+        state: restarted
+        enabled: yes
+
+
+  ### ASSISTED INSTALLER SERVICE SCRIPT
+
+  - name: Prepare assisted installer service
+    block:
+    - name: Clone the assisted installer service repo
+      git:
+        repo: "{{ ocp_ai_service_repo | default('https://github.com/sonofspike/assisted-service-onprem.git', true) }}"
+        dest: "{{ base_path }}/assisted-service-onprem"
+        force: yes
+        version: "{{ ocp_ai_service_branch | default('a55b218e3176ed920200c1283256337db94ae4b6', true) }}"
+
+    - name: Create assisted installer service storage directory
+      file:
+        path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-service', true) }}"
+        state: directory
+        mode: '0755'
+
+    - name: Set assisted installer service storage directory
+      replace:
+        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
+        regexp: 'OAS_HOSTDIR=.*'
+        replace: 'OAS_HOSTDIR={{ ocp_ai_service_store_dir | default("/opt/assisted-service", true) }}'
+
+    # FIXME: Hard-coded to OCP 4.7 discovery ISO image for now
+    - name: Set assisted installer service discovery ISO location
+      replace:
+        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
+        regexp: 'BASE_OS_IMAGE=.*'
+        replace: 'BASE_OS_IMAGE=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.7/4.7.0/rhcos-live.x86_64.iso'
+
+    - name: Set assisted installer service base URL
+      replace:
+        path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
+        regexp: 'SERVICE_BASE_URL=.*'
+        replace: 'SERVICE_BASE_URL=http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default("8090", true) }}'
+
+    - name: Start assisted installer service container
+      shell: |
+        ./stop-assisted-service.sh;
+        ./start-assisted-service.sh
+      args:
+        chdir: "{{ base_path }}/assisted-service-onprem"
+
+    - name: Wait until the assisted installer service is fully available
+      shell: |
+        aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} list cluster
+      register: assisted_service_ready
+      until: '"Dns Domain" in assisted_service_ready.stdout'
+      retries: 48
+      delay: 5
+      environment:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+
+  ### ASSISTED INSTALLER EXECUTION PLAYBOOKS
+
+  - name: Download and configure assisted installer playbooks
+    become: true
+    become_user: ocp
+    block:
+    - name: Pull secret processing
+      include_tasks: pull-secret.yaml
+
+    - name: Clone the assisted installer playbooks repo
+      git:
+        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/sonofspike/cluster_mgnt_roles.git', true) }}"
+        dest: "{{ base_path }}/cluster_mgnt_roles"
+        force: true
+        version: "{{ ocp_ai_ansible_branch | default('ccb34826a671f6c3435869303b6abb538638252b', true) }}"
+
+    - name: Add schedulable-master manifest
+      block:
+      - name: Create schedulable-master manifest
+        template:
+          src: ai/cluster_mgnt_roles/50-master-scheduler.yml.j2
+          dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/50-master-scheduler.yml.j2"
+          mode: '0664'
+
+      - name: Inject schedulable-master manifest
+        lineinfile:
+          path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
+          regexp: '^\s\s\s\s-\s50-master-scheduler\.yml'
+          insertafter: '^\s\s\s\s-\s50-worker-remove-ipi-leftovers\.yml'
+          line: '    - 50-master-scheduler.yml'
+
+    - name: Add ingress controller manifest
+      block:
+      - name: Create ingress controller manifest
+        template:
+          src: ai/cluster_mgnt_roles/60-ingress-controller.yml.j2
+          dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/60-ingress-controller.yml.j2"
+          mode: '0664'
+
+      - name: Inject ingress controller manifest
+        lineinfile:
+          path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
+          regexp: '^\s\s\s\s-\s60-ingress-controller\.yml'
+          insertafter: '^\s\s\s\s-\s50-master-scheduler\.yml'
+          line: '    - 60-ingress-controller.yml'
+
+    - name: Force serial execution of boot_iso role
+      replace:
+        after: "Mounting, Booting the Assisted Installer Discovery ISO"
+        before: "- boot_iso"
+        path: "{{ base_path }}/cluster_mgnt_roles/deploy_cluster.yml"
+        regexp: 'strategy: free'
+        replace: 'serial: 1'
+
+    - name: Configure inventory variables
+      template:
+          src: ai/cluster_mgnt_roles/inventory.ospd.j2
+          dest: "{{ base_path }}/cluster_mgnt_roles/inventory.ospd"
+          mode: '0664'
