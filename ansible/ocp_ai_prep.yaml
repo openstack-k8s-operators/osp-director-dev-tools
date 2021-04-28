@@ -280,7 +280,7 @@
     # FIXME: Sushy-tools does not allow you to specify the libvirt storage pool, and assumes
     #        that default exists, so we need to make sure that it does
     - name: Check if default storage pool exists
-      shell: virsh pool-list | grep default 
+      shell: virsh pool-list | grep default
       register: libvirt_default_pool
       failed_when: libvirt_default_pool.stderr != "" and "no storage pool with matching name" not in libvirt_default_pool.stderr
 
@@ -311,7 +311,7 @@
     - name: Create AI OCP VM XML definitions
       shell: |
         for i in {1..{{ ocp_num_masters }}}; do
-            sudo virt-install \
+            virt-install \
             --virt-type=kvm \
             --name "{{ ocp_cluster_name }}-master-$((i-1))" \
             --memory {{ ocp_master_memory }} \
@@ -320,7 +320,8 @@
             --os-type linux \
             --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_master_mac_prefix }}$((i-1))" \
             --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_master_mac_prefix }}$((i-1))" \
-            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-master-$((i-1)).qcow2,size={{ ocp_master_disk }},bus=virtio,format=qcow2 \
+            --controller type=scsi,model=virtio-scsi \
+            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-master-$((i-1)).qcow2,size={{ ocp_master_disk }},bus=scsi,format=qcow2 \
             --graphics vnc \
             --noautoconsole --wait=-1 \
             --boot uefi \
@@ -329,7 +330,7 @@
         done
 
         for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
-            sudo virt-install \
+            virt-install \
             --virt-type=kvm \
             --name "{{ ocp_cluster_name }}-worker-$((i-1))" \
             --memory {{ ocp_worker_memory }} \
@@ -338,7 +339,8 @@
             --os-type linux \
             --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_worker_mac_prefix }}$((i-1))" \
             --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_worker_mac_prefix }}$((i-1))" \
-            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-worker-$((i-1)).qcow2,size={{ ocp_worker_disk }},bus=virtio,format=qcow2 \
+            --controller type=scsi,model=virtio-scsi \
+            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-worker-$((i-1)).qcow2,size={{ ocp_worker_disk }},bus=scsi,format=qcow2 \
             --graphics vnc \
             --noautoconsole --wait=-1 \
             --boot uefi \
@@ -349,11 +351,11 @@
     - name: Create VMs
       shell: |
         for i in {1..{{ ocp_num_masters }}}; do
-          sudo virsh define --file /tmp/{{ ocp_cluster_name }}-master-$((i-1)).xml
+          virsh define --file /tmp/{{ ocp_cluster_name }}-master-$((i-1)).xml
         done
 
         for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
-          sudo virsh define --file /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
+          virsh define --file /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
         done
 
     - name: Get worker domain names
@@ -485,7 +487,7 @@
         aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} list cluster
       register: assisted_service_ready
       until: '"Dns Domain" in assisted_service_ready.stdout'
-      retries: 36
+      retries: 48
       delay: 5
       environment:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
