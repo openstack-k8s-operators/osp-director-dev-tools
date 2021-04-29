@@ -87,5 +87,7 @@
         <<: *oc_env
       retries: 5
       delay: 5
+      register: result
+      until: result.rc == 0
 
     when: ocp_ai|bool
