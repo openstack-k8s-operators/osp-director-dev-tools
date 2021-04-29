@@ -5,7 +5,9 @@ no-resolv
 no-hosts
 
 # Recursive DNS
-server={{ ocp_ai_external_dns }}
+{% for dns_server in ocp_ai_external_dns %}
+server={{ dns_server }}
+{% endfor %}
 
 # Set local domain
 domain={{ ocp_ai_full_cluster_name }}

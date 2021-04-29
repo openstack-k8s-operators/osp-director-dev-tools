@@ -87,6 +87,7 @@
       url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-{{ ocp_version }}/openshift-client-linux.tar.gz"
       dest: "/tmp/openshift-client-linux.tar.gz"
       mode: '0755'
+      timeout: 30
 
   - name: "Untar the openshift-client-linux.tar.gz"
     unarchive:

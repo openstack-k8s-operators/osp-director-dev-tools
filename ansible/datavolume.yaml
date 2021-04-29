@@ -33,6 +33,7 @@
       owner: ocp
       group: ocp
       mode: '0644'
+      timeout: 30
 
   - name: does the datavolume already exist
     ignore_errors: true
