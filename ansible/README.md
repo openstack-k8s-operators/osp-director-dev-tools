@@ -6,16 +6,6 @@
 
 Provision a host with RHEL 8.2 or CentOS should also work with at least 128GB of RAM
 
-##### Clone the repository to the beaker host
-
-The ansible playbooks can be used as any user, but this user needs to be able to
-get root priviledges to the host via passwordless sudo.
-
-```
-ssh root@<node>
-dnf install -y git
-git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
-```
 
 ##### Install Dependencies
 
@@ -23,6 +13,15 @@ If not already installed, install the required dependencies
 
 ```
 dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
+```
+
+##### Clone the repository to the beaker host
+
+The ansible playbooks can be used as any user, but this user needs to be able to
+get root privileges to the host via passwordless sudo.
+
+```
+git clone https://github.com/openstack-k8s-operators/osp-director-dev-tools.git
 ```
 
 ##### Modify the variable files
@@ -38,7 +37,7 @@ You can get ci_token from https://console-openshift-console.apps.ci.l2s4.p1.open
 by clicking on your name in the top right corner and coping the login
 command (the token is part of the command)
 
-`local-deaults.yaml` has the min format:
+`local-defaults.yaml` has the min format:
 
 ```
 ci_token: <TOKEN>
@@ -54,11 +53,20 @@ export CI_TOKEN: <TOKEN>
 Additionally create the following files relative to the
 project root:
 
-`vars/rhel-subscription.yaml` in the format:
+`vars/rhel-subscription.yaml` is used to subscribe to correct repositories to use the metal3 dev scripts
 
 ```
 rhel_subscription_activation_key: xyz
 rhel_subscription_org_id: "123123123"
+```
+
+If `vars/rhel-subscription.yaml` is not specified, a subscription must have been configured manually prior to run the ansible. The manual subscription must give access to the following repositories:
+
+```
+advanced-virt-for-rhel-8-x86_64-rpms                    Advanced Virtualization for RHEL 8 x86_64 (RPMs)
+ansible-2-for-rhel-8-x86_64-rpms                        Red Hat Ansible Engine 2 for RHEL 8 x86_64 (RPMs)
+rhel-8-for-x86_64-appstream-rpms                        Red Hat Enterprise Linux 8 for x86_64 - AppStream (RPMs)
+rhel-8-for-x86_64-baseos-rpms                           Red Hat Enterprise Linux 8 for x86_64 - BaseOS (RPMs)
 ```
 
 `files/pull-secret` which contains your OCP pull-secrets file.
@@ -127,7 +135,7 @@ oc get pods -n openstack
 
 The ansible playbook generates the scaffolding needed for tripleo to deploy OpenStack. The actual OpenStack installation need to be triggered manually
 ```
-oc exec -it -n openstack openstackclient /home/cloud-admin/deploy_tripleo.sh
+oc exec -it -n openstack openstackclient -- /home/cloud-admin/tripleo-deploy.sh
 ```
 
 ##### Access OSP

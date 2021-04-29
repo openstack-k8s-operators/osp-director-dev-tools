@@ -30,13 +30,18 @@
       - name: Include rhel-subscription info
         include_vars: vars/rhel-subscription.yaml
       rescue:
-      - fail:
+      - name: No rhel-subscription info
+        debug:
           msg: |
-            vars/rhel-subscription.yaml is not present. You must create this
+            vars/rhel-subscription.yaml is not present. You can create this
             file manually. The format of the file is:
 
             rhel_subscription_activation_key: <activation key>
             rhel_subscription_org_id: "xxxxxxx"
+
+            If you do not have the file, we will use your manually provisioned
+            subscription
+        register: manual_rhel_subscription
 
     - name: use secrets_repo
       when: secrets_repo is defined
@@ -58,7 +63,8 @@
       - name: Include rhel-subscription info
         include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
       rescue:
-      - fail:
+      - name:
+        debug:
           msg: |
             rhel-subscription.yaml is not present in {{ secrets_repo }}. You must create this
             file. The format of the file is:
@@ -66,19 +72,26 @@
             rhel_subscription_activation_key: <activation key>
             rhel_subscription_org_id: "xxxxxxx"
 
-    - name: unregister node
-      redhat_subscription:
-        state: absent
-        activationkey: "{{ rhel_subscription_activation_key }}"
-        org_id: "{{ rhel_subscription_org_id }}"
-        pool: '^(Red Hat Enterprise Server for x86_64)$'
+            If you do not have the file, we will use your manually provisioned
+            subscription
+        register: manual_rhel_subscription
 
-    - name: Register with activationkey and consume subscriptions matching Red Hat Enterprise Server
-      redhat_subscription:
-        state: present
-        activationkey: "{{ rhel_subscription_activation_key }}"
-        org_id: "{{ rhel_subscription_org_id }}"
-        pool: '^(Red Hat Enterprise Server for x86_64)$'
+    - name: subscription-manager operations
+      when: manual_rhel_subscription is undefined
+      block:
+      - name: unregister node
+        redhat_subscription:
+          state: absent
+          activationkey: "{{ rhel_subscription_activation_key }}"
+          org_id: "{{ rhel_subscription_org_id }}"
+          pool: '^(Red Hat Enterprise Server for x86_64)$'
+
+      - name: Register with activationkey and consume subscriptions matching Red Hat Enterprise Server
+        redhat_subscription:
+          state: present
+          activationkey: "{{ rhel_subscription_activation_key }}"
+          org_id: "{{ rhel_subscription_org_id }}"
+          pool: '^(Red Hat Enterprise Server for x86_64)$'
 
     - name: enable rhel-8-for-x86_64-appstream-rpms and advanced-virt-for-rhel-8-x86_64-rpms
       command: subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms --enable=advanced-virt-for-rhel-8-x86_64-rpms
