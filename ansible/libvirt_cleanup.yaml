@@ -1,0 +1,12 @@
+---
+- hosts: convergence_base
+  become: true
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: Remove ospnetwork libvirt network
+    shell: |
+      virsh net-destroy ospnetwork
+      virsh net-undefine ospnetwork
