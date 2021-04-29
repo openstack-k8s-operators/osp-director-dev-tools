@@ -26,12 +26,14 @@
       url: https://github.com/operator-framework/operator-registry/releases/{{ opm_url_suffix }}/linux-amd64-opm
       dest: "{{ lookup('env', 'HOME') }}/bin/opm"
       mode: '0755'
+      timeout: 30
 
   - name: Download operator-sdk
     get_url:
       url: https://github.com/operator-framework/operator-sdk/releases/download/{{ sdk_version }}/operator-sdk_linux_amd64
       dest: "{{ lookup('env', 'HOME') }}/bin/operator-sdk"
       mode: '0755'
+      timeout: 30
 
   - name: Download and extract kustomize
     unarchive:
@@ -44,6 +46,7 @@
       url: https://github.com/kudobuilder/kuttl/releases/download/v{{ kuttl_version }}/kubectl-kuttl_{{ kuttl_version }}_linux_x86_64
       dest: "{{ lookup('env', 'HOME') }}/bin/kubectl-kuttl"
       mode: '0755'
+      timeout: 30
 
   - name: Install packages
     package:

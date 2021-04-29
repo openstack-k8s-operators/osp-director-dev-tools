@@ -209,6 +209,7 @@
         dest: "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}/{{ osp_controller_base_image_url | basename }}"
         mode: '0644'
         setype: httpd_sys_content_t
+        timeout: 30
 
     - name: Start httpd container
       containers.podman.podman_container:

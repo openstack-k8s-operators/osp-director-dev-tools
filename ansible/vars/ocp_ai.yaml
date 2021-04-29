@@ -1,5 +1,9 @@
 ---
-ocp_ai_external_dns: 10.11.5.19
+ocp_ai_external_dns:
+  - 10.11.5.19
+  - 10.38.5.26
+  - 10.10.160.2
+  - 10.5.30.160
 
 # ocp_ai_service_repo: defaults to "https://github.com/sonofspike/assisted-service-onprem.git"
 # ocp_ai_service_branch: defaults to "a55b218e3176ed920200c1283256337db94ae4b6"
