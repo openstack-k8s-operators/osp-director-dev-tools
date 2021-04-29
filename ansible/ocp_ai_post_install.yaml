@@ -82,8 +82,10 @@
 
     - name: Wait for Metal3 pods to restart
       shell: |
-        oc wait pod --for condition=ready -n openshift-machine-api -l k8s-app=metal3 --timeout={{ default_timeout*2 }}s
+        oc wait pod --for condition=ready -n openshift-machine-api -l k8s-app=metal3 --timeout={{ default_timeout }}s
       environment:
         <<: *oc_env
+      retries: 5
+      delay: 5
 
     when: ocp_ai|bool

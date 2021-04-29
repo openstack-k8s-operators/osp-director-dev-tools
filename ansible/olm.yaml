@@ -70,3 +70,5 @@
       oc wait pod -l control-plane=controller-manager --for condition=ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
     environment:
       <<: *oc_env
+    retries: 5
+    delay: 5
