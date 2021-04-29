@@ -168,24 +168,33 @@ You can also access the OSP console using your local web browser: <http://192.16
 oc exec -it openstackclient -- cat /home/cloud-admin/tripleo-deploy/tripleo-overcloud-passwords.yaml | grep -w AdminPassword
 ```
 
-### Cleanup full env:
+### Cleanup options
 
-```
-make cleanup
-```
+#### Delete OCP env
 
-### Other possible cleanup steps
-
-#### Delete ocp env only
+NOTE: This destroys the OCP cluster, and thus the OSP-D operator and any deployed overcloud!
 
 ```
 make destroy_ocp
 ```
 
-#### Delete OSP controllers
-TODO:
+#### Delete OSP overcloud only
+
+NOTE: This deletes the overcloud and the OCP resources that are associated with it.  
+      It does not remove the OCP cluster nor the OSP-D operator, however.
+
 ```
-make ocp_controller_cleanup
+make openstack_cleanup
+```
+
+#### Delete the operator only
+
+NOTE: This deletes the OSP-D operator, but leaves any resources it deployed intact.  
+      However, if those resources later change and would require OCP reconciliation, 
+      the OSP-D operator will obviously not be present to act upon them.
+
+```
+make olm_cleanup
 ```
 
 #### Tempest to run functional test
