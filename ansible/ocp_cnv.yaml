@@ -18,19 +18,33 @@
       state: directory
       mode: '0755'
 
-  - name: Copy deployment yamls to working dir
-    copy:
-      src: "{{ item }}"
-      dest: "{{ yaml_dir }}/"
-      mode: '0644'
-    loop:
-    - "cnv/1"
-    - "cnv/2"
+  - name: Render all OpenShift Virtualization Operator templates
+    template:
+      src:  "cnv/{{ item }}.j2"
+      dest: "{{ yaml_dir }}/{{ item }}"
+      mode: "0644"
+    with_items:
+    - namespace.yaml
+    - operatorgroup.yaml
+    - subscription.yaml
+    - deploy_operator.yaml
+
+  - name: Create namespace, operatorgroup, subscription and machine config pool
+    shell: |
+      set -e
+      oc apply -f "{{ yaml_dir }}"
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
 
   - name: Create namespace, operatorgroup and subscription
     shell: |
       set -e
-      oc apply -f "{{ yaml_dir }}/1/"
+      oc apply -f "{{ yaml_dir }}/{{ item }}"
+    with_items:
+    - namespace.yaml
+    - operatorgroup.yaml
+    - subscription.yaml
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
@@ -52,7 +66,7 @@
     shell: |
       set -e
       sleep 10
-      oc apply -f "{{ yaml_dir }}/2/"
+      oc apply -f "{{ yaml_dir }}/deploy_operator.yaml"
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
