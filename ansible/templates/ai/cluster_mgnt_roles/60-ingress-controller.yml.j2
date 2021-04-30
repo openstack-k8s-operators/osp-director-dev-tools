@@ -5,6 +5,9 @@ metadata:
   namespace: openshift-ingress-operator
 spec:
   nodePlacement:
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
     nodeSelector:
       matchLabels:
         node-role.kubernetes.io/master: ""
