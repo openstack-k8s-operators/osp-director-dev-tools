@@ -463,18 +463,23 @@
         regexp: 'OAS_HOSTDIR=.*'
         replace: 'OAS_HOSTDIR={{ ocp_ai_service_store_dir | default("/opt/assisted-service", true) }}'
 
-    # FIXME: Hard-coded to OCP 4.7 discovery ISO image for now
     - name: Set assisted installer service discovery ISO location
       replace:
         path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
         regexp: 'BASE_OS_IMAGE=.*'
-        replace: 'BASE_OS_IMAGE=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.7/4.7.0/rhcos-live.x86_64.iso'
+        replace: 'BASE_OS_IMAGE={{ ocp_ai_discovery_iso }}'
 
     - name: Set assisted installer service base URL
       replace:
         path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
         regexp: 'SERVICE_BASE_URL=.*'
         replace: 'SERVICE_BASE_URL=http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default("8090", true) }}'
+
+    - name: Set assisted installer service OCP release image
+      replace:
+        path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
+        regexp: '"display_name":"4.7.2","release_image":"quay.io/openshift-release-dev/ocp-release:4.7.2-x86_64"'
+        replace: '"display_name":"4.7","release_image":"{{ ocp_release_image }}"'
 
     - name: Start assisted installer service container
       shell: |
