@@ -17,10 +17,9 @@
       set_fact:
         ai_sched_ingress_yaml_dir: "{{ working_yamls_dir }}/ai_schedule_ingress"
 
-    - name: Set facts to disable schedulable masters and reduce ingress replica count
+    - name: Set facts to disable schedulable masters
       set_fact:
         ocp_ai_masters_schedulable: false
-        ocp_ai_ingress_replicas: 2
 
     - name: Create local yaml dir for schedule/ingress CRs
       file:
@@ -30,24 +29,18 @@
         owner: root
         group: root
 
-    - name: Create schedule/ingress CRs
+    - name: Create schedule CR
       template:
-        src: ai/cluster_mgnt_roles/{{ item }}.j2
-        dest: "{{ ai_sched_ingress_yaml_dir }}/{{ item }}"
+        src: ai/cluster_mgnt_roles/50-master-scheduler.yml.j2
+        dest: "{{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml"
         mode: '0664'
-      with_items:
-        - 50-master-scheduler.yml
-        - 60-ingress-controller.yml
 
-    - name: Apply schedule/ingress CRs
+    - name: Make masters unschedulable
       shell: |
-        oc apply -f {{ ai_sched_ingress_yaml_dir }}/{{ item }}
+        oc apply -f {{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml
       environment: &oc_env
         PATH: "{{ oc_env_path }}"
         KUBECONFIG: "{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}"
-      with_items:
-        - 50-master-scheduler.yml
-        - 60-ingress-controller.yml
 
 
     ### PROVISIONING NETWORK
