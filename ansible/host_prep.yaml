@@ -142,6 +142,9 @@
           - qemu-kvm
           - virt-install
 
+          # required to customize the guest-image to remove net.ifnames=0 kernel param
+          - libguestfs-tools-c
+
     - name: Enable helpful services
       service: name={{ item }} enabled=yes state=started
       with_items:

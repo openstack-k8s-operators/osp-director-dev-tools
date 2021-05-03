@@ -10,3 +10,4 @@
     shell: |
       virsh net-destroy ospnetwork
       virsh net-undefine ospnetwork
+    ignore_errors: true
