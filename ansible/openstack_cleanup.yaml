@@ -15,6 +15,8 @@
       - "oc delete -n openstack openstackbaremetalset --all"
       - "oc delete -n openstack openstackcontrolplane --all"
       - "oc delete -n openstack openstacknet --all"
+      - "oc delete -n openstack openstackplaybookgenerator --all"
+      - "oc delete -n openstack openstackephemeralheat --all"
 
   - name: Detach additional Ceph OSD disks
     shell: |

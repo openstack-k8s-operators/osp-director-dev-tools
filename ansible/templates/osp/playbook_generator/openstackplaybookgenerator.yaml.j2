@@ -1,0 +1,10 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackPlaybookGenerator
+metadata:
+  name: default
+  namespace: openstack
+spec:
+  imageURL: {{ openstackclient_image }}
+  openstackClientName: openstackclient
+  heatEnvConfigMap: tripleo-deploy-config-custom
+  tarballConfigMap: tripleo-net-config

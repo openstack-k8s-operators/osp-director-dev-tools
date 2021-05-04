@@ -28,6 +28,7 @@
     - custom.yaml
     - storage-backend.yaml
     - containers-prepare-parameter.yaml
+    - tripleo-overcloud-passwords.yaml
 
   - name: render {{ osp_network_type }} network parameter file
     template:
@@ -52,9 +53,12 @@
     with_fileglob:
     - "osp/net_config/{{ osp_network_type }}/*.yaml"
 
-  - name: create tripleo-net-config ConfigMap
+  - name: create tripleo-net-config ConfigMap with tarballs
     shell: |
-      oc create configmap -n openstack tripleo-net-config --from-file={{ ooo_net_config_dir }}/ --dry-run -o yaml | oc apply -f -
+      cd {{ ooo_net_config_dir }}
+      tar -cvzf net-config.tar.gz *.yaml
+      oc create configmap -n openstack tripleo-net-config --from-file=net-config.tar.gz
+      rm net-config.tar.gz
     environment:
       <<: *oc_env
 

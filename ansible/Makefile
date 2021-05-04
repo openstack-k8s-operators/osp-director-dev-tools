@@ -70,6 +70,7 @@ openstack:
 	$(MAKE) osp_custom_config
 	$(MAKE) ctlplane
 	$(MAKE) computes
+	$(MAKE) playbook_generator
 	# $(MAKE) overcloud
 
 openstack_cleanup: hosts local-defaults.yaml
@@ -94,6 +95,12 @@ computes: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	install_computes.yaml
+
+playbook_generator: hosts local-defaults.yaml
+	# NOTE: requires 'make olm'
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	playbook_generator.yaml
 
 datavolume: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
