@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set directory for generator yaml files
+    set_fact:
+      playbook_generator_yaml_dir: "{{ working_yamls_dir }}/playbook_generator"
+
+  - debug:
+      msg: "yamls will be written to {{ playbook_generator_yaml_dir }} locally"
+
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ playbook_generator_yaml_dir }}/"
+
+  - name: Create yaml dir
+    file:
+      path: "{{ playbook_generator_yaml_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Render templates to yaml dir
+    template:
+      src: "osp/playbook_generator/{{ item }}.j2"
+      dest: "{{ playbook_generator_yaml_dir }}/{{ item }}"
+      mode: '0644'
+    with_items:
+    - "openstackplaybookgenerator.yaml"
+
+  - name: does the playbook generator already exist
+    shell: >
+      oc get -n openstack osplaybookgenerator default -o json --ignore-not-found
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    register: playbook_generator_switch
+
+  - name: Start playbook generator
+    shell: |
+      set -e
+      oc apply -n openstack -f "{{ playbook_generator_yaml_dir }}/openstackplaybookgenerator.yaml"
+    environment:
+      <<: *oc_env
+    when: playbook_generator_switch.stdout | length == 0
