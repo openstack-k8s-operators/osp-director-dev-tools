@@ -359,6 +359,22 @@
           virsh define --file /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
         done
 
+    - name: Create rng device XML file
+      template:
+          src: ai/libvirt/rng_device.xml.j2
+          dest: "/tmp/{{ ocp_cluster_name }}_rng_device.xml"
+          mode: '0664'
+
+    - name: Remove random number generator devices from master VM XMLs
+      shell: |
+        virsh detach-device {{ ocp_cluster_name }}-master-{{ item }} /tmp/{{ ocp_cluster_name }}_rng_device.xml --config
+      with_sequence: start=0 end={{ ocp_num_masters-1 }}
+
+    - name: Remove random number generator devices from worker VM XMLs
+      shell: |
+        virsh detach-device {{ ocp_cluster_name }}-worker-{{ item }} /tmp/{{ ocp_cluster_name }}_rng_device.xml --config
+      with_sequence: start=0 end={{ ocp_num_workers+ocp_num_extra_workers-1 }}
+
     - name: Get worker domain names
       shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk {'print $2'}"
       register: worker_list
