@@ -39,7 +39,7 @@
       KUBECONFIG: "{{ kubeconfig }}"
     register: playbook_generator_switch
 
-  - name: Start provisionserver
+  - name: Start playbook generator
     shell: |
       set -e
       oc apply -n openstack -f "{{ playbook_generator_yaml_dir }}/openstackplaybookgenerator.yaml"
