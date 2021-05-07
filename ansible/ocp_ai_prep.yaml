@@ -125,7 +125,7 @@
       when: ocp_ai_ext_intf.stdout == ""
 
     - name: Add BM bridge to libvirt zone
-      command: firewall-cmd --zone libvirt --change-interface ostestbm --permanent
+      command: "firewall-cmd --zone libvirt --change-interface {{ ocp_cluster_name }}bm --permanent"
 
     - name: Add TCP firewall rules for BM bridge
       firewalld:
@@ -136,13 +136,13 @@
         immediate: yes
       with_items:
         - 8000
-        - 8080
-        - 8082
-        - 8090
+        - "{{ ocp_ai_http_store_port | default(8081, true) }}"
+        - "{{ ocp_ai_sushy_port | default(8082, true) }}"
+        - "{{ ocp_ai_service_port | default(8090, true) }}"
         - 8888
 
     - name: Add provisioning bridge to libvirt zone
-      command: firewall-cmd --zone libvirt --change-interface ostestpr --permanent
+      command: "firewall-cmd --zone libvirt --change-interface {{ ocp_cluster_name }}pr --permanent"
 
     - name: Add TCP firewall rules for provisioning bridge
       firewalld:
@@ -217,7 +217,7 @@
         image: registry.centos.org/centos/httpd-24-centos7:latest
         state: started
         ports:
-          - "8080:8080"
+          - "{{ ocp_ai_http_store_port | default(8081, true) }}:8080"
         volumes:
           - "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}:/var/www/html:z"
 

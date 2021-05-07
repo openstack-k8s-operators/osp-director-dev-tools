@@ -14,7 +14,7 @@ spec:
 {% if not (ocp_ai|bool) %}
   baseImageUrl: http://172.22.0.1/images/{{ osp_controller_base_image_url | basename }}
 {% else %}
-  baseImageUrl: http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8080', true) }}/{{ osp_controller_base_image_url | basename }}
+  baseImageUrl: http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8081', true) }}/{{ osp_controller_base_image_url | basename }}
 {% endif %}
   provisionServerName: openstack
   # The secret containing the SSH pub key to place on the provisioned nodes
