@@ -30,4 +30,4 @@ ocp_ai_pr_ip: "{{ (ocp_ai_pr_bridge_cidr.split('.')[0:3]|join('.')) }}.1"
 # ocp_ai_service_port: defaults to "8090"
 
 # ocp_ai_http_store_dir: defaults to "/opt/http_store/data"
-# ocp_ai_http_store_port: defaults to "8080"
+# ocp_ai_http_store_port: defaults to "8081"

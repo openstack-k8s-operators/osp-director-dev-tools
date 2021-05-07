@@ -53,7 +53,7 @@ openshift_version="{{ ocp_version }}"
 # Discovery ISO
 discovery_iso_name="discovery_image_{{ ocp_cluster_name }}.iso"
 # HTTP server where the ISO is stored
-discovery_iso_server="http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8080', true) }}"
+discovery_iso_server="http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8081', true) }}"
 
 # Parameters for a Restricted Network installation
 use_mirror= False
@@ -62,7 +62,7 @@ mirror_registry=NA:5000
 
 [services]
 assisted_installer host={{ ocp_ai_bm_ip }} port={{ ocp_ai_service_port | default('8090', true) }}
-http_store host={{ ocp_ai_bm_ip }} port={{ ocp_ai_http_store_port | default('8080', true) }}
+http_store host={{ ocp_ai_bm_ip }} port={{ ocp_ai_http_store_port | default('8081', true) }}
 
 [bastions]
 bastion ansible_ssh_user=root ansible_ssh_host={{ ocp_ai_bm_ip }}

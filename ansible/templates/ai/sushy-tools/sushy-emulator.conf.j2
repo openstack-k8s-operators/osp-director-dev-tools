@@ -5,7 +5,7 @@
 # Listen on all local IP interfaces
 SUSHY_EMULATOR_LISTEN_IP = u'0.0.0.0'
 
-# Bind to TCP port 8080
+# Bind to TCP port {{ ocp_ai_sushy_port | default('8082', true) }}
 SUSHY_EMULATOR_LISTEN_PORT = {{ ocp_ai_sushy_port | default('8082', true) }}
 
 # Serve this SSL certificate to the clients
