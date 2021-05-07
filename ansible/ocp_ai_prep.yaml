@@ -197,25 +197,12 @@
         state: directory
         mode: '0755'
 
-    - name: Stop httpd container
-      containers.podman.podman_container:
-        name: httpd
-        image: registry.centos.org/centos/httpd-24-centos7:latest
-        state: stopped
-
-    - name: Download RHEL QCOW2
-      get_url:
-        url:  "{{ osp_controller_base_image_url }}"
-        dest: "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}/{{ osp_controller_base_image_url | basename }}"
-        mode: '0644'
-        setype: httpd_sys_content_t
-        timeout: 30
-
     - name: Start httpd container
       containers.podman.podman_container:
         name: httpd
         image: registry.centos.org/centos/httpd-24-centos7:latest
         state: started
+        restart: yes
         ports:
           - "{{ ocp_ai_http_store_port | default(8081, true) }}:8080"
         volumes:

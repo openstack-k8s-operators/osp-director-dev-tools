@@ -1,3 +1,11 @@
+{% if osp_compute_hci %}
+resource_registry:
+  OS::TripleO::Services::CephMgr: deployment/ceph-ansible/ceph-mgr.yaml
+  OS::TripleO::Services::CephMon: deployment/ceph-ansible/ceph-mon.yaml
+  OS::TripleO::Services::CephOSD: deployment/ceph-ansible/ceph-osd.yaml
+  OS::TripleO::Services::CephClient: deployment/ceph-ansible/ceph-client.yaml
+{% endif %}
+
 parameter_defaults:
 {% if osp_compute_hci %}
   # CephAnsibleRepo can be removed when ceph-ansible is in official tripleoclient image
@@ -5,6 +13,7 @@ parameter_defaults:
   CephAnsiblePlaybookVerbosity: 3
   CinderEnableIscsiBackend: false
   CinderEnableRbdBackend: true
+  CinderBackupBackend: ceph
   CinderEnableNfsBackend: false
   NovaEnableRbdBackend: true
   GlanceBackend: rbd
