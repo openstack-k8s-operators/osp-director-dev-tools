@@ -19,6 +19,15 @@
     - "{{ ooo_yaml_dir }}"
     - "{{ ooo_net_config_dir }}"
 
+  - name: copy computeHCI roles file to custom tripleo environment files
+    copy:
+      src: "{{ item }}"
+      dest: "{{ ooo_yaml_dir }}/"
+      mode: '0644'
+    with_fileglob:
+    - osp/roles_computehci.yaml
+    when: osp_compute_hci | bool
+
   - name: render templates to yaml dir
     template:
       src: "osp/tripleo_deploy/{{ item }}.j2"
