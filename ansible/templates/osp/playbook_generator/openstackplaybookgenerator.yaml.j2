@@ -4,8 +4,8 @@ metadata:
   name: default
   namespace: openstack
 spec:
+  gitSecret: git-secret
   imageURL: {{ openstackclient_image }}
-  openstackClientName: openstackclient
   heatEnvConfigMap: tripleo-deploy-config-custom
   tarballConfigMap: tripleo-net-config
 {% if osp_compute_hci %}
