@@ -13,8 +13,8 @@ RUN tar xfz /tmp/openshift-client-linux.tar.gz -C /usr/local/bin/
 RUN rm -f /tmp/openshift-client-linux.tar.gz
 RUN dnf -y clean all
 # fixed IDs which are used in openstackclient fsGroup
-RUN groupadd -g 1001 cloud-admin
-RUN useradd -m -g 1001 -u 1001 cloud-admin&& echo "cloud-admin        ALL=(ALL)       NOPASSWD: ALL" >/etc/sudoers.d/cloud-admin
+RUN groupadd -g 42401 cloud-admin
+RUN useradd -m -g 42401 -u 42401 cloud-admin&& echo "cloud-admin        ALL=(ALL)       NOPASSWD: ALL" >/etc/sudoers.d/cloud-admin
 RUN mkdir /home/cloud-admin/.ssh && chown cloud-admin:cloud-admin /home/cloud-admin/.ssh
 
 ADD hostnamectl /usr/local/bin/
