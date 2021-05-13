@@ -14,9 +14,15 @@
   ### ASSISTED INSTALLER CLI BINARY
 
   - name: Install assisted installer CLI
-    shell: |
-      pip3 install aicli
-      pip3 install --user aicli
+    pip:
+      name: aicli
+      executable: /usr/bin/pip-3
+
+  - name: Install assisted installer CLI - user directory
+    pip:
+      name: aicli
+      extra_args: "--user"
+      executable: /usr/bin/pip-3
 
   ### ADDITIONAL SET-FACTS
 
