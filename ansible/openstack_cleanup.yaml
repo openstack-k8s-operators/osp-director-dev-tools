@@ -18,7 +18,7 @@
       - "oc delete -n openstack openstackplaybookgenerator --all"
       - "oc delete -n openstack openstackephemeralheat --all"
 
-  - name: create playbooks git repo dir
+  - name: delete playbooks git repo dir
     file:
       path: /home/git/playbooks.git
       state: absent
