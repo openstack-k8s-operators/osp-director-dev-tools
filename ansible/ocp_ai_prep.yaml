@@ -510,6 +510,14 @@
 
   ### ASSISTED INSTALLER EXECUTION PLAYBOOKS
 
+  # Work-around as invoking lookup plugin inside inventory.ospd.j2 template
+  # fails. This is because ansible user is different then id_rsa.pub one.
+  - name: Register SSH public key
+    become: true
+    become_user: root
+    command: "cat /root/.ssh/id_rsa.pub"
+    register: ssh_root_pub_key
+
   - name: Download and configure assisted installer playbooks
     become: true
     become_user: ocp
@@ -567,3 +575,5 @@
           src: ai/cluster_mgnt_roles/inventory.ospd.j2
           dest: "{{ base_path }}/cluster_mgnt_roles/inventory.ospd"
           mode: '0664'
+      vars:
+          ssh_pub_key: "{{ ssh_root_pub_key.stdout }}"
