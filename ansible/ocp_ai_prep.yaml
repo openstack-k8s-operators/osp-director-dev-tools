@@ -201,7 +201,7 @@
       file:
         path: "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}"
         state: directory
-        mode: '0755'
+        mode: '0777'
 
     - name: Start httpd container
       containers.podman.podman_container:
