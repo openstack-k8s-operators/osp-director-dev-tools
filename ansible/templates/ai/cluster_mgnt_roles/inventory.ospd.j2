@@ -35,7 +35,7 @@ ntp_server="clock.redhat.com"
 
 #Host SSH Public Key for troubleshooting after installation
 # Use the same host discovery SSH key
-ssh_public_key="{{ lookup('file', '/root/.ssh/id_rsa.pub') }}"
+ssh_public_key="{{ ssh_pub_key }}"
 
 # Load pull-secret file
 {% if secrets_repo is undefined %}
