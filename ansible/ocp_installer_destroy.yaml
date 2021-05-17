@@ -1,11 +1,9 @@
 ---
 - name: Destroy the dev-scripts OCP cluster
   import_playbook: ocp_dev_scripts_destroy.yaml
-  when: not (ocp_ai|bool)
 
 - name: Destroy the assisted installer OCP cluster
   import_playbook: ocp_ai_destroy.yaml
-  when: ocp_ai|bool
 
 - name: Cleanup libvirt resources
   import_playbook: libvirt_cleanup.yaml

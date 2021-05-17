@@ -84,6 +84,7 @@
       ./stop-assisted-service.sh
     args:
       chdir: "{{ base_path }}/assisted-service-onprem"
+    ignore_errors: true
 
 
   ### BRIDGES
