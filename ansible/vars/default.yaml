@@ -13,7 +13,7 @@ ocp_release_type: ga
 # - Thus, dev-scripts related variables are ignored, and ...
 # - ocp_release_type is ignored
 # - ocp_version must be 4.7 (for now)
-# - ocp_release_image should point to a 4.7.X image
+# - ocp_release_image is ignored (for now)
 # - Other OCP AI variables are stored in vars/ocp_ai.yaml to reduce clutter in this file
 # NOTE: This variable should be set to true in local-defaults.yaml as opposed to changing it here,
 #       otherwise our playbooks seem to be flaky with executing the AI logic
