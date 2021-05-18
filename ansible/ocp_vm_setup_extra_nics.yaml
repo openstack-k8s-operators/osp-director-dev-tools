@@ -1,7 +1,5 @@
 ---
 - hosts: localhost
-  become: true
-  become_user: root
   vars_files: vars/default.yaml
   roles:
   - oc_local
@@ -10,19 +8,9 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
-  - name: create libvirt hooks directory
-    file:
-      path: /etc/libvirt/hooks
-      state: directory
-      mode: 0755
-
-  - name: copy libvirt network hook to /etc/libvirt/hooks/network
-    copy:
-      src:  files/qemu/network
-      dest: /etc/libvirt/hooks/network
-      mode: 0750
-
   - name: check if osp network already exists
+    become: true
+    become_user: root
     shell: >
       virsh net-list --all | grep ospnetwork
     ignore_errors: true
@@ -46,52 +34,70 @@
         - files/ospnetwork.xml
 
     - name: Define ospnetwork libvirt network
+      become: true
+      become_user: root
       command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
 
-  - name: Start the osp network
-    shell: |
-      virsh net-start --network ospnetwork
-      virsh net-autostart --network ospnetwork
-    register: ospnetwork_start
-    failed_when: ospnetwork_start.stderr != "" and "network is already active" not in ospnetwork_start.stderr
+  - name: Setup OSP network
+    become: true
+    become_user: root
+    block:
+    - name: create libvirt hooks directory
+      file:
+        path: /etc/libvirt/hooks
+        state: directory
+        mode: 0755
 
-  - name: get active worker nodes
-    shell: >
-        echo $(virsh list --name | grep worker)
-    register: worker_ocp_active
+    - name: copy libvirt network hook to /etc/libvirt/hooks/network
+      copy:
+        src:  files/qemu/network
+        dest: /etc/libvirt/hooks/network
+        mode: 0750
 
-  - name: get inactive worker nodes
-    shell: >
-        echo $(virsh list --inactive --name | grep worker)
-    register: worker_ocp_inactive
+    - name: Start the osp network
+      shell: |
+        virsh net-start --network ospnetwork
+        virsh net-autostart --network ospnetwork
+      register: ospnetwork_start
+      failed_when: ospnetwork_start.stderr != "" and "network is already active" not in ospnetwork_start.stderr
 
-  - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
-    command: "virsh detach-interface {{ item }} bridge --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --persistent --live"
-    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
-    ignore_errors: true
+    - name: get active worker nodes
+      shell: >
+          echo $(virsh list --name | grep worker)
+      register: worker_ocp_active
 
-  - name: Detach osp network interface from INACTIVE worker VM's if this is a rerun of the playbook
-    command: "virsh detach-interface {{ item }} bridge --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --persistent"
-    with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
-    ignore_errors: true
+    - name: get inactive worker nodes
+      shell: >
+          echo $(virsh list --inactive --name | grep worker)
+      register: worker_ocp_inactive
 
-  - name: HACK to fix dev-scripts bug
-    shell: |
-      virsh destroy {{ item }}
-    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
-    when: not (ocp_ai|bool)
+    - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
+      command: "virsh detach-interface {{ item }} bridge --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --persistent --live"
+      with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+      ignore_errors: true
 
-  - name: Attach the osp network to ACTIVE worker VM's
-    command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --config"
-    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+    - name: Detach osp network interface from INACTIVE worker VM's if this is a rerun of the playbook
+      command: "virsh detach-interface {{ item }} bridge --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --persistent"
+      with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+      ignore_errors: true
 
-  - name: HACK to fix dev-scripts bug
-    shell: |
-      virsh start {{ item }}
-    with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
-    when: not (ocp_ai|bool)
+    - name: HACK to fix dev-scripts bug
+      shell: |
+        virsh destroy {{ item }}
+      with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+      when: not (ocp_ai|bool)
 
-  - name: Attach the osp network to INACTIVE worker VM's
-    command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent"
-    with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
-    when: worker_ocp_inactive.stdout_lines != 0
+    - name: Attach the osp network to ACTIVE worker VM's
+      command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --config"
+      with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+
+    - name: HACK to fix dev-scripts bug
+      shell: |
+        virsh start {{ item }}
+      with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
+      when: not (ocp_ai|bool)
+
+    - name: Attach the osp network to INACTIVE worker VM's
+      command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent"
+      with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+      when: worker_ocp_inactive.stdout_lines != 0
