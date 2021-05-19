@@ -58,7 +58,7 @@
 
   - name: git init playbooks.git
     shell: |
-       git init . 
+       git init .
     args:
       chdir: /home/git/playbooks.git
       creates: /home/git/playbooks.git/.git
@@ -67,11 +67,23 @@
 
 - hosts: convergence_base
   vars_files: vars/default.yaml
+  become: true
+
+  tasks:
+    - name: copy git .ssh key to local_working_dir
+      copy:
+        src: /home/git/.ssh/id_rsa
+        dest: "{{ local_working_dir }}/git_id_rsa"
+        owner: root
+        group: root
+        mode: 0644
+
+- hosts: convergence_base
+  vars_files: vars/default.yaml
   roles:
   - oc_local
 
   tasks:
-
   - name: does the git secret already exist
     shell: >
       oc get secret -n openstack git-secret --ignore-not-found
@@ -82,7 +94,7 @@
 
   - name: create secret for git ssh key
     shell: |
-            oc create secret generic git-secret -n openstack --from-file=git_ssh_identity=/home/git/.ssh/id_rsa --from-literal=git_url=git@{{ ansible_default_ipv4.address }}:/home/git/playbooks.git
+      oc create secret generic git-secret -n openstack --from-file=git_ssh_identity=/root/ostest-working/git_id_rsa --from-literal=git_url=git@{{ ansible_default_ipv4.address }}:/home/git/playbooks.git
     environment:
       <<: *oc_env
     when: git_secret_exist_switch.stdout | length == 0
