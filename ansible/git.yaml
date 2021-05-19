@@ -57,6 +57,7 @@
       PATH: /usr/local/bin:{{ ansible_env.PATH }}
 
   - name: git init playbooks.git
+    # noqa 303
     shell: |
        git init .
     args:
