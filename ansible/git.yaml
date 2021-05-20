@@ -68,15 +68,21 @@
 
 - hosts: convergence_base
   vars_files: vars/default.yaml
-  become: true
+  roles:
+  - oc_local
 
   tasks:
-    - name: copy git .ssh key to local_working_dir
+
+    - name: register git .ssh key
+      become: true
+      become_user: git
+      command: "cat /home/git/.ssh/id_rsa"
+      register: git_ssh_key
+
+    - name: copy git .ssh key to working_dir
       copy:
-        src: /home/git/.ssh/id_rsa
-        dest: "{{ local_working_dir }}/git_id_rsa"
-        owner: root
-        group: root
+        content: "{{ git_ssh_key.stdout }}"
+        dest: "{{ working_dir }}/git_id_rsa"
         mode: 0644
 
 - hosts: convergence_base
@@ -95,7 +101,7 @@
 
   - name: create secret for git ssh key
     shell: |
-      oc create secret generic git-secret -n openstack --from-file=git_ssh_identity=/root/ostest-working/git_id_rsa --from-literal=git_url=git@{{ ansible_default_ipv4.address }}:/home/git/playbooks.git
+      oc create secret generic git-secret -n openstack --from-file=git_ssh_identity={{ working_dir }}/git_id_rsa --from-literal=git_url=git@{{ ansible_default_ipv4.address }}:/home/git/playbooks.git
     environment:
       <<: *oc_env
     when: git_secret_exist_switch.stdout | length == 0
