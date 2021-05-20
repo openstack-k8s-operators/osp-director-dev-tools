@@ -1,12 +1,12 @@
 ---
 - hosts: convergence_base
   gather_facts: false
-  become: true
-  user: root
   vars_files: vars/default.yaml
 
   tasks:
   - name: Download and build custom QEMU
+    become: true
+    become_user: root
     when: enable_virt_sriov | bool
     block:
     - name: Enable codeready-builder-for-rhel-8-x86_64-rpms
@@ -123,8 +123,6 @@
 
 - hosts: localhost
   gather_facts: false
-  become: true
-  user: root
   vars_files: vars/default.yaml
   roles:
   - oc_local

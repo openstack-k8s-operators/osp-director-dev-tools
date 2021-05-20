@@ -26,8 +26,6 @@
         path: "{{ ai_sched_ingress_yaml_dir }}"
         state: directory
         mode: '0755'
-        owner: root
-        group: root
 
     - name: Create schedule CR
       template:
@@ -54,8 +52,6 @@
         path: "{{ ai_metal3_yaml_dir }}"
         state: directory
         mode: '0755'
-        owner: root
-        group: root
 
     - name: Create Metal3 provisioning CR
       template:

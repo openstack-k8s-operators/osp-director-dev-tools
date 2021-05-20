@@ -1,8 +1,6 @@
 ---
 - hosts: convergence_base
-  become: true
   gather_facts: false
-
   tasks:
   - name: Include default variables
     include_vars: vars/default.yaml
@@ -13,48 +11,52 @@
 
   ### EXECUTE ASSISTED INSTALLER PLAYBOOK
 
-  - name: Delete existing AI cluster (if any)
-    command: "aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} delete cluster {{ ocp_cluster_name }}"
-    environment:
-      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
-    register: delete_ai_cluster
-    failed_when: delete_ai_cluster.stderr != "" and "Cluster {{ ocp_cluster_name }} not found" not in delete_ai_cluster.stderr
+  - name: Run Assisted Installer
+    become: true
+    become_user: ocp
+    block:
+    - name: Delete existing AI cluster (if any)
+      command: "aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} delete cluster {{ ocp_cluster_name }}"
+      environment:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+      register: delete_ai_cluster
+      failed_when: delete_ai_cluster.stderr != "" and "Cluster {{ ocp_cluster_name }} not found" not in delete_ai_cluster.stderr
 
-  - name: Create assisted installer execution bash script
-    template:
-      src: ai/cluster_mgnt_roles/run_playbook.sh.j2
-      dest: "{{ base_path }}/cluster_mgnt_roles/run_playbook.sh"
-      mode: '0755'
+    - name: Create assisted installer execution bash script
+      template:
+        src: ai/cluster_mgnt_roles/run_playbook.sh.j2
+        dest: "{{ base_path }}/cluster_mgnt_roles/run_playbook.sh"
+        mode: '0755'
 
-  - debug:
-      msg: |
-        Executing the assisted installer playbook. You can tail the logs at {{ base_path }}/ai.log on
-        the host for progress.  Furthermore, you can view the assisted installer console by entering the
-        URL http://{{ ocp_ai_bm_ip }}:8888/clusters/.  If you do not have direct access to that IP from
-        your browser, you can use a tool like "sshuttle" to provide connectivity like so:
-        sshuttle --dns -r <user>@<cluster host> {{ ocp_ai_bm_bridge_cidr }}.  You would then hit this
-        URL in your browser: http://<cluster host>:8888/clusters/
+    - debug:
+        msg: |
+          Executing the assisted installer playbook. You can tail the logs at {{ base_path }}/ai.log on
+          the host for progress.  Furthermore, you can view the assisted installer console by entering the
+          URL http://{{ ocp_ai_bm_ip }}:8888/clusters/.  If you do not have direct access to that IP from
+          your browser, you can use a tool like "sshuttle" to provide connectivity like so:
+          sshuttle --dns -r <user>@<cluster host> {{ ocp_ai_bm_bridge_cidr }}.  You would then hit this
+          URL in your browser: http://<cluster host>:8888/clusters/
 
-  - name: Run the assisted installer playbook
-    shell: |
-      ./run_playbook.sh
-    args:
-      chdir: "{{ base_path }}/cluster_mgnt_roles"
-    environment:
-      ANSIBLE_HOST_KEY_CHECKING: false
+    - name: Run the assisted installer playbook
+      shell: |
+        ./run_playbook.sh
+      args:
+        chdir: "{{ base_path }}/cluster_mgnt_roles"
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: false
 
-  - name: Download assisted installer cluster kubeconfig and kubeadmin password
-    shell: |
-      aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
-      aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
-    args:
-      chdir: "{{ base_path }}/cluster_mgnt_roles"
-    environment:
-      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+    - name: Download assisted installer cluster kubeconfig and kubeadmin password
+      shell: |
+        aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
+        aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
+      args:
+        chdir: "{{ base_path }}/cluster_mgnt_roles"
+      environment:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
 
-  - name: Set kubeconfig fact
-    set_fact:
-      ai_kubeconfig: lookup('file', '{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}')
+    - name: Set kubeconfig fact
+      set_fact:
+        ai_kubeconfig: lookup('file', '{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}')
 
   - name: Create assisted installer kubeconfig locally
     block:
@@ -96,8 +98,9 @@
       mode: '0755'
 
   - name: Copy oc binary to /usr/local/bin
+    become: true
+    become_user: root
     copy:
       src: "/tmp/oc"
       dest: /usr/local/bin/
       mode: '0755'
-    become: yes

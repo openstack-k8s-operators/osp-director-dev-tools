@@ -1,8 +1,6 @@
 ---
 - hosts: convergence_base
-  become: true
   gather_facts: false
-
   tasks:
   - name: Include default variables
     include_vars: vars/default.yaml
@@ -14,6 +12,8 @@
   ### ASSISTED INSTALLER CLI BINARY
 
   - name: Install assisted installer CLI
+    become: true
+    become_user: root
     pip:
       name: aicli
       executable: /usr/bin/pip-3
@@ -45,79 +45,84 @@
 
 
   ### BRIDGES
-
-  # FIXME?: Should this task target the playbook host instead?
-  - name: Install needed network manager libs
-    package:
-      name:
-        - NetworkManager-libnm
-        - nm-connection-editor
-      state: present
-
-  - name: Create AI bridges
+  - name: Prepare bridges
+    become: true
+    become_user: root
     block:
-    - name: Remove lingering bridges from dev-scripts (if any)
-      shell: |
-        virsh net-destroy {{ ocp_cluster_name }}{{ item }};
-        virsh net-undefine {{ ocp_cluster_name }}{{ item }}
-      with_items:
-        - bm
-        - pr
-      register: dev_scripts_br_rm
-      failed_when: dev_scripts_br_rm.stderr != "" and "no network with matching name" not in dev_scripts_br_rm.stderr and "is not active" not in dev_scripts_br_rm.stderr
-
-    - name: Delete existing bridges (if any)
-      community.general.nmcli:
-        conn_name: "{{ item }}"
-        type: bridge
-        state: absent
-      with_items:
-        - "{{ ocp_cluster_name }}bm"
-        - "{{ ocp_cluster_name }}pr"
-        - "ospnetwork"
-
-    - name: Make sure bridge ifcfg files are removed
-      file:
-        path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
-        state: absent
-      with_items:
-        - "{{ ocp_cluster_name }}bm"
-        - "{{ ocp_cluster_name }}pr"
-        - "ospnetwork"
-
-    - name: Create BM bridge
-      community.general.nmcli:
-        conn_name: "{{ ocp_cluster_name }}bm"
-        type: bridge
-        ifname: "{{ ocp_cluster_name }}bm"
-        autoconnect: yes
-        stp: off
-        # TODO: Support any netmask?
-        ip4: "{{ ocp_ai_bm_ip }}/24"
+    # FIXME?: Should this task target the playbook host instead?
+    - name: Install needed network manager libs
+      package:
+        name:
+          - NetworkManager-libnm
+          - nm-connection-editor
         state: present
 
-    - name: Create provisioning bridge
-      community.general.nmcli:
-        conn_name: "{{ ocp_cluster_name }}pr"
-        type: bridge
-        ifname: "{{ ocp_cluster_name }}pr"
-        autoconnect: yes
-        stp: off
-        # TODO: Support any netmask?
-        ip4: "{{ ocp_ai_pr_ip }}/24"
-        state: present
+    - name: Create AI bridges
+      block:
+      - name: Remove lingering bridges from dev-scripts (if any)
+        shell: |
+          virsh net-destroy {{ ocp_cluster_name }}{{ item }};
+          virsh net-undefine {{ ocp_cluster_name }}{{ item }}
+        with_items:
+          - bm
+          - pr
+        register: dev_scripts_br_rm
+        failed_when: dev_scripts_br_rm.stderr != "" and "no network with matching name" not in dev_scripts_br_rm.stderr and "is not active" not in dev_scripts_br_rm.stderr
 
-    - name: Reload bridges
-      shell: |
-        /usr/bin/nmcli con reload {{ ocp_cluster_name }}{{ item }}; /usr/bin/nmcli con up {{ ocp_cluster_name }}{{ item }}
-      with_items:
-        - bm
-        - pr
+      - name: Delete existing bridges (if any)
+        community.general.nmcli:
+          conn_name: "{{ item }}"
+          type: bridge
+          state: absent
+        with_items:
+          - "{{ ocp_cluster_name }}bm"
+          - "{{ ocp_cluster_name }}pr"
+          - "ospnetwork"
+
+      - name: Make sure bridge ifcfg files are removed
+        file:
+          path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
+          state: absent
+        with_items:
+          - "{{ ocp_cluster_name }}bm"
+          - "{{ ocp_cluster_name }}pr"
+          - "ospnetwork"
+
+      - name: Create BM bridge
+        community.general.nmcli:
+          conn_name: "{{ ocp_cluster_name }}bm"
+          type: bridge
+          ifname: "{{ ocp_cluster_name }}bm"
+          autoconnect: yes
+          stp: off
+          # TODO: Support any netmask?
+          ip4: "{{ ocp_ai_bm_ip }}/24"
+          state: present
+
+      - name: Create provisioning bridge
+        community.general.nmcli:
+          conn_name: "{{ ocp_cluster_name }}pr"
+          type: bridge
+          ifname: "{{ ocp_cluster_name }}pr"
+          autoconnect: yes
+          stp: off
+          # TODO: Support any netmask?
+          ip4: "{{ ocp_ai_pr_ip }}/24"
+          state: present
+
+      - name: Reload bridges
+        shell: |
+          /usr/bin/nmcli con reload {{ ocp_cluster_name }}{{ item }}; /usr/bin/nmcli con up {{ ocp_cluster_name }}{{ item }}
+        with_items:
+          - bm
+          - pr
 
 
   ### FIREWALL
 
   - name: Prepare firewall
+    become: true
+    become_user: root
     block:
     - name: Acquire default external interface
       shell: |
@@ -196,6 +201,8 @@
   ### HTTP STORE
 
   - name: Create an HTTP server container to hold ISOs/QCOW2s
+    become: true
+    become_user: root
     block:
     - name: Create HTTP server storage directory
       file:
@@ -218,6 +225,8 @@
   ### DNSMASQ
 
   - name: Prepare dnsmasq
+    become: true
+    become_user: root
     block:
     - name: Create dnsmasq conf
       template:
@@ -231,34 +240,36 @@
         dest: "/etc/NetworkManager/conf.d/dnsmasq.conf"
         mode: '0644'
 
-  - name: Restart NetworkManager
-    service:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
+    - name: Restart NetworkManager
+      service:
+        name: NetworkManager
+        state: restarted
+        enabled: yes
 
-  - name: Stop all libvirt networks to clear DHCP socket bindings
-    shell: |
-      #!/bin/bash
-      for i in $(virsh net-list | grep -v Autostart | grep -v "---------------" | awk {'print $1'}); do
-        virsh net-destroy $i
-      done
+    - name: Stop all libvirt networks to clear DHCP socket bindings
+      shell: |
+        #!/bin/bash
+        for i in $(virsh net-list | grep -v Autostart | grep -v "---------------" | awk {'print $1'}); do
+          virsh net-destroy $i
+        done
 
-  - name: Start dnsmasq
-    service:
-      name: dnsmasq
-      state: restarted
-      enabled: yes
+    - name: Start dnsmasq
+      service:
+        name: dnsmasq
+        state: restarted
+        enabled: yes
 
-  - name: Configure /etc/resolv.conf
-    template:
-        src: "ai/dnsmasq/resolv.conf.j2"
-        dest: "/etc/resolv.conf"
-        mode: '0644'
+    - name: Configure /etc/resolv.conf
+      template:
+          src: "ai/dnsmasq/resolv.conf.j2"
+          dest: "/etc/resolv.conf"
+          mode: '0644'
 
   ### VMs
 
   - name: Provision VMs for use with the assisted installer
+    become: true
+    become_user: root
     block:
     - name: Delete existing VMs and disk QCOW2s (if any)
       shell: |
@@ -380,39 +391,40 @@
         index_var: index
       register: extra_worker_uuids
 
-    - name: Create Metal3 extra baremetal hosts CRs
-      block:
-      - name: Include oc_local role
-        include_role:
-          name: oc_local
+  ### CRs
+  - name: Create Metal3 extra baremetal hosts CRs
+    block:
+    - name: Include oc_local role
+      include_role:
+        name: oc_local
 
-      - name: Include default variables
-        include_vars: vars/default.yaml
+    - name: Include default variables
+      include_vars: vars/default.yaml
 
-      - name: Set directory for storing AI Metal3 yaml files
-        set_fact:
-          ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
+    - name: Set directory for storing AI Metal3 yaml files
+      set_fact:
+        ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
 
-      - name: Create local yamldir for AI Metal3 yaml files
-        file:
-          path: "{{ ai_metal3_yaml_dir }}"
-          state: directory
-          mode: '0755'
-          owner: root
-          group: root
+    - name: Create local yamldir for AI Metal3 yaml files
+      file:
+        path: "{{ ai_metal3_yaml_dir }}"
+        state: directory
+        mode: '0755'
 
-      - name: Render Metal3 extra baremetal hosts CRs
-        template:
-          src: ai/metal3/extra_workers_bmhs.yml.j2
-          dest: "{{ ai_metal3_yaml_dir }}/extra_workers_bmhs.yml"
-          mode: '0664'
+    - name: Render Metal3 extra baremetal hosts CRs
+      template:
+        src: ai/metal3/extra_workers_bmhs.yml.j2
+        dest: "{{ ai_metal3_yaml_dir }}/extra_workers_bmhs.yml"
+        mode: '0664'
 
-      delegate_to: localhost
+    delegate_to: localhost
 
 
   ### SUSHY-TOOLS
 
   - name: Install sushy-tools
+    become: true
+    become_user: root
     block:
     - name: Install sushy-tools via pip3
       pip:
@@ -451,6 +463,8 @@
   ### ASSISTED INSTALLER SERVICE SCRIPT
 
   - name: Prepare assisted installer service
+    become: true
+    become_user: root
     block:
     - name: Clone the assisted installer service repo
       git:
