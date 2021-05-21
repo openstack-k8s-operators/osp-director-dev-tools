@@ -7,12 +7,21 @@
   - oc_local
 
   tasks:
-  - name: Create VM attached Local Storage for local-storage-operator
-    with_items: "{{ local_storage_domains }}"
+  - name: Create VM attached Local Storage for local-storage-operator for dev-scripts
     include_role:
       name: local_storage
     vars:
       domain: "{{ item }}"
+    with_items: "{{ local_storage_domains }}"
+    when: not (ocp_ai | bool)
+
+  - name: Create VM attached Local Storage for local-storage-operator for AI
+    include_role:
+      name: local_storage
+    vars:
+      domain: "{{ (item | replace('_','-')) }}"
+    with_items: "{{ local_storage_domains }}"
+    when: (ocp_ai | bool)
 
   - name: Lookup defaultChannel for local-storage-operator
     shell: >
