@@ -24,7 +24,11 @@ SUSHY_EMULATOR_LIBVIRT_URI = u'qemu:///system'
 # system architecture
 SUSHY_EMULATOR_BOOT_LOADER_MAP = {
     u'UEFI': {
+{% if ansible_distribution_version|float <= 8.3 %}
         u'x86_64': u'/usr/share/edk2/ovmf/OVMF_CODE.secboot.fd',
+{% else %}
+        u'x86_64': u'/usr/share/OVMF/OVMF_CODE.secboot.fd',
+{% endif %}
         u'aarch64': u'/usr/share/AAVMF/AAVMF_CODE.fd'
     },
     u'Legacy': {
