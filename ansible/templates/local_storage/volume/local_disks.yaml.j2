@@ -9,7 +9,18 @@ spec:
     - matchExpressions:
         - key: kubernetes.io/hostname
           operator: In
+{% if not (ocp_ai|bool) %}
           values: {{ local_storage_workers }}
+{% else %}
+          values:
+{% for worker in local_storage_workers %}
+{% if ocp_cluster_name not in worker %}
+          - "{{ ocp_cluster_name }}-{{ worker }}"
+{% else %}
+          - "{{ worker }}"
+{% endif %}
+{% endfor %}
+{% endif %}
   storageClassDevices:
     - storageClassName: "local"
       volumeMode: Filesystem

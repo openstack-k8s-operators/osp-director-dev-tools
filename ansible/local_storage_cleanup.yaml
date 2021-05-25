@@ -29,13 +29,23 @@
     ignore_errors: true
     with_items: "{{ local_pvs.stdout_lines | list }}"
 
-  - name: Cleanup VM attached Local Storage
+  - name: Cleanup VM attached Local Storage for dev-scripts
     include_role:
       name: local_storage
       tasks_from: cleanup
     vars:
       domain: "{{ item }}"
     with_items: "{{ local_storage_domains }}"
+    when: not (ocp_ai | bool)
+
+  - name: Cleanup VM attached Local Storage for AI
+    include_role:
+      name: local_storage
+      tasks_from: cleanup
+    vars:
+      domain: "{{ (item | replace('_','-')) }}"
+    with_items: "{{ local_storage_domains }}"
+    when: (ocp_ai | bool)
 
   # NOTE: this can take awhile to terminate as the nodes will reboot above
   - name: Uninstall Local Storage Operator and Namespace  (worker rebooted...)
