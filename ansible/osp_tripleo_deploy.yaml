@@ -8,7 +8,15 @@
   - name: Set directory for the tripleo deployment files
     set_fact:
       ooo_yaml_dir: "{{ working_yamls_dir }}/tripleo_deploy"
-      ooo_net_config_dir: "{{ working_yamls_dir }}/net_config"
+      ooo_tarball_dir: "{{ working_yamls_dir }}/tripleo_deploy_tarball"
+
+  - name: Make sure to cleanup previous yaml dirs
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+    - "{{ ooo_yaml_dir }}"
+    - "{{ ooo_tarball_dir }}"
 
   - name: Create yaml dir
     file:
@@ -17,16 +25,7 @@
       mode: '0755'
     with_items:
     - "{{ ooo_yaml_dir }}"
-    - "{{ ooo_net_config_dir }}"
-
-  - name: copy computeHCI roles file to custom tripleo environment files
-    copy:
-      src: "{{ item }}"
-      dest: "{{ ooo_yaml_dir }}/"
-      mode: '0644'
-    with_fileglob:
-    - osp/roles_computehci.yaml
-    when: osp_compute_hci | bool
+    - "{{ ooo_tarball_dir }}"
 
   - name: render templates to yaml dir
     template:
@@ -54,20 +53,29 @@
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: copy net-config files to ooo_net_config_dir
+  - name: copy computeHCI roles file to custom tripleo environment files
     copy:
       src: "{{ item }}"
-      dest: "{{ ooo_net_config_dir }}/"
+      dest: "{{ ooo_tarball_dir }}/roles_data.yaml"
+      mode: '0644'
+    with_fileglob:
+    - osp/roles_computehci.yaml
+    when: osp_compute_hci | bool
+
+  - name: copy net-config files to ooo_tarball_dir
+    copy:
+      src: "{{ item }}"
+      dest: "{{ ooo_tarball_dir }}/"
       mode: '0644'
     with_fileglob:
     - "osp/net_config/{{ osp_network_type }}/*.yaml"
 
-  - name: create tripleo-net-config ConfigMap with tarballs
+  - name: create tripleo-tarball-config ConfigMap with tarballs
     shell: |
-      cd {{ ooo_net_config_dir }}
-      tar -cvzf net-config.tar.gz *.yaml
-      oc create configmap -n openstack tripleo-net-config --from-file=net-config.tar.gz
-      rm net-config.tar.gz
+      cd {{ ooo_tarball_dir }}
+      tar -cvzf tarball-config.tar.gz *.yaml
+      oc create configmap -n openstack tripleo-tarball-config --from-file=tarball-config.tar.gz
+      rm tarball-config.tar.gz
     environment:
       <<: *oc_env
 
