@@ -64,9 +64,14 @@ perf_install: hosts local-defaults.yaml
 	-i hosts -e @local-defaults.yaml \
 	ocp_performance.yaml
 
+git: hosts local-deps local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -v -i hosts -e @local-defaults.yaml \
+	git.yaml
+
 openstack:
 	$(MAKE) datavolume
 	$(MAKE) networks
+	$(MAKE) git
 	$(MAKE) osp_custom_config
 	$(MAKE) ctlplane
 	$(MAKE) computes

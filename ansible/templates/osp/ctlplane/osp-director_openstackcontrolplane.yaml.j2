@@ -4,6 +4,7 @@ metadata:
   name: overcloud
   namespace: {{ namespace }}
 spec:
+  gitSecret: git-secret
   openStackClientImageURL: {{ openstackclient_image }}
   openStackClientNetworks:
         - ctlplane

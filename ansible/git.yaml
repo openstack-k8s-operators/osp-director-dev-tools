@@ -1,0 +1,107 @@
+---
+- hosts: convergence_base
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: create git group
+      group:
+        name: git
+        state: present
+
+    - name: Create user to run installer dev scripts
+      user:
+        name: git
+        comment: git user
+        shell: /bin/bash
+        group: git
+
+    - name: make sure /home/git is world readable
+      file:
+        path: /home/git
+        state: directory
+        mode: '0755'
+        owner: git
+        group: git
+
+    - name: create git .ssh dir
+      file:
+        path: /home/git/.ssh
+        state: directory
+        mode: '0700'
+        owner: git
+        group: git
+
+    - name: create playbooks git repo dir
+      file:
+        path: /home/git/playbooks.git
+        state: directory
+        mode: '0755'
+        owner: git
+        group: git
+
+- hosts: convergence_base
+  become: true
+  become_user: git
+
+  tasks:
+  - name: generate ssh keys for git
+    shell: |
+        ssh-keygen -t rsa -N "" -f .ssh/id_rsa
+        cp .ssh/id_rsa.pub .ssh/authorized_keys
+        chmod 600 .ssh/authorized_keys
+    args:
+      chdir: /home/git
+      creates: .ssh/authorized_keys
+    environment:
+      PATH: /usr/local/bin:{{ ansible_env.PATH }}
+
+  - name: git init playbooks.git
+    # noqa 303
+    shell: |
+       git init .
+    args:
+      chdir: /home/git/playbooks.git
+      creates: /home/git/playbooks.git/.git
+    environment:
+      PATH: /usr/local/bin:{{ ansible_env.PATH }}
+
+- hosts: convergence_base
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+
+    - name: register git .ssh key
+      become: true
+      become_user: git
+      command: "cat /home/git/.ssh/id_rsa"
+      register: git_ssh_key
+
+    - name: copy git .ssh key to working_dir
+      copy:
+        content: "{{ git_ssh_key.stdout }}"
+        dest: "{{ working_dir }}/git_id_rsa"
+        mode: 0644
+
+- hosts: convergence_base
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: does the git secret already exist
+    shell: >
+      oc get secret -n openstack git-secret --ignore-not-found
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    register: git_secret_exist_switch
+
+  - name: create secret for git ssh key
+    shell: |
+      oc create secret generic git-secret -n openstack --from-file=git_ssh_identity={{ working_dir }}/git_id_rsa --from-literal=git_url=git@{{ ansible_default_ipv4.address }}:/home/git/playbooks.git
+    environment:
+      <<: *oc_env
+    when: git_secret_exist_switch.stdout | length == 0
