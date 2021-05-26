@@ -7,7 +7,4 @@ spec:
   gitSecret: git-secret
   imageURL: {{ openstackclient_image }}
   heatEnvConfigMap: tripleo-deploy-config-custom
-  tarballConfigMap: tripleo-net-config
-{% if osp_compute_hci %}
-  rolesFile: roles_computehci.yaml
-{% endif %}
+  tarballConfigMap: tripleo-tarball-config
