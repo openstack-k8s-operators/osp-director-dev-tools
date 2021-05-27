@@ -80,8 +80,9 @@
       register: git_ssh_key
 
     - name: copy git .ssh key to working_dir
+      #command: "echo {{ git_ssh_key.stdout }} > {{ working_dir }}/git_id_rsa"
       copy:
-        content: "{{ git_ssh_key.stdout }}"
+        content: "{{ git_ssh_key.stdout }}{{ '\n' }}"
         dest: "{{ working_dir }}/git_id_rsa"
         mode: 0644
 
