@@ -81,21 +81,19 @@
       with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
       ignore_errors: true
 
-    - name: HACK to fix dev-scripts bug
+    - name: Attach the osp network to ACTIVE worker VM's
       shell: |
+        # HACK to fix dev-scripts bug
         virsh destroy {{ item }}
+        virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --config
+        virsh start {{ item }}
       with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
       when: not (ocp_ai|bool)
 
     - name: Attach the osp network to ACTIVE worker VM's
       command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent --config"
       with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
-
-    - name: HACK to fix dev-scripts bug
-      shell: |
-        virsh start {{ item }}
-      with_items: "{{ worker_ocp_active.stdout_lines[0].split(' ') }}"
-      when: not (ocp_ai|bool)
+      when: ocp_ai|bool
 
     - name: Attach the osp network to INACTIVE worker VM's
       command: "virsh attach-interface {{ item }} bridge ospnetwork --mac {{ '00:14:cd:2b:c8:0%01x' | format(item[-1]|int) }} --model virtio --persistent"
