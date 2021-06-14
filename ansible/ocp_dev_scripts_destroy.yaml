@@ -13,6 +13,7 @@
       make clean
     args:
       chdir: "{{ base_path }}/dev-scripts"
+    ignore_errors: true
 
   ### remove osp_controller_base_image
 
