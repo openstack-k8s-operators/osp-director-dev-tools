@@ -279,13 +279,13 @@
 
         for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
           virsh undefine --nvram $i
-          rm -f /var/lib/libvirt/images/$i.qcow2
+          rm -f {{ ocp_ai_libvirt_storage_dir }}/$i.qcow2
         done
 
     # FIXME: Sushy-tools does not allow you to specify the libvirt storage pool, and assumes
     #        that default exists, so we need to make sure that it does
-    - name: Check if default storage pool exists
-      shell: virsh pool-list | grep default
+    - name: Check if default storage pool exists with the expected {{ ocp_ai_libvirt_storage_dir }} path
+      shell: virsh pool-dumpxml default | grep "<path>{{ ocp_ai_libvirt_storage_dir }}"
       register: libvirt_default_pool
       failed_when: libvirt_default_pool.stderr != "" and "no storage pool with matching name" not in libvirt_default_pool.stderr
 
@@ -297,10 +297,17 @@
           dest: "/tmp/storage-pool.xml"
           mode: '0664'
 
-      - name: Remove any storage pools currently using /var/lib/libvirt/images
+      - name: Remove any storage pools currently named "default"
+        shell: |
+          virsh pool-destroy default
+          virsh pool-undefine default
+        register: virsh_pool_destroy
+        failed_when: virsh_pool_destroy.stderr != "" and "Storage pool not found" not in virsh_pool_destroy.stderr
+
+      - name: Remove any storage pools currently using {{ ocp_ai_libvirt_storage_dir }}
         shell: |
           for i in $(virsh pool-list --all | grep -v "Autostart" | grep -v "\-\-\-\-\-\-\-\-\-" | awk {'print $1'}); do
-            if [[ -n '$(virsh pool-dumpxml $i | grep "/var/lib/libvirt/images")' ]]; then
+            if [[ -n '$(virsh pool-dumpxml $i | grep "<path>{{ ocp_ai_libvirt_storage_dir }}")' ]]; then
               virsh pool-destroy $i
               virsh pool-undefine $i
             fi
@@ -326,7 +333,7 @@
             --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_master_mac_prefix }}$((i-1))" \
             --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_master_mac_prefix }}$((i-1))" \
             --controller type=scsi,model=virtio-scsi \
-            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-master-$((i-1)).qcow2,size={{ ocp_master_disk }},bus=scsi,format=qcow2 \
+            --disk path={{ ocp_ai_libvirt_storage_dir }}/{{ ocp_cluster_name }}-master-$((i-1)).qcow2,size={{ ocp_master_disk }},bus=scsi,format=qcow2 \
             --graphics vnc \
             --noautoconsole --wait=-1 \
             --boot uefi \
@@ -345,7 +352,7 @@
             --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_worker_mac_prefix }}$((i-1))" \
             --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_worker_mac_prefix }}$((i-1))" \
             --controller type=scsi,model=virtio-scsi \
-            --disk path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-worker-$((i-1)).qcow2,size={{ ocp_worker_disk }},bus=scsi,format=qcow2 \
+            --disk path={{ ocp_ai_libvirt_storage_dir }}/{{ ocp_cluster_name }}-worker-$((i-1)).qcow2,size={{ ocp_worker_disk }},bus=scsi,format=qcow2 \
             --graphics vnc \
             --noautoconsole --wait=-1 \
             --boot uefi \
