@@ -70,7 +70,7 @@ sriov_version: 4.7
 perf_version: 4.7
 
 # CNV addon operator version (usually should correspond to X.X release)
-cnv_hyperconverged_operator_version: 2.6.1
+cnv_hyperconverged_operator_version: 2.6.2
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
