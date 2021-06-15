@@ -73,7 +73,7 @@
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    when: ocp_ai|bool
+    when: ocp_ai|bool and ocp_num_extra_workers > 0
 
   - name: Render templates to yaml dir
     template:
