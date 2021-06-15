@@ -76,7 +76,14 @@ openstack:
 	$(MAKE) ctlplane
 	$(MAKE) computes
 	$(MAKE) playbook_generator
+	$(MAKE) register_overcloud_nodes
 	# $(MAKE) overcloud
+
+register_overcloud_nodes: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	osp_register_overcloud_nodes.yaml
+
 
 openstack_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

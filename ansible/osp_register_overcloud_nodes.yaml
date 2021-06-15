@@ -1,0 +1,109 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: Set directory for rhsm yaml files
+    set_fact:
+      rhsm_yaml_dir: "{{ working_yamls_dir }}/rhsm"
+
+  - debug:
+      msg: "yamls will be written to {{ rhsm_yaml_dir }} locally"
+
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ rhsm_yaml_dir }}/"
+
+  - name: Create yaml dir
+    file:
+      path: "{{ rhsm_yaml_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: wait for OpenstackPlaybookGenerator finished rendering playbooks
+    shell: |
+      oc wait osplaybookgenerator -n openstack --for condition=Finished default --timeout={{ default_timeout }}s
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    retries: 50
+    delay: 5
+    register: result
+    until: result.rc == 0
+
+  - name: Register to subscription manager
+    when: osp_registry_method == "rhsm"
+    block:
+    - name: use local rhel-subscription info
+      when: secrets_repo is undefined
+      block:
+      - name: Include rhel-subscription info
+        include_vars: vars/rhel-subscription.yaml
+      rescue:
+      - fail:
+          msg: |
+            vars/rhel-subscription.yaml is not present. You must create this
+            file manually. The format of the file is:
+
+            rhel_subscription_activation_key: <activation key>
+            rhel_subscription_org_id: "xxxxxxx"
+
+    - name: use secrets_repo
+      when: secrets_repo is defined
+      block:
+      - set_fact:
+          secrets_repo_path: "{{ ansible_env.HOME }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
+      - name: create base dir for secrets_repo repo
+        file:
+          path: "{{ secrets_repo_path }}"
+          state: directory
+          mode: "0755"
+      - name: Clone the repo specified in secrets_repo
+        git:
+          repo: "{{ secrets_repo }}"
+          dest: "{{ secrets_repo_path }}"
+          version: "{{ secrets_branch | default('HEAD', true) }}"
+        environment:
+          GIT_SSL_NO_VERIFY: "true"
+      - name: Include rhel-subscription info
+        include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
+      rescue:
+      - fail:
+          msg: |
+            rhel-subscription.yaml is not present in {{ secrets_repo }}. You must create this
+            file. The format of the file is:
+
+            rhel_subscription_activation_key: <activation key>
+            rhel_subscription_org_id: "xxxxxxx"
+
+  - name: Render templates to yaml dir
+    template:
+      src: "osp/{{ item }}.j2"
+      dest: "{{ rhsm_yaml_dir }}/{{ item }}"
+      mode: '0644'
+    with_items:
+    - "rhsm.yaml"
+
+  - name: copy rhsm playbook to openstackclient
+    shell: |
+      #!/bin/bash
+      oc cp -n openstack {{ rhsm_yaml_dir }}/rhsm.yaml openstackclient:/home/cloud-admin/rhsm.yaml
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    register: result
+
+  - name: run rhsm playbook via openstackclient
+    shell: |
+      #!/bin/bash
+      oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/inventory.yaml /home/cloud-admin/rhsm.yaml
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    when: result.rc == 0
