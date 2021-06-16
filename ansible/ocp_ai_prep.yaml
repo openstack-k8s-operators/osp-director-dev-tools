@@ -510,7 +510,7 @@
       ansible.builtin.lineinfile:
         path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
         regexp: '^HW_VALIDATOR_REQUIREMENTS='
-        line: 'HW_VALIDATOR_REQUIREMENTS=[{"version":"default","master":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10}}]'
+        line: 'HW_VALIDATOR_REQUIREMENTS=[{"version":"default","master":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10},"sno":{"cpu_cores":8,"ram_mib":32768,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10}}]'
 
     - name: Start assisted installer service container
       shell: |
