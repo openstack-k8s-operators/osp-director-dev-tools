@@ -117,7 +117,7 @@ osp_controller_cores: 6
 osp_controller_memory: 12
 osp_controller_disk_size: 40
 # use http://download.devel.redhat.com to get the local mirror depending on where the server is
-osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/825/images/rhel-guest-image-8.4-825.x86_64.qcow2
+osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp7s0
