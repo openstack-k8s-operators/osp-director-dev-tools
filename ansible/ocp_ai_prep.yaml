@@ -322,43 +322,45 @@
 
     - name: Create AI OCP VM XML definitions
       shell: |
-        for i in {1..{{ ocp_num_masters }}}; do
+        for i in {0..{{ ocp_num_masters-1 }}}; do
             virt-install \
             --virt-type=kvm \
-            --name "{{ ocp_cluster_name }}-master-$((i-1))" \
+            --name "{{ ocp_cluster_name }}-master-$i" \
             --memory {{ ocp_master_memory }} \
             --vcpus={{ ocp_master_vcpu }} \
             --os-variant=rhel8.2 \
             --os-type linux \
-            --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_master_mac_prefix }}$((i-1))" \
-            --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_master_mac_prefix }}$((i-1))" \
+            --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_master_mac_prefix }}$i" \
+            --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_master_mac_prefix }}$i" \
             --controller type=scsi,model=virtio-scsi \
-            --disk path={{ ocp_ai_libvirt_storage_dir }}/{{ ocp_cluster_name }}-master-$((i-1)).qcow2,size={{ ocp_master_disk }},bus=scsi,format=qcow2 \
+            --disk path={{ ocp_ai_libvirt_storage_dir }}/{{ ocp_cluster_name }}-master-$i.qcow2,size={{ ocp_master_disk }},bus=scsi,format=qcow2 \
             --graphics vnc \
             --noautoconsole --wait=-1 \
             --boot uefi \
             --events on_reboot=restart \
-            --print-xml > /tmp/{{ ocp_cluster_name }}-master-$((i-1)).xml
+            --print-xml > /tmp/{{ ocp_cluster_name }}-master-$i.xml
         done
 
-        for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
-            virt-install \
-            --virt-type=kvm \
-            --name "{{ ocp_cluster_name }}-worker-$((i-1))" \
-            --memory {{ ocp_worker_memory }} \
-            --vcpus={{ ocp_worker_vcpu }} \
-            --os-variant=rhel8.2 \
-            --os-type linux \
-            --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_worker_mac_prefix }}$((i-1))" \
-            --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_worker_mac_prefix }}$((i-1))" \
-            --controller type=scsi,model=virtio-scsi \
-            --disk path={{ ocp_ai_libvirt_storage_dir }}/{{ ocp_cluster_name }}-worker-$((i-1)).qcow2,size={{ ocp_worker_disk }},bus=scsi,format=qcow2 \
-            --graphics vnc \
-            --noautoconsole --wait=-1 \
-            --boot uefi \
-            --events on_reboot=restart \
-            --print-xml > /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
-        done
+        if [[ "{{ ocp_num_workers }}" -gt "0" ]] || [[ "{{ ocp_num_extra_workers }}" -gt "0" ]]; then
+          for i in {0..{{ ocp_num_workers + ocp_num_extra_workers-1 }}}; do
+              virt-install \
+              --virt-type=kvm \
+              --name "{{ ocp_cluster_name }}-worker-$i" \
+              --memory {{ ocp_worker_memory }} \
+              --vcpus={{ ocp_worker_vcpu }} \
+              --os-variant=rhel8.2 \
+              --os-type linux \
+              --network=bridge:{{ ocp_cluster_name }}bm,mac="{{ ocp_ai_bm_bridge_worker_mac_prefix }}$i" \
+              --network=bridge:{{ ocp_cluster_name }}pr,mac="{{ ocp_ai_prov_bridge_worker_mac_prefix }}$i" \
+              --controller type=scsi,model=virtio-scsi \
+              --disk path={{ ocp_ai_libvirt_storage_dir }}/{{ ocp_cluster_name }}-worker-$i.qcow2,size={{ ocp_worker_disk }},bus=scsi,format=qcow2 \
+              --graphics vnc \
+              --noautoconsole --wait=-1 \
+              --boot uefi \
+              --events on_reboot=restart \
+              --print-xml > /tmp/{{ ocp_cluster_name }}-worker-$i.xml
+          done
+        fi
 
     - name: Create VMs
       shell: |
@@ -366,9 +368,11 @@
           virsh define --file /tmp/{{ ocp_cluster_name }}-master-$((i-1)).xml
         done
 
-        for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
-          virsh define --file /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
-        done
+        if [[ "{{ ocp_num_workers }}" -gt "0" ]] || [[ "{{ ocp_num_extra_workers }}" -gt "0" ]]; then
+          for i in {1..{{ ocp_num_workers + ocp_num_extra_workers }}}; do
+            virsh define --file /tmp/{{ ocp_cluster_name }}-worker-$((i-1)).xml
+          done
+        fi
 
     - name: Create rng device XML file
       template:
@@ -383,8 +387,9 @@
 
     - name: Remove random number generator devices from worker VM XMLs
       shell: |
-        virsh detach-device {{ ocp_cluster_name }}-worker-{{ item }} /tmp/{{ ocp_cluster_name }}_rng_device.xml --config
-      with_sequence: start=0 end={{ ocp_num_workers+ocp_num_extra_workers-1 }}
+        virsh detach-device {{ ocp_cluster_name }}-worker-{{ (item|int)-1 }} /tmp/{{ ocp_cluster_name }}_rng_device.xml --config
+      with_sequence: start=0 end={{ ocp_num_workers+ocp_num_extra_workers }}
+      when: (item|int-1) >= 0
 
     - name: Get worker domain names
       shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk {'print $2'}"
@@ -425,6 +430,7 @@
         mode: '0664'
 
     delegate_to: localhost
+    when: ocp_num_extra_workers > 0
 
 
   ### SUSHY-TOOLS

@@ -55,13 +55,25 @@
     register: datavolume_switch
 
   - name: Deploy the datavolume
-    shell: |
-      virtctl image-upload dv openstack-base-img -n {{ namespace }} --size={{ osp_controller_disk_size }}G --image-path={{ osp_controller_base_image_url_path }} --insecure
+    when: datavolume_switch.rc == 1
     environment:
       <<: *oc_env
-    when: datavolume_switch.rc == 1
+    block:
+      - name: Upload OSP Controller base image
+        shell: |
+          virtctl image-upload dv openstack-base-img -n {{ namespace }} --size={{ osp_controller_disk_size }}G --image-path={{ osp_controller_base_image_url_path }} --insecure
+    rescue:
+      - name: Remove datavolume from failed OSP Controller upload
+        command: oc delete datavolume openstack-base-img -n {{ namespace }}
+        ignore_errors: yes
+
+      - name: Re-Upload OSP Controller base image
+        shell: |
+          virtctl image-upload dv openstack-base-img -n {{ namespace }} --size={{ osp_controller_disk_size }}G --image-path={{ osp_controller_base_image_url_path }} --insecure
 
   - name: Wait for the datavolume to be ready
+    retries: 5
+    delay: 5
     shell: |
       oc wait datavolume openstack-base-img --for condition=Ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
     environment:

@@ -80,8 +80,24 @@ Create `local-defaults.yaml` file with settings like so:
 
 ```
 ocp_ai: true
-ocp_version: 4.7
 ```
+
+##### 3-master-worker-combo nodes install via AI
+
+We support the ability to deploy a cluster without dedicated workers -- instead using the master nodes as both
+masters and workers -- through our assisted installer integration.  To do so, set the following variables in
+your `local-defaults.yaml`:
+
+```
+ocp_ai: true
+ocp_num_workers: 0
+ocp_master_memory: 40000
+ocp_master_vcpu: 12
+ocp_master_disk: 50
+```
+
+Note that `ocp_num_extra_workers` still defaults to 2 in `vars/default.yaml`, meaning 2 extra VMs will be created
+for use as OSP compute nodes.  You may obviously change this if needed.
 
 #### Install all steps using the Makefile
 
