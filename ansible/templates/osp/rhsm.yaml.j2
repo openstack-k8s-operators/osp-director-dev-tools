@@ -1,0 +1,25 @@
+---
+- hosts: overcloud
+  become: true
+
+  tasks:
+{% if osp_registry_method == "rhsm" %}
+  - name: Red Hat Subscription Management configuration
+    import_role:
+      name: redhat-subscription
+    vars:
+      rhsm_activation_key: "{{ rhel_subscription_activation_key }}"
+      rhsm_org_id: "{{ rhel_subscription_org_id }}"
+      rhsm_release: "{{ osp_rhel_subscription_release }}"
+      rhsm_repos: "{{ osp_rhel_subscription_repos }}"
+{% else %}
+  - name: install rhos-release
+    dnf:
+      name: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+      state: present
+      disable_gpg_check: true
+  - name: run rhos-release
+    shell: |
+      rhos-release {{ osp_release }} -p {{ osp_rhos_release_compose }} -r {{ osp_rhel_subscription_release }}
+{% endif %}
+
