@@ -178,10 +178,10 @@ You can also access the OSP console using your local web browser: <http://192.16
 | <!-- --> | <!-- --> |
 | ------------ | ------------ |
 | User | `admin` |
-| Pwd | The admin password can be found in the `/home/cloud-admin/tripleo-deploy/tripleo-overcloud-passwords.yaml` file on the `openstackclient` pod in the `openstack` namespace. |
+| Pwd | The admin password can be found in the `/home/cloud-admin/.config/openstack/clouds.yaml` file on the `openstackclient` pod in the `openstack` namespace. |
 
 ```
-oc exec -it openstackclient -- cat /home/cloud-admin/tripleo-deploy/tripleo-overcloud-passwords.yaml | grep -w AdminPassword
+oc exec -it openstackclient -- cat /home/cloud-admin/.config/openstack/clouds.yaml | grep -w password
 ```
 
 ### Cleanup options
