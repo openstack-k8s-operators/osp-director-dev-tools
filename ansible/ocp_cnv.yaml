@@ -67,6 +67,10 @@
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
+    retries: 5
+    delay: 30
+    register: result
+    until: result.rc == 0
 
   - name: wait for OpenShift Virtualization Operator to be installed
     shell: |
