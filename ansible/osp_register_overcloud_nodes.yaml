@@ -29,7 +29,7 @@
   - name: wait for OpenstackPlaybookGenerator finished rendering playbooks
     shell: |
       oc wait osplaybookgenerator -n openstack --for condition=Finished default --timeout={{ default_timeout }}s
-    environment:
+    environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
     retries: 50
@@ -95,15 +95,23 @@
       #!/bin/bash
       oc cp -n openstack {{ rhsm_yaml_dir }}/rhsm.yaml openstackclient:/home/cloud-admin/rhsm.yaml
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+      <<: *oc_env
     register: result
+
+  - name: Accept rendered playbooks to get the current inventory
+    shell: |
+      #!/bin/bash
+      set -e
+      oc rsh -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh -a
+    environment:
+      <<: *oc_env
+    register: playbooks_accept
+    when: result.rc == 0
 
   - name: run rhsm playbook via openstackclient
     shell: |
       #!/bin/bash
       oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/inventory.yaml /home/cloud-admin/rhsm.yaml
     environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    when: result.rc == 0
+      <<: *oc_env
+    when: playbooks_accept.rc == 0

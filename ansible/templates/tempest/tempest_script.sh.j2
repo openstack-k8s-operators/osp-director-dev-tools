@@ -31,7 +31,7 @@ export TEMPESTCONF="/usr/bin/discover-tempest-config"
 # located in the shared directory.
 $TEMPESTCONF \
   --out /var/lib/tempest/tempest_workspace/etc/tempest.conf \
-  --deployer-input /var/lib/tempest/container_tempest_config/tempest-deployer-input.conf \
+  --deployer-input /var/lib/tempest/tempest-deployer-input.conf \
   --debug \
   --create \
   --network-id ${PUB_NETWORK_ID} \
@@ -39,8 +39,8 @@ $TEMPESTCONF \
 
 tempest cleanup --init-saved-state
 
-if [ -f "/var/lib/tempest/container_tempest_config/whitelist_file" ]; then
-  tempest run --whitelist-file /var/lib/tempest/container_tempest_config/whitelist_file
+if [ -f "/var/lib/tempest/whitelist_file" ]; then
+  tempest run --whitelist-file /var/lib/tempest/whitelist_file
 else
   # Run for example smoke tests
   tempest run --smoke
