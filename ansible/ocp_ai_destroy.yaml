@@ -45,7 +45,7 @@
 
       for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
         virsh undefine --nvram $i
-        rm -f /var/lib/libvirt/images/$i.qcow2
+        rm -f $(virsh pool-dumpxml default|grep -o "<path>.*</path>"|sed 's/\(<path>\|<\/path>\)//g')/$i.qcow2
       done
 
 

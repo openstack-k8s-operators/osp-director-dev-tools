@@ -31,3 +31,5 @@ ocp_ai_pr_ip: "{{ (ocp_ai_pr_bridge_cidr.split('.')[0:3]|join('.')) }}.1"
 
 # ocp_ai_http_store_dir: defaults to "/opt/http_store/data"
 # ocp_ai_http_store_port: defaults to "8081"
+
+ocp_ai_libvirt_storage_dir: /var/lib/libvirt/images
