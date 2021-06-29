@@ -1,0 +1,131 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set tempest yaml facts
+    set_fact:
+      tempest_yaml_dir: "{{ working_yamls_dir }}/tempest"
+      tempest_working_dir: "{{ working_dir }}/tempest"
+
+  - debug:
+      msg:
+      - "tempest yamls will be written to {{ tempest_yaml_dir }} locally"
+      - "tempest config will be written to {{ tempest_working_dir }} locally"
+
+  - name: Clean directories
+    file:
+      state: absent
+      path: "{{ item }}/"
+    with_items:
+    - "{{ tempest_yaml_dir }}"
+    - "{{ tempest_working_dir }}"
+
+  - name: Create tempest directories
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: '0755'
+    with_items:
+    - "{{ tempest_yaml_dir }}"
+    - "{{ tempest_working_dir }}"
+
+  - name: render tempest osclient to {{ tempest_yaml_dir }} dir
+    vars:
+      os_password: "{{ os_password_ret.stdout }}"
+    template:
+      src: "tempest/tempest_openstackclient.yaml.j2"
+      dest: "{{ tempest_yaml_dir }}/tempest_openstackclient.yaml"
+      mode: '0644'
+
+  - name: render tempest working templates to {{ tempest_working_dir }}
+    vars:
+      os_password: "{{ os_password_ret.stdout }}"
+    template:
+      src: "tempest/{{ item }}.j2"
+      dest: "{{ tempest_working_dir }}/{{ item }}"
+      mode: '0644'
+    with_items:
+    - tempest-deployer-input.conf
+    - tempest_script.sh
+    - whitelist_file
+
+  - name: create tempest osclient
+    shell: |
+      if oc get osclient/tempest; then
+        oc delete osclient tempest
+      fi
+      oc apply -f {{ tempest_yaml_dir }}/tempest_openstackclient.yaml
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: wait for tempest pod in ready state
+    shell: |
+      oc wait pod -n openstack tempest --for condition=Ready --timeout="{{ tempest_timeout }}s"
+    environment:
+      <<: *oc_env
+    retries: 10
+    delay: 5
+    register: pod_result
+    until: pod_result.rc == 0
+
+  - name: prepare config and run tempest
+    when: pod_result.rc == 0
+    block:
+    - name: get clouds.yaml from openstackclient pod
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp -n openstack openstackclient:/home/cloud-admin/.config/openstack/clouds.yaml {{ tempest_working_dir }}/clouds.yaml
+      environment:
+        <<: *oc_env
+
+    - name: create /var/lib/tempest/.config/openstack directory and copy clouds.yaml
+      shell: |
+        #!/bin/bash
+        set -e
+        oc rsh -n openstack tempest mkdir -p /var/lib/tempest/.config/openstack
+        oc cp -n openstack {{ tempest_working_dir }}/clouds.yaml tempest:/var/lib/tempest/.config/openstack/clouds.yaml
+      environment:
+        <<: *oc_env
+
+    - name: copy rendered tempest config
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp -n openstack {{ tempest_working_dir }}/{{ item }} tempest:/var/lib/tempest/{{ item }}
+      environment:
+        <<: *oc_env
+      with_items:
+      - tempest-deployer-input.conf
+      - tempest_script.sh
+      - whitelist_file
+
+    - name: Run tempest, the output gets logged at {{ working_log_dir }}/tempest.log
+      shell: |
+        #!/bin/bash
+        set -e
+        oc rsh -n openstack tempest timeout {{ osp_deploy_timeout }} sh /var/lib/tempest/tempest_script.sh > {{ working_log_dir }}/tempest.log 2>&1
+      environment:
+        <<: *oc_env
+      ignore_errors: true
+      register: tempest_run
+
+    - name: Get tempest summary
+      shell: |
+        #!/bin/bash
+        set -e
+        sed -n '/^Totals/,$p' /root/ostest-working/logs/tempest.log
+      register: tempest_summary
+
+    - name:
+      debug:
+        msg: "{{ tempest_summary.stdout.split('\n') }}"
+
+    - name: Fail playbook if tempest run failed or timed out
+      fail:
+        msg: Tempest run failed or timed out, check output {{ working_log_dir }}/tempest.log
+      when: tempest_run.rc == 1

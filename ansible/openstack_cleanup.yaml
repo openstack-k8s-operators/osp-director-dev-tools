@@ -17,6 +17,7 @@
       - "oc delete -n openstack openstacknet --all"
       - "oc delete -n openstack openstackplaybookgenerator --all"
       - "oc delete -n openstack openstackephemeralheat --all"
+      - "oc delete -n openstack openstackclient --all"
 
   - name: delete playbooks git repo dir
     file:

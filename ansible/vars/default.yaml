@@ -89,8 +89,8 @@ csv_version: 0.0.1
 #ocp_network_type: OVNKubernetes
 ocp_network_type: OpenShiftSDN
 
-# Tempest
-tempest_enabled: false
+# image used to run tempest
+tempest_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tempest:16.2_20210623.1
 
 # tempest timeout in seconds
 tempest_timeout: 3600
@@ -121,7 +121,7 @@ osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/package
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp7s0
-osp_container_tag: 16.2_20210521.1
+osp_container_tag: 16.2_20210623.1
 osp_ceph_image: ceph-4.2-rhel-8
 
 # number of OCP worker nodes should be OSP compute hosts
@@ -155,6 +155,9 @@ osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-nfv-rpms
   - rhceph-4-tools-for-rhel-8-x86_64-rpms
   - codeready-builder-for-rhel-8-x86_64-rpms
+
+# OSP deployment timeout
+osp_deploy_timeout: 60m
 
 # Local Storage Operator specific (only required if using local-storage operator)
 local_storage_domains:

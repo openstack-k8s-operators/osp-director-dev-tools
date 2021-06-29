@@ -4,7 +4,6 @@ default: \
   sriov_install \
   olm \
   openstack
-  #osp_tests_run
 
 all: default
 
@@ -77,7 +76,12 @@ openstack:
 	$(MAKE) computes
 	$(MAKE) playbook_generator
 	$(MAKE) register_overcloud_nodes
-	# $(MAKE) overcloud
+	$(MAKE) osp_deploy
+
+osp_deploy: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	osp_deploy.yaml
 
 register_overcloud_nodes: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -129,10 +133,10 @@ osp_content: hosts local-defaults.yaml
 	-i hosts -e @local-defaults.yaml \
 	osp_content.yaml
 
-osp_tests_run: hosts local-defaults.yaml
+osp_tempest: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
-	osp_tempest_ocp.yaml
+	osp_tempest.yaml
 
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
