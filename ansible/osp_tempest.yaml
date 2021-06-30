@@ -118,7 +118,7 @@
       shell: |
         #!/bin/bash
         set -e
-        sed -n '/^Totals/,$p' /root/ostest-working/logs/tempest.log
+        sed -n '/^Totals/,$p' {{ working_log_dir }}/tempest.log
       register: tempest_summary
 
     - name:
