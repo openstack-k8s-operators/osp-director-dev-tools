@@ -54,6 +54,11 @@
         dest: /etc/libvirt/hooks/network
         mode: 0750
 
+    - name: Restart libvirt
+      service:
+         name: libvirtd
+         state: restarted
+
     - name: Start the osp network
       shell: |
         virsh net-start --network ospnetwork
