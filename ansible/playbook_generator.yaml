@@ -50,6 +50,6 @@
   - name: wait for playbook generator to finish
     shell: |
       set -e
-      oc wait -n openstack osplaybookgenerator default --for condition=Finished --timeout="{{ (default_timeout * 3)|int }}s"
+      oc wait -n openstack osplaybookgenerator default --for condition=Finished --timeout="{{ (default_timeout * 5)|int }}s"
     environment:
       <<: *oc_env
