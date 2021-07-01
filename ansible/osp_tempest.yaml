@@ -50,7 +50,8 @@
     with_items:
     - tempest-deployer-input.conf
     - tempest_script.sh
-    - whitelist_file
+    - include_file
+    - exclude_file
 
   - name: create tempest osclient
     shell: |
@@ -102,7 +103,8 @@
       with_items:
       - tempest-deployer-input.conf
       - tempest_script.sh
-      - whitelist_file
+      - include_file
+      - exclude_file
 
     - name: Run tempest, the output gets logged at {{ working_log_dir }}/tempest.log
       shell: |

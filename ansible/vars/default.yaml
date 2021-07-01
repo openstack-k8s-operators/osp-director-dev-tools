@@ -95,10 +95,18 @@ tempest_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tempest:16.2_20
 # tempest timeout in seconds
 tempest_timeout: 3600
 
-# tempest test whitelist, if [] smoke test runs
-#tempest_whitelist: []
-tempest_whitelist:
-  - 'tempest.api.compute.servers.test_create_server.ServersTestJSON.test_list_servers'
+# run smoketest
+tempest_smoketest: false
+
+# specify tempest tests to run
+tempest_test_dict:
+  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+  includelist: []
+  excludelist:
+      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
 
 local_working_dir: "~/{{ ocp_cluster_name }}-working"
 
