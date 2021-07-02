@@ -90,7 +90,7 @@ csv_version: 0.0.1
 ocp_network_type: OpenShiftSDN
 
 # image used to run tempest
-tempest_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tempest:16.2_20210623.1
+tempest_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tempest:16.2_20210630.1
 
 # tempest timeout in seconds
 tempest_timeout: 3600
@@ -109,7 +109,7 @@ nfs_export_dir: /home/nfs
 default_timeout: 240
 
 # openstackclient container image
-openstackclient_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tripleoclient:16.2_20210521.1
+openstackclient_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tripleoclient:16.2_20210630.1
 
 # OSP controller VM sizing
 osp_controller_count: 1
@@ -121,7 +121,7 @@ osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/package
 osp_controller_storage_class: host-nfs-storageclass
 # Interface connected to osp network, will be configured as linux-bridge using nmstate
 osp_interface: enp7s0
-osp_container_tag: 16.2_20210623.1
+osp_container_tag: 16.2_20210630.1
 osp_ceph_image: ceph-4.2-rhel-8
 
 # number of OCP worker nodes should be OSP compute hosts
