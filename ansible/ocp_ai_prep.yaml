@@ -565,7 +565,7 @@
         repo: "{{ ocp_ai_ansible_repo | default('https://github.com/sonofspike/cluster_mgnt_roles.git', true) }}"
         dest: "{{ base_path }}/cluster_mgnt_roles"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('ccb34826a671f6c3435869303b6abb538638252b', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('9051f7da86fa90f9b60c1b09414dabeaf7d58fb7', true) }}"
 
     - name: Add schedulable-master manifest
       block:
