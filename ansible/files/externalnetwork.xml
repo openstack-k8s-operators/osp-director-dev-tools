@@ -1,0 +1,12 @@
+<network>
+  <name>external</name>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='external' stp='on' delay='0'/>
+  <mac address='52:54:00:eb:1e:dd'/>
+  <ip address='10.0.0.1' netmask='255.255.255.0'>
+  </ip>
+</network>

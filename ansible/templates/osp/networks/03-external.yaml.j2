@@ -5,7 +5,6 @@ metadata:
 spec:
   cidr: 10.0.0.0/24
   gateway: 10.0.0.1
-  vlan: 10
   allocationStart: 10.0.0.4
   allocationEnd: 10.0.0.250
   attachConfiguration:
@@ -19,8 +18,8 @@ spec:
               stp:
                 enabled: false
             port:
-            - name: {{ osp_interface }}
-          description: Linux bridge with {{ osp_interface }} as a port
-          name: br-osp
+            - name: {{ osp_external }}
+          description: Linux bridge with {{ osp_external }} as a port
+          name: br-ex
           state: up
           type: linux-bridge

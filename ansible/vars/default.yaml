@@ -122,13 +122,14 @@ openstackclient_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tripleo
 # OSP controller VM sizing
 osp_controller_count: 1
 osp_controller_cores: 6
-osp_controller_memory: 12
+osp_controller_memory: 20
 osp_controller_disk_size: 40
 # use http://download.devel.redhat.com to get the local mirror depending on where the server is
 osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
 osp_controller_storage_class: host-nfs-storageclass
-# Interface connected to osp network, will be configured as linux-bridge using nmstate
-osp_interface: enp7s0
+# Interfaces connected to the external and osp(ctlplane,internal_api,storage,storage_mgmt via vlan) network, will be configured as linux-bridge using nmstate
+osp_interface: enp8s0
+osp_external: enp7s0
 osp_container_tag: 16.2_20210630.1
 osp_ceph_image: ceph-4.2-rhel-8
 

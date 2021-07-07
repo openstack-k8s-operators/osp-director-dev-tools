@@ -3,12 +3,12 @@ set -e
 
 PUB_NETWORK_ID=$(openstack --os-cloud overcloud network list -f value -c ID --name public)
 if [ -z "$PUB_NETWORK_ID" ]; then
-  openstack --os-cloud overcloud network create public --external
-  openstack --os-cloud overcloud subnet create ext --subnet-range 192.168.25.96/28 --gateway 192.168.25.1 --no-dhcp --network public
+  openstack --os-cloud overcloud network create public --external  --provider-network-type flat --provider-physical-network datacentre
+  openstack --os-cloud overcloud subnet create pub_sub --subnet-range 10.0.0.0/24 --allocation-pool start=10.0.0.100,end=10.0.0.150 --gateway 10.0.0.1 --no-dhcp --network public
   openstack --os-cloud overcloud network create private --share
-  openstack --os-cloud overcloud subnet create priv --subnet-range 192.168.0.0/24 --network private
+  openstack --os-cloud overcloud subnet create priv_sub --subnet-range 192.168.0.0/24 --network private
   openstack --os-cloud overcloud router create priv_router
-  openstack --os-cloud overcloud router add subnet priv_router priv
+  openstack --os-cloud overcloud router add subnet priv_router priv_sub
   openstack --os-cloud overcloud router set priv_router --external-gateway public
   PUB_NETWORK_ID=$(openstack --os-cloud overcloud network list -f value -c ID --name public)
 fi
@@ -36,6 +36,8 @@ $TEMPESTCONF \
   --create \
   --network-id ${PUB_NETWORK_ID} \
   object-storage.reseller_admin ResellerAdmin
+
+crudini --set /var/lib/tempest/tempest_workspace/etc/tempest.conf compute-feature-enabled vnc_console true
 
 tempest cleanup --init-saved-state
 

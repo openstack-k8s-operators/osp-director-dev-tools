@@ -12,12 +12,20 @@
     become: true
     become_user: root
     shell: >
-      virsh net-list --all | grep ospnetwork
+      virsh net-info ospnetwork
     ignore_errors: true
     register: ospnetwork_exist
 
-  - name: create osp network
-    when: ospnetwork_exist.rc == 1
+  - name: check if osp external network already exists
+    become: true
+    become_user: root
+    shell: >
+      virsh net-info external
+    ignore_errors: true
+    register: extnetwork_exist
+
+  - name: create osp networks
+    when: ospnetwork_exist.rc == 1 or extnetwork_exist.rc == 1
     block:
     - name: create osp network directory
       file:
@@ -32,39 +40,33 @@
         mode: 0644
       with_items:
         - files/ospnetwork.xml
+        - files/externalnetwork.xml
 
     - name: Define ospnetwork libvirt network
       become: true
       become_user: root
       command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
+      when: ospnetwork_exist.rc == 1
+
+    - name: Define external libvirt network
+      become: true
+      become_user: root
+      command: "virsh net-define {{ working_dir }}/osp-network/externalnetwork.xml"
+      when: extnetwork_exist.rc == 1
 
   - name: Setup OSP network
     become: true
     become_user: root
     block:
-    - name: create libvirt hooks directory
-      file:
-        path: /etc/libvirt/hooks
-        state: directory
-        mode: 0755
-
-    - name: copy libvirt network hook to /etc/libvirt/hooks/network
-      copy:
-        src:  files/qemu/network
-        dest: /etc/libvirt/hooks/network
-        mode: 0750
-
-    - name: Restart libvirt
-      service:
-         name: libvirtd
-         state: restarted
-
-    - name: Start the osp network
+    - name: Start the osp networks
       shell: |
-        virsh net-start --network ospnetwork
-        virsh net-autostart --network ospnetwork
-      register: ospnetwork_start
-      failed_when: ospnetwork_start.stderr != "" and "network is already active" not in ospnetwork_start.stderr
+        virsh net-start --network {{ item }}
+        virsh net-autostart --network {{ item }}
+      register: network_start
+      failed_when: network_start.stderr != "" and "network is already active" not in network_start.stderr
+      with_items:
+        - external
+        - ospnetwork
 
     - name: get active worker nodes, if they exist
       shell: >
@@ -94,35 +96,59 @@
       register: worker_ocp_inactive
 
     - name: Attach/detach network interfaces for INACTIVE workers
+      when: worker_ocp_inactive.stdout_lines|length > 0
       block:
-      - name: Detach osp network interface from INACTIVE worker VM's if this is a rerun of the playbook
-        command: "virsh detach-interface {{ item }} bridge --persistent"
-        with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+      - name: Detach network interface from INACTIVE worker VM's if this is a rerun of the playbook
+        shell: |
+          ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
+          for mac in $ifmacs; do
+            virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent
+          done
+        with_nested:
+        - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+        - ['external', 'ospnetwork']
         ignore_errors: true
 
       - name: Attach the osp network to INACTIVE worker VM's
-        command: "virsh attach-interface {{ item }} bridge ospnetwork --model virtio --persistent"
-        with_items: "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
-      when: worker_ocp_inactive.stdout_lines|length > 0
+        command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent"
+        with_nested:
+        - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+        - ['external', 'ospnetwork']
 
     - name: Attach/detach network interfaces for ACTIVE workers
+      when: worker_ocp_active|length > 0
       block:
       - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
-        command: "virsh detach-interface {{ item }} bridge --persistent --live"
-        with_items: "{{ worker_ocp_active[0].split(' ') }}"
+        shell: |
+          ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
+          for mac in $ifmacs; do
+            virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent --live
+          done
+        with_nested:
+        - "{{ worker_ocp_active[0].split(' ') }}"
+        - ['external',  'ospnetwork']
         ignore_errors: true
 
       - name: Attach the osp network to ACTIVE worker VM's
-        shell: |
-          # HACK to fix dev-scripts bug
-          virsh destroy {{ item }}
-          virsh attach-interface {{ item }} bridge ospnetwork --model virtio --persistent --config
-          virsh start {{ item }}
-        with_items: "{{ worker_ocp_active[0].split(' ') }}"
         when: not (ocp_ai|bool)
+        block:
+        # HACK to fix dev-scripts bug
+        - name: "destroy vm {{ item }}"
+          command: "virsh destroy {{ item }}"
+          with_items: "{{ worker_ocp_active[0].split(' ') }}"
+        - name: attach interfaces to vm
+          shell: |
+            virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config
+          with_nested:
+          - "{{ worker_ocp_active[0].split(' ') }}"
+          - ['external', 'ospnetwork']
+        - name: "start vm {{ item }}"
+          command: "virsh start {{ item }}"
+          with_items: "{{ worker_ocp_active[0].split(' ') }}"
 
       - name: Attach the osp network to ACTIVE worker VM's
-        command: "virsh attach-interface {{ item }} bridge ospnetwork --model virtio --persistent --config"
-        with_items: "{{ worker_ocp_active[0].split(' ') }}"
+        command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config"
+        with_nested:
+        - "{{ worker_ocp_active[0].split(' ') }}"
+        - ['external', 'ospnetwork']
         when: ocp_ai|bool
-      when: worker_ocp_active|length > 0
