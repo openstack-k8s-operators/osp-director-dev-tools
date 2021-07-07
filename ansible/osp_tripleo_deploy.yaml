@@ -36,7 +36,6 @@
     - custom.yaml
     - storage-backend.yaml
     - containers-prepare-parameter.yaml
-    - tripleo-overcloud-passwords.yaml
 
   - name: render {{ osp_network_type }} network parameter file
     template:
