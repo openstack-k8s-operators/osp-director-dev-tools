@@ -7,7 +7,7 @@
   tasks:
   - name: Set directory for the tripleo deployment files
     set_fact:
-      ooo_yaml_dir: "{{ working_yamls_dir }}/tripleo_deploy"
+      ooo_yaml_dir: "{{ working_yamls_dir }}/tripleo_heat_envs"
       ooo_tarball_dir: "{{ working_yamls_dir }}/tripleo_deploy_tarball"
 
   - name: Make sure to cleanup previous yaml dirs
@@ -29,7 +29,7 @@
 
   - name: render templates to yaml dir
     template:
-      src: "osp/tripleo_deploy/{{ item }}.j2"
+      src: "osp/tripleo_heat_envs/{{ item }}.j2"
       dest: "{{ ooo_yaml_dir }}/{{ item }}"
       mode: '0644'
     with_items:
@@ -39,15 +39,15 @@
 
   - name: render {{ osp_network_type }} network parameter file
     template:
-      src: "osp/tripleo_deploy/{{ osp_network_type }}/{{ item }}.j2"
+      src: "osp/tripleo_heat_envs/{{ osp_network_type }}/{{ item }}.j2"
       dest: "{{ ooo_yaml_dir }}/{{ item }}"
       mode: '0644'
     with_items:
     - network-environment.yaml
 
-  - name: create tripleo-deploy-config-custom ConfigMap
+  - name: create heat-env-config ConfigMap
     shell: |
-      oc create configmap -n openstack tripleo-deploy-config-custom --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
+      oc create configmap -n openstack heat-env-config --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
