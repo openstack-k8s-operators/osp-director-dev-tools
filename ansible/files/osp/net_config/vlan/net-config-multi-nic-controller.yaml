@@ -221,7 +221,7 @@ resources:
                   list_concat_unique:
                     - get_param: InternalApiInterfaceRoutes
               - type: ovs_bridge
-                name: br-tenant
+                name: br-isolated
                 mtu:
                   get_param: TenantMtu
                 dns_servers:

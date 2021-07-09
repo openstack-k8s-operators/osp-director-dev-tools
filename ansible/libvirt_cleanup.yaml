@@ -10,4 +10,17 @@
     shell: |
       virsh net-destroy ospnetwork
       virsh net-undefine ospnetwork
+      virsh net-destroy external
+      virsh net-undefine external
     ignore_errors: true
+
+  # only required now for cleanup existing envs without redeploy, could be removed soon
+  - name: make sure ibvirt network script is gone
+    file:
+      path: /etc/libvirt/hooks/network
+      state: absent
+
+  - name: Restart libvirt
+    service:
+       name: libvirtd
+       state: restarted

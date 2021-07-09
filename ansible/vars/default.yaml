@@ -95,10 +95,21 @@ tempest_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tempest:16.2_20
 # tempest timeout in seconds
 tempest_timeout: 3600
 
-# tempest test whitelist, if [] smoke test runs
-#tempest_whitelist: []
-tempest_whitelist:
-  - 'tempest.api.compute.servers.test_create_server.ServersTestJSON.test_list_servers'
+# run smoketest
+tempest_smoketest: false
+
+# specify tempest tests to run
+tempest_test_dict:
+  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+  includelist: []
+  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
+  excludelist:
+      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
 
 local_working_dir: "~/{{ ocp_cluster_name }}-working"
 
@@ -114,13 +125,14 @@ openstackclient_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tripleo
 # OSP controller VM sizing
 osp_controller_count: 1
 osp_controller_cores: 6
-osp_controller_memory: 12
+osp_controller_memory: 20
 osp_controller_disk_size: 40
 # use http://download.devel.redhat.com to get the local mirror depending on where the server is
 osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
 osp_controller_storage_class: host-nfs-storageclass
-# Interface connected to osp network, will be configured as linux-bridge using nmstate
-osp_interface: enp7s0
+# Interfaces connected to the external and osp(ctlplane,internal_api,storage,storage_mgmt via vlan) network, will be configured as linux-bridge using nmstate
+osp_interface: enp8s0
+osp_external: enp7s0
 osp_container_tag: 16.2_20210630.1
 osp_ceph_image: ceph-4.2-rhel-8
 

@@ -50,7 +50,8 @@
     with_items:
     - tempest-deployer-input.conf
     - tempest_script.sh
-    - whitelist_file
+    - include_file
+    - exclude_file
 
   - name: create tempest osclient
     shell: |
@@ -102,7 +103,8 @@
       with_items:
       - tempest-deployer-input.conf
       - tempest_script.sh
-      - whitelist_file
+      - include_file
+      - exclude_file
 
     - name: Run tempest, the output gets logged at {{ working_log_dir }}/tempest.log
       shell: |
@@ -121,11 +123,22 @@
         sed -n '/^Totals/,$p' {{ working_log_dir }}/tempest.log
       register: tempest_summary
 
-    - name:
+    - name: Get failed tempest tests
+      shell: |
+        #!/bin/bash
+        set -e
+        grep FAILED {{ working_log_dir }}/tempest.log || true
+      register: tempest_failed
+
+    - name: Tempest run summary
       debug:
         msg: "{{ tempest_summary.stdout.split('\n') }}"
+
+    - name: Tempest failed tests
+      debug:
+        msg: "{{ tempest_failed.stdout.split('\n') }}"
 
     - name: Fail playbook if tempest run failed or timed out
       fail:
         msg: Tempest run failed or timed out, check output {{ working_log_dir }}/tempest.log
-      when: tempest_run.rc == 1
+      when: tempest_run.rc == 1 or tempest_failed.stdout | length != 0

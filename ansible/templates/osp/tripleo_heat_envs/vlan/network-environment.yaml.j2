@@ -1,16 +1,17 @@
 resource_registry:
   OS::TripleO::Controller::Net::SoftwareConfig: net-config-multi-nic-controller.yaml
 {% if osp_compute_hci %}
-  OS::TripleO::ComputeHCI::Net::SoftwareConfig: net-config-single-vlan-computehci.yaml
+  OS::TripleO::ComputeHCI::Net::SoftwareConfig: net-config-two-nic-vlan-computehci.yaml
 {% else %}
-  OS::TripleO::Compute::Net::SoftwareConfig: net-config-single-vlan-compute.yaml
+  OS::TripleO::Compute::Net::SoftwareConfig: net-config-two-nic-vlan-compute.yaml
 {% endif %}
 
 
 parameter_defaults:
   EC2MetadataIp: 192.168.25.1
   ControlPlaneDefaultRoute: 192.168.25.1
-  NeutronPublicInterface: eth1
+  NeutronGlobalPhysnetMtu: 1350
+  NeutronPublicInterface: nic3
   NtpServer:
     - clock.redhat.com
     - clock2.redhat.com
@@ -22,7 +23,6 @@ parameter_defaults:
       start: 10.0.0.4
   ExternalInterfaceDefaultRoute: 10.0.0.1
   ExternalNetCidr: 10.0.0.0/24
-  ExternalNetworkVlanID: 10
   InternalApiAllocationPools:
   -   end: 172.16.2.250
       start: 172.16.2.4
