@@ -54,12 +54,11 @@
       command: "virsh net-define {{ working_dir }}/osp-network/externalnetwork.xml"
       when: extnetwork_exist.rc == 1
 
-  - name: Setup OSP network
-    become: true
-    become_user: root
-    block:
     - name: Start the osp networks
+      become: true
+      become_user: root
       shell: |
+        set -e
         virsh net-start --network {{ item }}
         virsh net-autostart --network {{ item }}
       register: network_start
@@ -68,6 +67,22 @@
         - external
         - ospnetwork
 
+  # on CI runs it has seen that the network interface was still down
+  # lets make sure the OSP network interfaces are up
+  - name: make sure the network interfaces are up
+    become: true
+    become_user: root
+    shell: |
+      set -e
+      ip link set {{ item }} up
+    with_items:
+        - external
+        - ospnetwork
+
+  - name: Attach OSP networks to OCP worker VMs
+    become: true
+    become_user: root
+    block:
     - name: get active worker nodes, if they exist
       shell: >
           echo $(virsh list --name | grep worker)
