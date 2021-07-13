@@ -16,7 +16,7 @@
     become_user: ocp
     block:
     - name: Delete existing AI cluster (if any)
-      command: "aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} delete cluster {{ ocp_cluster_name }}"
+      command: "aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete cluster {{ ocp_cluster_name }}"
       environment:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
       register: delete_ai_cluster
@@ -32,9 +32,9 @@
         msg: |
           Executing the assisted installer playbook. You can tail the logs at {{ base_path }}/ai.log on
           the host for progress.  Furthermore, you can view the assisted installer console by entering the
-          URL http://{{ ocp_ai_bm_ip }}:8888/clusters/.  If you do not have direct access to that IP from
+          URL http://192.168.111.1:8888/clusters/.  If you do not have direct access to that IP from
           your browser, you can use a tool like "sshuttle" to provide connectivity like so:
-          sshuttle --dns -r <user>@<cluster host> {{ ocp_ai_bm_bridge_cidr }}.  You would then hit this
+          sshuttle --dns -r <user>@<cluster host> 192.168.111.0/24.  You would then hit this
           URL in your browser: http://<cluster host>:8888/clusters/
 
     - name: Run the assisted installer playbook
@@ -47,8 +47,8 @@
 
     - name: Download assisted installer cluster kubeconfig and kubeadmin password
       shell: |
-        aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
-        aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
+        aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
+        aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
       args:
         chdir: "{{ base_path }}/cluster_mgnt_roles"
       environment:
