@@ -43,7 +43,9 @@
         shell: |
           #!/bin/bash
           set -e
-          virt-customize -a "{{ osp_controller_base_image_url_path }}" --run-command 'sed -i -e "s/^\(kernelopts=.*\)net.ifnames=0 \(.*\)/\1\2/" /boot/grub2/grubenv'
+          virt-customize -a "{{ osp_controller_base_image_url_path }}" \
+            --run-command 'sed -i -e "s/^\(kernelopts=.*\)net.ifnames=0 \(.*\)/\1\2/" /boot/grub2/grubenv' \
+            --run-command 'sed -i -e "s/^\(GRUB_CMDLINE_LINUX=.*\)net.ifnames=0 \(.*\)/\1\2/" /etc/default/grub'
 
   - name: does the datavolume already exist
     ignore_errors: true
