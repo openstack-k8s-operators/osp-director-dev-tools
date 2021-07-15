@@ -11,7 +11,7 @@ cluster_name="{{ ocp_cluster_name }}"
 base_dns_domain="{{ ocp_domain_name | default('test.metalkube.org', true) }}"
 
 # Available subnets *
-machine_network_cidr="{{ ocp_ai_bm_bridge_cidr }}"
+machine_network_cidr="192.168.111.0/24"
 
 # Allocate virtual IPs via DHCP server
 vip_dhcp_allocation=False
@@ -53,7 +53,7 @@ openshift_version="{{ ocp_version }}"
 # Discovery ISO
 discovery_iso_name="discovery_image_{{ ocp_cluster_name }}.iso"
 # HTTP server where the ISO is stored
-discovery_iso_server="http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8081', true) }}"
+discovery_iso_server="http://192.168.111.1/images"
 
 # Parameters for a Restricted Network installation
 use_mirror= False
@@ -61,11 +61,11 @@ mirror_certificate="NA"
 mirror_registry=NA:5000
 
 [services]
-assisted_installer host={{ ocp_ai_bm_ip }} port={{ ocp_ai_service_port | default('8090', true) }}
-http_store host={{ ocp_ai_bm_ip }} port={{ ocp_ai_http_store_port | default('8081', true) }}
+assisted_installer host=192.168.111.1 port={{ ocp_ai_service_port | default('8090', true) }}
+http_store host=192.168.111.1 port=80
 
 [bastions]
-bastion ansible_ssh_user=root ansible_ssh_host={{ ocp_ai_bm_ip }}
+bastion ansible_ssh_user=root ansible_ssh_host=192.168.111.1
 
 [bastions:vars]
 ansible_connection=local
@@ -79,7 +79,7 @@ ansible_connection=local
 # Master nodes
 [masters]
 {% for i in range(0, ocp_num_masters) %}
-{{ ocp_cluster_name }}-master-{{ i }} bmc_address={{ ocp_ai_bm_ip }}:{{ ocp_ai_sushy_port | default('8082', true) }} mac={{ ocp_ai_bm_bridge_master_mac_prefix }}{{ i }} ip={{ ocp_ai_bm_cidr_prefix }}.1{{ i }}
+{{ ocp_cluster_name }}-master-{{ i }} bmc_address=192.168.111.1:{{ ocp_ai_sushy_port | default('8082', true) }} mac={{ ocp_ai_bm_bridge_master_mac_prefix }}{{ i }} ip={{ ocp_ai_bm_cidr_prefix }}.1{{ i }}
 {% endfor %}
 
 [masters:vars]
@@ -88,13 +88,13 @@ vendor=KVM
 bmc_user=USERID
 bmc_password=PASSW0RD
 mask=24
-gateway={{ ocp_ai_bm_ip }}
-dns={{ ocp_ai_bm_ip }}
+gateway=192.168.111.1
+dns=192.168.111.1
 
 # Worker nodes
 [workers]
 {% for i in range(0, ocp_num_workers) %}
-{{ ocp_cluster_name }}-worker-{{ i }} bmc_address={{ ocp_ai_bm_ip }}:{{ ocp_ai_sushy_port | default('8082', true) }} mac={{ ocp_ai_bm_bridge_worker_mac_prefix }}{{ i }} ip={{ ocp_ai_bm_cidr_prefix }}.2{{ i }}
+{{ ocp_cluster_name }}-worker-{{ i }} bmc_address=192.168.111.1:{{ ocp_ai_sushy_port | default('8082', true) }} mac={{ ocp_ai_bm_bridge_worker_mac_prefix }}{{ i }} ip={{ ocp_ai_bm_cidr_prefix }}.2{{ i }}
 {% endfor %}
 
 [workers:vars]
@@ -103,5 +103,5 @@ vendor=KVM
 bmc_user=USERID
 bmc_password=PASSW0RD
 mask=24
-gateway={{ ocp_ai_bm_ip }}
-dns={{ ocp_ai_bm_ip }}
+gateway=192.168.111.1
+dns=192.168.111.1

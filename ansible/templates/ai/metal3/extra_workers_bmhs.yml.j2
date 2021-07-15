@@ -20,7 +20,7 @@ spec:
   online: false
   bootMACAddress: {{ ocp_ai_prov_bridge_worker_mac_prefix }}{{ i }}
   bmc:
-    address: redfish+http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_sushy_port | default('8082', true) }}/redfish/v1/Systems/{{ extra_worker_uuids.results[i].stdout }}
+    address: redfish+http://192.168.111.1:{{ ocp_ai_sushy_port | default('8082', true) }}/redfish/v1/Systems/{{ extra_worker_uuids.results[i].stdout }}
     credentialsName: openshift-worker-{{ i }}-bmc-secret
   hardwareProfile: unknown
   bootMode: legacy

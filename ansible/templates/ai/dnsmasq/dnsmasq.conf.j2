@@ -21,19 +21,19 @@ interface=cni-podman0
 bind-interfaces
 
 #### DHCP (dnsmasq --help dhcp)
-dhcp-range={{ ocp_ai_bm_bridge_dhcp_range }},24h
+dhcp-range=192.168.111.6,192.168.111.100,24h
 dhcp-option=option:netmask,255.255.255.0
-dhcp-option=option:router,{{ ocp_ai_bm_ip }}
-dhcp-option=option:dns-server,{{ ocp_ai_bm_ip }}
-dhcp-option=option:ntp-server,{{ ocp_ai_bm_ip }}
+dhcp-option=option:router,192.168.111.1
+dhcp-option=option:dns-server,192.168.111.1
+dhcp-option=option:ntp-server,192.168.111.1
 
 
 # Provisioning node
-address=/provisioning.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_ip }}
+address=/provisioning.{{ ocp_ai_full_cluster_name }}/192.168.111.1
 ptr-record=1.{{ ocp_ai_bm_cidr_rev_suffix }},provisioning.{{ ocp_ai_full_cluster_name }}
 
 # Cluster ntp-server
-address=/ntp-server.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_ip }}
+address=/ntp-server.{{ ocp_ai_full_cluster_name }}/192.168.111.1
 ptr-record=1.{{ ocp_ai_bm_cidr_rev_suffix }},ntp-server.{{ ocp_ai_full_cluster_name }}
 
 # External API endpoint (External VIP)

@@ -24,6 +24,7 @@
       extra_args: "--user"
       executable: /usr/bin/pip-3
 
+
   ### ADDITIONAL SET-FACTS
 
   - name: Set fact for full cluster name
@@ -33,15 +34,11 @@
   # TODO: Add support for ipv6 for this and the following set_facts
   - name: Set fact for BM CIDR prefix
     set_fact:
-      ocp_ai_bm_cidr_prefix: "{{ ((ocp_ai_bm_bridge_cidr.split('.'))[0:3])|join('.') }}"
+      ocp_ai_bm_cidr_prefix: "192.168.111"
 
   - name: Set fact for reverse BM CIDR suffix
     set_fact:
-      ocp_ai_bm_cidr_rev_suffix: "{{ ((ocp_ai_bm_bridge_cidr.split('.'))[:-1]|join('.')|ipaddr('revdns'))[2:-1] }}"
-
-  - name: Set fact for provisioning CIDR prefix
-    set_fact:
-        ocp_ai_pr_cidr_prefix: "{{ ((ocp_ai_bm_bridge_cidr.split('.'))[0:3])|join('.') }}"
+      ocp_ai_bm_cidr_rev_suffix: "111.168.192"
 
 
   ### BRIDGES
@@ -96,7 +93,7 @@
           autoconnect: yes
           stp: off
           # TODO: Support any netmask?
-          ip4: "{{ ocp_ai_bm_ip }}/24"
+          ip4: "192.168.111.1/24"
           state: present
 
       - name: Create provisioning bridge
@@ -107,7 +104,7 @@
           autoconnect: yes
           stp: off
           # TODO: Support any netmask?
-          ip4: "{{ ocp_ai_pr_ip }}/24"
+          ip4: "172.22.0.1/24"
           state: present
 
       - name: Reload bridges
@@ -147,7 +144,7 @@
         immediate: yes
       with_items:
         - 8000
-        - "{{ ocp_ai_http_store_port | default(8081, true) }}"
+        - 80
         - "{{ ocp_ai_sushy_port | default(8082, true) }}"
         - "{{ ocp_ai_service_port | default(8090, true) }}"
         - 8888
@@ -206,7 +203,7 @@
     block:
     - name: Create HTTP server storage directory
       file:
-        path: "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}"
+        path: /opt/http_store/data/images
         state: directory
         mode: '0777'
 
@@ -217,9 +214,9 @@
         state: started
         restart: yes
         ports:
-          - "{{ ocp_ai_http_store_port | default(8081, true) }}:8080"
+          - "80:8080"
         volumes:
-          - "{{ ocp_ai_http_store_dir | default('/opt/http_store/data', true) }}:/var/www/html:z"
+          - "/opt/http_store/data:/var/www/html:z"
 
 
   ### DNSMASQ
@@ -508,7 +505,7 @@
       replace:
         path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
         regexp: 'SERVICE_BASE_URL=.*'
-        replace: 'SERVICE_BASE_URL=http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default("8090", true) }}'
+        replace: 'SERVICE_BASE_URL=http://192.168.111.1:{{ ocp_ai_service_port | default("8090", true) }}'
 
     - name: Set assisted installer service OCP release image
       replace:
@@ -534,7 +531,7 @@
 
     - name: Wait until the assisted installer service is fully available
       shell: |
-        aicli -U http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_service_port | default('8090', true) }} list cluster
+        aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster
       register: assisted_service_ready
       until: '"Dns Domain" in assisted_service_ready.stdout'
       retries: 60

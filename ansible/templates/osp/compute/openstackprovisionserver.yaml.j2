@@ -5,8 +5,4 @@ metadata:
   namespace: openstack
 spec:
   port: 8080
-{% if not (ocp_ai|bool) %}
-  baseImageUrl: http://172.22.0.1/images/{{ osp_controller_base_image_url | basename }}
-{% else %}
-  baseImageUrl: http://{{ ocp_ai_bm_ip }}:{{ ocp_ai_http_store_port | default('8081', true) }}/{{ osp_controller_base_image_url | basename }}
-{% endif %}
+  baseImageUrl: http://192.168.111.1/images/{{ osp_controller_base_image_url | basename }}

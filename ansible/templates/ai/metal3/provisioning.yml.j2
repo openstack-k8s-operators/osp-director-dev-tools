@@ -5,9 +5,9 @@ metadata:
   - provisioning.metal3.io
   name: provisioning-configuration
 spec:
-  provisioningDHCPRange: {{ ocp_ai_pr_bridge_dhcp_range }}
-  provisioningIP: {{ ((ocp_ai_pr_bridge_cidr.split('.'))[0:3])|join('.') }}.3
+  provisioningDHCPRange: 172.22.0.10,172.22.0.254
+  provisioningIP: 172.22.0.3
   provisioningInterface: enp2s0
   provisioningNetwork: Managed
-  provisioningNetworkCIDR: {{ ocp_ai_pr_bridge_cidr }}
+  provisioningNetworkCIDR: 172.22.0.0/24
   
