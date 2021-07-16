@@ -98,6 +98,20 @@ tempest_timeout: 3600
 # run smoketest
 tempest_smoketest: false
 
+# enable specific tempest features
+tempest_enable_feature_dict:
+  compute-feature-enabled:
+    vnc_console: true
+    live_migration: true
+    block_migration_for_live_migration: true
+    volume_backed_live_migration: true
+    console_output: true
+
+# disable specific tempest features
+#tempest_disable_feature_dict:
+#  compute-feature-enabled:
+#    vnc_console: false
+
 # specify tempest tests to run
 tempest_test_dict:
   regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
@@ -137,7 +151,7 @@ osp_container_tag: 16.2_20210713.1
 osp_ceph_image: ceph-4.2-rhel-8
 
 # number of OCP worker nodes should be OSP compute hosts
-osp_compute_count: 1
+osp_compute_count: 2
 # if false nfs is used for glance
 osp_compute_hci: false
 # number of OSD disks per compute node
