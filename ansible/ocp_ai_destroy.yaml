@@ -118,3 +118,10 @@
     file:
       path: "{{ osp_controller_base_image_url_path }}"
       state: absent
+
+  - name: Delete dicovery images
+    file:
+      path:
+      state: absent
+    with_fileglob:
+    - "/var/lib/libvirt/images/discovery_image_ostest*.img"
