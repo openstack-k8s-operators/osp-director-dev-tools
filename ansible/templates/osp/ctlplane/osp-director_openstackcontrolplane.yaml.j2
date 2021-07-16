@@ -26,7 +26,5 @@ spec:
       cores: {{ osp_controller_cores }}
       memory: {{ osp_controller_memory }}
       diskSize: {{ osp_controller_disk_size }}
-      # FIXME: remove this once we make baseImageURL optional
-      baseImageURL: {{ osp_controller_base_image_url }}
       baseImageVolumeName: openstack-base-img
       storageClass: {{ osp_controller_storage_class }}
