@@ -1,0 +1,33 @@
+# This playbook sets up the OpenShift cluster to allow downstream containers to be used as insecure registries
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files: vars/default.yaml
+  roles:
+    - oc_local
+
+  tasks:
+  - name: Configure custom (insecure) registries for downstream repos
+    shell: |
+      set -e
+
+      oc patch image.config.openshift.io/cluster --type merge \
+        --patch '{"spec":{"registrySources":{"allowedRegistries":["registry.redhat.io","quay.io","registry-proxy.engineering.redhat.com","gcr.io"],"insecureRegistries":["registry-proxy.engineering.redhat.com"]}}}'
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: wait for the machine config pools to update for image registry customizations
+    shell: |
+      set -e
+      /bin/sleep 15 #wait a few seconds for the machine configs to update
+      oc wait --for condition=updated -n openshift-machine-api \
+         mcp/master --timeout={{ default_timeout }}s
+      oc wait --for condition=updated -n openshift-machine-api \
+         mcp/worker --timeout={{ default_timeout }}s
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    retries: "{{ (default_timeout / 5)|int }}"
+    delay: 5
