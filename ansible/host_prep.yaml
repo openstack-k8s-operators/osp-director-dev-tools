@@ -96,9 +96,9 @@
           msg: RHEL 8.3+ is required for the assisted installer deployments
         when: ansible_distribution != "RedHat" or ansible_distribution_version|float < 8.3
 
-      - fail:
-          msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP 4.7 is currently supported for assisted installer deployments."
-        when: ocp_version != 4.7
+      #- fail:
+          #msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP 4.7 is currently supported for assisted installer deployments."
+        #when: ocp_version != 4.7
 
       - name: disable virt module for rhel and enable it for 8.3
         shell: |
