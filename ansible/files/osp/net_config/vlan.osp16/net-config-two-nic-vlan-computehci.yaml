@@ -54,6 +54,28 @@ parameters:
       Unless the default is changed, the parameter is automatically resolved
       from the subnet host_routes attribute.
     type: json
+  StorageMgmtIpSubnet:
+    default: ''
+    description: IP address/subnet on the storage_mgmt network
+    type: string
+  StorageMgmtNetworkVlanID:
+    default: 40
+    description: Vlan ID for the storage_mgmt network traffic.
+    type: number
+  StorageMgmtMtu:
+    default: 1500
+    description: The maximum transmission unit (MTU) size(in bytes) that is
+      guaranteed to pass through the data path of the segments in the
+      StorageMgmt network.
+    type: number
+  StorageMgmtInterfaceRoutes:
+    default: []
+    description: >
+      Routes for the storage_mgmt network traffic.
+      JSON route e.g. [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+      Unless the default is changed, the parameter is automatically resolved
+      from the subnet host_routes attribute.
+    type: json
   InternalApiIpSubnet:
     default: ''
     description: IP address/subnet on the internal_api network
@@ -132,90 +154,110 @@ resources:
           data:
             - {get_param: ControlPlaneMtu}
             - {get_param: StorageMtu}
+            - {get_param: StorageMgmtMtu}
             - {get_param: InternalApiMtu}
             - {get_param: TenantMtu}
             - {get_param: ExternalMtu}
 
   OsNetConfigImpl:
-    type: OS::Heat::Value
+    type: OS::Heat::SoftwareConfig
     properties:
-      network_config:
-      - type: ovs_bridge
-        name: br-isolated
-        mtu:
-          get_attr: [MinViableMtu, value]
-        use_dhcp: false
-        dns_servers:
-          get_param: DnsServers
-        domain:
-          get_param: DnsSearchDomains
-        addresses:
-        - ip_netmask:
-            list_join:
-            - /
-            - - get_param: ControlPlaneIp
-              - get_param: ControlPlaneSubnetCidr
-        routes:
-          list_concat_unique:
-            - get_param: ControlPlaneStaticRoutes
-            - - default: true
-                next_hop:
-                  get_param: ControlPlaneDefaultRoute
-        members:
-        - type: interface
-          name: nic4
-          mtu:
-            get_attr: [MinViableMtu, value]
-          # force the MAC address of the bridge to this interface
-          primary: true
-        - type: vlan
-          mtu:
-            get_param: StorageMtu
-          vlan_id:
-            get_param: StorageNetworkVlanID
-          addresses:
-          - ip_netmask:
-              get_param: StorageIpSubnet
-          routes:
-            list_concat_unique:
-              - get_param: StorageInterfaceRoutes
-        - type: vlan
-          mtu:
-            get_param: InternalApiMtu
-          vlan_id:
-            get_param: InternalApiNetworkVlanID
-          addresses:
-          - ip_netmask:
-              get_param: InternalApiIpSubnet
-          routes:
-            list_concat_unique:
-              - get_param: InternalApiInterfaceRoutes
-        - type: vlan
-          mtu:
-            get_param: TenantMtu
-          vlan_id:
-            get_param: TenantNetworkVlanID
-          addresses:
-          - ip_netmask:
-              get_param: TenantIpSubnet
-          routes:
-            list_concat_unique:
-              - get_param: TenantInterfaceRoutes
-      - type: ovs_bridge
-        # This will default to br-ex, anything else requires specific
-        # brige mapping entries for it to be used.
-        name: bridge_name
-        mtu:
-          get_param: ExternalMtu
-        use_dhcp: false
-        members:
-        - type: interface
-          name: nic3
-          mtu:
-            get_param: ExternalMtu
-          use_dhcp: false
-          primary: true
+      group: script
+      config:
+        str_replace:
+          template:
+            get_file: /usr/share/openstack-tripleo-heat-templates/network/scripts/run-os-net-config.sh
+          params:
+            $network_config:
+              network_config:
+              - type: ovs_bridge
+                name: br-isolated
+                mtu:
+                  get_attr: [MinViableMtu, value]
+                use_dhcp: false
+                dns_servers:
+                  get_param: DnsServers
+                domain:
+                  get_param: DnsSearchDomains
+                addresses:
+                - ip_netmask:
+                    list_join:
+                    - /
+                    - - get_param: ControlPlaneIp
+                      - get_param: ControlPlaneSubnetCidr
+                routes:
+                  list_concat_unique:
+                    - get_param: ControlPlaneStaticRoutes
+                    - - default: true
+                        next_hop:
+                          get_param: ControlPlaneDefaultRoute
+                members:
+                - type: interface
+                  name: nic4
+                  mtu:
+                    get_attr: [MinViableMtu, value]
+                  # force the MAC address of the bridge to this interface
+                  primary: true
+                - type: vlan
+                  mtu:
+                    get_param: StorageMtu
+                  vlan_id:
+                    get_param: StorageNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: StorageIpSubnet
+                  routes:
+                    list_concat_unique:
+                      - get_param: StorageInterfaceRoutes
+                - type: vlan
+                  mtu:
+                    get_param: StorageMgmtMtu
+                  vlan_id:
+                    get_param: StorageMgmtNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: StorageMgmtIpSubnet
+                  routes:
+                    list_concat_unique:
+                      - get_param: StorageMgmtInterfaceRoutes
+                - type: vlan
+                  mtu:
+                    get_param: InternalApiMtu
+                  vlan_id:
+                    get_param: InternalApiNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: InternalApiIpSubnet
+                  routes:
+                    list_concat_unique:
+                      - get_param: InternalApiInterfaceRoutes
+                - type: vlan
+                  mtu:
+                    get_param: TenantMtu
+                  vlan_id:
+                    get_param: TenantNetworkVlanID
+                  addresses:
+                  - ip_netmask:
+                      get_param: TenantIpSubnet
+                  routes:
+                    list_concat_unique:
+                      - get_param: TenantInterfaceRoutes
+              - type: ovs_bridge
+                # This will default to br-ex, anything else requires specific
+                # brige mapping entries for it to be used.
+                name: bridge_name
+                mtu:
+                  get_param: ExternalMtu
+                use_dhcp: false
+                members:
+                - type: interface
+                  name: nic3
+                  mtu:
+                    get_param: ExternalMtu
+                  use_dhcp: false
+                  primary: true
 outputs:
-  config:
+  OS::stack_id:
     description: The OsNetConfigImpl resource.
-    value: {get_attr: [OsNetConfigImpl, value]}
+    value:
+      get_resource: OsNetConfigImpl

@@ -162,8 +162,8 @@ osp_compute_ceph_osd_disks:
 osp_compute_ceph_num_osd_disk_size: 20
 nfs_server: '192.168.25.1'
 
-# network architecture, either flat or vlan
-osp_network_type: vlan
+# network architecture, either flat, vlan, flat.osp16, or vlan.osp16
+osp_network_type: vlan.osp16
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
