@@ -1,5 +1,5 @@
 ---
-ocp_ai_discovery_iso: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.7/4.7.0/rhcos-live.x86_64.iso
+ocp_ai_discovery_iso: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.8/4.8.2/rhcos-live.x86_64.iso
 
 ocp_ai_external_dns:
   - 10.11.5.19

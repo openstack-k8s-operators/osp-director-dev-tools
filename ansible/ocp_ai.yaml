@@ -84,12 +84,22 @@
   ### OC CLIENT
 
   tasks:
-  - name: Get the ocp client tar gunzip file
+  - name: Get the ocp client tar gunzip file 4.6/4.7
     get_url:
       url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-{{ ocp_version }}/openshift-client-linux.tar.gz"
       dest: "/tmp/openshift-client-linux.tar.gz"
       mode: '0755'
       timeout: 30
+      when: ocp_version < 4.8
+
+  # FIXME: remove when 4.8 is hosted in the format above
+  - name: Get the ocp client tar gunzip file 4.8
+    get_url:
+      url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.8.2/openshift-client-linux.tar.gz"
+      dest: "/tmp/openshift-client-linux.tar.gz"
+      mode: '0755'
+      timeout: 30
+      when: ocp_version == 4.8
 
   - name: "Untar the openshift-client-linux.tar.gz"
     unarchive:
