@@ -1,4 +1,4 @@
-{% if osp_compute_hci %}
+{% if osp.compute.hci %}
 resource_registry:
   OS::TripleO::Services::CephMgr: deployment/ceph-ansible/ceph-mgr.yaml
   OS::TripleO::Services::CephMon: deployment/ceph-ansible/ceph-mon.yaml
@@ -7,7 +7,7 @@ resource_registry:
 {% endif %}
 
 parameter_defaults:
-{% if osp_compute_hci %}
+{% if osp.compute.hci %}
   # CephAnsibleRepo can be removed when ceph-ansible is in official tripleoclient image
   CephAnsibleRepo: "rhelosp-ceph-4-tools"
   CephAnsiblePlaybookVerbosity: 3
@@ -24,7 +24,7 @@ parameter_defaults:
   CephPoolDefaultSize: 2
   CephAnsibleDisksConfig:
     devices:
-{% for disk in osp_compute_ceph_osd_disks %}
+{% for disk in osp.compute.ceph_osd_disks %}
       - '/dev/{{ disk }}'
 {% endfor %}
     osd_scenario: lvm

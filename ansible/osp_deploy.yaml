@@ -22,7 +22,7 @@
     shell: |
       #!/bin/bash
       set -e
-      oc rsh -n openstack openstackclient timeout {{ osp_deploy_timeout }} /home/cloud-admin/tripleo-deploy.sh -p > {{ working_log_dir }}/osp-deploy.log 2>&1
+      oc rsh -n openstack openstackclient timeout {{ osp.deploy_timeout }} /home/cloud-admin/tripleo-deploy.sh -p > {{ working_log_dir }}/osp-deploy.log 2>&1
     environment:
       <<: *oc_env
     when: playbooks_accept.rc == 0

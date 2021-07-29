@@ -134,41 +134,50 @@ nfs_export_dir: /home/nfs
 default_timeout: 240
 
 # openstackclient container image
-openstackclient_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tripleoclient:16.2_20210713.1
+openstackclient_image: quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1
 
-# OSP controller VM sizing
-osp_controller_count: 1
-osp_controller_cores: 6
-osp_controller_memory: 20
-osp_controller_disk_size: 40
-# use http://download.devel.redhat.com to get the local mirror depending on where the server is
-osp_controller_base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
-osp_controller_storage_class: host-nfs-storageclass
-# Interfaces connected to the external and osp(ctlplane,internal_api,storage,storage_mgmt via vlan) network, will be configured as linux-bridge using nmstate
-osp_interface: enp8s0
-osp_external: enp7s0
-osp_container_tag: 16.2_20210713.1
-osp_ceph_image: ceph-4.2-rhel-8
-
-# number of OCP worker nodes should be OSP compute hosts
-osp_compute_count: 2
-# if false nfs is used for glance
-osp_compute_hci: false
-# number of OSD disks per compute node
-osp_compute_ceph_osd_disks:
-  - sdb
-  - sdc
-# size of OSD disk size in GB
-osp_compute_ceph_num_osd_disk_size: 20
 nfs_server: '192.168.25.1'
 
 # network architecture, either flat or vlan
 osp_network_type: vlan
 
+osp:
+  release: 17.0
+  # OSP controller VM sizing
+  controller:
+    count: 1
+    cores: 6
+    memory: 20
+    disk_size: 40
+    # use http://download.devel.redhat.com to get the local mirror depending on where the server is
+    base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
+    storage_class: host-nfs-storageclass
+  # OSP compute OCP worker settings
+  compute:
+    # number of OCP worker nodes should be OSP compute hosts
+    count: 2
+    # if false nfs is used for glance
+    hci: false
+    # number of OSD disks per compute node
+    ceph_osd_disks:
+      - sdb
+      - sdc
+    # size of OSD disk size in GB
+    ceph_num_osd_disk_size: 20
+  interface:
+    external: enp7s0
+    ospnetwork: enp8s0
+  network_type: vlan
+  container_tag: 17.0_20210720.1
+  ceph_image: ceph-4.2-rhel-8
+  # OSP deployment timeout
+  deploy_timeout: 60m
+#  extrafeatures:
+#    - nfv
+
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
 osp_rhos_release_compose: passed_phase2
-osp_release: 16.2
 osp_rhel_subscription_release: 8.4
 osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-baseos-eus-rpms
@@ -176,14 +185,11 @@ osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-highavailability-eus-rpms
   - ansible-2.9-for-rhel-8-x86_64-rpms
   - advanced-virt-for-rhel-8-x86_64-rpms
-  - openstack-{{ osp_release }}-for-rhel-8-x86_64-rpms
+  - openstack-{{ osp.release }}-for-rhel-8-x86_64-rpms
   - fast-datapath-for-rhel-8-x86_64-rpms
   - rhel-8-for-x86_64-nfv-rpms
   - rhceph-4-tools-for-rhel-8-x86_64-rpms
   - codeready-builder-for-rhel-8-x86_64-rpms
-
-# OSP deployment timeout
-osp_deploy_timeout: 60m
 
 # Local Storage Operator specific (only required if using local-storage operator)
 local_storage_domains:

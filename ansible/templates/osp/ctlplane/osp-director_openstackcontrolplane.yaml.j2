@@ -10,12 +10,12 @@ spec:
         - ctlplane
         - external
         - internalapi
-  openStackClientStorageClass: {{ osp_controller_storage_class }}
+  openStackClientStorageClass: {{ osp.controller.storage_class }}
   passwordSecret: userpassword
   virtualMachineRoles:
     controller:
       roleName: Controller
-      roleCount: {{ osp_controller_count }}
+      roleCount: {{ osp.controller.count }}
       networks:
         - ctlplane
         - internalapi
@@ -23,8 +23,8 @@ spec:
         - tenant
         - storage
         - storagemgmt
-      cores: {{ osp_controller_cores }}
-      memory: {{ osp_controller_memory }}
-      diskSize: {{ osp_controller_disk_size }}
+      cores: {{ osp.controller.cores }}
+      memory: {{ osp.controller.memory }}
+      diskSize: {{ osp.controller.disk_size }}
       baseImageVolumeName: openstack-base-img
-      storageClass: {{ osp_controller_storage_class }}
+      storageClass: {{ osp.controller.storage_class }}

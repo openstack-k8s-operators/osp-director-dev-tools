@@ -20,6 +20,6 @@
       disable_gpg_check: true
   - name: run rhos-release
     shell: |
-      rhos-release {{ osp_release }} -p {{ osp_rhos_release_compose }} -r {{ osp_rhel_subscription_release }}
+      rhos-release {{ osp.release }} -p {{ osp_rhos_release_compose }} -r {{ osp_rhel_subscription_release }}
 {% endif %}
 

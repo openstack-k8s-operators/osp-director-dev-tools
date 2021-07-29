@@ -110,7 +110,7 @@
       shell: |
         #!/bin/bash
         set -e
-        oc rsh -n openstack tempest timeout {{ osp_deploy_timeout }} sh /var/lib/tempest/tempest_script.sh > {{ working_log_dir }}/tempest.log 2>&1
+        oc rsh -n openstack tempest timeout {{ osp.deploy_timeout }} sh /var/lib/tempest/tempest_script.sh > {{ working_log_dir }}/tempest.log 2>&1
       environment:
         <<: *oc_env
       ignore_errors: true

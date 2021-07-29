@@ -5,7 +5,7 @@ metadata:
 spec:
   cidr: 10.0.0.0/24
   gateway: 10.0.0.1
-  allocationStart: 10.0.0.4
+  allocationStart: 10.0.0.10
   allocationEnd: 10.0.0.250
   attachConfiguration:
     nodeNetworkConfigurationPolicy:
@@ -18,8 +18,8 @@ spec:
               stp:
                 enabled: false
             port:
-            - name: {{ osp_external }}
-          description: Linux bridge with {{ osp_external }} as a port
+            - name: {{ osp.interface.external }}
+          description: Linux bridge with {{ osp.interface.external }} as a port
           name: br-ex
           state: up
           type: linux-bridge

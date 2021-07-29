@@ -47,10 +47,10 @@
     shell: |
       #!/bin/bash
       for domain in $(virsh list --inactive --name); do
-        qemu-img create -f qcow2 -o preallocation=falloc {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp_compute_ceph_num_osd_disk_size }}G
+        qemu-img create -f qcow2 -o preallocation=falloc {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp.compute.ceph_num_osd_disk_size }}G
         virsh attach-disk ${domain} --source {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 --target {{ item }} --persistent
       done
-    with_items: "{{ osp_compute_ceph_osd_disks }}"
+    with_items: "{{ osp.compute.ceph_osd_disks }}"
     become: true
     become_user: root
 

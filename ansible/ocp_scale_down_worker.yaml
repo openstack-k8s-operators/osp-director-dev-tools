@@ -21,8 +21,8 @@
 
     - name: scale down OCP workers if there are not enough ready baremetal nodes
       when:
-        - osp_compute_count > 0
-        - worker_ocp_ready.stdout|int != osp_compute_count|int
+        - osp.compute.count > 0
+        - worker_ocp_ready.stdout|int != osp.compute.count|int
       block:
         - name: get current {{ ocp_cluster_name }}-worker-0 replicas
           shell: >
@@ -33,7 +33,7 @@
 
         - name: set fact of new replicas count
           set_fact:
-            replicas: "{{ worker_replicas.stdout|int - osp_compute_count|int }}"
+            replicas: "{{ worker_replicas.stdout|int - osp.compute.count|int }}"
 
         - name: scale down worker machineset by {{ replicas }}
           shell: >
@@ -47,6 +47,6 @@
           environment:
             <<: *oc_env
           register: worker_ocp_ready
-          until: worker_ocp_ready.stdout|int == osp_compute_count|int
+          until: worker_ocp_ready.stdout|int == osp.compute.count|int
           delay: 30
           retries: 60
