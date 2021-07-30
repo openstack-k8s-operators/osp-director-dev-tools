@@ -86,14 +86,14 @@
 
   - name: install kubevirt client
     block:
-    - name: enable cnv-2.6-for-rhel-8-x86_64-rpms to install kubevirt-virtctl
+    - name: enable cnv-4.8-for-rhel-8-x86_64-rpms to install kubevirt-virtctl
       become: true
       become_user: root
-      command: subscription-manager repos --enable=cnv-2.6-for-rhel-8-x86_64-rpms
+      command: subscription-manager repos --enable=cnv-4.8-for-rhel-8-x86_64-rpms
 
     - name: Install kubevirt-virtctl package
       become: true
       become_user: root
       package:
         name:  kubevirt-virtctl
-        state: installed
+        state: latest
