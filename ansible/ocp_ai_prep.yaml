@@ -481,7 +481,7 @@
         repo: "{{ ocp_ai_service_repo | default('https://github.com/sonofspike/assisted-service-onprem.git', true) }}"
         dest: "{{ base_path }}/assisted-service-onprem"
         force: yes
-        version: "{{ ocp_ai_service_branch | default('a55b218e3176ed920200c1283256337db94ae4b6', true) }}"
+        version: "{{ ocp_ai_service_branch | default('feb00ba10823ab04ec489a05ce8eb543ec688fda', true) }}"
 
     - name: Create assisted installer service storage directory
       file:
@@ -564,6 +564,16 @@
         dest: "{{ base_path }}/cluster_mgnt_roles"
         force: true
         version: "{{ ocp_ai_ansible_branch | default('9051f7da86fa90f9b60c1b09414dabeaf7d58fb7', true) }}"
+
+    # HACK: Remove old, bad logic from SoS so that it works with latest AI service (we never needed it anyhow)
+    # Once this logic is fixed upstream in SoS, we can remove this task
+    - name: Remove problematic SoS create-cluster logic
+      replace:
+        path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
+        after: '##### TO REMOVE ####'
+        before: '#TODO: Apply manifests before cluster installation'
+        regexp: '^(.+)$'
+        replace: '# \1'
 
     - name: Add schedulable-master manifest
       block:
