@@ -77,3 +77,7 @@
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
+    register: image_registry_available
+    until: image_registry_available is not failed
+    retries: "{{ (default_timeout / 5)|int }}"
+    delay: 5
