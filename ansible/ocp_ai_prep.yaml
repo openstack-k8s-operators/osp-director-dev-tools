@@ -210,7 +210,7 @@
     - name: Start httpd container
       containers.podman.podman_container:
         name: httpd
-        image: registry.centos.org/centos/httpd-24-centos7:latest
+        image: quay.io/openstack-k8s-operators/httpd-24-centos7:2.4
         state: started
         restart: yes
         ports:
