@@ -1,4 +1,5 @@
 parameter_defaults:
+  # gets created by openstack overcloud network provision
   DeployedNetworkEnvironment:
     net_attributes_map:
       external:
@@ -112,5 +113,23 @@ parameter_defaults:
       storage: 4
       storage_mgmt: 4
       tenant: 4
-resource_registry:
-  OS::TripleO::Network: /home/cloud-admin/openstack-tripleo-heat-templates/network/deployed_networks.yaml
+  # https://opendev.org/openstack/tripleo-heat-templates/src/branch/master/network/deployed_networks.yaml#L12
+  # The value for this parameter is automatically populated in the plan environment by tripleoclient.
+  CtlplaneNetworkAttributes:
+    network:
+      dns_domain: ctlplane.localdomain.
+      mtu: 1500
+      name: ctlplane
+      tags:
+      - 192.168.25.0/24
+    subnets:
+      ctlplane-subnet:
+        cidr: 192.168.25.0/24
+        dns_nameservers:
+        - 10.11.5.19
+        - 10.10.160.2
+        - 10.5.30.160
+        gateway_ip: 192.168.25.1
+        host_routes: []
+        ip_version: 4
+        name: ctlplane-subnet
