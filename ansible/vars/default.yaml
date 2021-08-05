@@ -134,7 +134,7 @@ nfs_export_dir: /home/nfs
 default_timeout: 240
 
 # openstackclient container image
-openstackclient_image: quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1
+openstackclient_image: quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1_patched
 
 nfs_server: '192.168.25.1'
 
