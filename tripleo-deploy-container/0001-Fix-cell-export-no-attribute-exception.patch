@@ -1,0 +1,33 @@
+From 12d9efbdaecfeb2623588d0a61798ab0ecbc8206 Mon Sep 17 00:00:00 2001
+From: Dan Prince <dprince@redhat.com>
+Date: Fri, 6 Aug 2021 12:44:22 -0400
+Subject: [PATCH] Fix 'cell export' no attribute exception
+
+This patch resolves an issue in trying to use the 'overcloud cell
+export' command where the old tripleoclient.orchestration
+property was still in use. This patch updates the code to
+access the orchestration client directly similar to what we did in
+cdcf16ee457e36d0db1dc1e1b98201ca42ad147d.
+
+Change-Id: If13bbe77b8ea1a59cbc1d8c8b8e3fc652a9f0b15
+Closes-Bug: 1939167
+---
+ tripleoclient/v1/overcloud_cell.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tripleoclient/v1/overcloud_cell.py b/tripleoclient/v1/overcloud_cell.py
+index 685c81fb..e608b62d 100644
+--- a/tripleoclient/v1/overcloud_cell.py
++++ b/tripleoclient/v1/overcloud_cell.py
+@@ -80,7 +80,7 @@ class ExportCell(command.Command):
+ 
+         # prepare clients to access the environment
+         clients = self.app.client_manager
+-        heat = clients.tripleoclient.orchestration
++        heat = clients.orchestration
+ 
+         data = export.export_passwords(heat, control_plane_stack)
+ 
+-- 
+2.26.3
+
