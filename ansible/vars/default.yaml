@@ -177,7 +177,7 @@ osp:
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
-osp_rhos_release_compose: passed_phase2
+osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
 osp_rhel_subscription_release: 8.4
 osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-baseos-eus-rpms
