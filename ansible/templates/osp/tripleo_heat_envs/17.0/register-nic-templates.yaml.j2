@@ -1,7 +1,7 @@
 parameter_defaults:
-  ControllerNetworkConfigTemplate: '/home/cloud-admin/fix/me/multiple_nics_dvr.j2'
+  ControllerNetworkConfigTemplate: '$HOME/playbooks/tarball/multiple_nics_dvr.j2'
 {% if osp.compute.hci %}
-  ComputeHciNetworkConfigTemplate: '/home/cloue/admin/fix/me/single_nic_vlans.j2'
+  ComputeHciNetworkConfigTemplate: '$HOME/playbooks/tarball/single_nic_vlans/single_nic_vlans.j2'
 {% else %}
-  ComputeNetworkConfigTemplate: '/home/cloue/admin/fix/me/single_nic_vlans.j2'
+  ComputeNetworkConfigTemplate: '$HOME/playbooks/tarball/single_nic_vlans/single_nic_vlans.j2'
 {% endif %}

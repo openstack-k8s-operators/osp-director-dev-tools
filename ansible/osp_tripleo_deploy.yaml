@@ -71,7 +71,7 @@
   - name: create tripleo-tarball-config ConfigMap with tarballs
     shell: |
       cd {{ ooo_tarball_dir }}
-      tar -cvzf tarball-config.tar.gz *.yaml
+      tar -cvzf tarball-config.tar.gz *
       oc create configmap -n openstack tripleo-tarball-config --from-file=tarball-config.tar.gz
       rm tarball-config.tar.gz
     environment:
