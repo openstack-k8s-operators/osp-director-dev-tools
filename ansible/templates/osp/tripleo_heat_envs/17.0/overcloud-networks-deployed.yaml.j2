@@ -39,7 +39,7 @@ parameter_defaults:
             ip_version: 4
             name: internal_api_subnet
             tags:
-            - tripleo_vlan_id=1
+            - tripleo_vlan_id=20
       storage:
         network:
           dns_domain: storage.localdomain.
@@ -58,7 +58,7 @@ parameter_defaults:
             ip_version: 4
             name: storage_subnet
             tags:
-            - tripleo_vlan_id=1
+            - tripleo_vlan_id=30
       storage_mgmt:
         network:
           dns_domain: storagemgmt.localdomain.
@@ -77,7 +77,7 @@ parameter_defaults:
             ip_version: 4
             name: storage_mgmt_subnet
             tags:
-            - tripleo_vlan_id=1
+            - tripleo_vlan_id=30
       tenant:
         network:
           dns_domain: tenant.localdomain.
@@ -95,7 +95,7 @@ parameter_defaults:
             ip_version: 4
             name: tenant_subnet
             tags:
-            - tripleo_vlan_id=1
+            - tripleo_vlan_id=50
     net_cidr_map:
       external:
       - 10.0.0.0/24

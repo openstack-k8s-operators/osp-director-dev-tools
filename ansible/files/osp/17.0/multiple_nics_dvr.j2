@@ -2,6 +2,10 @@
 network_config:
 - type: interface
   name: nic1
+  mtu: 1500
+  use_dhcp: true
+- type: interface
+  name: nic2
   mtu: {{ ctlplane_mtu }}
   dns_servers: {{ ctlplane_dns_nameservers }}
   domain: {{ dns_search_domains }}
@@ -24,12 +28,12 @@ network_config:
 {% endif %}
   members:
   - type: interface
-    name:  nic{{ loop.index +1 }}
+    name:  nic{{ loop.index +2 }}
     mtu: {{ lookup('vars', networks_lower[network] ~ '_mtu') }}
     primary: true
 {% elif network not in ["External", "Tenant"] and network in role_networks %}
 - type: interface
-  name: nic{{ loop.index +1 }}
+  name: nic{{ loop.index +2 }}
   mtu: {{ lookup('vars', networks_lower[network] ~ '_mtu') }}
   use_dhcp: false
   addresses:
@@ -38,7 +42,7 @@ network_config:
   routes: {{ lookup('vars', networks_lower[network] ~ '_host_routes') }}
 {% elif network == 'Tenant' and network in role_networks %}
 - type: ovs_bridge
-  name: {{ 'br-' ~ networks_lower[network] }}
+  name: br-isolated
   mtu: {{ lookup('vars', networks_lower[network] ~ '_mtu') }}
   dns_servers: {{ ctlplane_dns_nameservers }}
   use_dhcp: false
@@ -48,7 +52,7 @@ network_config:
   routes: {{ lookup('vars', networks_lower[network] ~ '_host_routes') }}
   members:
   - type: interface
-    name: nic{{loop.index + 1}}
+    name: nic{{loop.index + 2}}
     mtu: {{ lookup('vars', networks_lower[network] ~ '_mtu') }}
     use_dhcp: false
     primary: true
