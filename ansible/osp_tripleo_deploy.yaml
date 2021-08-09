@@ -72,7 +72,7 @@
     shell: |
       cd {{ ooo_tarball_dir }}
       tar -cvzf tarball-config.tar.gz *
-      oc create configmap -n openstack tripleo-tarball-config --from-file=tarball-config.tar.gz
+      oc create configmap -n openstack tripleo-tarball-config --from-file=tarball-config.tar.gz --dry-run -o yaml | oc apply -f -
       rm tarball-config.tar.gz
     environment:
       <<: *oc_env
