@@ -6,19 +6,19 @@ parameter_defaults:
   InternalApiNetCidr: 172.17.0.0/24
   InternalApiAllocationPools: [{"start": "172.17.0.10", "end": "172.17.0.250"}]
   # Note: in OSP17 the subnet vlan id from DeployedNetworkEnvironment has precedence
-  # InternalApiNetworkVlanID: 20
+  InternalApiNetworkVlanID: 20
   StorageNetCidr: 172.18.0.0/24
   StorageAllocationPools: [{"start": "172.18.0.10", "end": "172.18.0.250"}]
   # Note: in OSP17 the subnet vlan id from DeployedNetworkEnvironment has precedence
-  # StorageNetworkVlanID: 30
+  StorageNetworkVlanID: 30
   StorageMgmtNetCidr: 172.19.0.0/24
   StorageMgmtAllocationPools: [{"start": "172.19.0.10", "end": "172.19.0.250"}]
   # Note: in OSP17 the subnet vlan id from DeployedNetworkEnvironment has precedence
-  # StorageMgmtNetworkVlanID: 40
+  StorageMgmtNetworkVlanID: 40
   TenantNetCidr: 172.20.0.0/24
   TenantAllocationPools: [{"start": "172.20.0.10", "end": "172.20.0.250"}]
   # Note: in OSP17 the subnet vlan id from DeployedNetworkEnvironment has precedence
-  # TenantNetworkVlanID: 50
+  TenantNetworkVlanID: 50
   ControlPlaneDefaultRoute: 192.168.25.1
   ControlPlaneSubnetCidr: '24'
   NeutronGlobalPhysnetMtu: 1350
@@ -33,10 +33,3 @@ parameter_defaults:
   NeutronNetworkType: geneve
   NeutronNetworkVLANRanges: tenant:1000:2000
   NeutronTunnelTypes: geneve
-  # workaround until we have these service IPs implemented in the operator
-  RedisVirtualFixedIPs:
-    - ip_address: 172.17.0.9
-      use_neutron: false
-  OVNDBsVirtualFixedIPs:
-    - ip_address: 172.17.0.8
-      use_neutron: false
