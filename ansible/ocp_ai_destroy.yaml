@@ -86,6 +86,11 @@
       chdir: "{{ base_path }}/assisted-service-onprem"
     ignore_errors: true
 
+  - name: Remove Postgres data store
+    file:
+      path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-service', true) }}/data/postgresql"
+      state: absent
+
 
   ### BRIDGES
 
