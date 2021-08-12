@@ -3,10 +3,10 @@ kind: OpenStackNet
 metadata:
   name: internalapi
 spec:
-  cidr: 172.16.2.0/24
+  cidr: 172.17.0.0/24
   vlan: 20
-  allocationStart: 172.16.2.4
-  allocationEnd: 172.16.2.250
+  allocationStart: 172.17.0.10
+  allocationEnd: 172.17.0.250
   attachConfiguration:
     nodeNetworkConfigurationPolicy:
       nodeSelector:
@@ -18,8 +18,8 @@ spec:
               stp:
                 enabled: false
             port:
-            - name: {{ osp_interface }}
-          description: Linux bridge with {{ osp_interface }} as a port
+            - name: {{ osp.interface.ospnetwork }}
+          description: Linux bridge with {{ osp.interface.ospnetwork }} as a port
           name: br-osp
           state: up
           type: linux-bridge

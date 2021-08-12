@@ -1,0 +1,8 @@
+resource_registry:
+  OS::TripleO::Controller::Net::SoftwareConfig: net-config-multi-nic-controller.yaml
+{% if osp.compute.hci %}
+  OS::TripleO::ComputeHCI::Net::SoftwareConfig: net-config-two-nic-vlan-computehci.yaml
+{% else %}
+  OS::TripleO::Compute::Net::SoftwareConfig: net-config-two-nic-vlan-compute.yaml
+{% endif %}
+

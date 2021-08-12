@@ -1,0 +1,18 @@
+parameter_defaults:
+  CloudDomain: {{ ocp_cluster_name }}
+  CloudName: overcloud.{{ ocp_cluster_name }}
+  CloudNameInternal: overcloud.internalapi.{{ ocp_cluster_name }}
+  CloudNameStorage: overcloud.storage.{{ ocp_cluster_name }}
+  CloudNameStorageManagement: overcloud.storagemgmt.{{ ocp_cluster_name }}
+  CloudNameCtlplane: overcloud.ctlplane.{{ ocp_cluster_name }}
+  # Compute settings
+  ComputeParameters:
+    KernelArgs: "default_hugepagesz=1GB hugepagesz=1G hugepages=256"
+    ExtraSysctlSettings:
+      # must be equal to value from 1G kernel args: hugepages=2
+      vm.nr_hugepages:
+        value: 256
+      vm.max_map_count:
+        value: 128960
+    TunedProfileName: "cpu-partitioning"
+    IsolCpusList: 4-7

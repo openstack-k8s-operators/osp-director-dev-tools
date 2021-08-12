@@ -1,23 +1,15 @@
-FROM registry.redhat.io/ubi8/ubi
+FROM quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1
 
-RUN dnf -y install http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
-RUN rhos-release 16.2 -p passed_phase2 --without-ceph
-RUN dnf -y install python3-tripleoclient
-RUN dnf -y install sudo
-RUN dnf -y install bash-completion
+USER root
 RUN dnf -y install patch
-RUN dnf -y install python3-osc-placement
-RUN openstack complete | tee /etc/bash_completion.d/osc.bash_completion > /dev/null
-RUN curl -s -S -o /tmp/openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz > /dev/null
-RUN tar xfz /tmp/openshift-client-linux.tar.gz -C /usr/local/bin/
-RUN rm -f /tmp/openshift-client-linux.tar.gz
 RUN dnf -y clean all
-# fixed IDs which are used in openstackclient fsGroup
-RUN groupadd -g 42401 cloud-admin
-RUN useradd -m -g 42401 -u 42401 cloud-admin&& echo "cloud-admin        ALL=(ALL)       NOPASSWD: ALL" >/etc/sudoers.d/cloud-admin
-RUN mkdir /home/cloud-admin/.ssh && chown cloud-admin:cloud-admin /home/cloud-admin/.ssh
 
-ADD hostnamectl /usr/local/bin/
-WORKDIR /home/cloud-admin
+# https://review.opendev.org/c/openstack/tripleo-common/+/803599
+ADD 0001-inventory.py-all_get_neutron_data-to-handle-404.patch /root/
+RUN patch -p1 < /root/0001-inventory.py-all_get_neutron_data-to-handle-404.patch -d /usr/lib/python3.6/site-packages/
+
+# https://bugs.launchpad.net/tripleo/+bug/1939167
+ADD 0001-Fix-cell-export-no-attribute-exception.patch /root/
+RUN patch -p1 < /root/0001-Fix-cell-export-no-attribute-exception.patch -d /usr/lib/python3.6/site-packages/
+
 USER cloud-admin
-CMD /bin/bash

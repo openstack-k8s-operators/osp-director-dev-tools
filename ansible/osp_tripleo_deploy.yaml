@@ -27,23 +27,21 @@
     - "{{ ooo_yaml_dir }}"
     - "{{ ooo_tarball_dir }}"
 
+  - name: render common templates to yaml dir
+    template:
+      src: "{{ item }}"
+      dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
+      mode: '0644'
+    with_fileglob:
+    - "templates/osp/tripleo_heat_envs/common/*.j2"
+
   - name: render templates to yaml dir
     template:
-      src: "osp/tripleo_heat_envs/{{ item }}.j2"
-      dest: "{{ ooo_yaml_dir }}/{{ item }}"
+      src: "{{ item }}"
+      dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
       mode: '0644'
-    with_items:
-    - custom.yaml
-    - storage-backend.yaml
-    - containers-prepare-parameter.yaml
-
-  - name: render {{ osp_network_type }} network parameter file
-    template:
-      src: "osp/tripleo_heat_envs/{{ osp_network_type }}/{{ item }}.j2"
-      dest: "{{ ooo_yaml_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - network-environment.yaml
+    with_fileglob:
+    - "templates/osp/tripleo_heat_envs/{{ osp.release }}/*.j2"
 
   - name: create heat-env-config ConfigMap
     shell: |
@@ -52,28 +50,29 @@
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: copy computeHCI roles file to custom tripleo environment files
-    copy:
-      src: "{{ item }}"
-      dest: "{{ ooo_tarball_dir }}/roles_data.yaml"
-      mode: '0644'
-    with_fileglob:
-    - osp/roles_computehci.yaml
-    when: osp_compute_hci | bool
-
-  - name: copy net-config files to ooo_tarball_dir
+  - name: copy {{ osp.release }} custom tripleo tarball files
     copy:
       src: "{{ item }}"
       dest: "{{ ooo_tarball_dir }}/"
       mode: '0644'
     with_fileglob:
-    - "osp/net_config/{{ osp_network_type }}/*.yaml"
+    - osp/{{ osp.release }}/*
+
+  # (mschuppert) todo make feature enablement more generic by provide a list of features in the vars file
+  - name: copy computeHCI roles file to custom tripleo environment files
+    copy:
+      src: "{{ item }}"
+      dest: "{{ ooo_tarball_dir }}/{{ item | basename | splitext | first }}"
+      mode: '0644'
+    with_fileglob:
+    - "files/osp/features/{{ osp.release }}/hci/*.yaml"
+    when: osp.compute.hci | bool
 
   - name: create tripleo-tarball-config ConfigMap with tarballs
     shell: |
       cd {{ ooo_tarball_dir }}
-      tar -cvzf tarball-config.tar.gz *.yaml
-      oc create configmap -n openstack tripleo-tarball-config --from-file=tarball-config.tar.gz
+      tar -cvzf tarball-config.tar.gz *
+      oc create configmap -n openstack tripleo-tarball-config --from-file=tarball-config.tar.gz --dry-run -o yaml | oc apply -f -
       rm tarball-config.tar.gz
     environment:
       <<: *oc_env

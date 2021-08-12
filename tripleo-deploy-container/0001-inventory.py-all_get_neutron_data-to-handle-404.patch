@@ -1,0 +1,30 @@
+From ce71a5a144a89cf2bc96f3d68a0a05dc5e8ec70d Mon Sep 17 00:00:00 2001
+From: Dan Prince <dprince@redhat.com>
+Date: Thu, 5 Aug 2021 09:07:48 -0400
+Subject: [PATCH] inventory.py: all_get_neutron_data to handle 404
+
+This allows the _get_neutron_data function to work in the ephemeral
+heat case where only Heat exists in the keystone catalog. This
+function will try to access the /ports API and will recieve
+an HTTP 404 (not found) from the ephemeral Heat API.
+
+Change-Id: I5afb567f0cf578562b1f1a596ed9b5648eaad144
+---
+ tripleo_common/inventory.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/tripleo_common/inventory.py b/tripleo_common/inventory.py
+index c90ee7c7..12e65826 100644
+--- a/tripleo_common/inventory.py
++++ b/tripleo_common/inventory.py
+@@ -529,6 +529,7 @@ class TripleoInventory(object):
+                         "generation.")
+             return None
+         except (openstack.connection.exceptions.EndpointNotFound,
++                openstack.exceptions.ResourceNotFound,
+                 keystoneauth1.exceptions.catalog.EndpointNotFound):
+             LOG.warning("Neutron service not installed. Disabling use of "
+                         "neutron as a source for inventory generation.")
+-- 
+2.26.3
+

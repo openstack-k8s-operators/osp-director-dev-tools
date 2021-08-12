@@ -111,7 +111,7 @@
   - name: run rhsm playbook via openstackclient
     shell: |
       #!/bin/bash
-      oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/inventory.yaml /home/cloud-admin/rhsm.yaml
+      oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/tripleo-ansible-inventory.yaml /home/cloud-admin/rhsm.yaml
     environment:
       <<: *oc_env
     when: playbooks_accept.rc == 0

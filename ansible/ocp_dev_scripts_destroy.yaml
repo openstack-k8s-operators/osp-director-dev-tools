@@ -19,7 +19,7 @@
 
   - name: Set path to RHEL base image for dev-scripts
     set_fact:
-      osp_controller_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp_controller_base_image_url | basename }}"
+      osp_controller_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp.controller.base_image_url | basename }}"
 
   - name: Delete {{ osp_controller_base_image_url_path }}
     file:
