@@ -1,0 +1,85 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Fencing overrides for TripleO
+    block:
+    - name: Set directory for Puppet fencing files
+      set_fact:
+        puppet_fencing_dir: "/tmp/puppet_fencing"
+
+    - name: Create local Puppet fencing directory
+      file:
+        path: "{{ puppet_fencing_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy required files to Puppet fencing directory
+      copy:
+        src: "fencing/{{ item }}"
+        dest: "{{ puppet_fencing_dir }}/"
+        mode: '0644'
+      loop:
+      - "fencing.pp"
+      - "fence_kubevirt.pp"
+
+    - name: Copy Puppet fencing files to openstackclient
+      shell: |
+        #!/bin/bash
+        oc cp -n openstack {{ puppet_fencing_dir }}/{{ item }} openstackclient:/home/cloud-admin/{{ item }}
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      loop:
+      - "fencing.pp"
+      - "fence_kubevirt.pp"
+
+    - name: Copy kubeconfig to openstackclient
+      shell: |
+        #!/bin/bash
+        oc cp -n openstack {{ kubeconfig }} openstackclient:/home/cloud-admin/kubeconfig
+        oc rsh -n openstack openstackclient chmod 0755 /home/cloud-admin/kubeconfig
+      environment:
+        <<: *oc_env
+
+    - name: Set directory for fencing override playbook
+      set_fact:
+        fencing_yaml_dir: "{{ working_yamls_dir }}/fencing"
+
+    - debug:
+        msg: "yamls will be written to {{ fencing_yaml_dir }} locally"
+
+    - name: Clean yaml dir
+      file:
+        state: absent
+        path: "{{ fencing_yaml_dir }}/"
+
+    - name: Create yaml dir
+      file:
+        path: "{{ fencing_yaml_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Render template to yaml dir
+      template:
+        src: "osp/tripleo_fencing_overrides.yaml.j2"
+        dest: "{{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml"
+        mode: '0644'
+
+    - name: Copy TripleO fencing overrides playbook to openstackclient
+      shell: |
+        #!/bin/bash
+        oc cp -n openstack {{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml openstackclient:/home/cloud-admin/tripleo_fencing_overrides.yaml
+      environment:
+        <<: *oc_env
+
+    - name: Run TripleO fencing overrides playbook via openstackclient
+      shell: |
+        #!/bin/bash
+        oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/tripleo-ansible-inventory.yaml /home/cloud-admin/tripleo_fencing_overrides.yaml
+      environment:
+        <<: *oc_env
+    when: osp.controller.count == 3
