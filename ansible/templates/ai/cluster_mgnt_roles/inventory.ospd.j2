@@ -53,7 +53,7 @@ openshift_version="{{ ocp_version }}"
 # Discovery ISO
 discovery_iso_name="discovery_image_{{ ocp_cluster_name }}.iso"
 # HTTP server where the ISO is stored
-discovery_iso_server="http://192.168.111.1/images"
+discovery_iso_server="http://{{ ocp_ai_discovery_iso_server }}/images"
 
 # Parameters for a Restricted Network installation
 use_mirror= False
@@ -105,3 +105,8 @@ bmc_password=PASSW0RD
 mask=24
 gateway=192.168.111.1
 dns=192.168.111.1
+
+# BM Worker node (optional)
+{% if ocp_num_bm_workers == 1 %}
+{{ ocp_cluster_name }}-bm-worker-0 vendor={{ ocp_bm_worker_vendor }} bmc_address={{ ocp_bm_worker_bmc_address }} bmc_user={{ ocp_bm_worker_bmc_user }} bmc_password={{ ocp_bm_worker_bmc_password }} mac={{ ocp_bm_worker_mac }} ip={{ ocp_bm_worker_ip }}
+{% endif %}

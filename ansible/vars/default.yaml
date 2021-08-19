@@ -47,6 +47,18 @@ ocp_worker_memory: 30000
 ocp_worker_vcpu: 8
 ocp_worker_disk: 50
 
+# reserved for future expansion. Can be 0 or 1 at this point
+ocp_num_bm_workers: 0
+
+# required if ocp_num_bm_workers == 1
+#ocp_bm_worker_vendor: Dell
+#ocp_bm_worker_bmc_address: 10.16.231.76
+#ocp_bm_worker_bmc_user: root
+#ocp_bm_worker_bmc_password: calvin
+#ocp_bm_worker_mac: 40:a6:b7:2b:19:01
+#ocp_bm_worker_ip: 192.168.111.30
+#ocp_bm_int: ens3f0
+
 # OCP cluster name
 ocp_cluster_name: ostest
 #ocp_domain_name: defaults to test.metalkube.org
