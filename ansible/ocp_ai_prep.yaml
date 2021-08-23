@@ -96,6 +96,11 @@
           ip4: "192.168.111.1/24"
           state: present
 
+      - name: Add BM interface to BM bridge
+        shell: |
+          /usr/bin/nmcli con add type bridge-slave ifname {{ ocp_bm_int }} master {{ ocp_cluster_name }}bm
+        when: ocp_bm_int is defined
+
       - name: Create provisioning bridge
         community.general.nmcli:
           conn_name: "{{ ocp_cluster_name }}pr"
