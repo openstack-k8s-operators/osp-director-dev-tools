@@ -17,7 +17,8 @@ local-deps:
 	# This should work for both roles and collections, but does not:
 	# ansible-galaxy install -r requirements.yml
 	# ...so we install requirements twice, once for roles and once for collections
-	ansible-galaxy role install -r requirements.yml && ansible-galaxy collection install -r requirements.yml
+	chmod 755 ./local_deps.sh
+	./local_deps.sh
 
 download_tools: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
