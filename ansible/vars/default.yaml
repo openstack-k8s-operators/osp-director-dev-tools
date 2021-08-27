@@ -4,8 +4,8 @@ base_path: /home/ocp
 #dev_scripts_branch: defaults to "HEAD"
 
 # To set a specific release to install.
-ocp_version: 4.8
-ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.8.2-x86_64
+ocp_version: 4.7
+ocp_release_image: quay.io/openshift-release-dev/ocp-release:4.7.9-x86_64
 ocp_release_type: ga
 
 # If set to true:
@@ -76,10 +76,10 @@ kustomize_version: v4.0.1
 kuttl_version: 0.9.0
 
 # SRIOV network operator version (usually should correspond to X.X release)
-sriov_version: 4.8
+sriov_version: 4.7
 
 # Performance addon operator version (usually should correspond to X.X release)
-perf_version: 4.8
+perf_version: 4.7
 
 # CNV addon operator version (usually should correspond to X.X release)
 cnv_hyperconverged_operator_version: 2.6.2
