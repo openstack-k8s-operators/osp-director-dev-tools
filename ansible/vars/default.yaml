@@ -125,17 +125,32 @@ tempest_enable_feature_dict:
 #    vnc_console: false
 
 # specify tempest tests to run
+# for now phase1 tempest tests
 tempest_test_dict:
-  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
-  includelist: []
+  regex: ''
+  includelist:
+      - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
+      - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
+      - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
+      - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
   # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
   excludelist:
-      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+
+# phase2 tempest tests
+#tempest_test_dict:
+#  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+#  includelist: []
+#  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
+#  excludelist:
+#      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+#      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+#      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+#      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+#      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+#      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
 
 local_working_dir: "~/{{ ocp_cluster_name }}-working"
 
