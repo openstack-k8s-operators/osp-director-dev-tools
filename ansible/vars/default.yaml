@@ -180,8 +180,9 @@ osp:
     external: enp7s0
     ospnetwork: enp8s0
   network_type: vlan
-  container_tag: 17.0_20210720.1
-  ceph_image: ceph-4.2-rhel-8
+  container_tag: 17.0_20210824.1
+  ceph_image: rhceph
+  ceph_tag: 5-12
   # OSP deployment timeout
   deploy_timeout: 60m
 #  extrafeatures:
