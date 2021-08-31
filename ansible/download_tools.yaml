@@ -49,6 +49,8 @@
       timeout: 30
 
   - name: Install packages
+    become: true
+    become_user: root
     package:
       state: installed
       name:

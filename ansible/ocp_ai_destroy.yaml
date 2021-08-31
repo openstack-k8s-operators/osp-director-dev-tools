@@ -73,7 +73,7 @@
   - name: Stop and remove httpd container
     containers.podman.podman_container:
       name: httpd
-      image: registry.centos.org/centos/httpd-24-centos7:latest
+      image: quay.io/openstack-k8s-operators/httpd-24-centos7:2.4
       state: absent
 
 
@@ -85,6 +85,11 @@
     args:
       chdir: "{{ base_path }}/assisted-service-onprem"
     ignore_errors: true
+
+  - name: Remove Postgres data store
+    file:
+      path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-service', true) }}/data/postgresql"
+      state: absent
 
 
   ### BRIDGES
@@ -119,9 +124,13 @@
       path: "{{ osp_controller_base_image_url_path }}"
       state: absent
 
-  - name: Delete dicovery images
+  - name: Delete discovery images
     file:
       path:
       state: absent
     with_fileglob:
     - "/var/lib/libvirt/images/discovery_image_ostest*.img"
+
+  - name: Delete AI podman images
+    shell: |
+      for i in $(podman images | grep -E '(assisted-service|ocp-metal-ui)' | awk {'print $3'}); do podman rmi $i; done
