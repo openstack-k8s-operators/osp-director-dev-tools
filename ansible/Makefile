@@ -105,6 +105,11 @@ openstack_cleanup: hosts local-defaults.yaml
 	-i hosts -e @local-defaults.yaml \
 	openstack_cleanup.yaml
 
+director_image_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	director_image_cleanup.yaml
+
 networks: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
