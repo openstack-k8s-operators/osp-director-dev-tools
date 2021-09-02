@@ -82,9 +82,9 @@ openstack:
 	$(MAKE) datavolume
 	$(MAKE) networks
 	$(MAKE) git
-	$(MAKE) osp_custom_config
 	$(MAKE) ctlplane
 	$(MAKE) computes
+	$(MAKE) osp_custom_config
 	$(MAKE) playbook_generator
 	$(MAKE) register_overcloud_nodes
 	$(MAKE) osp_deploy
@@ -97,8 +97,8 @@ osp_deploy: hosts local-defaults.yaml
 register_overcloud_nodes: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
-	osp_register_overcloud_nodes.yaml
-
+	osp_register_overcloud_nodes.yaml \
+	osp_tripleo_fencing_overrides.yaml
 
 openstack_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

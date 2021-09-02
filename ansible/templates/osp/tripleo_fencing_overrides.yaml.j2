@@ -1,0 +1,64 @@
+---
+- hosts: Controller
+  become: true
+
+  tasks:
+  - name: Install Kubevirt fencing agent dependencies
+    shell: |
+      #!/bin/bash
+      /usr/libexec/platform-python -m pip install openshift
+
+  - name: Pre-install certain Puppet modules
+    package:
+      state: installed
+      name: "{{ '{{' }} item {{ '}}' }}"
+    with_items:
+      - puppet-tripleo
+      - puppet-pacemaker
+
+  - name: Download Kubevirt fencing agent code
+    get_url:
+      url: "{{ kubevirt_fencing_agent_url }}"
+      dest: "/usr/sbin/fence_kubevirt"
+      owner: root
+      group: root
+      mode: '0755'
+      timeout: 30
+
+  - name: Replace Python interpreter in Kubevirt fencing agent code
+    lineinfile:
+      path: "/usr/sbin/fence_kubevirt"
+      regexp: '^#\!@PYTHON@'
+      line: '#!/usr/libexec/platform-python -tt'
+
+  - name: Replace Python fencing dependencies dir in Kubevirt fencing agent code
+    lineinfile:
+      path: "/usr/sbin/fence_kubevirt"
+      regexp: '^sys.path.append\("@FENCEAGENTSLIBDIR@"\)'
+      line: 'sys.path.append("/usr/share/fence")'
+
+  - name: Replace Kubevirt API version in Kubevirt fencing agent code
+    lineinfile:
+      path: "/usr/sbin/fence_kubevirt"
+      regexp: "^API_VERSION='kubevirt.io/v1'"
+      line: "API_VERSION='kubevirt.io/v1alpha3'"
+
+  - name: Copy kubeconfig from openstackclient
+    copy:
+      src: "/home/cloud-admin/kubeconfig"
+      dest: "/home/cloud-admin/kubeconfig"
+      mode: 0644
+
+  - name: Copy fencing.pp from openstackclient
+    copy:
+      src: "/home/cloud-admin/fencing.pp"
+      dest: "/usr/share/openstack-puppet/modules/tripleo/manifests/fencing.pp"
+      mode: 0755
+
+  - name: Copy fence_kubevirt.pp from openstackclient
+    copy:
+      src: "/home/cloud-admin/fence_kubevirt.pp"
+      dest: "/usr/share/openstack-puppet/modules/pacemaker/manifests/stonith/fence_kubevirt.pp"
+      mode: 0755
+
+  

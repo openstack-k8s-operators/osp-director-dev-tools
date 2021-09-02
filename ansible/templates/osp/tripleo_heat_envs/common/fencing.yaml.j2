@@ -1,0 +1,19 @@
+parameter_defaults:
+{% if osp.controller.count < 3 %}
+  EnableFencing: false
+{% else %}
+  EnableFencing: true
+  FencingConfig:
+    devices:
+      level1:
+{% for vm_name in ctrl_vm_names.stdout_lines %}
+      - agent: fence_kubevirt
+        host_mac: {{ ctrl_vm_macs.stdout_lines[loop.index-1] }}
+        params:
+          plug: {{ vm_name }}
+          namespace: openstack
+          ssl_insecure: true
+          power_timeout: 30
+          kubeconfig: /home/cloud-admin/kubeconfig
+{% endfor %}
+{% endif %}

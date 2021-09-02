@@ -238,3 +238,5 @@ virt_sriov_repo: https://github.com/marcel-apf/qemu.git
 virt_sriov_domains:
   - "{{ ocp_cluster_name }}_worker_3"
   - "{{ ocp_cluster_name }}_worker_4"
+
+kubevirt_fencing_agent_url: https://raw.githubusercontent.com/ClusterLabs/fence-agents/master/agents/kubevirt/fence_kubevirt.py

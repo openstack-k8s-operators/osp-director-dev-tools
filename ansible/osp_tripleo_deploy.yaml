@@ -27,6 +27,38 @@
     - "{{ ooo_yaml_dir }}"
     - "{{ ooo_tarball_dir }}"
 
+  # FIXME: Hack for fencing data generation -- needs CNV VM info
+  - name: Fencing data generation
+    block:
+    - name: Wait until all controller VMs are present
+      shell: |
+        oc get vm -n openstack -o name | wc -l
+      register: ctrl_vm_count
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      retries: 50
+      delay: 5
+      until: ctrl_vm_count.stdout|int == osp.controller.count|int
+
+    - name: Get controller VM names
+      shell: |
+        oc get vm -n openstack -o custom-columns=NAME:.metadata.name --no-headers
+      register: ctrl_vm_names
+      environment:
+        <<: *oc_env
+
+    - name: Get controller VMI control plane MACs
+      shell: |
+        oc get vmi -n openstack -o jsonpath='{range .items[*].status.interfaces[?(.name=="ctlplane")]}{.mac}{"\n"}{end}'
+      environment:
+        <<: *oc_env
+      register: ctrl_vm_macs
+      retries: 50
+      delay: 5
+      until: ctrl_vm_macs.stdout_lines|length == osp.controller.count|int
+    when: osp.controller.count == 3
+
   - name: render common templates to yaml dir
     template:
       src: "{{ item }}"
@@ -46,9 +78,8 @@
   - name: create heat-env-config ConfigMap
     shell: |
       oc create configmap -n openstack heat-env-config --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    environment:
+      <<: *oc_env
 
   - name: copy {{ osp.release }} custom tripleo tarball files
     copy:
