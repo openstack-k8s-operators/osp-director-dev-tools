@@ -1,5 +1,5 @@
 ---
-ocp_ai_discovery_iso: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.7/4.7.0/rhcos-live.x86_64.iso
+ocp_ai_discovery_iso: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso"
 
 # this address needs to be reachable from IPMI/iDRAC if BM worker is used 
 ocp_ai_discovery_iso_server: 192.168.111.1
