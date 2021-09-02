@@ -8,13 +8,16 @@
       #!/bin/bash
       /usr/libexec/platform-python -m pip install openshift
 
-  - name: Pre-install certain Puppet modules
+  # Note: can be removed when is available https://review.opendev.org/q/topic:%22fence_kubevirt%22
+  - name: Pre-install certain packaged
     package:
       state: installed
       name: "{{ '{{' }} item {{ '}}' }}"
     with_items:
       - puppet-tripleo
       - puppet-pacemaker
+      - patch
+      - patchutils
 
   - name: Download Kubevirt fencing agent code
     get_url:
@@ -49,16 +52,15 @@
       dest: "/home/cloud-admin/kubeconfig"
       mode: 0644
 
-  - name: Copy fencing.pp from openstackclient
-    copy:
-      src: "/home/cloud-admin/fencing.pp"
-      dest: "/usr/share/openstack-puppet/modules/tripleo/manifests/fencing.pp"
-      mode: 0755
+  # Note: can be removed when is available https://review.opendev.org/q/topic:%22fence_kubevirt%22
+  - name: Apply patches to puppet modules on controller VMs
+    shell: |
+      #!/bin/bash
+      set -x
+      if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~806924/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/pacemaker -p1; then
+        curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~806924/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/pacemaker -b -z .orig -p1
+      fi
+      if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~806926/revisions/2/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/tripleo -p1; then
+        curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~806926/revisions/2/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/tripleo -b -z .orig -p1
+      fi
 
-  - name: Copy fence_kubevirt.pp from openstackclient
-    copy:
-      src: "/home/cloud-admin/fence_kubevirt.pp"
-      dest: "/usr/share/openstack-puppet/modules/pacemaker/manifests/stonith/fence_kubevirt.pp"
-      mode: 0755
-
-  

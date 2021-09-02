@@ -7,43 +7,14 @@
   tasks:
   - name: Fencing overrides for TripleO
     block:
-    - name: Set directory for Puppet fencing files
-      set_fact:
-        puppet_fencing_dir: "/tmp/puppet_fencing"
-
-    - name: Create local Puppet fencing directory
-      file:
-        path: "{{ puppet_fencing_dir }}"
-        state: directory
-        mode: '0755'
-
-    - name: Copy required files to Puppet fencing directory
-      copy:
-        src: "fencing/{{ item }}"
-        dest: "{{ puppet_fencing_dir }}/"
-        mode: '0644'
-      loop:
-      - "fencing.pp"
-      - "fence_kubevirt.pp"
-
-    - name: Copy Puppet fencing files to openstackclient
-      shell: |
-        #!/bin/bash
-        oc cp -n openstack {{ puppet_fencing_dir }}/{{ item }} openstackclient:/home/cloud-admin/{{ item }}
-      environment: &oc_env
-        PATH: "{{ oc_env_path }}"
-        KUBECONFIG: "{{ kubeconfig }}"
-      loop:
-      - "fencing.pp"
-      - "fence_kubevirt.pp"
-
     - name: Copy kubeconfig to openstackclient
       shell: |
         #!/bin/bash
         oc cp -n openstack {{ kubeconfig }} openstackclient:/home/cloud-admin/kubeconfig
         oc rsh -n openstack openstackclient chmod 0755 /home/cloud-admin/kubeconfig
-      environment:
-        <<: *oc_env
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
     - name: Set directory for fencing override playbook
       set_fact:
