@@ -11,6 +11,7 @@ parameter_defaults:
         host_mac: {{ ctrl_vm_macs.stdout_lines[loop.index-1] }}
         params:
           plug: {{ vm_name }}
+          apiversion: kubevirt.io/v1alpha3
           namespace: openstack
           ssl_insecure: true
           power_timeout: 30
