@@ -109,7 +109,7 @@
         block:
         - name: Uninstall qemu-kvm
           dnf:
-            name: qemu-kvm
+            name: qemu-kvm*
             state: absent
 
         - name: Install latest qemu-kvm
