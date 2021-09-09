@@ -1,6 +1,7 @@
 ---
 - hosts: convergence_base
   become: true
+  become_user: root
   gather_facts: false
 
   tasks:
@@ -125,12 +126,18 @@
       path: "{{ osp_controller_base_image_url_path }}"
       state: absent
 
+  - name: Find discovery images
+    find:
+      paths: "/var/lib/libvirt/images/"
+      patterns: "discovery_image_{{ ocp_cluster_name }}*.img"
+    register: discovery_images
+
   - name: Delete discovery images
     file:
-      path: "{{ item }}"
+      path: "{{ item.path }}"
       state: absent
-    with_fileglob:
-    - "/var/lib/libvirt/images/discovery_image_ostest*.img"
+    with_items:
+      - "{{ discovery_images.files }}"
 
   - name: Delete AI podman images
     shell: |
