@@ -97,8 +97,14 @@
           state: present
 
       - name: Add BM interface to BM bridge
-        shell: |
-          /usr/bin/nmcli con add type bridge-slave ifname {{ ocp_bm_int }} master {{ ocp_cluster_name }}bm
+        community.general.nmcli:
+          conn_name: "bridge-slave-{{ ocp_bm_int }}"
+          type: bridge-slave
+          ifname: "{{ ocp_bm_int }}"
+          autoconnect: yes
+          hairpin: no
+          master: "{{ ocp_cluster_name }}bm"
+          state: present
         when: ocp_bm_int is defined
 
       - name: Create provisioning bridge
