@@ -133,14 +133,3 @@ parameter_defaults:
         host_routes: []
         ip_version: 4
         name: ctlplane-subnet
-  # for now add static OVNStaticBridgeMacMappings, see https://github.com/openstack-k8s-operators/osp-director-operator/issues/254
-  OVNStaticBridgeMacMappings:
-    controller-0:
-      datacenter: 00:00:5E:00:53:00
-      provider: 00:00:5E:00:53:01
-    compute-0:
-      datacenter: 00:00:5E:00:54:00
-      provider: 00:00:5E:00:54:01
-    compute-1:
-      datacenter: 00:00:5E:00:55:00
-      provider: 00:00:5E:00:55:01
