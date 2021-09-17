@@ -193,10 +193,10 @@ osp:
     # size of OSD disk size in GB
     ceph_num_osd_disk_size: 20
   interface:
-    external: enp7s0
-    ospnetwork: enp8s0
+    external: enp6s0
+    ospnetwork: enp7s0
   network_type: vlan
-  container_tag: 17.0_20210824.1
+  container_tag: 17.0_20210907.1
   ceph_image: rhceph
   ceph_tag: 5-12
   # OSP deployment timeout
