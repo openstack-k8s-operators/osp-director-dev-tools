@@ -40,11 +40,11 @@
 
   - name: Delete VMs and disk QCOW2s
     shell: |
-      for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
+      for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
         virsh destroy $i
       done
 
-      for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk {"print $2"}); do
+      for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
         virsh undefine --nvram $i
         rm -f $(virsh pool-dumpxml default|grep -o "<path>.*</path>"|sed 's/\(<path>\|<\/path>\)//g')/$i.qcow2
       done
@@ -150,4 +150,4 @@
 
   - name: Delete AI podman images
     shell: |
-      for i in $(podman images | grep -E '(assisted-service|ocp-metal-ui)' | awk {'print $3'}); do podman rmi $i; done
+      for i in $(podman images | grep -E '(assisted-service|ocp-metal-ui)' | awk '{print $3}'); do podman rmi $i; done
