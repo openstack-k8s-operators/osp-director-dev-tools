@@ -4,7 +4,7 @@ parameter_defaults:
     net_attributes_map:
       external:
         network:
-          dns_domain: external.localdomain.
+          dns_domain: external.{{ ocp_cluster_name }}.
           mtu: 1350
           name: external
           tags:
@@ -23,7 +23,7 @@ parameter_defaults:
             - tripleo_vlan_id=1
       internal_api:
         network:
-          dns_domain: internalapi.localdomain.
+          dns_domain: internalapi.{{ ocp_cluster_name }}.
           mtu: 1350
           name: internal_api
           tags:
@@ -42,7 +42,7 @@ parameter_defaults:
             - tripleo_vlan_id=20
       storage:
         network:
-          dns_domain: storage.localdomain.
+          dns_domain: storage.{{ ocp_cluster_name }}.
           mtu: 1350
           name: storage
           tags:
@@ -61,7 +61,7 @@ parameter_defaults:
             - tripleo_vlan_id=30
       storage_mgmt:
         network:
-          dns_domain: storagemgmt.localdomain.
+          dns_domain: storagemgmt.{{ ocp_cluster_name }}.
           mtu: 1350
           name: storage_mgmt
           tags:
@@ -80,7 +80,7 @@ parameter_defaults:
             - tripleo_vlan_id=30
       tenant:
         network:
-          dns_domain: tenant.localdomain.
+          dns_domain: tenant.{{ ocp_cluster_name }}.
           mtu: 1350
           name: tenant
           tags:
@@ -117,7 +117,7 @@ parameter_defaults:
   # The value for this parameter is automatically populated in the plan environment by tripleoclient.
   CtlplaneNetworkAttributes:
     network:
-      dns_domain: ctlplane.localdomain.
+      dns_domain: ctlplane.{{ ocp_cluster_name }}.
       mtu: 1500
       name: ctlplane
       tags:
