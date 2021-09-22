@@ -162,7 +162,7 @@ nfs_export_dir: /home/nfs
 default_timeout: 240
 
 # openstackclient container image
-openstackclient_image: quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1_patched2
+openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
 
 nfs_server: '192.168.25.1'
 
@@ -170,7 +170,7 @@ nfs_server: '192.168.25.1'
 osp_network_type: vlan
 
 osp:
-  release: 17.0
+  release: 16.2
   # OSP controller VM sizing
   controller:
     count: 1
@@ -196,7 +196,7 @@ osp:
     external: enp6s0
     ospnetwork: enp7s0
   network_type: vlan
-  container_tag: 17.0_20210907.1
+  container_tag: 16.2_20210901.2
   ceph_image: rhceph
   ceph_tag: 5-12
   # OSP deployment timeout
@@ -206,7 +206,7 @@ osp:
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
-osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
+osp_rhos_release_compose: passed_phase2
 osp_rhel_subscription_release: 8.4
 osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-baseos-eus-rpms
