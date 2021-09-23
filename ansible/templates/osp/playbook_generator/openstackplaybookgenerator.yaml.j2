@@ -8,3 +8,10 @@ spec:
   imageURL: {{ openstackclient_image }}
   heatEnvConfigMap: heat-env-config
   tarballConfigMap: tripleo-tarball-config
+{% if ephemeral_heat is defined and ephemeral_heat|length %}
+  ephemeralHeatSettings:
+    heatAPIImageURL: {{ ephemeral_heat.heat_api_image }}
+    heatEngineImageURL: {{ ephemeral_heat.heat_engine_image }}
+    mariadbImageURL: {{ ephemeral_heat.mariadb_image }}
+    rabbitImageURL: {{ ephemeral_heat.rabbit_image }}
+{% endif %}

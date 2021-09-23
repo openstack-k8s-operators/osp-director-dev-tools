@@ -1,0 +1,42 @@
+# Todo: need to check what is missing in upstream wallaby tripleoclient image
+# openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
+openstackclient_image: quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1_patched2
+osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
+osp:
+  release: 17.0
+  # OSP controller VM sizing
+  controller:
+    count: 1
+    cores: 6
+    memory: 20
+    disk_size: 40
+    # use http://download.devel.redhat.com to get the local mirror depending on where the server is
+    base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
+    storage_class: host-nfs-storageclass
+  # OSP compute OCP worker settings
+  compute:
+    # number of OCP worker nodes should be OSP compute hosts
+    count: 2
+    # if false nfs is used for glance
+    hci: false
+    # number of OSD disks per compute node
+    ceph_osd_disks:
+      - sdb
+      - sdc
+    # size of OSD disk size in GB
+    ceph_num_osd_disk_size: 20
+  interface:
+    external: enp6s0
+    ospnetwork: enp7s0
+  network_type: vlan
+  container_tag: 17.0_20210920.1
+  ceph_image: rhceph
+  ceph_tag: 5-12
+  # OSP deployment timeout
+  deploy_timeout: 60m
+ephemeral_heat:
+  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
+  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
+  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
+  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+
