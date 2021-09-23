@@ -1,22 +1,4 @@
 parameter_defaults:
-  ExternalNetCidr: 10.0.0.0/24
-  ExternalAllocationPools: [{"start": "10.0.0.10", "end": "10.0.0.50"}]
-  ExternalInterfaceDefaultRoute: 10.0.0.1
-  PublicVirtualFixedIPs: [{ "ip_address": "10.0.0.5" }]
-  InternalApiNetCidr: 172.17.0.0/24
-  InternalApiAllocationPools: [{"start": "172.17.0.10", "end": "172.17.0.250"}]
-  InternalApiNetworkVlanID: 20
-  StorageNetCidr: 172.18.0.0/24
-  StorageAllocationPools: [{"start": "172.18.0.10", "end": "172.18.0.250"}]
-  StorageNetworkVlanID: 30
-  StorageMgmtNetCidr: 172.19.0.0/24
-  StorageMgmtAllocationPools: [{"start": "172.19.0.10", "end": "172.19.0.250"}]
-  StorageMgmtNetworkVlanID: 40
-  TenantNetCidr: 172.20.0.0/24
-  TenantAllocationPools: [{"start": "172.20.0.10", "end": "172.20.0.250"}]
-  TenantNetworkVlanID: 50
-  ControlPlaneDefaultRoute: 192.168.25.1
-  ControlPlaneSubnetCidr: '24'
   NeutronGlobalPhysnetMtu: 1350
   NeutronPublicInterface: nic3
   NeutronBridgeMappings: datacentre:br-ex,tenant:br-isolated
