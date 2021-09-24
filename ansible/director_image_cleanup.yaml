@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+
+  #NOTE: this is a bit risky as it just greps for director. But I've not hit an issue yet.
+  - name: director image cleanup
+    ignore_errors: true
+    shell: >
+      {% raw %}
+      for worker in $(oc get nodes -o name); do
+        oc debug $worker -T -- chroot /host sh -c "podman images --format 'table {{ .ID }} {{ .Repository }}:{{ .Tag }}' | grep director | cut -f 1 -d ' ' | xargs -r podman rmi -f"
+      done
+      {% endraw %}
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"

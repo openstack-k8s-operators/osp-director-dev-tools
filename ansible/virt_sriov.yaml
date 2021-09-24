@@ -147,7 +147,7 @@
 
       - name: Increase worker machineset count
         shell: |
-          oc scale machineset $(oc get machineset -A | grep {{ ocp_cluster_name }} | awk {'print $2'}) -n openshift-machine-api --replicas={{ ocp_num_workers + (virt_sriov_domains | length) }}
+          oc scale machineset $(oc get machineset -A | grep {{ ocp_cluster_name }} | awk '{print $2}') -n openshift-machine-api --replicas={{ ocp_num_workers + (virt_sriov_domains | length) }}
         environment:
           <<: *oc_env
 

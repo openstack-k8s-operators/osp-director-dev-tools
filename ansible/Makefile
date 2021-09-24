@@ -27,12 +27,16 @@ download_tools: hosts local-defaults.yaml
 
 ocp_install:
 	$(MAKE) host_prep
+	$(MAKE) ocp_installer_prep
 	$(MAKE) ocp_installer
 	$(MAKE) post_install
 
 host_prep: hosts local-deps local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
-	host_prep.yaml \
+	host_prep.yaml
+
+ocp_installer_prep: hosts local-deps local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
 	ocp_installer_prep.yaml
 
 ocp_installer: hosts local-defaults.yaml
@@ -45,8 +49,8 @@ post_install: hosts local-defaults.yaml
 	local_oc_client.yaml \
 	ocp_ai_post_install.yaml \
 	ocp_default_storageclass.yaml \
-	ocp_image_registry.yaml \
-	ocp_vm_setup_extra_nics.yaml
+	ocp_image_registry.yaml
+	$(MAKE) nics
 
 custom_registries: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -104,6 +108,11 @@ openstack_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	openstack_cleanup.yaml
+
+director_image_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	director_image_cleanup.yaml
 
 networks: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'

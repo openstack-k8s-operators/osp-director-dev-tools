@@ -25,6 +25,8 @@ If not already installed, install the required dependencies
 dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
 ```
 
+> NOTE: make sure you install ansible >= 2.9 otherwise ansible collections will not work correctly
+
 #### Modify the variable files
 
 Modify `ansible/vars/default.yaml` to meet your req.
@@ -167,9 +169,11 @@ oc get pods -n openstack
 
 #### Install OSP
 
-The ansible playbook generates the scaffolding needed for tripleo to deploy OpenStack. The actual OpenStack installation need to be triggered manually
+If you ran all targets in the makefile (i.e. you invoked `make` without specifying a specific target) then the OSP deployment steps are also executed after the OCP cluster installation is finished. You can find the deployment logs at `/root/ostest-working/logs/osp-deploy.log` (if you changed the name of your cluster from the default `ostest` your local path will be different to reflect the cluster name).
+
+If you need to run the OpenStack installation manually after the OCP cluster is deployed you can run:
 ```
-oc exec -it -n openstack openstackclient /home/cloud-admin/deploy_tripleo.sh
+oc exec -it -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh
 ```
 
 #### Access OSP
@@ -181,7 +185,7 @@ You can also access the OSP console using your local web browser: <http://192.16
 | Pwd | The admin password can be found in the `/home/cloud-admin/.config/openstack/clouds.yaml` file on the `openstackclient` pod in the `openstack` namespace. |
 
 ```
-oc exec -it openstackclient -- cat /home/cloud-admin/.config/openstack/clouds.yaml | grep -w password
+oc exec -it openstackclient -n openstack -- cat /home/cloud-admin/.config/openstack/clouds.yaml | grep -w password
 ```
 
 ### Cleanup options
