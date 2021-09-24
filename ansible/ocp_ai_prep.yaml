@@ -482,13 +482,6 @@
         regexp: 'OAS_HOSTDIR=.*'
         replace: 'OAS_HOSTDIR={{ ocp_ai_service_store_dir | default("/opt/assisted-service", true) }}'
 
-    # FIXME: Remove once AI team fixes the issue mentioned here
-    - name: Use older version of assisted-service image to avoid auth bug from 8/12/2021
-      replace:
-        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
-        regexp: 'OAS_IMAGE=.*'
-        replace: 'OAS_IMAGE=quay.io/ocpmetal/assisted-service:stable.10.08.2021-22.10'
-
     - name: Set assisted installer service discovery ISO location
       replace:
         path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
