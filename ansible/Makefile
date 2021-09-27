@@ -1,3 +1,8 @@
+# make openstack OSP_RELEASE=17.0
+ifndef OSP_RELEASE
+OSP_RELEASE = 16.2
+endif
+
 default: \
   ocp_install \
   cnv_install \
@@ -22,7 +27,8 @@ local-deps:
 
 download_tools: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-v -i hosts -e @local-defaults.yaml \
+	-v -i hosts -e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	download_tools.yaml
 
 ocp_install:
@@ -32,20 +38,28 @@ ocp_install:
 	$(MAKE) post_install
 
 host_prep: hosts local-deps local-defaults.yaml
-	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	host_prep.yaml
 
 ocp_installer_prep: hosts local-deps local-defaults.yaml
-	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_installer_prep.yaml
 
 ocp_installer: hosts local-defaults.yaml
-	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_installer.yaml
 
 post_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	local_oc_client.yaml \
 	ocp_ai_post_install.yaml \
 	ocp_default_storageclass.yaml \
@@ -54,32 +68,44 @@ post_install: hosts local-defaults.yaml
 
 custom_registries: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_custom_registries.yaml
 
 nics: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_vm_setup_extra_nics.yaml
 
 cnv_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_cnv.yaml
 
 sriov_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_sriov.yaml \
 	virt_sriov.yaml
 
 perf_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_performance.yaml
 
 git: hosts local-deps local-defaults.yaml
-	ANSIBLE_FORCE_COLOR=true ansible-playbook -v -i hosts -e @local-defaults.yaml \
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -v -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	git.yaml
 
 openstack:
@@ -95,88 +121,120 @@ openstack:
 
 osp_deploy: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	osp_deploy.yaml
 
 register_overcloud_nodes: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	osp_register_overcloud_nodes.yaml \
 	osp_tripleo_fencing_overrides.yaml
 
 openstack_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	openstack_cleanup.yaml
 
 director_image_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	director_image_cleanup.yaml
 
 networks: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	install_networks.yaml
 
 ctlplane: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	install_ctlplane.yaml
 
 computes: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	install_computes.yaml
 
 playbook_generator: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	playbook_generator.yaml
 
 datavolume: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	datavolume.yaml
 
 osp_custom_config: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	osp_tripleo_deploy.yaml
 
 osp_content: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	osp_content.yaml
 
 osp_tempest: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	osp_tempest.yaml
 
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-v -i hosts -e @local-defaults.yaml \
+	-v -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	install_namespace.yaml \
 	olm.yaml
 
 olm_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-v -i hosts -e @local-defaults.yaml \
+	-v -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	olm_cleanup.yaml
 
 local_storage: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-v -i hosts -e @local-defaults.yaml \
+	-v -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	local_storage.yaml
 
 local_storage_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-v -i hosts -e @local-defaults.yaml \
+	-v -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	local_storage_cleanup.yaml
 
 nfs_cleanup: hosts
@@ -195,11 +253,15 @@ nfs_cleanup: hosts
 
 destroy_ocp: hosts local-defaults.yaml
 	$(MAKE) openstack_cleanup
-	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts -e @local-defaults.yaml \
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	ocp_installer_destroy.yaml
 	$(MAKE) nfs_cleanup
 
 demo: hosts
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts -e @local-defaults.yaml \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	demo.yaml

@@ -27,10 +27,6 @@ dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
 
 > NOTE: make sure you install ansible >= 2.9 otherwise ansible collections will not work correctly
 
-#### Modify the variable files
-
-Modify `ansible/vars/default.yaml` to meet your req.
-
 #### Create local-defaults.yaml file with personal information
 
 First create the following files relative to the project root:
@@ -110,6 +106,16 @@ dnf install -y make
 cd osp-director-dev-tools/ansible
 make
 ```
+
+**Note**
+The default OSP version deployed is 16.2 if you'd like to deploy OSP 17.0 provide the version using OSP_RELEASE, like:
+
+```
+make OSP_RELEASE=17.0
+```
+
+The version specific defaults are located in vars/X.Y.yaml.
+
 
 **Note**
 prepare_host.yaml will delete the home lvs and grow the root partition to max.
