@@ -166,9 +166,6 @@ openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16
 
 nfs_server: '192.168.25.1'
 
-# network architecture, either flat or vlan
-osp_network_type: vlan
-
 osp:
   release: 16.2
   # OSP controller VM sizing
@@ -195,7 +192,6 @@ osp:
   interface:
     external: enp6s0
     ospnetwork: enp7s0
-  network_type: vlan
   container_tag: 16.2_20210901.2
   ceph_image: rhceph
   ceph_tag: 5-12
