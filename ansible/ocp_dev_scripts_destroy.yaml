@@ -7,6 +7,10 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
   - name: Clean dev-scripts deployment
     shell: |
       export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
