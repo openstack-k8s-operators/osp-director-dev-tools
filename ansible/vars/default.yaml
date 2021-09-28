@@ -62,7 +62,7 @@ ocp_num_bm_workers: 0
 
 # OCP cluster name
 ocp_cluster_name: ostest
-#ocp_domain_name: defaults to test.metalkube.org
+ocp_domain_name: test.metalkube.org
 
 # Released version of the opm package (can be set to 'latest')
 opm_version: v1.12.5

@@ -12,6 +12,7 @@ spec:
         - internalapi
   openStackClientStorageClass: {{ osp.controller.storage_class }}
   passwordSecret: userpassword
+  domainName: {{ ocp_cluster_name }}.{{ ocp_domain_name }}
   virtualMachineRoles:
     controller:
       roleName: Controller
