@@ -12,6 +12,7 @@
       rhsm_org_id: "{{ rhel_subscription_org_id }}"
       rhsm_release: "{{ osp_rhel_subscription_release }}"
       rhsm_repos: "{{ osp_rhel_subscription_repos }}"
+      rhsm_server_hostname: "{{ rhel_subscription_server_hostname|default(omit) }}"
 {% else %}
   - name: install rhos-release
     dnf:

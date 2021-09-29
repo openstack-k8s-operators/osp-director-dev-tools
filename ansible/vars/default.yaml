@@ -26,6 +26,7 @@ ocp_release_type: ga
 # * rhel-subscription.yaml - content:
 #   rhel_subscription_activation_key: <activation key>
 #   rhel_subscription_org_id: "xxxxxxx"
+#   rhel_subscription_server_hostname: <subscription server> (optional)
 # * pull-secret
 #   obtain it from https://cloud.redhat.com/openshift/install/pull-secret
 #secrets_repo: https uri to repo, no default manual local file is expected if not present
