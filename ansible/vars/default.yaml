@@ -26,6 +26,7 @@ ocp_release_type: ga
 # * rhel-subscription.yaml - content:
 #   rhel_subscription_activation_key: <activation key>
 #   rhel_subscription_org_id: "xxxxxxx"
+#   rhel_subscription_server_hostname: <subscription server> (optional)
 # * pull-secret
 #   obtain it from https://cloud.redhat.com/openshift/install/pull-secret
 #secrets_repo: https uri to repo, no default manual local file is expected if not present
@@ -62,7 +63,7 @@ ocp_num_bm_workers: 0
 
 # OCP cluster name
 ocp_cluster_name: ostest
-#ocp_domain_name: defaults to test.metalkube.org
+ocp_domain_name: test.metalkube.org
 
 # Released version of the opm package (can be set to 'latest')
 opm_version: v1.12.5

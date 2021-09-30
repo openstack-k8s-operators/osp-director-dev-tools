@@ -43,6 +43,10 @@
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
     register: network_exist_switch
+    # Retry on failure, probably osnet does not exist yet
+    retries: 15
+    delay: 10
+    until: network_exist_switch.rc == 0
 
   - name: Start networks
     shell: |

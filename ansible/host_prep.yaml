@@ -98,6 +98,7 @@
         activationkey: "{{ rhel_subscription_activation_key }}"
         org_id: "{{ rhel_subscription_org_id }}"
         pool: '^(Red Hat Enterprise Server for x86_64)$'
+        server_hostname: "{{ rhel_subscription_server_hostname|default(omit) }}"
       when: manual_rhel_subscription is undefined
 
     - name: enable rhel-8-for-x86_64-appstream-rpms and advanced-virt-for-rhel-8-x86_64-rpms
