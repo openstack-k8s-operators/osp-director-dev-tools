@@ -28,6 +28,7 @@ local-deps:
 download_tools: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts -e @vars/${OSP_RELEASE}.yaml \
+	-e @vars/kuttl_tests.yaml \
 	-e @local-defaults.yaml \
 	download_tools.yaml
 
@@ -207,6 +208,14 @@ osp_tempest: hosts local-defaults.yaml
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	osp_tempest.yaml
+
+kuttl_tests: hosts local-defaults.yaml
+	$(MAKE) download_tools
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @vars/kuttl_tests.yaml \
+	-e @local-defaults.yaml \
+	osp_kuttl.yaml
 
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

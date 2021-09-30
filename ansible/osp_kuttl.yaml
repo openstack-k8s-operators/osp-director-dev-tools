@@ -1,0 +1,116 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set osp-director-operator directory facts
+    set_fact:
+      kuttl_working_dir: "{{ working_dir }}/kuttl"
+      osp_director_working_path: "{{ working_dir }}/kuttl/osp-director-operator"
+
+  - name: Set osp-director-operator local path if exists in env variable
+    set_fact:
+      osp_director_local_path: "{{ lookup('env','OSP_DIRECTOR_GIT_DIR') }}"
+    when: lookup('env','OSP_DIRECTOR_GIT_DIR')|length != 0
+
+  - debug:
+      msg:
+      - "Kuttl working directory available locally {{ kuttl_working_dir }}"
+      - "OSP Director Operator repo at {{ osp_director_working_path }}"
+
+  - debug:
+      msg:
+      - "Local OSP Director Operator repo at {{ osp_director_local_path }}"
+    when: (osp_director_local_path is defined and (osp_director_local_path|string|length != 0))
+
+  - name: Clean directories
+    file:
+      state: absent
+      path: "{{ item }}/"
+    with_items:
+    - "{{ kuttl_working_dir }}"
+    - "{{ osp_director_working_path }}"
+
+  - name: Create kuttl directories
+    file:
+      path: "{{ kuttl_working_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Synchronize OSP director operator repository to working dir
+    ansible.posix.synchronize:
+      mode: push
+      src: "{{ osp_director_local_path }}"
+      dest: "{{ osp_director_working_path }}"
+      delete: yes
+    when: (osp_director_local_path is defined and (osp_director_local_path|string|length != 0))
+
+  - block:
+    - name: Clone OSP director operator repository from defaults
+      ansible.builtin.git:
+        repo: "{{ osp_director_operator_git }}"
+        dest: "{{ osp_director_working_path }}"
+        version: "{{ osp_director_operator_branch }}"
+      when: (osp_director_operator_pr|string|length == 0)
+
+    - name: Clone OSP director operator repository from defaults with PR
+      ansible.builtin.git:
+        refspec: "+refs/pull/{{ osp_director_operator_pr }}/head:refs/remotes/origin/pr/{{ osp_director_operator_pr }}"
+        version: "pr/{{ osp_director_operator_pr }}"
+        repo: "{{ osp_director_operator_git }}"
+        dest: "{{ osp_director_working_path }}"
+      when: (osp_director_operator_pr|string|length != 0)
+    when: (osp_director_local_path is not defined or (osp_director_local_path|string|length == 0))
+
+  - name: Remove OSP Director Operator CRs
+    command: "{{ item }}"
+    ignore_errors: true
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    with_items:
+      - "oc delete -n {{ namespace }} openstackbaremetalset --all"
+      - "oc delete -n {{ namespace }} openstackcontrolplane --all"
+      - "oc delete -n {{ namespace }} openstackvmset --all"
+      - "oc delete -n {{ namespace }} openstacknet --all"
+
+  - name: Execute kubectl-kuttl tests
+    shell: |
+      #!/bin/bash
+      set -e
+      pushd {{ osp_director_working_path }}
+      kubectl-kuttl test > {{ working_log_dir }}/kuttl_tests.log 2>&1
+      popd
+    register: kuttl_result
+    environment:
+      <<: *oc_env
+
+  - name: Get failed tests
+    shell: |
+      #!/bin/bash
+      set -e
+      grep \\-\\-\\-\ FAIL {{ working_log_dir }}/kuttl_tests.log || true
+    register: kuttl_failed
+
+  - name: Get test summary
+    shell: |
+      #!/bin/bash
+      set -e
+      sed -E -e '/^.*--- FAIL:.*|^.*--- PASS:.*/!d' {{ working_log_dir }}/kuttl_tests.log
+    register: kuttl_summary
+
+  - name: kuttl run summary
+    debug:
+      msg: "{{ kuttl_summary.stdout.split('\n') }}"
+
+  - name: kuttl failed tests
+    debug:
+      msg: "{{ kuttl_failed.stdout.split('\n') }}"
+
+  - name: Fail playbook if kuttl run failed
+    ignore_errors: true
+    fail:
+      msg: kuttl test run failed, check output {{ working_log_dir }}/kuttl_tests.log
+    when: kuttl_result.rc == 1

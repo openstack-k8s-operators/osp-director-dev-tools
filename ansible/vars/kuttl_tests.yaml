@@ -1,0 +1,14 @@
+---
+# Variables required to run kuttl tests
+
+# The OSP Director Operator git repository contain kuttl tests itself,
+# so one need to be available locally. If not one is cloned from upstream
+# github.
+osp_director_operator_git: "https://github.com/openstack-k8s-operators/osp-director-operator"
+osp_director_operator_branch: "master"
+
+# Number - if specified PR is fetched
+osp_director_operator_pr: ""
+
+# kuttl version to use (must be specific version)
+kuttl_version: 0.9.0
