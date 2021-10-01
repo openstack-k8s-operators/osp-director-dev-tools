@@ -10,8 +10,7 @@ osp:
     cores: 6
     memory: 20
     disk_size: 40
-    # use http://download.devel.redhat.com to get the local mirror depending on where the server is
-    base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
+    image_url_path: brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
     storage_class: host-nfs-storageclass
   # OSP compute OCP worker settings
   compute:

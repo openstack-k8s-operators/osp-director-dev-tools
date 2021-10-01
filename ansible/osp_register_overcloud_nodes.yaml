@@ -82,6 +82,15 @@
             rhel_subscription_activation_key: <activation key>
             rhel_subscription_org_id: "xxxxxxx"
 
+  - name: Select fastest rcm-guest mirror
+    shell: |
+      printf "{{ osp.controller.base_image_url_mirrors | join('\n') }}" | xargs -I {} echo "curl -r 0-102400 -s -w %{speed_download} -o /dev/null {}/ls-lR.gz; echo ' '{}" | sh | sort -g -r |head -1| awk '{ print $2 }'
+    register: download_site
+
+  - name: Set the rcm-guest mirror
+    set_fact:
+      base_image_url: "{{ download_site.stdout }}"
+
   - name: Render templates to yaml dir
     template:
       src: "osp/{{ item }}.j2"

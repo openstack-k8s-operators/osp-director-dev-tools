@@ -9,18 +9,18 @@
 
   - name: Set path to RHEL base image for dev-scripts
     set_fact:
-      osp_controller_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp.controller.base_image_url | basename }}"
+      osp_controller_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp.controller.image_url_path | basename }}"
     when: not (ocp_ai|bool)
 
   - name: Set path to RHEL base image for assisted installer
     set_fact:
-      osp_controller_base_image_url_path: "/opt/http_store/data/images/{{ osp.controller.base_image_url | basename }}"
+      osp_controller_base_image_url_path: "/opt/http_store/data/images/{{ osp.controller.image_url_path | basename }}"
     when: ocp_ai|bool
 
   # NOTE: we copy this to the Ironic images directory to reuse it for
   # the provision server (openstackbaremetalsets). This avoids downloading
   # the same image twice.
-  - name: Check if {{ osp.controller.base_image_url | basename }} already exist
+  - name: Check if {{ osp.controller.image_url_path | basename }} already exist
     stat:
       path: "{{ osp_controller_base_image_url_path }}"
     register: stat_result
@@ -30,9 +30,18 @@
     become_user: ocp
     when: not stat_result.stat.exists
     block:
-      - name: Download RHEL guest image {{ osp.controller.base_image_url }}
+      - name: Select fastest guest base image mirror
+        shell: |
+          printf "{{ osp.controller.base_image_url_mirrors | join('\n') }}" | xargs -I {} echo "curl -r 0-102400 -s -w %{speed_download} -o /dev/null {}/ls-lR.gz; echo ' '{}" | sh | sort -g -r |head -1| awk '{ print $2 }'
+        register: download_site
+
+      - name: Set the guest image mirror
+        set_fact:
+          base_image_url: "{{ download_site.stdout }}"
+
+      - name: Download RHEL guest image {{ osp.controller.image_url_path | basename }}
         get_url:
-          url: "{{ osp.controller.base_image_url }}"
+          url: "{{ base_image_url }}/{{ osp.controller.image_url_path }}"
           dest: "{{ osp_controller_base_image_url_path }}"
           owner: ocp
           group: ocp

@@ -15,7 +15,7 @@
 {% else %}
   - name: install rhos-release
     dnf:
-      name: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+      name: "{{ base_image_url }}/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm"
       state: present
       disable_gpg_check: true
   - name: run rhos-release
