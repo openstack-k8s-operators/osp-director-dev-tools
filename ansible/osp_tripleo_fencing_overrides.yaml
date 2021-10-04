@@ -11,15 +11,6 @@
 
   - name: Fencing overrides for TripleO
     block:
-    - name: Copy kubeconfig to openstackclient
-      shell: |
-        #!/bin/bash
-        oc cp -n openstack {{ kubeconfig }} openstackclient:/home/cloud-admin/kubeconfig
-        oc rsh -n openstack openstackclient chmod 0755 /home/cloud-admin/kubeconfig
-      environment: &oc_env
-        PATH: "{{ oc_env_path }}"
-        KUBECONFIG: "{{ kubeconfig }}"
-
     - name: Set directory for fencing override playbook
       set_fact:
         fencing_yaml_dir: "{{ working_yamls_dir }}/fencing"
@@ -48,8 +39,9 @@
       shell: |
         #!/bin/bash
         oc cp -n openstack {{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml openstackclient:/home/cloud-admin/tripleo_fencing_overrides.yaml
-      environment:
-        <<: *oc_env
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
     - name: Run TripleO fencing overrides playbook via openstackclient
       shell: |

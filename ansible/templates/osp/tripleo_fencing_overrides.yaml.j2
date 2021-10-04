@@ -40,12 +40,6 @@
       regexp: '^sys.path.append\("@FENCEAGENTSLIBDIR@"\)'
       line: 'sys.path.append("/usr/share/fence")'
 
-  - name: Copy kubeconfig from openstackclient
-    copy:
-      src: "/home/cloud-admin/kubeconfig"
-      dest: "/home/cloud-admin/kubeconfig"
-      mode: 0644
-
   # Note: can be removed when is available https://review.opendev.org/q/topic:%22fence_kubevirt%22
   - name: Apply patches to puppet modules on controller VMs
     shell: |
@@ -57,7 +51,8 @@
       if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~807299/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/pacemaker -p1; then
         curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~807299/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/pacemaker -b -z .orig -p1
       fi
-      if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~806926/revisions/2/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/tripleo -p1; then
-        curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~806926/revisions/2/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/tripleo -b -z .orig -p1
+      if [[ "{{ osp.release }}" == "16.2" ]]; then
+        if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~810682/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/tripleo -p1; then
+          curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~810682/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/tripleo -b -z .orig -p1
+        fi
       fi
-
