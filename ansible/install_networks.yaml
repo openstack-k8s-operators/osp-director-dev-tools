@@ -5,6 +5,10 @@
   - oc_local
 
   tasks:
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
   - name: Set directory for networks yaml files
     set_fact:
       network_yaml_dir: "{{ working_yamls_dir }}/networks"
@@ -25,16 +29,10 @@
 
   - name: Render templates to yaml dir
     template:
-      src: "osp/networks/{{ item }}.j2"
-      dest: "{{ network_yaml_dir }}/{{ item }}"
+      src: "osp/networks/osnet.yaml.j2"
+      dest: "{{ network_yaml_dir }}/{{ item.key }}.yaml"
       mode: '0644'
-    with_items:
-    - "01-ctlplane.yaml"
-    - "02-internalapi.yaml"
-    - "03-external.yaml"
-    - "04-tenant.yaml"
-    - "05-storage.yaml"
-    - "06-storagemgmt.yaml"
+    with_dict: "{{ osp.networks }}"
 
   - name: does the networks already exist
     shell: >

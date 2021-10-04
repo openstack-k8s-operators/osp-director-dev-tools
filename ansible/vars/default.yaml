@@ -164,10 +164,7 @@ openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16
 
 nfs_server: '192.168.25.1'
 
-# network architecture, either flat or vlan
-osp_network_type: vlan
-
-osp:
+osp_defaults:
   release: 16.2
   # OSP controller VM sizing
   controller:
@@ -190,10 +187,61 @@ osp:
       - sdc
     # size of OSD disk size in GB
     ceph_num_osd_disk_size: 20
-  interface:
-    external: enp6s0
-    ospnetwork: enp7s0
-  network_type: vlan
+  networks:
+    ctlplane:
+      cidr: 192.168.25.0/24
+      gateway: 192.168.25.1
+      allocation:
+        start: 192.168.25.100
+        end: 192.168.25.250
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    internalapi:
+      cidr: 172.17.0.0/24
+      vlan: 20
+      allocation:
+        start: 172.17.0.10
+        end: 172.17.0.250
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    external:
+      cidr: 10.0.0.0/24
+      gateway: 10.0.0.1
+      allocation:
+        start: 10.0.0.10
+        end: 10.0.0.250
+      attach_config:
+        bridge_name: br-ex
+        interface: enp6s0
+    storage:
+      cidr: 172.18.0.0/24
+      vlan: 30
+      allocation:
+        start: 172.18.0.10
+        end: 172.18.0.250
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    storagemgmt:
+      cidr: 172.19.0.0/24
+      vlan: 40
+      allocation:
+        start: 172.19.0.10
+        end: 172.19.0.250
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    tenant:
+      cidr: 172.20.0.0/24
+      vlan: 50
+      allocation:
+        start: 172.20.0.10
+        end: 172.20.0.250
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
   container_tag: 16.2_20210901.2
   ceph_image: rhceph
   ceph_tag: 5-12
@@ -201,6 +249,12 @@ osp:
   deploy_timeout: 60m
 #  extrafeatures:
 #    - nfv
+
+# overwrite elements from osp_defaults for a specific release
+osp_release_defaults: {}
+
+# overwrite elements from osp_defaults or osp_release_defaults for local settings
+osp_local: {}
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
@@ -212,7 +266,7 @@ osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-highavailability-eus-rpms
   - ansible-2.9-for-rhel-8-x86_64-rpms
   - advanced-virt-for-rhel-8-x86_64-rpms
-  - openstack-{{ osp.release }}-for-rhel-8-x86_64-rpms
+  - openstack-{{ osp_defaults.release }}-for-rhel-8-x86_64-rpms
   - fast-datapath-for-rhel-8-x86_64-rpms
   - rhel-8-for-x86_64-nfv-rpms
   - rhceph-4-tools-for-rhel-8-x86_64-rpms

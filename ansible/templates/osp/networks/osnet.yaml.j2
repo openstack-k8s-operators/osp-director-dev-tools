@@ -1,0 +1,32 @@
+{% set net_name = item.key %}
+{% set net = item.value %}
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackNet
+metadata:
+  name: {{ net_name }}
+spec:
+  cidr: {{ net.cidr }}
+{% if net.gateway is defined %}
+  gateway: {{ net.gateway }}
+{% endif %}
+{% if net.vlan is defined %}
+  vlan: {{ net.vlan }}
+{% endif %}
+  allocationStart: {{ net.allocation.start }}
+  allocationEnd: {{ net.allocation.end }}
+  attachConfiguration:
+    nodeNetworkConfigurationPolicy:
+      nodeSelector:
+        node-role.kubernetes.io/worker: ""
+      desiredState:
+        interfaces:
+        - bridge:
+            options:
+              stp:
+                enabled: false
+            port:
+            - name: {{ net.attach_config.interface }}
+          description: Linux bridge with {{ net.attach_config.interface }} as a port
+          name: {{ net.attach_config.bridge_name }}
+          state: up
+          type: linux-bridge
