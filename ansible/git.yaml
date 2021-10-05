@@ -59,7 +59,7 @@
   - name: git init playbooks.git
     # noqa 303
     shell: |
-       git init .
+       git init --bare .
     args:
       chdir: /home/git/playbooks.git
       creates: /home/git/playbooks.git/.git
