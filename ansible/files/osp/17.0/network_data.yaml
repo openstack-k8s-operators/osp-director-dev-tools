@@ -9,6 +9,7 @@
       allocation_pools:
         - start: 10.0.0.10
           end: 10.0.0.250
+      vlan: 10
 - name: InternalApi
   name_lower: internal_api
   mtu: 1350

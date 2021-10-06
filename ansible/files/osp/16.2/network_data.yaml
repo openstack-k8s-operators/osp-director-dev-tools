@@ -1,7 +1,6 @@
 - name: External
   vip: true
   name_lower: external
-  vlan: 10
   ip_subnet: '10.0.0.0/24'
   allocation_pools: [{'start': '10.0.0.10', 'end': '10.0.0.250'}]
   gateway_ip: '10.0.0.1'

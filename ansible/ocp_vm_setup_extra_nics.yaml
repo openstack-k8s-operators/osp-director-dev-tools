@@ -54,6 +54,14 @@
       command: "virsh net-define {{ working_dir }}/osp-network/externalnetwork.xml"
       when: extnetwork_exist.rc == 1
 
+    - name: set accept_ra = 2  due to "enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss"
+      become: true
+      become_user: root
+      sysctl:
+        name: net.ipv6.conf.all.accept_ra
+        value: '2'
+        sysctl_file: /etc/sysctl.d/90-network.conf
+
     - name: Start the osp networks
       become: true
       become_user: root

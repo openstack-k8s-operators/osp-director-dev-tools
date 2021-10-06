@@ -1,0 +1,3 @@
+osp_release_defaults:
+  extrafeatures:
+    - hci

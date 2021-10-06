@@ -1,7 +1,7 @@
 apiVersion: osp-director.openstack.org/v1beta1
 kind: OpenStackBaremetalSet
 metadata:
-{% if osp.compute.hci %}
+{% if "hci" in osp.extrafeatures %}
   name: computehci
 {% else %}
   name: compute
@@ -24,7 +24,7 @@ spec:
     - internalapi
     - tenant
     - storage
-{% if osp.compute.hci %}
+{% if "hci" in osp.extrafeatures %}
     - storagemgmt
   roleName: ComputeHCI
 {% else %}

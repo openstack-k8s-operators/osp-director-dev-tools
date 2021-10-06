@@ -1,0 +1,26 @@
+- name: Set feature tarball dir
+  set_fact:
+    feature_dir: "{{ playbook_dir }}/files/osp/features/{{ osp.release }}/{{ feature }}"
+
+- name: Get stats of the local feature dir
+  stat:
+    path="{{ feature_dir }}"
+  delegate_to: localhost
+  register: p
+
+- name: copy feature files if directory exists
+  when: p.stat.exists
+  block:
+  - name: Find template files in feature dir
+    delegate_to: localhost
+    find:
+      paths: "{{ feature_dir }}"
+      patterns: "^.*\\.yaml"
+      use_regex: yes
+    register: f
+  - name: copy feature {{ feature }} files to custom tripleo tarball dir
+    template:
+      src: "{{ item.path }}"
+      dest: "{{ ooo_tarball_dir }}/{{ item.path | basename }}"
+      mode: '0644'
+    with_items: "{{ f.files }}"

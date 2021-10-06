@@ -14,3 +14,4 @@ spec:
   # tempest:x:42480:42480
   runUID: 42480
   runGID: 42480
+  domainName: "{{ ocp_domain_name | default('test.metalkube.org', true) }}"

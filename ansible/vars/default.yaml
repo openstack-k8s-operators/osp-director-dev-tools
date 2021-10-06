@@ -179,8 +179,6 @@ osp_defaults:
   compute:
     # number of OCP worker nodes should be OSP compute hosts
     count: 2
-    # if false nfs is used for glance
-    hci: false
     # number of OSD disks per compute node
     ceph_osd_disks:
       - sdb
@@ -242,13 +240,16 @@ osp_defaults:
       attach_config:
         bridge_name: br-osp
         interface: enp7s0
-  container_tag: 16.2_20210901.2
+  container_tag: 16.2_20211006.1
   ceph_image: rhceph
-  ceph_tag: 5-12
+  ceph_tag: 4-59
   # OSP deployment timeout
   deploy_timeout: 60m
-#  extrafeatures:
-#    - nfv
+  # extra features to enable
+  # Right now available extra features
+  #    - hci
+  #    - ipv6
+  extrafeatures: []
 
 # overwrite elements from osp_defaults for a specific release
 osp_release_defaults: {}

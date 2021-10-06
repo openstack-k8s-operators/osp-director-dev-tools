@@ -47,6 +47,12 @@
     with_fileglob:
     - "templates/osp/tripleo_heat_envs/{{ osp.release }}/*.j2"
 
+  # enable osp extra features parameters
+  - include_tasks: extrafeature_heat_env.yaml
+    loop: "{{ osp.extrafeatures }}"
+    loop_control:
+      loop_var: feature
+
   - name: create heat-env-config ConfigMap
     shell: |
       oc create configmap -n openstack heat-env-config --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
@@ -62,15 +68,11 @@
     with_fileglob:
     - osp/{{ osp.release }}/*
 
-  # (mschuppert) todo make feature enablement more generic by provide a list of features in the vars file
-  - name: copy computeHCI roles file to custom tripleo environment files
-    copy:
-      src: "{{ item }}"
-      dest: "{{ ooo_tarball_dir }}/{{ item | basename | splitext | first }}"
-      mode: '0644'
-    with_fileglob:
-    - "files/osp/features/{{ osp.release }}/hci/*.yaml"
-    when: osp.compute.hci | bool
+  # enable osp tarball extra features
+  - include_tasks: extrafeature_tarball_config.yaml
+    loop: "{{ osp.extrafeatures }}"
+    loop_control:
+      loop_var: feature
 
   - name: create tripleo-tarball-config ConfigMap with tarballs
     shell: |
