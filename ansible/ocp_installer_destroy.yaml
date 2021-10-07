@@ -1,5 +1,18 @@
 ---
+- hosts: convergence_base
+  become: true
+  become_user: root
+  gather_facts: false
+
+  tasks:
+  - name: Check if ocp user exists
+    getent:
+      database: passwd
+      key: "ocp"
+      fail_key: False
+
 - name: Destroy the dev-scripts OCP cluster
+  when: getent_passwd.ocp != None
   import_playbook: ocp_dev_scripts_destroy.yaml
 
 - name: Destroy the assisted installer OCP cluster
