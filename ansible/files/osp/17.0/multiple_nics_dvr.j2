@@ -2,8 +2,13 @@
 network_config:
 - type: interface
   name: nic1
-  mtu: 1500
-  use_dhcp: true
+  mtu: 1450
+  use_dhcp: false
+  addresses:
+  - ip_netmask: 10.0.2.2/24
+  routes:
+  - ip_netmask: 172.30.0.1/32
+    next_hop: 10.0.2.1
 - type: interface
   name: nic2
   mtu: {{ ctlplane_mtu }}
@@ -22,8 +27,7 @@ network_config:
   use_dhcp: false
 {% if network in role_networks %}
   addresses:
-  - ip_netmask:
-      {{ lookup('vars', networks_lower[network] ~ '_ip') }}/{{ lookup('vars', networks_lower[network] ~ '_cidr') }}
+  - ip_netmask: {{ lookup('vars', networks_lower[network] ~ '_ip') }}/{{ lookup('vars', networks_lower[network] ~ '_cidr') }}
   routes: {{ lookup('vars', networks_lower[network] ~ '_host_routes') }}
 {% endif %}
   members:
@@ -37,8 +41,7 @@ network_config:
   mtu: {{ lookup('vars', networks_lower[network] ~ '_mtu') }}
   use_dhcp: false
   addresses:
-  - ip_netmask:
-      {{ lookup('vars', networks_lower[network] ~ '_ip') }}/{{ lookup('vars', networks_lower[network] ~ '_cidr') }}
+  - ip_netmask: {{ lookup('vars', networks_lower[network] ~ '_ip') }}/{{ lookup('vars', networks_lower[network] ~ '_cidr') }}
   routes: {{ lookup('vars', networks_lower[network] ~ '_host_routes') }}
 {% elif network == 'Tenant' and network in role_networks %}
 - type: ovs_bridge
@@ -47,8 +50,7 @@ network_config:
   dns_servers: {{ ctlplane_dns_nameservers }}
   use_dhcp: false
   addresses:
-  - ip_netmask:
-      {{ lookup('vars', networks_lower[network] ~ '_ip') }}/{{ lookup('vars', networks_lower[network] ~ '_cidr') }}
+  - ip_netmask: {{ lookup('vars', networks_lower[network] ~ '_ip') }}/{{ lookup('vars', networks_lower[network] ~ '_cidr') }}
   routes: {{ lookup('vars', networks_lower[network] ~ '_host_routes') }}
   members:
   - type: interface
