@@ -13,7 +13,8 @@
       rhsm_release: "{{ osp_rhel_subscription_release }}"
       rhsm_repos: "{{ osp_rhel_subscription_repos }}"
       rhsm_server_hostname: "{{ rhel_subscription_server_hostname|default(omit) }}"
-{% else %}
+## float() returns 0.0 if var cannot converted to float, all upstream release names returns 0.0
+{% elif osp.release|float() >=  16.2 %}
   - name: install rhos-release
     dnf:
       name: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
@@ -22,5 +23,31 @@
   - name: run rhos-release
     shell: |
       rhos-release {{ osp.release }} -p {{ osp_rhos_release_compose }} -r {{ osp_rhel_subscription_release }}
+ {% else %}
+  - name: Add TripleO current repo
+    yum_repository:
+      name: tripleocurrent
+      description: TripleO current repo
+      file: tripleo_current
+      baseurl: https://trunk.rdoproject.org/centos8/component/tripleo/current/
+      gpgcheck: no
+  - name: install tripleo-repos
+    dnf:
+      name: python3-tripleo-repos
+      state: present
+      disable_gpg_check: true
+  - name: run tripleo-repos
+    shell: |
+      tripleo-repos -d centos8 -b {{ osp.release }} current-tripleo
+  # TODO: move command list to vars file to make it possible to be version specific
+  - name: disable container-tools:rhel8 and enable container-tools:3.0
+    shell: |
+      dnf module disable container-tools:rhel8 -y
+      dnf module enable container-tools:3.0 -y
+      dnf module enable idm:client -y
+      dnf module enable perl:5.26 -y
+      dnf module enable perl-IO-Socket-SSL:2.066 -y
+      dnf module enable perl-libwww-perl:6.34 -y
+      dnf clean metadata
 {% endif %}
 
