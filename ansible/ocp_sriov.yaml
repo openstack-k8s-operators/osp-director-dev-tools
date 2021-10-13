@@ -5,37 +5,58 @@
   - oc_local
 
   tasks:
-  - name: Set directory for sriov yaml files
-    set_fact:
-      yaml_dir: "{{ working_yamls_dir }}/sriov"
+  # FIXME: Remove this outer block wrapper when SRIOV operator becomes available in 4.9
+  - name: SRIOV operator install for 4.8 and earlier
+    when: ocp_version <= 4.8
+    block:
+    - name: Set directory for sriov yaml files
+      set_fact:
+        yaml_dir: "{{ working_yamls_dir }}/sriov"
 
-  - debug:
-      msg: "yamls will be written to {{ yaml_dir }} locally"
+    - debug:
+        msg: "yamls will be written to {{ yaml_dir }} locally"
 
-  - name: Create local yamldir
-    file:
-      path: "{{ yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create local yamldir
+      file:
+        path: "{{ yaml_dir }}"
+        state: directory
+        mode: '0755'
 
-  - name: Render all OpenShift SRIOV Network Operator templates
-    template:
-      src:  "sriov/{{ item }}.j2"
-      dest: "{{ yaml_dir }}/{{ item }}"
-      mode: "0644"
-    with_items:
-    - namespace.yaml
-    - operatorgroup.yaml
-    - subscription.yaml
-    - mcp.yaml
+    - name: Render all OpenShift SRIOV Network Operator templates
+      template:
+        src:  "sriov/{{ item }}.j2"
+        dest: "{{ yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+      - namespace.yaml
+      - operatorgroup.yaml
+      - subscription.yaml
+      - mcp.yaml
 
-  - name: Create namespace, operatorgroup, subscription and machine config pool
-    shell: |
-      set -e
-      oc apply -f "{{ yaml_dir }}"
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Create namespace, operatorgroup, subscription and machine config pool
+      shell: |
+        set -e
+        oc apply -f "{{ yaml_dir }}"
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+
+  # FIXME: Remove once SRIOV operator becomes available in 4.9
+  - name: SRIOV operator install for 4.9+
+    when: ocp_version >= 4.9
+    block:
+    - name: Clone SRIOV operator source
+      git:
+        repo: https://github.com/openshift/sriov-network-operator.git
+        dest: "{{ working_src_dir }}/sriov-network-operator"
+        force: yes
+        version: ce0b52103bef0db001003230e01fdaf4c6a16f0e
+
+    - name: Install SRIOV operator
+      shell: |
+        make deploy-setup
+      args:
+        chdir: "{{ working_src_dir }}/sriov-network-operator"
 
   - name: Wait for OpenShift SRIOV Network Operator to be installed
     shell: |
