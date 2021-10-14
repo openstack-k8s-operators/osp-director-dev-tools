@@ -1,0 +1,28 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: localhost
+  vars_files: "vars/default.yaml"
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Delete {{ osp_controller_base_image_url_path }}
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_fileglob:
+    - "{{ base_path }}/ironic/html/images/*.qcow2"
+    - "/opt/http_store/data/images/*.qcow2"
+
+  - name: Delete datavolume
+    shell: >
+      oc delete datavolume --ignore-not-found=true openstack-base-img -n {{ namespace }}
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: Delete provionserver
+    shell: >
+      oc delete openstackprovisionservers.osp-director.openstack.org --ignore-not-found=true openstack -n {{ namespace }}
+    environment:
+      <<: *oc_env
