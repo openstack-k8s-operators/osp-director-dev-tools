@@ -240,7 +240,7 @@ osp_defaults:
       attach_config:
         bridge_name: br-osp
         interface: enp7s0
-  container_tag: 16.2_20211006.1
+  container_tag: 16.2_20211013.1
   ceph_image: rhceph
   ceph_tag: 4-59
   # OSP deployment timeout
