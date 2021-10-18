@@ -1,4 +1,11 @@
 parameter_defaults:
+  # workaround until we have these service IPs implemented in the operator
+  RedisVirtualFixedIPs:
+    - ip_address: 2001:db8:fd00:1000::5
+      use_neutron: false
+  OVNDBsVirtualFixedIPs:
+    - ip_address: 2001:db8:fd00:1000::6
+      use_neutron: false
   # gets created by openstack overcloud network provision
   DeployedNetworkEnvironment:
     net_attributes_map:
@@ -13,11 +20,11 @@ parameter_defaults:
           - tripleo_vip=true
         subnets:
           external_subnet:
-            cidr: 10.0.0.0/24
+            cidr: 2001:db8:fd00:1000::/64
             dns_nameservers: []
-            gateway_ip: 10.0.0.1
+            gateway_ip: 2001:db8:fd00:1000::1
             host_routes: []
-            ip_version: 4
+            ip_version: 6
             name: external_subnet
             tags:
             - tripleo_vlan_id=1
@@ -32,11 +39,11 @@ parameter_defaults:
           - tripleo_vip=true
         subnets:
           internal_api_subnet:
-            cidr: 172.17.0.0/24
+            cidr: fd00:fd00:fd00:2000::/64
             dns_nameservers: []
             gateway_ip: null
             host_routes: []
-            ip_version: 4
+            ip_version: 6
             name: internal_api_subnet
             tags:
             - tripleo_vlan_id=20
@@ -51,11 +58,11 @@ parameter_defaults:
           - tripleo_vip=true
         subnets:
           storage_subnet:
-            cidr: 172.18.0.0/24
+            cidr: fd00:fd00:fd00:3000::/64
             dns_nameservers: []
             gateway_ip: null
             host_routes: []
-            ip_version: 4
+            ip_version: 6
             name: storage_subnet
             tags:
             - tripleo_vlan_id=30
@@ -70,11 +77,11 @@ parameter_defaults:
           - tripleo_vip=true
         subnets:
           storage_mgmt_subnet:
-            cidr: 172.19.0.0/24
+            cidr: fd00:fd00:fd00:4000::/64
             dns_nameservers: []
             gateway_ip: null
             host_routes: []
-            ip_version: 4
+            ip_version: 6
             name: storage_mgmt_subnet
             tags:
             - tripleo_vlan_id=30
@@ -98,20 +105,20 @@ parameter_defaults:
             - tripleo_vlan_id=50
     net_cidr_map:
       external:
-      - 10.0.0.0/24
+      - 2001:db8:fd00:1000::/64
       internal_api:
-      - 172.17.0.0/24
+      - fd00:fd00:fd00:2000::/64
       storage:
-      - 172.18.0.0/24
+      - fd00:fd00:fd00:3000::/64
       storage_mgmt:
-      - 172.19.0.0/24
+      - fd00:fd00:fd00:4000::/64
       tenant:
       - 172.20.0.0/24
     net_ip_version_map:
-      external: 4
-      internal_api: 4
-      storage: 4
-      storage_mgmt: 4
+      external: 6
+      internal_api: 6
+      storage: 6
+      storage_mgmt: 6
       tenant: 4
   # https://opendev.org/openstack/tripleo-heat-templates/src/branch/master/network/deployed_networks.yaml#L12
   # The value for this parameter is automatically populated in the plan environment by tripleoclient.

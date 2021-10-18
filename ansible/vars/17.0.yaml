@@ -1,11 +1,9 @@
-# Todo: need to check what is missing in upstream wallaby tripleoclient image
-# openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
+# Todo: switch to downstream tripleoclient container image when available
 openstackclient_image: quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1_patched2
 osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
 osp_release_defaults:
   release: 17.0
   container_tag: 17.0_20210920.1
-  ceph_image: rhceph
   ceph_tag: 5-12
 ephemeral_heat:
   heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo

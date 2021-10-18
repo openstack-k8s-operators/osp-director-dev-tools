@@ -28,8 +28,10 @@
       subnet: tenant_subnet
   # For systems with both IPv4 and IPv6, you may specify a gateway network for
   # each, such as ['ControlPlane', 'External']
-  default_route_networks: ['External']
+  default_route_networks: ['ControlPlane', 'External']
   HostnameFormatDefault: '%stackname%-controller-%index%'
+  RoleParametersDefault:
+    OVNCMSOptions: "enable-chassis-as-gw"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
   uses_deprecated_params: True
@@ -54,6 +56,7 @@
     - OS::TripleO::Services::CACerts
     - OS::TripleO::Services::CeilometerAgentCentral
     - OS::TripleO::Services::CeilometerAgentNotification
+    - OS::TripleO::Services::CephClient
     - OS::TripleO::Services::CephExternal
     - OS::TripleO::Services::CephGrafana
     - OS::TripleO::Services::CephMds
@@ -61,9 +64,7 @@
     - OS::TripleO::Services::CephMon
     - OS::TripleO::Services::CephRbdMirror
     - OS::TripleO::Services::CephRgw
-    - OS::TripleO::Services::CertmongerUser
     - OS::TripleO::Services::CinderApi
-    - OS::TripleO::Services::CinderBackendDellPs
     - OS::TripleO::Services::CinderBackendDellSc
     - OS::TripleO::Services::CinderBackendDellEMCPowerFlex
     - OS::TripleO::Services::CinderBackendDellEMCPowermax
@@ -74,11 +75,9 @@
     - OS::TripleO::Services::CinderBackendDellEMCVNX
     - OS::TripleO::Services::CinderBackendDellEMCVxFlexOS
     - OS::TripleO::Services::CinderBackendDellEMCXtremio
-    - OS::TripleO::Services::CinderBackendDellEMCXTREMIOISCSI
     - OS::TripleO::Services::CinderBackendNetApp
     - OS::TripleO::Services::CinderBackendPure
     - OS::TripleO::Services::CinderBackendScaleIO
-    - OS::TripleO::Services::CinderBackendVRTSHyperScale
     - OS::TripleO::Services::CinderBackendNVMeOF
     - OS::TripleO::Services::CinderBackup
     - OS::TripleO::Services::CinderHPELeftHandISCSI
@@ -93,10 +92,10 @@
     - OS::TripleO::Services::DesignateWorker
     - OS::TripleO::Services::DesignateMDNS
     - OS::TripleO::Services::DesignateSink
-    - OS::TripleO::Services::Docker
-    - OS::TripleO::Services::Ec2Api
+    - OS::TripleO::Services::DesignateBind
     - OS::TripleO::Services::Etcd
     - OS::TripleO::Services::ExternalSwiftProxy
+    - OS::TripleO::Services::Frr
     - OS::TripleO::Services::GlanceApi
     - OS::TripleO::Services::GnocchiApi
     - OS::TripleO::Services::GnocchiMetricd
@@ -115,7 +114,6 @@
     - OS::TripleO::Services::IronicPxe
     - OS::TripleO::Services::IronicNeutronAgent
     - OS::TripleO::Services::Iscsid
-    - OS::TripleO::Services::Keepalived
     - OS::TripleO::Services::Kernel
     - OS::TripleO::Services::Keystone
     - OS::TripleO::Services::LoginDefs
@@ -130,10 +128,6 @@
     - OS::TripleO::Services::ManilaShare
     - OS::TripleO::Services::Memcached
     - OS::TripleO::Services::MetricsQdr
-    - OS::TripleO::Services::MistralApi
-    - OS::TripleO::Services::MistralEngine
-    - OS::TripleO::Services::MistralExecutor
-    - OS::TripleO::Services::MistralEventEngine
     - OS::TripleO::Services::Multipathd
     - OS::TripleO::Services::MySQL
     - OS::TripleO::Services::MySQLClient
@@ -147,8 +141,6 @@
     - OS::TripleO::Services::NeutronL3Agent
     - OS::TripleO::Services::NeutronLinuxbridgeAgent
     - OS::TripleO::Services::NeutronMetadataAgent
-    - OS::TripleO::Services::NeutronML2FujitsuCfab
-    - OS::TripleO::Services::NeutronML2FujitsuFossw
     - OS::TripleO::Services::NeutronOvsAgent
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NeutronAgentsIBConfig
@@ -168,7 +160,6 @@
     - OS::TripleO::Services::OVNDBs
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::Pacemaker
-    - OS::TripleO::Services::PankoApi
     - OS::TripleO::Services::PlacementApi
     - OS::TripleO::Services::OsloMessagingRpc
     - OS::TripleO::Services::OsloMessagingNotify
@@ -178,8 +169,6 @@
     - OS::TripleO::Services::Rhsm
     - OS::TripleO::Services::Rsyslog
     - OS::TripleO::Services::RsyslogSidecar
-    - OS::TripleO::Services::SaharaApi
-    - OS::TripleO::Services::SaharaEngine
     - OS::TripleO::Services::Securetty
     - OS::TripleO::Services::Snmp
     - OS::TripleO::Services::Sshd
@@ -192,14 +181,96 @@
     - OS::TripleO::Services::TripleoFirewall
     - OS::TripleO::Services::TripleoPackages
     - OS::TripleO::Services::Tuned
+    - OS::TripleO::Services::Unbound
     - OS::TripleO::Services::Vpp
-    - OS::TripleO::Services::Zaqar
+###############################################################################
+# Role: Compute                                                               #
+###############################################################################
+- name: Compute
+  description: |
+    Basic Compute Node role
+  # Create external Neutron bridge (unset if using ML2/OVS without DVR)
+  tags:
+    - compute
+    - external_bridge
+  networks:
+    InternalApi:
+      subnet: internal_api_subnet
+    Tenant:
+      subnet: tenant_subnet
+    Storage:
+      subnet: storage_subnet
+  HostnameFormatDefault: '%stackname%-novacompute-%index%'
+  RoleParametersDefault:
+    TunedProfileName: "virtual-host"
+  # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
+  # Set uses_deprecated_params to True if any deprecated params are used.
+  # These deprecated_params only need to be used for existing roles and not for
+  # composable roles.
+  uses_deprecated_params: True
+  deprecated_param_image: 'NovaImage'
+  deprecated_param_extraconfig: 'NovaComputeExtraConfig'
+  deprecated_param_metadata: 'NovaComputeServerMetadata'
+  deprecated_param_scheduler_hints: 'NovaComputeSchedulerHints'
+  deprecated_param_ips: 'NovaComputeIPs'
+  deprecated_server_resource_name: 'NovaCompute'
+  deprecated_nic_config_name: 'compute.yaml'
+  update_serial: 25
+  ServicesDefault:
+    - OS::TripleO::Services::Aide
+    - OS::TripleO::Services::AuditD
+    - OS::TripleO::Services::BootParams
+    - OS::TripleO::Services::CACerts
+    - OS::TripleO::Services::CephClient
+    - OS::TripleO::Services::CephExternal
+    - OS::TripleO::Services::Collectd
+    - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::ComputeNeutronCorePlugin
+    - OS::TripleO::Services::ComputeNeutronL3Agent
+    - OS::TripleO::Services::ComputeNeutronMetadataAgent
+    - OS::TripleO::Services::ComputeNeutronOvsAgent
+    - OS::TripleO::Services::Frr
+    - OS::TripleO::Services::IpaClient
+    - OS::TripleO::Services::Ipsec
+    - OS::TripleO::Services::Iscsid
+    - OS::TripleO::Services::Kernel
+    - OS::TripleO::Services::LoginDefs
+    - OS::TripleO::Services::MetricsQdr
+    - OS::TripleO::Services::Multipathd
+    - OS::TripleO::Services::MySQLClient
+    - OS::TripleO::Services::NeutronBgpVpnBagpipe
+    - OS::TripleO::Services::NeutronLinuxbridgeAgent
+    - OS::TripleO::Services::NeutronVppAgent
+    - OS::TripleO::Services::NovaAZConfig
+    - OS::TripleO::Services::NovaCompute
+    - OS::TripleO::Services::NovaLibvirt
+    - OS::TripleO::Services::NovaLibvirtGuests
+    - OS::TripleO::Services::NovaMigrationTarget
+    - OS::TripleO::Services::ContainersLogrotateCrond
+    - OS::TripleO::Services::Podman
+    - OS::TripleO::Services::Rear
+    - OS::TripleO::Services::Rhsm
+    - OS::TripleO::Services::Rsyslog
+    - OS::TripleO::Services::RsyslogSidecar
+    - OS::TripleO::Services::Securetty
+    - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
+    - OS::TripleO::Services::Timesync
+    - OS::TripleO::Services::Timezone
+    - OS::TripleO::Services::TripleoFirewall
+    - OS::TripleO::Services::TripleoPackages
+    - OS::TripleO::Services::Tuned
+    - OS::TripleO::Services::Vpp
+    - OS::TripleO::Services::OVNController
+    - OS::TripleO::Services::OVNMetadataAgent
 ###############################################################################
 # Role: ComputeHCI                                                            #
 ###############################################################################
 - name: ComputeHCI
   description: |
     Compute Node role hosting Ceph OSD too
+  tags:
+    - compute
   networks:
     InternalApi:
       subnet: internal_api_subnet
@@ -211,6 +282,7 @@
       subnet: storage_mgmt_subnet
   RoleParametersDefault:
     TunedProfileName: "throughput-performance"
+    NovaComputeStartupDelay: 180
   # CephOSD present so serial has to be 1
   update_serial: 1
   ServicesDefault:
@@ -221,14 +293,13 @@
     - OS::TripleO::Services::CephClient
     - OS::TripleO::Services::CephExternal
     - OS::TripleO::Services::CephOSD
-    - OS::TripleO::Services::CertmongerUser
     - OS::TripleO::Services::Collectd
     - OS::TripleO::Services::ComputeCeilometerAgent
     - OS::TripleO::Services::ComputeNeutronCorePlugin
     - OS::TripleO::Services::ComputeNeutronL3Agent
     - OS::TripleO::Services::ComputeNeutronMetadataAgent
     - OS::TripleO::Services::ComputeNeutronOvsAgent
-    - OS::TripleO::Services::Docker
+    - OS::TripleO::Services::Frr
     - OS::TripleO::Services::IpaClient
     - OS::TripleO::Services::Ipsec
     - OS::TripleO::Services::Iscsid

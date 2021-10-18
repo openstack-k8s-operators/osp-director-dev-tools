@@ -1,4 +1,4 @@
-{% if osp.compute.hci %}
+{% if "hci" in osp.extrafeatures %}
 resource_registry:
   OS::TripleO::Services::CephMgr: deployment/ceph-ansible/ceph-mgr.yaml
   OS::TripleO::Services::CephMon: deployment/ceph-ansible/ceph-mon.yaml
@@ -7,7 +7,7 @@ resource_registry:
 {% endif %}
 
 parameter_defaults:
-{% if osp.compute.hci %}
+{% if "hci" in osp.extrafeatures %}
   # CephAnsibleRepo can be removed when ceph-ansible is in official tripleoclient image
   CephAnsibleRepo: "rhelosp-ceph-4-tools"
   CephAnsiblePlaybookVerbosity: 3

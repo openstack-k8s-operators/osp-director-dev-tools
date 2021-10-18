@@ -1,0 +1,108 @@
+# Todo: need to check what is missing in upstream wallaby tripleoclient image
+# openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
+openstackclient_image: quay.io/openstack-k8s-operators/tripleowallaby-openstack-tripleoclient:current-tripleo_patched
+osp_release_defaults:
+  release: wallaby
+  container_tag: current-tripleo
+  #TODO: which ceph images tag to use for upstream wallaby?
+  #ceph_tag: 5-12
+  #ceph_image: daemon
+  controller:
+    base_image_url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2
+  networks:
+    ctlplane:
+      cidr: 192.168.25.0/24
+      gateway: 192.168.25.1
+      allocation:
+        start: 192.168.25.100
+        end: 192.168.25.250
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    internalapi:
+      cidr: fd00:fd00:fd00:2000::/64
+      vlan: 20
+      allocation:
+        start: fd00:fd00:fd00:2000::10
+        end: fd00:fd00:fd00:2000:ffff:ffff:ffff:fffe
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    external:
+      cidr: 2001:db8:fd00:1000::/64
+      gateway: 2001:db8:fd00:1000::1
+      allocation:
+        start: 2001:db8:fd00:1000::10
+        end: 2001:db8:fd00:1000:ffff:ffff:ffff:fffe
+      attach_config:
+        bridge_name: br-ex
+        interface: enp6s0
+    storage:
+      cidr: fd00:fd00:fd00:3000::/64
+      vlan: 30
+      allocation:
+        start: fd00:fd00:fd00:3000::10
+        end: fd00:fd00:fd00:3000:ffff:ffff:ffff:fffe
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    storagemgmt:
+      cidr: fd00:fd00:fd00:4000::/64
+      vlan: 40
+      allocation:
+        start: fd00:fd00:fd00:4000::10
+        end: fd00:fd00:fd00:4000:ffff:ffff:ffff:fffe
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+    tenant:
+      cidr: 172.20.0.0/24
+      vlan: 50
+      allocation:
+        start: 172.20.0.10
+        end: 172.20.0.250
+      attach_config:
+        bridge_name: br-osp
+        interface: enp7s0
+  extrafeatures:
+    - ipv6
+
+ephemeral_heat:
+  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
+  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
+  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
+  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+
+# TODO: create good set of ipv6 tempest tests, right now disabled those which create floating IP, which is not the case in IPv6
+tempest_test_dict:
+  regex: ''
+  includelist:
+      - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
+      - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
+      - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
+      - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
+  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
+  excludelist:
+      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
+      - "^tempest.scenario.test_snapshot_pattern.TestSnapshotPattern.test_snapshot_pattern"
+      - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_volume_boot_pattern"
+
+tempest_enable_feature_dict:
+  network:
+    # The cidr block to allocate project ipv6 subnets from (string value)
+    project_network_v6_cidr: 2001:db8:fd00:6000::/64
+    # The mask bits for project ipv6 subnets (integer value)
+    project_network_v6_mask_bits: 64
+  network-feature-enabled:
+    ipv6: true
+    # with ipv6 only external network there are no floating ips
+    floating_ips: false
+  compute-feature-enabled:
+    vnc_console: true
+    live_migration: true
+    block_migration_for_live_migration: true
+    volume_backed_live_migration: true
+    console_output: true
