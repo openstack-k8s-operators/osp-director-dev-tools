@@ -62,6 +62,7 @@ osp_release_defaults:
       cidr: 172.20.0.0/24
       vlan: 50
       mtu: 1350
+      vip: false
       allocation:
         start: 172.20.0.10
         end: 172.20.0.250
