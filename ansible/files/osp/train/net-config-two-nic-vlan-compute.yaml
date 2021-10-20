@@ -148,7 +148,7 @@ resources:
             $network_config:
               network_config:
               - type: ovs_bridge
-                name: br-isolated
+                name: br-tenant
                 mtu:
                   get_attr: [MinViableMtu, value]
                 use_dhcp: false

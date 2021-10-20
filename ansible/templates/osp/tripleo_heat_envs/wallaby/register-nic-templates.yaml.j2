@@ -1,5 +1,4 @@
 parameter_defaults:
-  ControllerNetworkConfigTemplate: '/home/cloud-admin/playbooks/tarball/multiple_nics_dvr.j2'
 {% if "hci" in osp.extrafeatures %}
   ComputeHciNetworkConfigTemplate: '/home/cloud-admin/playbooks/tarball/multiple_nics_vlans_dvr.j2'
 {% else %}

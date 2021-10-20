@@ -48,7 +48,7 @@ network_config:
   routes: {{ lookup('vars', networks_lower[network] ~ '_host_routes') }}
 {% elif network == 'Tenant' and network in role_networks %}
 - type: ovs_bridge
-  name: br-isolated
+  name: br-tenant
   mtu: {{ lookup('vars', networks_lower[network] ~ '_mtu') }}
   dns_servers: {{ ctlplane_dns_nameservers }}
   use_dhcp: false
