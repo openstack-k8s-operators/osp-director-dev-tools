@@ -12,6 +12,12 @@ spec:
 {% if net.vlan is defined %}
   vlan: {{ net.vlan }}
 {% endif %}
+{% if net.mtu is defined %}
+  mtu: {{ net.mtu }}
+{% endif %}
+{% if net.vip is defined %}
+  vip: {{ net.vip }}
+{% endif %}
   allocationStart: {{ net.allocation.start }}
   allocationEnd: {{ net.allocation.end }}
   attachConfiguration:

@@ -21,6 +21,7 @@ osp_release_defaults:
     internalapi:
       cidr: fd00:fd00:fd00:2000::/64
       vlan: 20
+      mtu: 1350
       allocation:
         start: fd00:fd00:fd00:2000::10
         end: fd00:fd00:fd00:2000:ffff:ffff:ffff:fffe
@@ -39,6 +40,7 @@ osp_release_defaults:
     storage:
       cidr: fd00:fd00:fd00:3000::/64
       vlan: 30
+      mtu: 1350
       allocation:
         start: fd00:fd00:fd00:3000::10
         end: fd00:fd00:fd00:3000:ffff:ffff:ffff:fffe
@@ -48,6 +50,7 @@ osp_release_defaults:
     storagemgmt:
       cidr: fd00:fd00:fd00:4000::/64
       vlan: 40
+      mtu: 1350
       allocation:
         start: fd00:fd00:fd00:4000::10
         end: fd00:fd00:fd00:4000:ffff:ffff:ffff:fffe
@@ -57,6 +60,8 @@ osp_release_defaults:
     tenant:
       cidr: 172.20.0.0/24
       vlan: 50
+      mtu: 1350
+      vip: false
       allocation:
         start: 172.20.0.10
         end: 172.20.0.250
