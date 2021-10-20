@@ -188,6 +188,13 @@ datavolume: hosts local-defaults.yaml
 	-e @local-defaults.yaml \
 	datavolume.yaml
 
+datavolume_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	datavolume_cleanup.yaml
+
 osp_custom_config: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
