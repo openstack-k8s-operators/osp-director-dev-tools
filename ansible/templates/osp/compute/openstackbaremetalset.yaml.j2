@@ -1,17 +1,13 @@
 apiVersion: osp-director.openstack.org/v1beta1
 kind: OpenStackBaremetalSet
 metadata:
-{% if "hci" in osp.extrafeatures %}
-  name: computehci
-{% else %}
-  name: compute
-{% endif %}
-  namespace: openstack
+  name: {{ _role|lower }}
+  namespace: {{ namespace }}
 spec:
   # How many nodes to provision
-  count: {{ osp.compute.count }}
+  count: {{ osp.bmset[_role].count }}
   # The image to install on the provisioned nodes
-  baseImageUrl: http://192.168.111.1/images/{{ osp.controller.base_image_url | basename }}
+  baseImageUrl: http://192.168.111.1/images/{{ osp.base_image_url | basename }}
   provisionServerName: openstack
   # The secret containing the SSH pub key to place on the provisioned nodes
   deploymentSSHSecret: osp-controlplane-ssh-keys
@@ -19,15 +15,8 @@ spec:
   ctlplaneInterface: {{ osp.networks.ctlplane.attach_config.interface }}
   # Networks to associate with this host
   networks:
-    - ctlplane
-    - external
-    - internalapi
-    - tenant
-    - storage
-{% if "hci" in osp.extrafeatures %}
-    - storagemgmt
-  roleName: ComputeHCI
-{% else %}
-  roleName: Compute
-{% endif %}
+{% for net in osp.bmset[_role].networks %}
+        - {{ net }}
+{% endfor %}
+  roleName: {{ _role }}
   passwordSecret: userpassword

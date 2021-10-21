@@ -39,7 +39,7 @@
   - name: Start ctlplane
     shell: |
       set -e
-      oc apply -n openstack -f "{{ ctlplane_yaml_dir }}"
+      oc apply -n {{ namespace }} -f "{{ ctlplane_yaml_dir }}"
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"

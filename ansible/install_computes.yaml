@@ -51,10 +51,10 @@
     shell: |
       #!/bin/bash
       for domain in $(virsh list --inactive --name); do
-        qemu-img create -f qcow2 -o preallocation=falloc {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp.compute.ceph_num_osd_disk_size }}G
+        qemu-img create -f qcow2 -o preallocation=falloc {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp.ceph_num_osd_disk_size }}G
         virsh attach-disk ${domain} --source {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 --target {{ item }} --persistent
       done
-    with_items: "{{ osp.compute.ceph_osd_disks }}"
+    with_items: "{{ osp.ceph_osd_disks }}"
     become: true
     become_user: root
 
@@ -79,18 +79,25 @@
       KUBECONFIG: "{{ kubeconfig }}"
     when: ocp_ai|bool and ocp_num_extra_workers > 0
 
+  # render openstackbaremetalset.yaml per bmset
   - name: Render templates to yaml dir
     template:
-      src: "osp/compute/{{ item }}.j2"
-      dest: "{{ compute_yaml_dir }}/{{ item }}"
+      src: "osp/compute/openstackbaremetalset.yaml.j2"
+      dest: "{{ compute_yaml_dir }}/{{ _role }}_openstackbaremetalset.yaml"
       mode: '0644'
-    with_items:
-    - "openstackprovisionserver.yaml"
-    - "openstackbaremetalset.yaml"
+    loop: "{{ osp.bmset.keys() | list }}"
+    loop_control:
+      loop_var: _role
+
+  - name: Render provisionserver template to yaml dir
+    template:
+      src: "osp/compute/openstackprovisionserver.yaml.j2"
+      dest: "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
+      mode: '0644'
 
   - name: does the provisionserver already exist
     shell: >
-      oc get -n openstack osprovserver openstack -o json --ignore-not-found
+      oc get -n {{ namespace }} osprovserver openstack -o json --ignore-not-found
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
@@ -99,14 +106,16 @@
   - name: Start provisionserver
     shell: |
       set -e
-      oc apply -n openstack -f "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
+      oc apply -n {{ namespace }} -f "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
     environment:
       <<: *oc_env
     when: provisionserver_switch.stdout | length == 0
 
-  - name: Start baremetalset
+  - name: Start all baremetalsets
     shell: |
       set -e
-      oc apply -n openstack -f "{{ compute_yaml_dir }}/openstackbaremetalset.yaml"
+      oc apply -n {{ namespace }} -f "{{ item }}"
     environment:
       <<: *oc_env
+    with_fileglob:
+    - "{{ compute_yaml_dir }}/*_openstackbaremetalset.yaml"

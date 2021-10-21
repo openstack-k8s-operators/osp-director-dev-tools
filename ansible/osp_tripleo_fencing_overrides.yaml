@@ -9,6 +9,14 @@
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
+  # Note: with this the expectation is that the vmset with the largest role count is the one running the pacemaker cluster
+  - name: get VM role with biggest number of vmset role count
+    set_fact:
+      max_vm_role_count: "{{ osp.vmset[_role].count if osp.vmset[_role].count|int > max_vm_role_count|default(0)|int else max_vm_role_count|default(0) }}"
+    loop: "{{ osp.vmset.keys() | list }}"
+    loop_control:
+      loop_var: _role
+
   - name: Fencing overrides for TripleO
     block:
     - name: Set directory for fencing override playbook
@@ -38,7 +46,7 @@
     - name: Copy TripleO fencing overrides playbook to openstackclient
       shell: |
         #!/bin/bash
-        oc cp -n openstack {{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml openstackclient:/home/cloud-admin/tripleo_fencing_overrides.yaml
+        oc cp -n {{ namespace }} {{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml openstackclient:/home/cloud-admin/tripleo_fencing_overrides.yaml
       environment: &oc_env
         PATH: "{{ oc_env_path }}"
         KUBECONFIG: "{{ kubeconfig }}"
@@ -46,7 +54,7 @@
     - name: Run TripleO fencing overrides playbook via openstackclient
       shell: |
         #!/bin/bash
-        oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/tripleo-ansible-inventory.yaml /home/cloud-admin/tripleo_fencing_overrides.yaml
+        oc rsh -n {{ namespace }} openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/tripleo-ansible-inventory.yaml /home/cloud-admin/tripleo_fencing_overrides.yaml
       environment:
         <<: *oc_env
-    when: osp.controller.count == 3
+    when: max_vm_role_count|int > 2

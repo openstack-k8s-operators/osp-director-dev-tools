@@ -127,15 +127,15 @@
         - pr
     ignore_errors: true
 
-  ### remove osp_controller_base_image
+  ### remove osp_base_image
 
   - name: Set path to RHEL base image for assisted installer
     set_fact:
-      osp_controller_base_image_url_path: "/opt/http_store/data/images/{{ osp.controller.base_image_url | basename }}"
+      osp_base_image_url_path: "/opt/http_store/data/images/{{ osp.base_image_url | basename }}"
 
-  - name: Delete {{ osp_controller_base_image_url_path }}
+  - name: Delete {{ osp_base_image_url_path }}
     file:
-      path: "{{ osp_controller_base_image_url_path }}"
+      path: "{{ osp_base_image_url_path }}"
       state: absent
 
   - name: Find discovery images

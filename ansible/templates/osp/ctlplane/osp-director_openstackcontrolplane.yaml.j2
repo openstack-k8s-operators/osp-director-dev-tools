@@ -6,29 +6,27 @@ metadata:
 spec:
   gitSecret: git-secret
   openStackClientImageURL: {{ openstackclient_image }}
-  openStackClientNetworks:
-        - ctlplane
-        - external
-        - internalapi
-  openStackClientStorageClass: {{ osp.controller.storage_class }}
+  openStackClientNetworks: {{ openstackclient_networks }}
+  openStackClientStorageClass: {{ openstackclient_storage_class }}
   passwordSecret: userpassword
   domainName: {{ ocp_cluster_name }}.{{ ocp_domain_name }}
   virtualMachineRoles:
-    controller:
-      roleName: Controller
-      roleCount: {{ osp.controller.count }}
+{% for name, role in osp.vmset.items() %}
+{% if role.count > 0 %}
+    {{ name }}:
+      roleName: {{ name }}
+      roleCount: {{ role.count }}
       networks:
-        - ctlplane
-        - internalapi
-        - external
-        - tenant
-        - storage
-        - storagemgmt
-      cores: {{ osp.controller.cores }}
-      memory: {{ osp.controller.memory }}
-      diskSize: {{ osp.controller.disk_size }}
-      baseImageVolumeName: openstack-base-img
-      storageClass: {{ osp.controller.storage_class }}
+{% for net in role.networks %}
+        - {{ net }}
+{% endfor %}
+      cores: {{ role.cores }}
+      memory: {{ role.memory }}
+      diskSize: {{ role.disk_size }}
+      baseImageVolumeName: {{ name|lower }}-base-img
+      storageClass: {{ role.storage_class }}
+{% endif %}
+{% endfor %}
   enableFencing: {{ enable_fencing }}
 {% if osp.release == "train" %}
   # for upstream train release the image URLs are different, force the release via parameter

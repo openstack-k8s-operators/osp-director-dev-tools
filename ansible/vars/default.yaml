@@ -161,30 +161,50 @@ default_timeout: 240
 
 # openstackclient container image
 openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
+openstackclient_storage_class: host-nfs-storageclass
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internalapi
 
 nfs_server: '192.168.25.1'
 
 osp_defaults:
   release: 16.2
+  # use http://download.devel.redhat.com to get the local mirror depending on where the server is
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
   # OSP controller VM sizing
-  controller:
-    count: 1
-    cores: 6
-    memory: 20
-    disk_size: 40
-    # use http://download.devel.redhat.com to get the local mirror depending on where the server is
-    base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
-    storage_class: host-nfs-storageclass
+  vmset:
+    Controller:
+      count: 1
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internalapi
+        - external
+        - tenant
+        - storage
+        - storagemgmt
+      storage_class: host-nfs-storageclass
   # OSP compute OCP worker settings
-  compute:
-    # number of OCP worker nodes should be OSP compute hosts
-    count: 2
-    # number of OSD disks per compute node
-    ceph_osd_disks:
-      - sdb
-      - sdc
-    # size of OSD disk size in GB
-    ceph_num_osd_disk_size: 20
+  bmset:
+    Compute:
+      # number of OCP worker nodes should be OSP compute hosts
+      count: 2
+      networks:
+        - ctlplane
+        - internalapi
+        - external
+        - tenant
+        - storage
+  # number of OSD disks per compute node
+  ceph_osd_disks:
+    - sdb
+    - sdc
+  # size of OSD disk size in GB
+  ceph_num_osd_disk_size: 20
   networks:
     ctlplane:
       cidr: 192.168.25.0/24

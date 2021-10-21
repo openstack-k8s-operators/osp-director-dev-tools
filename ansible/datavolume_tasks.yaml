@@ -1,0 +1,47 @@
+---
+- name: Set datavolume image fact
+  set_fact:
+    _datavolume: "{{ _role | lower }}-base-img"
+
+# Make sure we delete the datavolume e.g. when switch from rhel image to centos image
+# This won't solve the problem when the both images exist and we switch back.
+- name: delete {{ _datavolume }} datavolume if image got downloaded
+  when: not stat_result.stat.exists
+  shell: >
+    oc delete datavolume --ignore-not-found=true {{ _datavolume }} -n {{ namespace }}
+  environment: &oc_env
+    PATH: "{{ oc_env_path }}"
+    KUBECONFIG: "{{ kubeconfig }}"
+
+- name: does the datavolume {{ _datavolume }} already exist
+  ignore_errors: true
+  shell: >
+    oc get datavolume {{ _datavolume }} -n {{ namespace }}
+  environment:
+    <<: *oc_env
+  register: datavolume_switch
+
+- name: Deploy the datavolume {{ _datavolume }}
+  when: datavolume_switch.rc == 1
+  environment:
+    <<: *oc_env
+  block:
+    - name: Upload OSP Controller base image
+      shell: |
+        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure
+  rescue:
+    - name: Remove datavolume {{ _datavolume }} from failed upload
+      command: oc delete datavolume {{ _datavolume }} -n {{ namespace }}
+      ignore_errors: yes
+
+    - name: Re-Upload base image {{ _datavolume }}
+      shell: |
+        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure
+
+- name: Wait for the datavolume {{ _datavolume }} to be ready
+  retries: 5
+  delay: 5
+  shell: |
+    oc wait datavolume {{ _datavolume }} --for condition=Ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
+  environment:
+    <<: *oc_env
