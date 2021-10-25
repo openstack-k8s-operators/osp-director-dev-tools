@@ -34,7 +34,7 @@ network_config:
 {% endif %}
 {% endfor %}
 - type: ovs_bridge
-  name: br-isolated
+  name: br-tenant
   mtu: {{ min_viable_mtu }}
   use_dhcp: false
   dns_servers: {{ ctlplane_dns_nameservers }}
