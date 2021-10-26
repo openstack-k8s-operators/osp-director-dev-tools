@@ -6,7 +6,11 @@
   - oc_local
 
   tasks:
-  - name: Delete {{ osp_controller_base_image_url_path }}
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  - name: Delete base image {{ osp.base_image_url | basename }}
     file:
       path: "{{ item }}"
       state: absent
@@ -14,9 +18,9 @@
     - "{{ base_path }}/ironic/html/images/*.qcow2"
     - "/opt/http_store/data/images/*.qcow2"
 
-  - name: Delete datavolume
+  - name: Delete all datavolumes
     shell: >
-      oc delete datavolume --ignore-not-found=true openstack-base-img -n {{ namespace }}
+      oc delete dv --all -n {{ namespace }}
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"

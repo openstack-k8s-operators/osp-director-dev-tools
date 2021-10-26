@@ -1,0 +1,28 @@
+osp_release_defaults:
+  vmset:
+    Controller:
+      # Reset default Controller roleCount to 0
+      count: 0
+    ControllerNovaStandalone:
+      count: 1
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internalapi
+        - external
+        - tenant
+        - storage
+        - storagemgmt
+      storage_class: host-nfs-storageclass
+    Novacontrol:
+      count: 1
+      cores: 2
+      disk_size: 40
+      memory: 10
+      networks:
+        - ctlplane
+        - internalapi
+        - storage
+      storage_class: host-nfs-storageclass
