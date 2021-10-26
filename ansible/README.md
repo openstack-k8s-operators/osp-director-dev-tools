@@ -45,6 +45,7 @@ If `vars/rhel-subscription.yaml` is not specified, a subscription must have been
 ```
 advanced-virt-for-rhel-8-x86_64-rpms                    Advanced Virtualization for RHEL 8 x86_64 (RPMs)
 ansible-2-for-rhel-8-x86_64-rpms                        Red Hat Ansible Engine 2 for RHEL 8 x86_64 (RPMs)
+openstack-16-for-rhel-8-x86_64-rpms                     Red Hat OpenStack 16 for RHEL 8 x86_64 (RPMs)
 rhel-8-for-x86_64-appstream-rpms                        Red Hat Enterprise Linux 8 for x86_64 - AppStream (RPMs)
 rhel-8-for-x86_64-baseos-rpms                           Red Hat Enterprise Linux 8 for x86_64 - BaseOS (RPMs)
 ```
