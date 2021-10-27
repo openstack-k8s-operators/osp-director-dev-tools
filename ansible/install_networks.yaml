@@ -29,27 +29,37 @@
 
   - name: Render templates to yaml dir
     template:
-      src: "osp/networks/osnet.yaml.j2"
-      dest: "{{ network_yaml_dir }}/{{ item.key }}.yaml"
+      src: "osp/netconfig/osnet.yaml.j2"
+      dest: "{{ network_yaml_dir }}/osnet_config.yaml"
       mode: '0644'
-    with_dict: "{{ osp.networks }}"
-
-  - name: does the networks already exist
-    shell: >
-      oc get osnet -n openstack ctlplane internalapi --ignore-not-found
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: network_exist_switch
-    # Retry on failure, probably osnet does not exist yet
-    retries: 15
-    delay: 10
-    until: network_exist_switch.rc == 0
 
   - name: Start networks
     shell: |
       set -e
       oc apply -n openstack -f "{{ network_yaml_dir }}"
-    environment:
-      <<: *oc_env
-    when: network_exist_switch.stdout | length == 0
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    # Retry on failure, probably osnet does not exist yet
+    retries: 15
+    delay: 10
+
+  # Notes:
+  # * can not use nmcli module https://github.com/ansible/ansible/issues/48055
+  # * don't apply these persistent, in case of a host reboot those need to be reapplied
+  - name: Create gateways on isolated vlan networks
+    shell: |
+      set -e
+      cidr_suffix=$(echo "{{ item.1.ipv4.cidr }}" | sed  's/.*\///')
+      ip link add link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
+      ip addr flush dev ospnetwork.{{ item.1.vlan }}
+      ip addr add {{ item.1.ipv4.gateway }}/$cidr_suffix dev ospnetwork.{{ item.1.vlan }}
+      ip link set ospnetwork.{{ item.1.vlan }} up
+      firewall-cmd --zone=libvirt --change-interface=ospnetwork.{{ item.1.vlan }}
+      iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
+    with_subelements:
+    - "{{ osp.networks }}"
+    - subnets
+    when:
+    - item.1.vlan is defined
+    - item.1.ipv4.gateway is defined

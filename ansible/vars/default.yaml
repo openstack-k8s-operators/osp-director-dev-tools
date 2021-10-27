@@ -171,7 +171,7 @@ openstackclient_storage_class: host-nfs-storageclass
 openstackclient_networks:
   - ctlplane
   - external
-  - internalapi
+  - internal_api
 
 nfs_server: '192.168.25.1'
 
@@ -188,20 +188,21 @@ osp_defaults:
       memory: 20
       networks:
         - ctlplane
-        - internalapi
+        - internal_api
         - external
         - tenant
         - storage
-        - storagemgmt
+        - storage_mgmt
       storage_class: host-nfs-storageclass
   # OSP compute OCP worker settings
   bmset:
     Compute:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
+      ctlplane_interface: enp7s0
       networks:
         - ctlplane
-        - internalapi
+        - internal_api
         - external
         - tenant
         - storage
@@ -211,67 +212,95 @@ osp_defaults:
     - sdc
   # size of OSD disk size in GB
   ceph_num_osd_disk_size: 20
+  attach_configs:
+    br-osp:
+      bridge_name: br-osp
+      interface: enp7s0
+      mtu: 1500
+    br-ex:
+      bridge_name: br-ex
+      interface: enp6s0
+      mtu: 1500
   networks:
     ctlplane:
-      cidr: 192.168.25.0/24
-      gateway: 192.168.25.1
-      allocation:
-        start: 192.168.25.100
-        end: 192.168.25.250
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
+      name: Control
+      name_lower: ctlplane
+      subnets:
+      - name: ctlplane
+        ipv4:
+          cidr: 192.168.25.0/24
+          gateway: 192.168.25.1
+          allocation:
+            start: 192.168.25.100
+            end: 192.168.25.250
+        attach_config: br-osp
     internalapi:
-      cidr: 172.17.0.0/24
-      vlan: 20
+      name: InternalApi
+      name_lower: internal_api
       mtu: 1350
-      allocation:
-        start: 172.17.0.10
-        end: 172.17.0.250
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
+      subnets:
+      - name: internal_api
+        vlan: 20
+        ipv4:
+          cidr: 172.17.0.0/24
+          allocation:
+            start: 172.17.0.10
+            end: 172.17.0.250
+        attach_config: br-osp
     external:
-      cidr: 10.0.0.0/24
-      gateway: 10.0.0.1
-      allocation:
-        start: 10.0.0.10
-        end: 10.0.0.250
-      attach_config:
-        bridge_name: br-ex
-        interface: enp6s0
+      name: External
+      name_lower: external
+      subnets:
+      - name: external
+        ipv4:
+          cidr: 10.0.0.0/24
+          gateway: 10.0.0.1
+          allocation:
+            start: 10.0.0.10
+            end: 10.0.0.250
+        attach_config: br-ex
     storage:
-      cidr: 172.18.0.0/24
-      vlan: 30
+      name: Storage
+      name_lower: storage
       mtu: 1350
-      allocation:
-        start: 172.18.0.10
-        end: 172.18.0.250
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
+      subnets:
+      - name: storage
+        vlan: 30
+        ipv4:
+          cidr: 172.18.0.0/24
+          allocation:
+            start: 172.18.0.10
+            end: 172.18.0.250
+        attach_config: br-osp
     storagemgmt:
-      cidr: 172.19.0.0/24
-      vlan: 40
+      name: StorageMgmt
+      name_lower: storage_mgmt
       mtu: 1350
-      allocation:
-        start: 172.19.0.10
-        end: 172.19.0.250
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
+      subnets:
+      - name: storage_mgmt
+        vlan: 40
+        ipv4:
+          cidr: 172.19.0.0/24
+          allocation:
+            start: 172.19.0.10
+            end: 172.19.0.250
+        attach_config: br-osp
     tenant:
-      cidr: 172.20.0.0/24
-      vlan: 50
-      mtu: 1350
+      name: Tenant
+      name_lower: tenant
       vip: false
-      allocation:
-        start: 172.20.0.10
-        end: 172.20.0.250
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
-  container_tag: 16.2_20211013.1
+      mtu: 1350
+      subnets:
+      - name: tenant
+        vlan: 50
+        vip: false
+        ipv4:
+          cidr: 172.20.0.0/24
+          allocation:
+            start: 172.20.0.10
+            end: 172.20.0.250
+        attach_config: br-osp
+  container_tag: 16.2_20211110.2
   ceph_image: rhceph
   ceph_tag: 4-59
   # OSP deployment timeout

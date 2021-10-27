@@ -1,64 +1,57 @@
 osp_release_defaults:
+  # keep ctlplane and tenant as ipv4
   networks:
-    ctlplane:
-      cidr: 192.168.25.0/24
-      gateway: 192.168.25.1
-      allocation:
-        start: 192.168.25.100
-        end: 192.168.25.250
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
     internalapi:
-      cidr: fd00:fd00:fd00:2000::/64
-      vlan: 20
+      name: InternalApi
+      name_lower: internal_api
       mtu: 1350
-      allocation:
-        start: fd00:fd00:fd00:2000::10
-        end: fd00:fd00:fd00:2000:ffff:ffff:ffff:fffe
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
+      subnets:
+      - name: internal_api
+        vlan: 20
+        ipv6:
+          cidr: fd00:fd00:fd00:2000::/64
+          allocation:
+            start: fd00:fd00:fd00:2000::10
+            end: fd00:fd00:fd00:2000:ffff:ffff:ffff:fffe
+        attach_config: br-osp
     external:
-      cidr: 2001:db8:fd00:1000::/64
-      gateway: 2001:db8:fd00:1000::1
-      allocation:
-        start: 2001:db8:fd00:1000::10
-        end: 2001:db8:fd00:1000:ffff:ffff:ffff:fffe
-      attach_config:
-        bridge_name: br-ex
-        interface: enp6s0
+      name: External
+      name_lower: external
+      subnets:
+      - name: external
+        ipv6:
+          cidr: 2001:db8:fd00:1000::/64
+          gateway: 2001:db8:fd00:1000::1
+          allocation:
+            start: 2001:db8:fd00:1000::10
+            end: 2001:db8:fd00:1000:ffff:ffff:ffff:fffe
+        attach_config: br-ex
     storage:
-      cidr: fd00:fd00:fd00:3000::/64
-      vlan: 30
+      name: Storage
+      name_lower: storage
       mtu: 1350
-      allocation:
-        start: fd00:fd00:fd00:3000::10
-        end: fd00:fd00:fd00:3000:ffff:ffff:ffff:fffe
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
+      subnets:
+      - name: storage
+        vlan: 30
+        ipv6:
+          cidr: fd00:fd00:fd00:3000::/64
+          allocation:
+            start: fd00:fd00:fd00:3000::10
+            end: fd00:fd00:fd00:3000:ffff:ffff:ffff:fffe
+        attach_config: br-osp
     storagemgmt:
-      cidr: fd00:fd00:fd00:4000::/64
-      vlan: 40
+      name: StorageMgmt
+      name_lower: storage_mgmt
       mtu: 1350
-      allocation:
-        start: fd00:fd00:fd00:4000::10
-        end: fd00:fd00:fd00:4000:ffff:ffff:ffff:fffe
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
-    tenant:
-      cidr: 172.20.0.0/24
-      vlan: 50
-      mtu: 1350
-      vip: false
-      allocation:
-        start: 172.20.0.10
-        end: 172.20.0.250
-      attach_config:
-        bridge_name: br-osp
-        interface: enp7s0
+      subnets:
+      - name: storage_mgmt
+        vlan: 40
+        ipv6:
+          cidr: fd00:fd00:fd00:4000::/64
+          allocation:
+            start: fd00:fd00:fd00:4000::10
+            end: fd00:fd00:fd00:4000:ffff:ffff:ffff:fffe
+        attach_config: br-osp
   extrafeatures:
     - ipv6
 

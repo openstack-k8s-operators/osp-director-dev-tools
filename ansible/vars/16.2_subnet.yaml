@@ -1,0 +1,225 @@
+---
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internal_api
+  - internal_api_leaf1
+
+osp_release_defaults:
+  vmset:
+    Controller:
+      count: 1
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      storage_class: host-nfs-storageclass
+  bmset:
+    Compute:
+      count: 0
+    ComputeLeaf1:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf1
+        - external
+        - tenant_leaf1
+        - storage_leaf1
+    ComputeLeaf2:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf2
+        - external
+        - tenant_leaf2
+        - storage_leaf2
+
+  networks:
+    internalapi:
+      name: InternalApi
+      name_lower: internal_api
+      mtu: 1350
+      subnets:
+      - name: internal_api
+        vlan: 20
+        ipv4:
+          cidr: 172.17.0.0/24
+          allocation:
+            start: 172.17.0.10
+            end: 172.17.0.250
+          routes:
+          - destination: 172.17.1.0/24
+            nexthop: 172.17.0.1
+          - destination: 172.17.2.0/24
+            nexthop: 172.17.0.1
+        attach_config: br-osp
+      - name: internal_api_leaf1
+        vlan: 21
+        ipv4:
+          cidr: 172.17.1.0/24
+          allocation:
+            start: 172.17.1.10
+            end: 172.17.1.250
+          routes:
+          - destination: 172.17.0.0/24
+            nexthop: 172.17.1.1
+          - destination: 172.17.2.0/24
+            nexthop: 172.17.1.1
+        attach_config: br-osp
+      - name: internal_api_leaf2
+        vlan: 22
+        ipv4:
+          cidr: 172.17.2.0/24
+          allocation:
+            start: 172.17.2.10
+            end: 172.17.2.250
+          routes:
+          - destination: 172.17.1.0/24
+            nexthop: 172.17.2.1
+          - destination: 172.17.0.0/24
+            nexthop: 172.17.2.1
+        attach_config: br-osp
+    storage:
+      name: Storage
+      name_lower: storage
+      mtu: 1350
+      subnets:
+      - name: storage
+        vlan: 30
+        ipv4:
+          cidr: 172.18.0.0/24
+          allocation:
+            start: 172.18.0.10
+            end: 172.18.0.250
+          routes:
+          - destination: 172.18.1.0/24
+            nexthop: 172.18.0.1
+          - destination: 172.18.2.0/24
+            nexthop: 172.18.0.1
+        attach_config: br-osp
+      - name: storage_leaf1
+        vlan: 31
+        ipv4:
+          cidr: 172.18.1.0/24
+          allocation:
+            start: 172.18.1.10
+            end: 172.18.1.250
+          routes:
+          - destination: 172.18.0.0/24
+            nexthop: 172.18.1.1
+          - destination: 172.18.2.0/24
+            nexthop: 172.18.1.1
+        attach_config: br-osp
+      - name: storage_leaf2
+        vlan: 32
+        ipv4:
+          cidr: 172.18.2.0/24
+          allocation:
+            start: 172.18.2.10
+            end: 172.18.2.250
+          routes:
+          - destination: 172.18.0.0/24
+            nexthop: 172.18.2.1
+          - destination: 172.18.1.0/24
+            nexthop: 172.18.2.1
+        attach_config: br-osp
+    storagemgmt:
+      name: StorageMgmt
+      name_lower: storage_mgmt
+      mtu: 1350
+      subnets:
+      - name: storage_mgmt
+        vlan: 40
+        ipv4:
+          cidr: 172.19.0.0/24
+          allocation:
+            start: 172.19.0.10
+            end: 172.19.0.250
+          routes:
+          - destination: 172.19.1.0/24
+            nexthop: 172.19.0.1
+          - destination: 172.19.2.0/24
+            nexthop: 172.19.0.1
+        attach_config: br-osp
+      - name: storage_mgmt_leaf1
+        vlan: 41
+        ipv4:
+          cidr: 172.19.1.0/24
+          allocation:
+            start: 172.19.1.10
+            end: 172.19.1.250
+          routes:
+          - destination: 172.19.0.0/24
+            nexthop: 172.19.1.1
+          - destination: 172.19.2.0/24
+            nexthop: 172.19.1.1
+        attach_config: br-osp
+      - name: storage_mgmt_leaf2
+        vlan: 42
+        ipv4:
+          cidr: 172.19.2.0/24
+          allocation:
+            start: 172.19.2.10
+            end: 172.19.2.250
+          routes:
+          - destination: 172.19.0.0/24
+            nexthop: 172.19.2.1
+          - destination: 172.19.1.0/24
+            nexthop: 172.19.2.1
+        attach_config: br-osp
+    tenant:
+      name: Tenant
+      name_lower: tenant
+      vip: false
+      mtu: 1350
+      subnets:
+      - name: tenant
+        vlan: 50
+        vip: false
+        ipv4:
+          cidr: 172.20.0.0/24
+          allocation:
+            start: 172.20.0.10
+            end: 172.20.0.250
+          routes:
+          - destination: 172.20.1.0/24
+            nexthop: 172.20.0.1
+          - destination: 172.20.2.0/24
+            nexthop: 172.20.0.1
+        attach_config: br-osp
+      - name: tenant_leaf1
+        vlan: 51
+        vip: false
+        ipv4:
+          cidr: 172.20.1.0/24
+          allocation:
+            start: 172.20.1.10
+            end: 172.20.1.250
+          routes:
+          - destination: 172.20.0.0/24
+            nexthop: 172.20.1.1
+          - destination: 172.20.2.0/24
+            nexthop: 172.20.1.1
+        attach_config: br-osp
+      - name: tenant_leaf2
+        vlan: 52
+        vip: false
+        ipv4:
+          cidr: 172.20.2.0/24
+          allocation:
+            start: 172.20.2.10
+            end: 172.20.2.250
+          routes:
+          - destination: 172.20.0.0/24
+            nexthop: 172.20.2.1
+          - destination: 172.20.1.0/24
+            nexthop: 172.20.2.1
+        attach_config: br-osp

@@ -1,0 +1,78 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackNetConfig
+metadata:
+  name: openstacknetconfig
+spec:
+  attachConfigurations:
+{% for nodeConfName, nodeConfPolicy in osp.attach_configs.items() %}
+    {{ nodeConfName }}:
+      nodeNetworkConfigurationPolicy:
+        nodeSelector:
+          node-role.kubernetes.io/worker: ""
+        desiredState:
+          interfaces:
+          - bridge:
+              options:
+                stp:
+                  enabled: false
+              port:
+              - name: {{ nodeConfPolicy.interface }}
+            description: Linux bridge with {{ nodeConfPolicy.interface }} as a port
+            name: {{ nodeConfPolicy.bridge_name }}
+            state: up
+            type: linux-bridge
+{% if nodeConfPolicy.mtu is defined %}
+            mtu: {{ nodeConfPolicy.mtu }}
+{% endif %}
+{% endfor %}
+  networks:
+{% for id, net in osp.networks.items() %}
+  - name: {{ net.name }}
+    nameLower: {{ net.name_lower }}
+{% if net.vip is defined %}
+    vip: {{ net.vip }}
+{% endif %}
+{% if net.mtu is defined %}
+    mtu: {{ net.mtu }}
+{% endif %}
+    subnets:
+{% for subnet in net.subnets %}
+    - name: {{ subnet.name }}
+{% if subnet.ipv4 is defined %}
+      ipv4:
+        allocationEnd: {{ subnet.ipv4.allocation.end }}
+        allocationStart: {{ subnet.ipv4.allocation.start }}
+        cidr: {{ subnet.ipv4.cidr }}
+{% if subnet.ipv4.gateway is defined %}
+        gateway: {{ subnet.ipv4.gateway }}
+{% endif %}
+{% if subnet.ipv4.routes is defined %}
+        routes:
+{% for route in subnet.ipv4.routes %}
+        - destination: {{ route.destination }}
+          nexthop: {{ route.nexthop }}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% if subnet.ipv6 is defined %}
+      ipv6:
+        allocationEnd: {{ subnet.ipv6.allocation.end }}
+        allocationStart: {{ subnet.ipv6.allocation.start }}
+        cidr: {{ subnet.ipv6.cidr }}
+{% if subnet.ipv6.gateway is defined %}
+        gateway: {{ subnet.ipv6.gateway }}
+{% endif %}
+{% if subnet.ipv6.routes is defined %}
+        routes:
+{% for route in subnet.ipv6.routes %}
+        - destination: {{ route.destination }}
+          nexthop: {{ route.nexthop }}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% if subnet.vlan is defined %}
+      vlan: {{ subnet.vlan }}
+{% endif %}
+      attachConfiguration: {{ subnet.attach_config }}
+{% endfor %}
+{% endfor %}

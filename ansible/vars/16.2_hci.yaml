@@ -4,10 +4,10 @@ osp_release_defaults:
       count: 2
       networks:
         - ctlplane
-        - internalapi
+        - internal_api
         - external
         - tenant
         - storage
-        - storagemgmt
+        - storage_mgmt
   extrafeatures:
     - hci
