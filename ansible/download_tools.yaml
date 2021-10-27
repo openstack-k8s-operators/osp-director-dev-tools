@@ -48,10 +48,14 @@
       mode: '0755'
       timeout: 30
 
-  - name: Install packages
-    become: true
-    become_user: root
-    package:
-      state: installed
-      name:
-        - golang
+  - name: Download and extract golang
+    unarchive:
+      src: https://golang.org/dl/go{{ go_version }}.linux-amd64.tar.gz
+      dest: "{{ lookup('env', 'HOME') }}/bin/"
+      remote_src: yes
+      extra_opts:
+        - "--add-file"
+        - "go/bin/go"
+        - "--add-file"
+        - "go/bin/gofmt"
+        - "--strip-components=2"
