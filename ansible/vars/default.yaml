@@ -2,6 +2,9 @@
 base_path: /home/ocp
 #dev_scripts_repo: defaults to "https://github.com/openshift-metal3/dev-scripts.git"
 #dev_scripts_branch: defaults to "HEAD"
+# mschuppert: https://github.com/openshift-metal3/dev-scripts/commit/7430bfd427b1e46ad9b2ca79467d62707dc288c0
+# deploys python39 and ansible 4.6.0 which makes dev-tools to fail for the short term pin to b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
+dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 
 # To set a specific release to install.
 ocp_version: 4.7
