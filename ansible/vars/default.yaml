@@ -69,7 +69,10 @@ ocp_domain_name: test.metalkube.org
 opm_version: v1.12.5
 
 # operator-sdk version to use (must be specific version)
-sdk_version: v1.5.0
+sdk_version: v1.13.1
+
+# golang version
+go_version: 1.16.9
 
 # kustomize version to use (must be specific version)
 kustomize_version: v4.0.1
