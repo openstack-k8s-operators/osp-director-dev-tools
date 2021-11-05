@@ -500,15 +500,20 @@
       with_items:
         - "{{ ocp_ai_onprem_env }}"
 
-    - name: Set assisted installer service OCP release image
+    - name: Remove deprecated OPENSHIFT_VERSION onprem env var
       replace:
         path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
-        # regexp: '"display_name":"4.7.2","release_image":"quay.io/openshift-release-dev/ocp-release:4.7.2-x86_64"'
-        # replace: '"display_name":"4.7","release_image":"{{ ocp_release_image }}"'
         regexp: 'OPENSHIFT_VERSIONS=.*'
-        replace: 'OPENSHIFT_VERSIONS={{ ocp_ai_onprem_env_dict["OPENSHIFT_VERSIONS"] }}'
+        replace: ''
 
-        # NOTE: obtain rhcos image version from here: https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com/releasestream/4-stable/release/4.8.2 or https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.8/builds.json
+    - name: Inject OCP release image onprem env vars
+      lineinfile:
+        path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
+        state: present
+        line: '{{ item }}={{ ocp_ai_onprem_env_dict[item] }}'
+      with_items:
+        - OS_IMAGES
+        - RELEASE_IMAGES
 
     - name: Set assisted installer service default hardware requirements
       ansible.builtin.lineinfile:
