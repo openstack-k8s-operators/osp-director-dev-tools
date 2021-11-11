@@ -558,10 +558,10 @@
 
     - name: Clone the assisted installer playbooks repo
       git:
-        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/sonofspike/cluster_mgnt_roles.git', true) }}"
+        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/cluster_mgnt_roles.git', true) }}"
         dest: "{{ base_path }}/cluster_mgnt_roles"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('9051f7da86fa90f9b60c1b09414dabeaf7d58fb7', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('master', true) }}"
 
     # HACK: Remove old, bad logic from SoS so that it works with latest AI service (we never needed it anyhow)
     # Once this logic is fixed upstream in SoS, we can remove this task
