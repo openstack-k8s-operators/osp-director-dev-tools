@@ -13,8 +13,8 @@ ocp_ai_external_dns:
 
 # ocp_ai_service_repo: defaults to "https://github.com/sonofspike/assisted-service-onprem.git"
 # ocp_ai_service_branch: defaults to "feb00ba10823ab04ec489a05ce8eb543ec688fda"
-# ocp_ai_ansible_repo: defaults to "https://github.com/sonofspike/cluster_mgnt_roles.git"
-# ocp_ai_ansible_branch: defaults to "9051f7da86fa90f9b60c1b09414dabeaf7d58fb7"
+# ocp_ai_ansible_repo: defaults to "https://github.com/openstack-k8s-operators/cluster_mgnt_roles.git"
+# ocp_ai_ansible_branch: defaults to "master"
 
 ocp_ai_bm_bridge_master_mac_prefix: 3c:fd:fe:78:ab:0
 ocp_ai_bm_bridge_worker_mac_prefix: 3c:fd:fe:78:ab:1
