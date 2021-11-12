@@ -155,6 +155,9 @@
           - git
           - make
 
+          # Required to run osp-director-operator/scripts/build_and_push_images.sh
+          - skopeo
+
           # Required for assisted installer
           - dnsmasq
           - libvirt-devel
