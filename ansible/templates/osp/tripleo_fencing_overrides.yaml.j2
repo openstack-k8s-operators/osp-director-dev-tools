@@ -9,7 +9,7 @@
       /usr/libexec/platform-python -m pip install openshift
 
   # Note: can be removed when is available https://review.opendev.org/q/topic:%22fence_kubevirt%22
-  - name: Pre-install certain packaged
+  - name: Pre-install certain packages
     package:
       state: installed
       name: "{{ '{{' }} item {{ '}}' }}"
@@ -19,26 +19,18 @@
       - patch
       - patchutils
 
-  - name: Download Kubevirt fencing agent code
-    get_url:
-      url: "{{ kubevirt_fencing_agent_url }}"
-      dest: "/usr/sbin/fence_kubevirt"
-      owner: root
-      group: root
-      mode: '0755'
-      timeout: 30
-
-  - name: Replace Python interpreter in Kubevirt fencing agent code
-    lineinfile:
-      path: "/usr/sbin/fence_kubevirt"
-      regexp: '^#\!@PYTHON@'
-      line: '#!/usr/libexec/platform-python -tt'
-
-  - name: Replace Python fencing dependencies dir in Kubevirt fencing agent code
-    lineinfile:
-      path: "/usr/sbin/fence_kubevirt"
-      regexp: '^sys.path.append\("@FENCEAGENTSLIBDIR@"\)'
-      line: 'sys.path.append("/usr/share/fence")'
+  - name: Get noarch fencing agent dependencies
+    shell: |
+      curl -S http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/noarch/ | grep "href=\"fence-agents" | cut -d '"' -f 6 | awk '{print "http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/noarch/"$1}'
+    register: fence_agent_noarch_deps
+  
+  # Using yum module instead of package module here because the latter fails GPG key validation
+  - name: Pre-install latest fencing agents
+    yum:
+      name: "{{ '{{' }} fence_agent_noarch_deps.stdout_lines | join(',') {{ '}}' }}, http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-redfish-4.2.1-82.el8.x86_64.rpm, http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-kdump-4.2.1-82.el8.x86_64.rpm,  http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-kubevirt-4.2.1-82.el8.x86_64.rpm, http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-all-4.2.1-82.el8.x86_64.rpm"
+      state: installed
+      disable_gpg_check: yes
+      validate_certs: no
 
   # Note: can be removed when is available https://review.opendev.org/q/topic:%22fence_kubevirt%22
   - name: Apply patches to puppet modules on controller VMs
