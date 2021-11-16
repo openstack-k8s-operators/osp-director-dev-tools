@@ -106,7 +106,6 @@
 
     - name: validation and tweaks for assisted installer
       block:
-      # FIXME: Here to enforce use of RHEL 8.3+ and OCP 4.7 for now
       - fail:
           msg: RHEL 8.3+ is required for the assisted installer deployments
         when: ansible_distribution != "RedHat" or ansible_distribution_version|float < 8.3
@@ -114,23 +113,6 @@
       - fail:
           msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP greater than 4.6 is currently supported for assisted installer deployments."
         when: ocp_version <= 4.6
-
-      - name: disable virt module for rhel and enable it for 8.3
-        shell: |
-          dnf module disable virt:rhel -y
-          dnf module enable virt:8.3 -y
-
-      - name: Install the latest version of qemu-kvm
-        block:
-        - name: Uninstall qemu-kvm
-          dnf:
-            name: qemu-kvm*
-            state: absent
-
-        - name: Install latest qemu-kvm
-          dnf:
-            name: qemu-kvm
-            state: latest
       when: ocp_ai|bool
 
   - name: install packages and enable services
