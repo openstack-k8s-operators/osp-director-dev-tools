@@ -20,16 +20,6 @@
       - "oc delete -n openstack openstacknetconfig --all"
       - "oc delete -n openstack cm tripleo-deploy-config heat-env-config tripleo-tarball-config --ignore-not-found=true"
 
-  - name: HACK to enable re-apply of networks
-    shell: |
-      #!/bin/bash
-      for i in {0..{{ ocp_num_workers-1 }}}; do
-        oc debug node/{{ ocp_cluster_name }}-worker-$i -- ip l del br-osp;
-        oc debug node/{{ ocp_cluster_name }}-worker-$i -- ip l del br-ex;
-      done
-    ignore_errors: true
-    when: ocp_version > 4.7
-
   - name: delete playbooks git repo dir
     become: true
     become_user: root
