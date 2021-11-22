@@ -54,7 +54,7 @@
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    retries: 50
+    retries: 100
     delay: 5
     register: result
     until: result.rc == 0

@@ -4,6 +4,10 @@
 #
 
 parameter_defaults:
+  DockerInsecureRegistryAddress:
+    - registry-proxy.engineering.redhat.com
+    - registry.access.redhat.com
+    - docker-registry.upshift.redhat.com
   ContainerImagePrepare:
   - push_destination: false
     set:
