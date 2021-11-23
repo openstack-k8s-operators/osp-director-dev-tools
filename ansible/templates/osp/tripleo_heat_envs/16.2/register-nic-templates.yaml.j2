@@ -1,7 +1,7 @@
 resource_registry:
-{% if "hci" in osp.extrafeatures %}
-  OS::TripleO::ComputeHCI::Net::SoftwareConfig: net-config-two-nic-vlan-computehci.yaml
-{% else %}
   OS::TripleO::Compute::Net::SoftwareConfig: net-config-two-nic-vlan-compute.yaml
-{% endif %}
-
+  OS::TripleO::ComputeLeaf1::Net::SoftwareConfig: net-config-two-nic-vlan-compute_leaf1.yaml
+  OS::TripleO::ComputeLeaf2::Net::SoftwareConfig: net-config-two-nic-vlan-compute_leaf2.yaml
+  OS::TripleO::ComputeHCI::Net::SoftwareConfig: net-config-two-nic-vlan-computehci.yaml
+  OS::TripleO::ComputeHCILeaf1::Net::SoftwareConfig: net-config-two-nic-vlan-computehci_leaf1.yaml
+  OS::TripleO::ComputeHCILeaf2::Net::SoftwareConfig: net-config-two-nic-vlan-computehci_leaf2.yaml

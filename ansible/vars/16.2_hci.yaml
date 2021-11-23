@@ -1,13 +1,16 @@
 osp_release_defaults:
   bmset:
+    Compute:
+      count: 0
     ComputeHCI:
       count: 2
+      ctlplane_interface: enp7s0
       networks:
         - ctlplane
-        - internalapi
+        - internal_api
         - external
         - tenant
         - storage
-        - storagemgmt
+        - storage_mgmt
   extrafeatures:
     - hci

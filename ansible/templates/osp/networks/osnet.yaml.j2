@@ -5,6 +5,8 @@ kind: OpenStackNet
 metadata:
   name: {{ net_name }}
 spec:
+  name: {{ net.name }}
+  nameLower: {{ net.name_lower }}
   cidr: {{ net.cidr }}
 {% if net.gateway is defined %}
   gateway: {{ net.gateway }}
@@ -36,3 +38,6 @@ spec:
           name: {{ net.attach_config.bridge_name }}
           state: up
           type: linux-bridge
+{% if net.mtu is defined %}
+          mtu: {{ net.mtu }}
+{% endif %}

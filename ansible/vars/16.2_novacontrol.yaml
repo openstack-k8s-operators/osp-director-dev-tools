@@ -10,11 +10,11 @@ osp_release_defaults:
       memory: 20
       networks:
         - ctlplane
-        - internalapi
+        - internal_api
         - external
         - tenant
         - storage
-        - storagemgmt
+        - storage_mgmt
       storage_class: host-nfs-storageclass
     Novacontrol:
       count: 1
@@ -23,6 +23,6 @@ osp_release_defaults:
       memory: 10
       networks:
         - ctlplane
-        - internalapi
+        - internal_api
         - storage
       storage_class: host-nfs-storageclass

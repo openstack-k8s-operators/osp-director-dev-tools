@@ -12,7 +12,7 @@ spec:
   # The secret containing the SSH pub key to place on the provisioned nodes
   deploymentSSHSecret: osp-controlplane-ssh-keys
   # The interface on the nodes that will be assigned an IP from the mgmtCidr
-  ctlplaneInterface: {{ osp.networks.ctlplane.attach_config.interface }}
+  ctlplaneInterface: {{ osp.bmset[_role].ctlplane_interface }}
   # Networks to associate with this host
   networks:
 {% for net in osp.bmset[_role].networks %}
