@@ -178,7 +178,7 @@ nfs_server: '192.168.25.1'
 osp_defaults:
   release: 16.2
   # use http://download.devel.redhat.com to get the local mirror depending on where the server is
-  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/1168/images/rhel-guest-image-8.4-1168.x86_64.qcow2
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/992/images/rhel-guest-image-8.4-992.x86_64.qcow2
   # OSP controller VM sizing
   vmset:
     Controller:
