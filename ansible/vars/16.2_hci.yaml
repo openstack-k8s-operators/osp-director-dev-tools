@@ -1,7 +1,10 @@
 osp_release_defaults:
   bmset:
+    Compute:
+      count: 0
     ComputeHCI:
       count: 2
+      ctlplane_interface: enp7s0
       networks:
         - ctlplane
         - internal_api

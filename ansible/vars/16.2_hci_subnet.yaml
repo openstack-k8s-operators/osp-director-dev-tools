@@ -1,10 +1,3 @@
----
-openstackclient_networks:
-  - ctlplane
-  - external
-  - internal_api
-  - internal_api_leaf1
-
 osp_release_defaults:
   vmset:
     Controller:
@@ -23,25 +16,18 @@ osp_release_defaults:
   bmset:
     Compute:
       count: 0
-    ComputeLeaf1:
-      count: 1
+    ComputeHCILeaf1:
+      count: 2
       ctlplane_interface: enp7s0
       networks:
         - ctlplane
+        - external
         - internal_api_leaf1
-        - external
-        - tenant_leaf1
         - storage_leaf1
-    ComputeLeaf2:
-      count: 1
-      ctlplane_interface: enp7s0
-      networks:
-        - ctlplane
-        - internal_api_leaf2
-        - external
-        - tenant_leaf2
-        - storage_leaf2
-
+        - storage_mgmt_leaf1
+        - tenant_leaf1
+  extrafeatures:
+    - hci
   networks:
     internalapi:
       name: InternalApi
@@ -76,20 +62,6 @@ osp_release_defaults:
           - destination: 172.17.2.0/24
             nexthop: 172.17.1.1
         attach_config: br-osp
-      - name: internal_api_leaf2
-        vlan: 22
-        ipv4:
-          cidr: 172.17.2.0/24
-          allocation:
-            start: 172.17.2.10
-            end: 172.17.2.250
-          gateway: 172.17.2.1
-          routes:
-          - destination: 172.17.1.0/24
-            nexthop: 172.17.2.1
-          - destination: 172.17.0.0/24
-            nexthop: 172.17.2.1
-        attach_config: br-osp
     storage:
       name: Storage
       name_lower: storage
@@ -123,20 +95,6 @@ osp_release_defaults:
           - destination: 172.18.2.0/24
             nexthop: 172.18.1.1
         attach_config: br-osp
-      - name: storage_leaf2
-        vlan: 32
-        ipv4:
-          cidr: 172.18.2.0/24
-          allocation:
-            start: 172.18.2.10
-            end: 172.18.2.250
-          gateway: 172.18.2.1
-          routes:
-          - destination: 172.18.0.0/24
-            nexthop: 172.18.2.1
-          - destination: 172.18.1.0/24
-            nexthop: 172.18.2.1
-        attach_config: br-osp
     storagemgmt:
       name: StorageMgmt
       name_lower: storage_mgmt
@@ -169,20 +127,6 @@ osp_release_defaults:
             nexthop: 172.19.1.1
           - destination: 172.19.2.0/24
             nexthop: 172.19.1.1
-        attach_config: br-osp
-      - name: storage_mgmt_leaf2
-        vlan: 42
-        ipv4:
-          cidr: 172.19.2.0/24
-          allocation:
-            start: 172.19.2.10
-            end: 172.19.2.250
-          gateway: 172.19.2.1
-          routes:
-          - destination: 172.19.0.0/24
-            nexthop: 172.19.2.1
-          - destination: 172.19.1.0/24
-            nexthop: 172.19.2.1
         attach_config: br-osp
     tenant:
       name: Tenant
@@ -219,19 +163,4 @@ osp_release_defaults:
             nexthop: 172.20.1.1
           - destination: 172.20.2.0/24
             nexthop: 172.20.1.1
-        attach_config: br-osp
-      - name: tenant_leaf2
-        vlan: 52
-        vip: false
-        ipv4:
-          cidr: 172.20.2.0/24
-          allocation:
-            start: 172.20.2.10
-            end: 172.20.2.250
-          gateway: 172.20.2.1
-          routes:
-          - destination: 172.20.0.0/24
-            nexthop: 172.20.2.1
-          - destination: 172.20.1.0/24
-            nexthop: 172.20.2.1
         attach_config: br-osp

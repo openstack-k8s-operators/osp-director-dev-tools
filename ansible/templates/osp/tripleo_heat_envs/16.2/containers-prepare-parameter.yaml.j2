@@ -10,9 +10,9 @@ parameter_defaults:
       namespace: registry-proxy.engineering.redhat.com/rh-osbs
       name_prefix: rhosp16-openstack-
       tag: {{ osp.container_tag }}
-      ceph-namespace: registry-proxy.engineering.redhat.com/rh-osbs
-      ceph-image: {{ osp.ceph_image }}
-      ceph-tag: {{ osp.ceph_tag }}
+      ceph_namespace: registry-proxy.engineering.redhat.com/rh-osbs
+      ceph_image: {{ osp.ceph_image }}
+      ceph_tag: {{ osp.ceph_tag }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: registry-proxy.engineering.redhat.com/rh-osbs
       ceph_alertmanager_tag: v4.1

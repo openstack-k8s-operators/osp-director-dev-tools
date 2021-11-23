@@ -24,7 +24,7 @@ parameter_defaults:
   CephPoolDefaultSize: 2
   CephAnsibleDisksConfig:
     devices:
-{% for disk in osp.compute.ceph_osd_disks %}
+{% for disk in osp.ceph_osd_disks %}
       - '/dev/{{ disk }}'
 {% endfor %}
     osd_scenario: lvm
