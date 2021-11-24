@@ -28,7 +28,11 @@
       subnet: tenant_subnet
   # For systems with both IPv4 and IPv6, you may specify a gateway network for
   # each, such as ['ControlPlane', 'External']
+{% if "ipv6" in osp.extrafeatures %}
+  default_route_networks: ['ControlPlane', 'External']
+{% else %}
   default_route_networks: ['External']
+{% endif %}
   HostnameFormatDefault: '%stackname%-controller-%index%'
   RoleParametersDefault:
     OVNCMSOptions: "enable-chassis-as-gw"
