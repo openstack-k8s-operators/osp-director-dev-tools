@@ -82,7 +82,6 @@
           dest: /opt/freeipa/data/{{ item }}
           mode: '0755'
         loop:
-          - dns_setup.sh
           - openstack_cleanup.sh
           - olm_cleanup.sh
 
