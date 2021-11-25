@@ -1,6 +1,7 @@
 ---
 - hosts: localhost
   vars_files: vars/default.yaml
+  become: true
   roles:
   - oc_local
 
