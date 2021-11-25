@@ -38,7 +38,6 @@
       name: dnsmasq
       state: stopped
 
-
   ### VMs
 
   - name: Delete VMs and disk QCOW2s
@@ -69,7 +68,7 @@
 
   - name: Reload systemd service
     systemd:
-      daemon_reexec: yes
+      daemon_reload: yes
 
 
   ### HTTP STORE

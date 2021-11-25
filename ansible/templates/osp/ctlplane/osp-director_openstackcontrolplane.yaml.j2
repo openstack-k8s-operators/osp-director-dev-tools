@@ -9,7 +9,16 @@ spec:
   openStackClientNetworks: {{ openstackclient_networks }}
   openStackClientStorageClass: {{ openstackclient_storage_class }}
   passwordSecret: userpassword
-  domainName: {{ ocp_cluster_name }}.{{ ocp_domain_name }}
+  domainName: {{ osp.domain_name }}
+{% if osp.dns_search_domains is defined and osp.dns_search_domains|length %}
+  dnsServers: {{ osp.dns_servers }}
+{% endif %}
+{% if osp.dns_search_domains is defined and osp.dns_search_domains|length %}
+  dnsSearchDomains: {{ osp.dns_search_domains }}
+{% endif %}
+{% if osp.tlse|default(false)|bool %}
+  idmSecret: idmsecret
+{% endif %}
   virtualMachineRoles:
 {% for name, role in osp.vmset.items() %}
 {% if role.count > 0 %}

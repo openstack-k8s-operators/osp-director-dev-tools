@@ -448,7 +448,7 @@
 
     - name: Reload systemd service
       systemd:
-        daemon_reexec: yes
+        daemon_reload: yes
 
     - name: Start sushy-tools service
       service:

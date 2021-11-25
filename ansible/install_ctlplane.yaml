@@ -35,6 +35,7 @@
     with_items:
     - "osp-director_openstackcontrolplane.yaml"
     - "password-secret.yaml"
+    - "idm-secret.yaml"
 
   - name: Start ctlplane
     shell: |

@@ -1,0 +1,17 @@
+[Unit]
+Description=Podman freeipa-server.service
+Wants=network.target
+After=network-online.target
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+Restart=on-failure
+TimeoutStopSec=180
+ExecStart=/usr/bin/podman start freeipa-server
+ExecStop=/usr/bin/podman stop -t 120 freeipa-server
+ExecStopPost=/usr/bin/podman stop -t 120 freeipa-server
+PIDFile=/run/podman-freeipa-server-conman.pid
+Type=forking
+
+[Install]
+WantedBy=multi-user.target

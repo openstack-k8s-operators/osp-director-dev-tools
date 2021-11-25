@@ -14,4 +14,9 @@ spec:
   # tempest:x:42480:42480
   runUID: 42480
   runGID: 42480
-  domainName: "{{ ocp_domain_name | default('test.metalkube.org', true) }}"
+  domainName: {{ osp.domain_name }}
+  dnsServers: [ "192.168.25.1"]
+  dnsSearchDomains:
+    - {{ osp.domain_name }}
+    - {{ base_domain_name }}
+

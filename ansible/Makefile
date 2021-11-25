@@ -66,6 +66,7 @@ post_install: hosts local-defaults.yaml
 	ocp_default_storageclass.yaml \
 	ocp_image_registry.yaml
 	$(MAKE) nics
+	$(MAKE) freeipa
 
 custom_registries: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -80,6 +81,20 @@ nics: hosts local-defaults.yaml
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	ocp_vm_setup_extra_nics.yaml
+
+freeipa: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	freeipa.yaml
+
+freeipa_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	freeipa_cleanup.yaml
 
 cnv_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

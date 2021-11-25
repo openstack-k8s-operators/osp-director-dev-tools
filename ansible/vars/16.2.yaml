@@ -1,1 +1,2 @@
 osp_release_defaults: {}
+openstackclient_image: quay.io/olliewalsh/rhosp16-openstack-tripleoclient:16.2_ipa
