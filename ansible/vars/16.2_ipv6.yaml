@@ -1,5 +1,5 @@
 osp_release_defaults:
-  # keep ctlplane and tenant as ipv4
+  # keeps ctlplane and tenant as ipv4
   networks:
     internalapi:
       name: InternalApi

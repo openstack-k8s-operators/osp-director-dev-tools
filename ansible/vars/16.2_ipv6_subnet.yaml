@@ -1,0 +1,285 @@
+---
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internal_api
+  - internal_api_leaf1
+
+osp_release_defaults:
+  vmset:
+    Controller:
+      count: 1
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      storage_class: host-nfs-storageclass
+  bmset:
+    Compute:
+      count: 0
+    ComputeLeaf1:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf1
+        - external
+        - tenant_leaf1
+        - storage_leaf1
+    ComputeLeaf2:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf2
+        - external
+        - tenant_leaf2
+        - storage_leaf2
+  # keeps ctlplane and tenant as ipv4
+  networks:
+    internalapi:
+      name: InternalApi
+      name_lower: internal_api
+      mtu: 1350
+      subnets:
+      - name: internal_api
+        vlan: 20
+        ipv6:
+          cidr: fd00:fd00:fd00:2000::/64
+          allocation:
+            start: fd00:fd00:fd00:2000::10
+            end: fd00:fd00:fd00:2000:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:2000::1
+          routes:
+          - destination: fd00:fd00:fd00:2001::/64
+            nexthop: fd00:fd00:fd00:2000::1
+          - destination: fd00:fd00:fd00:2002::/64
+            nexthop: fd00:fd00:fd00:2000::1
+        attach_config: br-osp
+      - name: internal_api_leaf1
+        vlan: 21
+        ipv6:
+          cidr: fd00:fd00:fd00:2001::/64
+          allocation:
+            start: fd00:fd00:fd00:2001::10
+            end: fd00:fd00:fd00:2001:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:2001::1
+          routes:
+          - destination: fd00:fd00:fd00:2000::/64
+            nexthop: fd00:fd00:fd00:2001::1
+          - destination: fd00:fd00:fd00:2002::/64
+            nexthop: fd00:fd00:fd00:2001::1
+        attach_config: br-osp
+      - name: internal_api_leaf2
+        vlan: 22
+        ipv6:
+          cidr: fd00:fd00:fd00:2002::/64
+          allocation:
+            start: fd00:fd00:fd00:2002::10
+            end: fd00:fd00:fd00:2002:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:2002::1
+          routes:
+          - destination: fd00:fd00:fd00:2000::/64
+            nexthop: fd00:fd00:fd00:2002::1
+          - destination: fd00:fd00:fd00:2001::/64
+            nexthop: fd00:fd00:fd00:2002::1
+        attach_config: br-osp
+    external:
+      name: External
+      name_lower: external
+      subnets:
+      - name: external
+        ipv6:
+          cidr: 2001:db8:fd00:1000::/64
+          gateway: 2001:db8:fd00:1000::1
+          allocation:
+            start: 2001:db8:fd00:1000::10
+            end: 2001:db8:fd00:1000:ffff:ffff:ffff:fffe
+        attach_config: br-ex
+    storage:
+      name: Storage
+      name_lower: storage
+      mtu: 1350
+      subnets:
+      - name: storage
+        vlan: 30
+        ipv6:
+          cidr: fd00:fd00:fd00:3000::/64
+          allocation:
+            start: fd00:fd00:fd00:3000::10
+            end: fd00:fd00:fd00:3000:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:3000::1
+          routes:
+          - destination: fd00:fd00:fd00:3001::/64
+            nexthop: fd00:fd00:fd00:3000::1
+          - destination: fd00:fd00:fd00:3002::/64
+            nexthop: fd00:fd00:fd00:3000::1
+        attach_config: br-osp
+      - name: storage_leaf1
+        vlan: 31
+        ipv6:
+          cidr: fd00:fd00:fd00:3001::/64
+          allocation:
+            start: fd00:fd00:fd00:3001::10
+            end: fd00:fd00:fd00:3001:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:3001::1
+          routes:
+          - destination: fd00:fd00:fd00:3000::/64
+            nexthop: fd00:fd00:fd00:3001::1
+          - destination: fd00:fd00:fd00:3002::/64
+            nexthop: fd00:fd00:fd00:3001::1
+        attach_config: br-osp
+      - name: storage_leaf2
+        vlan: 32
+        ipv6:
+          cidr: fd00:fd00:fd00:3002::/64
+          allocation:
+            start: fd00:fd00:fd00:3002::10
+            end: fd00:fd00:fd00:3002:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:3002::1
+          routes:
+          - destination: fd00:fd00:fd00:3000::/64
+            nexthop: fd00:fd00:fd00:3002::1
+          - destination: fd00:fd00:fd00:3001::/64
+            nexthop: fd00:fd00:fd00:3002::1
+        attach_config: br-osp
+    storagemgmt:
+      name: StorageMgmt
+      name_lower: storage_mgmt
+      mtu: 1350
+      subnets:
+      - name: storage_mgmt
+        vlan: 40
+        ipv6:
+          cidr: fd00:fd00:fd00:4000::/64
+          allocation:
+            start: fd00:fd00:fd00:4000::10
+            end: fd00:fd00:fd00:4000:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:4000::1
+          routes:
+          - destination: fd00:fd00:fd00:4001::/64
+            nexthop: fd00:fd00:fd00:4000::1
+          - destination: fd00:fd00:fd00:4002::/64
+            nexthop: fd00:fd00:fd00:4000::1
+        attach_config: br-osp
+      - name: storage_mgmt_leaf1
+        vlan: 41
+        ipv6:
+          cidr: fd00:fd00:fd00:4001::/64
+          allocation:
+            start: fd00:fd00:fd00:4001::10
+            end: fd00:fd00:fd00:4001:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:4001::1
+          routes:
+          - destination: fd00:fd00:fd00:4000::/64
+            nexthop: fd00:fd00:fd00:4001::1
+          - destination: fd00:fd00:fd00:4002::/64
+            nexthop: fd00:fd00:fd00:4001::1
+        attach_config: br-osp
+      - name: storage_mgmt_leaf2
+        vlan: 42
+        ipv6:
+          cidr: fd00:fd00:fd00:4002::/64
+          allocation:
+            start: fd00:fd00:fd00:4002::10
+            end: fd00:fd00:fd00:4002:ffff:ffff:ffff:fffe
+          gateway: fd00:fd00:fd00:4002::1
+          routes:
+          - destination: fd00:fd00:fd00:4000::/64
+            nexthop: fd00:fd00:fd00:4002::1
+          - destination: fd00:fd00:fd00:4001::/64
+            nexthop: fd00:fd00:fd00:4002::1
+        attach_config: br-osp
+    tenant:
+      name: Tenant
+      name_lower: tenant
+      vip: false
+      mtu: 1350
+      subnets:
+      - name: tenant
+        vlan: 50
+        vip: false
+        ipv4:
+          cidr: 172.20.0.0/24
+          allocation:
+            start: 172.20.0.10
+            end: 172.20.0.250
+          gateway: 172.20.0.1
+          routes:
+          - destination: 172.20.1.0/24
+            nexthop: 172.20.0.1
+          - destination: 172.20.2.0/24
+            nexthop: 172.20.0.1
+        attach_config: br-osp
+      - name: tenant_leaf1
+        vlan: 51
+        vip: false
+        ipv4:
+          cidr: 172.20.1.0/24
+          allocation:
+            start: 172.20.1.10
+            end: 172.20.1.250
+          gateway: 172.20.1.1
+          routes:
+          - destination: 172.20.0.0/24
+            nexthop: 172.20.1.1
+          - destination: 172.20.2.0/24
+            nexthop: 172.20.1.1
+        attach_config: br-osp
+      - name: tenant_leaf2
+        vlan: 52
+        vip: false
+        ipv4:
+          cidr: 172.20.2.0/24
+          allocation:
+            start: 172.20.2.10
+            end: 172.20.2.250
+          gateway: 172.20.2.1
+          routes:
+          - destination: 172.20.0.0/24
+            nexthop: 172.20.2.1
+          - destination: 172.20.1.0/24
+            nexthop: 172.20.2.1
+        attach_config: br-osp
+  extrafeatures:
+    - ipv6
+
+# TODO: create good set of ipv6 tempest tests, right now disabled those which create floating IP, which is not the case in IPv6
+tempest_test_dict:
+  regex: ''
+  includelist:
+      - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
+      - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
+      - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
+      - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
+  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
+  excludelist:
+      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
+      - "^tempest.scenario.test_snapshot_pattern.TestSnapshotPattern.test_snapshot_pattern"
+      - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_volume_boot_pattern"
+
+tempest_enable_feature_dict:
+  network:
+    # The cidr block to allocate project ipv6 subnets from (string value)
+    project_network_v6_cidr: 2001:db8:fd00:6000::/64
+    # The mask bits for project ipv6 subnets (integer value)
+    project_network_v6_mask_bits: 64
+  network-feature-enabled:
+    ipv6: true
+    # with ipv6 only external network there are no floating ips
+    floating_ips: false
+  compute-feature-enabled:
+    vnc_console: true
+    live_migration: true
+    block_migration_for_live_migration: true
+    volume_backed_live_migration: true
+    console_output: true

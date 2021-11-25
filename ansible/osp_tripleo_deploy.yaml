@@ -31,7 +31,7 @@
     - "{{ ooo_yaml_dir }}"
     - "{{ ooo_tarball_dir }}"
 
-  - name: render common templates to yaml dir
+  - name: render heat-env-config common templates to yaml dir
     template:
       src: "{{ item }}"
       dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
@@ -39,7 +39,7 @@
     with_fileglob:
     - "templates/osp/tripleo_heat_envs/common/*.j2"
 
-  - name: render templates to yaml dir
+  - name: render version specific heat-env-config templates to yaml dir
     template:
       src: "{{ item }}"
       dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
@@ -60,7 +60,7 @@
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: copy {{ osp.release }} custom tripleo tarball files
+  - name: copy tripleo-tarball-config {{ osp.release }} custom tripleo tarball files
     copy:
       src: "{{ item }}"
       dest: "{{ ooo_tarball_dir }}/"
@@ -74,7 +74,15 @@
     loop_control:
       loop_var: feature
 
-  - name: create tripleo-tarball-config ConfigMap with tarballs
+  - name: render tripleo-tarball-config templates to yaml dir
+    template:
+      src: "{{ item }}"
+      dest: "{{ ooo_tarball_dir }}/{{ item | basename | splitext | first }}"
+      mode: '0644'
+    with_fileglob:
+    - "templates/osp/tripleo_tarball_config/{{ osp.release }}/*.j2"
+
+  - name: create tripleo-tarball-config ConfigMap with tarball
     shell: |
       cd {{ ooo_tarball_dir }}
       tar -cvzf tarball-config.tar.gz *

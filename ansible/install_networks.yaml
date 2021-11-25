@@ -47,13 +47,15 @@
   # Notes:
   # * can not use nmcli module https://github.com/ansible/ansible/issues/48055
   # * don't apply these persistent, in case of a host reboot those need to be reapplied
-  - name: Create gateways on isolated vlan networks
+  - name: Create IPv4 gateways on isolated vlan networks
+    vars:
+      cidr_suffix: "{{ item.1.ipv4.cidr | regex_search('.*/(.+)', '\\1') | first }}"
     shell: |
       set -e
-      cidr_suffix=$(echo "{{ item.1.ipv4.cidr }}" | sed  's/.*\///')
+      ip link del link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
       ip link add link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
       ip addr flush dev ospnetwork.{{ item.1.vlan }}
-      ip addr add {{ item.1.ipv4.gateway }}/$cidr_suffix dev ospnetwork.{{ item.1.vlan }}
+      ip addr add {{ item.1.ipv4.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
       ip link set ospnetwork.{{ item.1.vlan }} up
       firewall-cmd --zone=libvirt --change-interface=ospnetwork.{{ item.1.vlan }}
       iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
@@ -63,3 +65,27 @@
     when:
     - item.1.vlan is defined
     - item.1.ipv4.gateway is defined
+
+  - name: Create IPv6 gateways on isolated vlan networks
+    vars:
+      cidr_suffix: "{{ item.1.ipv6.cidr | regex_search('.*/(.+)', '\\1') | first }}"
+    shell: |
+      set -e
+      ip link del link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
+      ip link add link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
+      sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.autoconf=0
+      sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.accept_ra=0
+      sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.disable_ipv6=0
+      ip addr flush dev ospnetwork.{{ item.1.vlan }}
+      ip addr add {{ item.1.ipv6.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
+      ip link set ospnetwork.{{ item.1.vlan }} up
+      firewall-cmd --zone=libvirt --change-interface=ospnetwork.{{ item.1.vlan }}
+      ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
+    args:
+      executable: /bin/bash
+    with_subelements:
+    - "{{ osp.networks }}"
+    - subnets
+    when:
+    - item.1.vlan is defined
+    - item.1.ipv6.gateway is defined
