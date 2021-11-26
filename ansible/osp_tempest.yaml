@@ -93,7 +93,7 @@
       shell: |
         #!/bin/bash
         set -e
-        curl -o {{ tempest_working_dir }}/ca.crt http://ipa-ca.{{ base_domain_name }}/ipa/config/ca.crt
+        /usr/bin/cp -f /opt/freeipa/data/etc/ipa/ca.crt {{ tempest_working_dir }}/ca.crt
         sed -i -e 's!\(\s*cacert:\).*!\1 /var/lib/tempest/.config/openstack/ca.crt!' {{ tempest_working_dir }}/clouds.yaml
       environment:
         <<: *oc_env
