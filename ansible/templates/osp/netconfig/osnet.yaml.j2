@@ -25,6 +25,13 @@ spec:
             mtu: {{ nodeConfPolicy.mtu }}
 {% endif %}
 {% endfor %}
+  domainName: {{ osp.domain_name }}
+{% if osp.dns_servers is defined and osp.dns_servers|length %}
+  dnsServers: {{ osp.dns_servers }}
+{% endif %}
+{% if osp.dns_search_domains is defined and osp.dns_search_domains|length %}
+  dnsSearchDomains : {{ osp.dns_search_domains }}
+{% endif %}
   networks:
 {% for id, net in osp.networks.items() %}
   - name: {{ net.name }}
@@ -34,6 +41,9 @@ spec:
 {% endif %}
 {% if net.mtu is defined %}
     mtu: {{ net.mtu }}
+{% endif %}
+{% if net.is_control_plane is defined %}
+    isControlPlane: true
 {% endif %}
     subnets:
 {% for subnet in net.subnets %}

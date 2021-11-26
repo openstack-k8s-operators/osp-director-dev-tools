@@ -1,4 +1,4 @@
-# Todo: switch to downstream tripleoclient container image when available
+---
 openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
 osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
 osp_release_defaults:

@@ -6,6 +6,8 @@ base_path: /home/ocp
 # deploys python39 and ansible 4.6.0 which makes dev-tools to fail for the short term pin to b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 
+base_domain_name: test.metalkube.org
+
 # To set a specific release to install.
 ocp_version: 4.7
 ocp_minor_version: 9
@@ -66,7 +68,7 @@ ocp_num_bm_workers: 0
 
 # OCP cluster name
 ocp_cluster_name: ostest
-ocp_domain_name: test.metalkube.org
+ocp_domain_name: "{{ base_domain_name }}"
 
 # Released version of the opm package (can be set to 'latest')
 opm_version: v1.12.5
@@ -212,6 +214,10 @@ osp_defaults:
     - sdc
   # size of OSD disk size in GB
   ceph_num_osd_disk_size: 20
+  domain_name: "osptest.{{ base_domain_name }}"
+  dns_servers:
+    - 192.168.25.1
+  dns_search_domains: []
   attach_configs:
     br-osp:
       bridge_name: br-osp
@@ -225,6 +231,7 @@ osp_defaults:
     ctlplane:
       name: Control
       name_lower: ctlplane
+      is_control_plane: true
       subnets:
       - name: ctlplane
         ipv4:

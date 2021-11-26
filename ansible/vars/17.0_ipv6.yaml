@@ -1,7 +1,5 @@
-# Todo: need to check what is missing in upstream wallaby tripleoclient image
-#openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
-openstackclient_image: quay.io/openstack-k8s-operators/tripleowallaby-openstack-tripleoclient:current-tripleo_patched
-#openstackclient_image: quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1_patched2
+---
+openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
 osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
 
 osp_release_defaults:
