@@ -1,7 +1,7 @@
 -U
 -r {{ base_domain_name|upper }}
 --no-ntp
---ds-password=abcd1234
---admin-password=abcd4321
+--ds-password={{ freeipa_directory_manager_password }}
+--admin-password={{ freeipa_admin_password }}
 --setup-dns
 --no-forwarders

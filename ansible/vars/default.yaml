@@ -374,3 +374,5 @@ no_proxy: ""
 
 # Configure freeipa and use for base_domain_name DNS (required for internal TLS)
 enable_freeipa: true
+freeipa_admin_password: abcd4321
+freeipa_directory_manager_password: dcba1234
