@@ -268,12 +268,11 @@ nfs_cleanup: hosts
 	 rm \$$temp"
 
 destroy_ocp: hosts local-defaults.yaml
-	$(MAKE) openstack_cleanup
 	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	ocp_installer_destroy.yaml
-	$(MAKE) nfs_cleanup
+	$(MAKE) openstack_cleanup nfs_cleanup
 
 demo: hosts
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

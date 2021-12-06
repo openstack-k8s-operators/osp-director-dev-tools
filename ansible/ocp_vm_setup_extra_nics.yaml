@@ -156,18 +156,30 @@
         when: not (ocp_ai|bool)
         block:
         # HACK to fix dev-scripts bug
-        - name: "destroy vm {{ item }}"
-          command: "virsh destroy {{ item }}"
-          with_items: "{{ worker_ocp_active[0].split(' ') }}"
+        # It's not possible to hot-plug 2 nics with the default libvirt pci topology
+        # The "right way" to fix this is to add more pci root ports at VM create.
+        # However the VM xml is managed deep in the openshift installer (terraform libvirt plugin)
+        #
+        # Instead we gracefully stop the VM to attach the nics (libvirt adds the root ports implicitly)
+        # Sushy-tools is paused while this is being done so that it and metal3/ironic do not react to the
+        # power state changing.
+
+        - name: pause sushy-tools
+          command:
+            cmd: podman pause sushy-tools
+
         - name: attach interfaces to vm
           shell: |
-            virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config
-          with_nested:
-          - "{{ worker_ocp_active[0].split(' ') }}"
-          - ['external', 'ospnetwork']
-        - name: "start vm {{ item }}"
-          command: "virsh start {{ item }}"
+            virsh destroy {{ item }} --graceful
+            for net in "external" "ospnetwork"; do
+              virsh attach-interface {{ item }} bridge ${net} --model virtio --persistent --config
+            done
+            virsh start {{ item }}
           with_items: "{{ worker_ocp_active[0].split(' ') }}"
+
+        - name: unpause sushy-tools
+          command:
+            cmd: podman unpause sushy-tools
 
       - name: Attach the osp network to ACTIVE worker VM's
         command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config"

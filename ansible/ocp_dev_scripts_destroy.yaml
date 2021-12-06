@@ -19,6 +19,44 @@
       chdir: "{{ base_path }}/dev-scripts"
     ignore_errors: true
 
+  - name: Kill any orphaned install
+    command:
+      cmd: pkill -9 -f '{{ ocp_cluster_name }}/openshift-baremetal-install'
+    ignore_errors: true
+
+  - name: Ensure dev_scripts VMs and networks are deleted
+    become: true
+    become_user: root
+    shell: |
+      for i in $(virsh list --name | grep "^{{ ocp_cluster_name }}_"); do
+        virsh destroy $i
+      done
+
+      for i in $(virsh list --all --name | grep "^{{ ocp_cluster_name }}_"); do
+        virsh undefine $i --remove-all-storage --nvram
+      done
+
+      for i in $(virsh net-list --name | grep "^{{ ocp_cluster_name }}"); do
+        virsh net-destroy $i
+      done
+
+      for i in $(virsh net-list --all --name | grep "^{{ ocp_cluster_name }}"); do
+        virsh net-undefine $i
+      done
+
+  - name: Kill any orphaned dnsmasq
+    command:
+      cmd: pkill -f 'dnsmasq .*--conf-file=/var/lib/libvirt/dnsmasq/{{ ocp_cluster_name }}'
+    ignore_errors: true
+
+  - name: Removed cached deployment data
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}"
+      - "{{ base_path }}/{{ ocp_cluster_name }}"
+
   ### remove osp_base_image
 
   - name: Set path to RHEL base image for dev-scripts
