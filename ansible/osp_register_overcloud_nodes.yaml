@@ -30,9 +30,9 @@
       state: directory
       mode: '0755'
 
-  - name: wait for OpenstackPlaybookGenerator finished rendering playbooks
+  - name: wait for OpenstackConfigGenerator finished rendering playbooks
     shell: |
-      oc wait osplaybookgenerator -n openstack --for condition=Finished default --timeout={{ default_timeout }}s
+      oc wait osconfiggenerator -n openstack --for condition=Finished default --timeout={{ default_timeout }}s
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
