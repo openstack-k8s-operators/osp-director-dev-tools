@@ -65,6 +65,7 @@ osp_release_defaults:
           allocation:
             start: 172.17.0.10
             end: 172.17.0.250
+          gateway: 172.17.0.1
           routes:
           - destination: 172.17.1.0/24
             nexthop: 172.17.0.1
@@ -78,6 +79,7 @@ osp_release_defaults:
           allocation:
             start: 172.17.1.10
             end: 172.17.1.250
+          gateway: 172.17.1.1
           routes:
           - destination: 172.17.0.0/24
             nexthop: 172.17.1.1
@@ -91,6 +93,7 @@ osp_release_defaults:
           allocation:
             start: 172.17.2.10
             end: 172.17.2.250
+          gateway: 172.17.2.1
           routes:
           - destination: 172.17.1.0/24
             nexthop: 172.17.2.1
@@ -109,6 +112,7 @@ osp_release_defaults:
           allocation:
             start: 172.18.0.10
             end: 172.18.0.250
+          gateway: 172.18.0.1
           routes:
           - destination: 172.18.1.0/24
             nexthop: 172.18.0.1
@@ -122,6 +126,7 @@ osp_release_defaults:
           allocation:
             start: 172.18.1.10
             end: 172.18.1.250
+          gateway: 172.18.1.1
           routes:
           - destination: 172.18.0.0/24
             nexthop: 172.18.1.1
@@ -135,6 +140,7 @@ osp_release_defaults:
           allocation:
             start: 172.18.2.10
             end: 172.18.2.250
+          gateway: 172.18.2.1
           routes:
           - destination: 172.18.0.0/24
             nexthop: 172.18.2.1
@@ -153,6 +159,7 @@ osp_release_defaults:
           allocation:
             start: 172.19.0.10
             end: 172.19.0.250
+          gateway: 172.19.0.1
           routes:
           - destination: 172.19.1.0/24
             nexthop: 172.19.0.1
@@ -166,6 +173,7 @@ osp_release_defaults:
           allocation:
             start: 172.19.1.10
             end: 172.19.1.250
+          gateway: 172.19.1.1
           routes:
           - destination: 172.19.0.0/24
             nexthop: 172.19.1.1
@@ -179,6 +187,7 @@ osp_release_defaults:
           allocation:
             start: 172.19.2.10
             end: 172.19.2.250
+          gateway: 172.19.2.1
           routes:
           - destination: 172.19.0.0/24
             nexthop: 172.19.2.1
@@ -199,6 +208,7 @@ osp_release_defaults:
           allocation:
             start: 172.20.0.10
             end: 172.20.0.250
+          gateway: 172.20.0.1
           routes:
           - destination: 172.20.1.0/24
             nexthop: 172.20.0.1
@@ -213,6 +223,7 @@ osp_release_defaults:
           allocation:
             start: 172.20.1.10
             end: 172.20.1.250
+          gateway: 172.20.1.1
           routes:
           - destination: 172.20.0.0/24
             nexthop: 172.20.1.1
@@ -227,6 +238,7 @@ osp_release_defaults:
           allocation:
             start: 172.20.2.10
             end: 172.20.2.250
+          gateway: 172.20.2.1
           routes:
           - destination: 172.20.0.0/24
             nexthop: 172.20.2.1
