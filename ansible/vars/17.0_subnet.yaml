@@ -1,6 +1,5 @@
 ---
-openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
-
+openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp17-openstack-tripleoclient:17.0_20211130.1
 osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
 ephemeral_heat:
   heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
@@ -16,8 +15,8 @@ openstackclient_networks:
 
 osp_release_defaults:
   release: 17.0
-  container_tag: 17.0_20211104.1
-  ceph_tag: 5-12
+  container_tag: 17.0_20211130.1
+  ceph_tag: 5-35
   vmset:
     Controller:
       count: 1
