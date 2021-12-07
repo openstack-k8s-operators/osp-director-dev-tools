@@ -116,7 +116,7 @@ openstack:
 	$(MAKE) ctlplane
 	$(MAKE) computes
 	$(MAKE) osp_custom_config
-	$(MAKE) playbook_generator
+	$(MAKE) config_generator
 	$(MAKE) register_overcloud_nodes
 	$(MAKE) osp_deploy
 
@@ -173,13 +173,13 @@ computes: hosts local-defaults.yaml
 	-e @local-defaults.yaml \
 	install_computes.yaml
 
-playbook_generator: hosts local-defaults.yaml
+config_generator: hosts local-defaults.yaml
 	# NOTE: requires 'make olm'
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
-	playbook_generator.yaml
+	config_generator.yaml
 
 datavolume: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
