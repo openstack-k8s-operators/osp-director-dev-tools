@@ -1,10 +1,8 @@
 FROM registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
 
 USER root
-RUN dnf install -y http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
-RUN rhos-release rhel-8.4
+ADD rhel.repo /etc/yum.repos.d/rhel.repo
 RUN dnf -y install ipa-client
-RUN dnf -y remove rhos-release
-RUN rm -f /etc/yum.repos.d/rhos-release-*
+RUN rm -f /etc/yum.repos.d/rhel.repo
 RUN dnf -y clean all
 USER cloud-admin
