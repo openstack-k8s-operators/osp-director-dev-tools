@@ -15,8 +15,9 @@ spec:
   runUID: 42480
   runGID: 42480
   domainName: {{ osp.domain_name }}
-  dnsServers: [ "192.168.25.1"]
-  dnsSearchDomains:
-    - {{ osp.domain_name }}
-    - {{ base_domain_name }}
-
+{% if osp.dns_search_domains is defined and osp.dns_search_domains|length %}
+  dnsServers: {{ osp.dns_servers }}
+{% endif %}
+{% if osp.dns_search_domains is defined and osp.dns_search_domains|length %}
+  dnsSearchDomains: {{ osp.dns_search_domains }}
+{% endif %}
