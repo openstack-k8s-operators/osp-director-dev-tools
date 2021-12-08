@@ -229,7 +229,6 @@ osp_defaults:
       bridge_name: br-ex
       interface: enp6s0
       mtu: 1500
-  domain_name: "osptest.{{ base_domain_name }}"
   networks:
     ctlplane:
       name: Control
