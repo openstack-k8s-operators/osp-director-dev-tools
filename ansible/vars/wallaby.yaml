@@ -1,6 +1,5 @@
-# Todo: need to check what is missing in upstream wallaby tripleoclient image
-# openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
-openstackclient_image: quay.io/openstack-k8s-operators/tripleowallaby-openstack-tripleoclient:current-tripleo_patched
+---
+openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
 osp_release_defaults:
   release: wallaby
   container_tag: current-tripleo
