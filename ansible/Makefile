@@ -65,6 +65,7 @@ post_install: hosts local-defaults.yaml
 	ocp_ai_post_install.yaml \
 	ocp_default_storageclass.yaml \
 	ocp_image_registry.yaml
+	$(MAKE) custom_registries
 	$(MAKE) nics
 	$(MAKE) freeipa
 
