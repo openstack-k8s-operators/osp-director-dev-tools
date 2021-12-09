@@ -18,5 +18,8 @@
 - name: Destroy the assisted installer OCP cluster
   import_playbook: ocp_ai_destroy.yaml
 
+- name: Cleanup freeipa
+  import_playbook: freeipa_cleanup.yaml
+
 - name: Cleanup libvirt resources
   import_playbook: libvirt_cleanup.yaml

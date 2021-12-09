@@ -39,3 +39,8 @@
         done
       done
 
+  - name: Cleanup FreeIPA objects
+    become: true
+    become_user: root
+    ignore_errors: true
+    command: podman exec freeipa-server /data/openstack_cleanup.sh

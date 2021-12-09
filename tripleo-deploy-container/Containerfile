@@ -1,15 +1,8 @@
-FROM quay.io/openstack-k8s-operators/rhosp17-openstack-tripleoclient:17.0_20210720.1
+FROM registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
 
 USER root
-RUN dnf -y install patch
+ADD rhel.repo /etc/yum.repos.d/rhel.repo
+RUN dnf -y install ipa-client
+RUN rm -f /etc/yum.repos.d/rhel.repo
 RUN dnf -y clean all
-
-# https://review.opendev.org/c/openstack/tripleo-common/+/803599
-ADD 0001-inventory.py-all_get_neutron_data-to-handle-404.patch /root/
-RUN patch -p1 < /root/0001-inventory.py-all_get_neutron_data-to-handle-404.patch -d /usr/lib/python3.6/site-packages/
-
-# https://bugs.launchpad.net/tripleo/+bug/1939167
-ADD 0001-Fix-cell-export-no-attribute-exception.patch /root/
-RUN patch -p1 < /root/0001-Fix-cell-export-no-attribute-exception.patch -d /usr/lib/python3.6/site-packages/
-
 USER cloud-admin

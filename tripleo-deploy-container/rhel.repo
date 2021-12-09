@@ -1,0 +1,13 @@
+[rhel-8.4-baseos]
+name=rhel8 baseos
+baseurl=http://rhsm-pulp.corp.redhat.com/content/eus/rhel8/8.4/$basearch/baseos/os/
+enabled=1
+gpgcheck=0
+
+[rhel-8.4-appstream]
+name=rhel8 appstream
+baseurl=http://rhsm-pulp.corp.redhat.com/content/eus/rhel8/8.4/$basearch/appstream/os/
+enabled=1
+gpgcheck=0
+
+

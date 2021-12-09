@@ -88,12 +88,23 @@
       environment:
         <<: *oc_env
 
+    - name: Add CA cert
+      when: osp.tlse|default(false)|bool
+      shell: |
+        #!/bin/bash
+        set -e
+        /usr/bin/cp -f /opt/freeipa/data/etc/ipa/ca.crt {{ tempest_working_dir }}/ca.crt
+        sed -i -e 's!\(\s*cacert:\).*!\1 /var/lib/tempest/.config/openstack/ca.crt!' {{ tempest_working_dir }}/clouds.yaml
+      environment:
+        <<: *oc_env
+
     - name: create /var/lib/tempest/.config/openstack directory and copy clouds.yaml
       shell: |
         #!/bin/bash
         set -e
         oc rsh -n openstack tempest mkdir -p /var/lib/tempest/.config/openstack
         oc cp -n openstack {{ tempest_working_dir }}/clouds.yaml tempest:/var/lib/tempest/.config/openstack/clouds.yaml
+        test -e {{ tempest_working_dir }}/ca.crt && oc cp -n openstack {{ tempest_working_dir }}/ca.crt tempest:/var/lib/tempest/.config/openstack/ca.crt || true
       environment:
         <<: *oc_env
 

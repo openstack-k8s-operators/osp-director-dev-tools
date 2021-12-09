@@ -1,7 +1,7 @@
 parameter_defaults:
-  CloudDomain: {{ ocp_cluster_name }}.{{ ocp_domain_name }}
-  CloudName: overcloud.{{ ocp_cluster_name }}.{{ ocp_domain_name }}
-  CloudNameInternal: overcloud.internalapi.{{ ocp_cluster_name }}.{{ ocp_domain_name }}
-  CloudNameStorage: overcloud.storage.{{ ocp_cluster_name }}.{{ ocp_domain_name }}
-  CloudNameStorageManagement: overcloud.storagemgmt.{{ ocp_cluster_name }}.{{ ocp_domain_name }}
-  CloudNameCtlplane: overcloud.ctlplane.{{ ocp_cluster_name }}.{{ ocp_domain_name }}
+  CloudDomain: {{ osp.domain_name }}
+  CloudName: overcloud.{{ osp.domain_name }}
+  CloudNameInternal: overcloud.internalapi.{{ osp.domain_name }}
+  CloudNameStorage: overcloud.storage.{{ osp.domain_name }}
+  CloudNameStorageManagement: overcloud.storagemgmt.{{ osp.domain_name }}
+  CloudNameCtlplane: overcloud.ctlplane.{{ osp.domain_name }}

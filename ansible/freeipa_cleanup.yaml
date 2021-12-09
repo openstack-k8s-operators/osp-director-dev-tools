@@ -1,0 +1,56 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  become: true
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: Update dev_script dnsmasq to stop forwarding to freeipa
+    lineinfile:
+      path: /etc/NetworkManager/dnsmasq.d/openshift-ostest.conf
+      regexp: '# Forward to FreeIPA'
+      state: absent
+    when: not (ocp_ai|bool)
+
+  - name: Reload NetworkManager
+    service:
+      name: NetworkManager
+      state: reloaded
+      enabled: yes
+    when: not (ocp_ai|bool)
+
+  - name: Stop FreeIPA
+    service:
+      name: container-freeipa-server
+      state: stopped
+      enabled: no
+    ignore_errors: true
+
+  - name: Remove freeipa-server container
+    containers.podman.podman_container:
+      name: freeipa-server
+      state: absent
+
+  - name: Remove freeipa-network
+    containers.podman.podman_network:
+      name: freeipa-network
+      state: absent
+
+  - name: Delete FreeIPA data
+    file:
+      path: /opt/freeipa/data
+      state: absent
+
+  - name: Delete freeipa service
+    file:
+      path: /etc/systemd/system/container-freeipa-server.service
+      state: absent
+
+  - name: Reload systemd service
+    systemd:
+      daemon_reload: yes
+
