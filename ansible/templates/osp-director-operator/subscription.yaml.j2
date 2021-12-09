@@ -11,5 +11,7 @@ spec:
   source: osp-director-operator-index
   sourceNamespace: {{ namespace }}
   name: osp-director-operator
-  startingCSV: osp-director-operator.v{{ csv_version }}
+  # to install a specific version
+  # installPlanApproval: Manual
+  # startingCSV: osp-director-operator.vX.X.X
   channel: alpha
