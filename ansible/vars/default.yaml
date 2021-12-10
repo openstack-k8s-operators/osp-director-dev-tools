@@ -320,7 +320,7 @@ osp_defaults:
   #    - ipv6
   extrafeatures: []
   # Enable TLS everywhere
-  tlse: true
+  tlse: false
 
 # overwrite elements from osp_defaults for a specific release
 osp_release_defaults: {}
@@ -372,6 +372,6 @@ https_proxy: ""
 no_proxy: ""
 
 # Configure freeipa and use for base_domain_name DNS (required for internal TLS)
-enable_freeipa: true
+enable_freeipa: false
 freeipa_admin_password: abcd4321
 freeipa_directory_manager_password: dcba1234

@@ -1,0 +1,4 @@
+osp_release_defaults:
+  tlse: true
+
+enable_freeipa: true
