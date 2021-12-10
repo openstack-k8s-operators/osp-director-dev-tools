@@ -375,3 +375,8 @@ no_proxy: ""
 enable_freeipa: false
 freeipa_admin_password: abcd4321
 freeipa_directory_manager_password: dcba1234
+
+# must-gather image
+must_gather_image: quay.io/openstack-k8s-operators/must-gather:0.0.2
+# Optional directory to save must-gather information, defaults to "{{ working_log_dir }}"
+# must_gather_directory: "{{ working_log_dir }}"
