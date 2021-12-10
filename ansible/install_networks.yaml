@@ -9,6 +9,10 @@
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
+  - name: Include network file {{ osp.networks }}.yaml
+    include_vars:
+      file: "{{ osp.networks }}.yaml"
+
   - name: Set directory for networks yaml files
     set_fact:
       network_yaml_dir: "{{ working_yamls_dir }}/networks"
@@ -29,8 +33,8 @@
 
   - name: Render templates to yaml dir
     template:
-      src: "osp/netconfig/osnet.yaml.j2"
-      dest: "{{ network_yaml_dir }}/osnet_config.yaml"
+      src: "osp/netconfig/osnetconfig.yaml.j2"
+      dest: "{{ network_yaml_dir }}/osnetconfig.yaml"
       mode: '0644'
 
   - name: Start networks
@@ -60,7 +64,7 @@
       firewall-cmd --zone=libvirt --change-interface=ospnetwork.{{ item.1.vlan }}
       iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
     with_subelements:
-    - "{{ osp.networks }}"
+    - "{{ osp_networks }}"
     - subnets
     when:
     - item.1.vlan is defined
@@ -84,7 +88,7 @@
     args:
       executable: /bin/bash
     with_subelements:
-    - "{{ osp.networks }}"
+    - "{{ osp_networks }}"
     - subnets
     when:
     - item.1.vlan is defined

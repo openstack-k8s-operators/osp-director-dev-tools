@@ -5,11 +5,13 @@ openstackclient_networks:
   - internal_api
   - internal_api_leaf1
 
+enable_fencing: true
+
 osp_release_defaults:
   networks: ipv4_subnet
   vmset:
     Controller:
-      count: 1
+      count: 3
       cores: 6
       disk_size: 40
       memory: 20

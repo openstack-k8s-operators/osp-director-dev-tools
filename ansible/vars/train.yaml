@@ -1,4 +1,4 @@
-# Note, this uses the centos7 image as the regexp matches with later releases
+---
 openstackclient_image: quay.io/tripleotraincentos8/centos-binary-tripleoclient:current-tripleo
 osp_release_defaults:
   release: train

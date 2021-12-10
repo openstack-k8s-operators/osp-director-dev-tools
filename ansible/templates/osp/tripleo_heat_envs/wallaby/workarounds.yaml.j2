@@ -1,8 +1,1 @@
-parameter_defaults:
-  # workaround until we have these service IPs implemented in the operator
-  RedisVirtualFixedIPs:
-    - ip_address: 172.17.0.9
-      use_neutron: false
-  OVNDBsVirtualFixedIPs:
-    - ip_address: 172.17.0.8
-      use_neutron: false
+../17.0/workarounds.yaml.j2

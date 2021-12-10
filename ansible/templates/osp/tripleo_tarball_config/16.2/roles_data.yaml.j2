@@ -199,8 +199,11 @@
     - OS::TripleO::Services::Zaqar
 ###############################################################################
 # Role: ControllerNovaStandalone                                              #
+# Note: max hostname length limitation to 64 char. If longer fails with:      #
+#       "response host_add: invalid 'hostname': can be at most 64 characters" #
+#       https://bugzilla.redhat.com/show_bug.cgi?id=1703564                   #
 ###############################################################################
-- name: ControllerNovaStandalone
+- name: CtlNovaStdalone
   description: |
     Controller role that does not contain the nova control component.  Use in
     combination with the Novacontrol role.
@@ -280,6 +283,7 @@
     - OS::TripleO::Services::HeatApiCfn
     - OS::TripleO::Services::HeatEngine
     - OS::TripleO::Services::Horizon
+    - OS::TripleO::Services::IpaClient
     - OS::TripleO::Services::Ipsec
     - OS::TripleO::Services::IronicApi
     - OS::TripleO::Services::IronicConductor
