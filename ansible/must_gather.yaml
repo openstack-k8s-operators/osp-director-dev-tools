@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: must-gather run dir
+    set_fact:
+      _must_gather_dir: "{{ must_gather_directory | default(working_log_dir) }}/must-gather-{{ ansible_date_time.iso8601_basic }}"
+
+  - name: Create must-gather run dir
+    file:
+      path: "{{ _must_gather_dir }}"
+      state: directory
+      mode: 0755
+
+  - name: Run must-gather
+    shell: |
+      #!/bin/bash
+      set -e
+      oc adm must-gather \
+        --image={{ must_gather_image }} \
+        --dest-dir={{ _must_gather_dir }}
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: Zip must-gather
+    archive:
+      path: "{{ _must_gather_dir }}"
+      dest: "{{ _must_gather_dir }}.zip"
+      format: zip
+      remove: yes
+    when: must_gather_compress_logs|default(false)|bool

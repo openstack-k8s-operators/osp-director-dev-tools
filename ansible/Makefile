@@ -135,6 +135,7 @@ openstack:
 	$(MAKE) config_generator
 	$(MAKE) register_overcloud_nodes
 	$(MAKE) osp_deploy
+	$(MAKE) must_gather
 
 osp_deploy: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -289,6 +290,12 @@ destroy_ocp: hosts local-defaults.yaml
 	-e @local-defaults.yaml \
 	ocp_installer_destroy.yaml
 	$(MAKE) openstack_cleanup nfs_cleanup
+
+must_gather: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	must_gather.yaml
 
 demo: hosts
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
