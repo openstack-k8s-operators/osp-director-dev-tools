@@ -1,3 +1,4 @@
+#jinja2: trim_blocks:False
 {% if osp.tlse|default(false)|bool %}
 parameter_defaults:
   EnableInternalTLS: True
@@ -16,10 +17,12 @@ resource_registry:
   OS::TripleO::Services::HAProxyInternalTLS: deployment/haproxy/haproxy-internal-tls-certmonger.yaml
   OS::TripleO::Services::IpaClient: deployment/ipa/ipaservices-baremetal-ansible.yaml
   OS::TripleO::Services::TLSProxyBase: deployment/apache/apache-baremetal-puppet.yaml
-  OS::TripleO::ControllerServiceServerMetadataHook: extraconfig/nova_metadata/krb-service-principals/controller-role.yaml
-  OS::TripleO::Compute{% if "hci" in osp.extrafeatures %}HCI{% endif %}ServiceServerMetadataHook: extraconfig/nova_metadata/krb-service-principals/compute{% if "hci" in osp.extrafeatures %}hci{% endif %}-role.yaml
+  {%- for role in ["Controller", "Compute", "ComputeLeaf1", "ComputeLeaf2", "ComputeHCI", "ComputeHCILeaf1", "ComputeHCILeaf2"] %}
+  OS::TripleO::{{ role }}ServiceServerMetadataHook: extraconfig/nova_metadata/krb-service-principals/{{ role|lower }}-role.yaml
+  {%- endfor %}
 
 {% else %}
 parameter_defaults:
   EnableInternalTLS: False
 {% endif %}
+
