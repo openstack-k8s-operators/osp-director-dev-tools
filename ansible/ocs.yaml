@@ -1,0 +1,84 @@
+---
+- name: Install OCS
+  when: (enable_ocs | bool) and (ocp_ai | bool)
+  block:
+  - name: Create OCS YAMLs working dir
+    file:
+      path: "{{ working_yamls_dir }}/ocs"
+      state: directory
+      mode: 0755
+
+  - name: Write OCS YAMLs to working dir
+    template:
+      src: ocs/{{ item }}.yaml.j2
+      dest: "{{ working_yamls_dir }}/ocs/{{ item }}.yaml"
+      mode: 0644
+    with_items:
+      - ocs-storage-cluster
+      - ocs-sub
+
+  - name: Label {{ ocp_num_storage_workers }} workers as OCS-capable
+    shell: |
+        oc label node/{{ node }} cluster.ocs.openshift.io/openshift-storage='' --overwrite=true;
+        oc label node/{{ node }} topology.rook.io/rack=rack{{ node_index }} --overwrite=true
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    vars:
+      node: "{{ ocp_cluster_name }}-worker-{{ item }}"
+    loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
+    loop_control:
+      index_var: node_index
+
+  - name: Deploy OCS subscription
+    shell: |
+      oc apply -f {{ working_yamls_dir }}/ocs/ocs-sub.yaml
+    environment:
+      <<: *oc_env
+
+  - name: Wait for OCS, rook-ceph and noobaa operators to be ready
+    shell: |
+      oc get pods -n openshift-storage
+    retries: 100
+    delay: 20
+    register: ocs_operators_ready
+    until: (ocs_operators_ready.stdout | regex_findall('ocs-operator-.+-.+Running') | length) == 1 and (ocs_operators_ready.stdout | regex_findall('rook-ceph-operator-.+-.+Running') | length) == 1 and (ocs_operators_ready.stdout | regex_findall('noobaa-operator-.+-.+Running') | length) == 1
+    environment:
+      <<: *oc_env
+
+  - name: Deploy OCS cluster
+    shell: |
+      oc apply -f {{ working_yamls_dir }}/ocs/ocs-storage-cluster.yaml
+    environment:
+      <<: *oc_env
+
+  # FIXME: We currently check for the pods enumerated in the "until" clause below due to the behavior of the 
+  #        StorageCluster resource's "phase" output.  Unfortunately the phase is reported as "Ready" as soon
+  #        as the StorageCluster resource appears, which is not actually true, as the various OCS pods required
+  #        for the proper functioning of the underlying Ceph cluster have not yet been created.  The phase 
+  #        eventually transitions to "Progressing" and then to "Ready" again at a later time.  Thus, we can't
+  #        rely on this state and have to check for the individual pods for now.
+  - name: Wait for OCS pods to be ready
+    shell: |
+      oc get pods -n openshift-storage
+    retries: 100
+    delay: 30
+    register: ocs_pods_ready
+    until: ((ocs_pods_ready.stdout | regex_findall('csi-cephfsplugin-.+Running') | length) == (ocs_pods_ready.stdout | regex_findall('csi-cephfsplugin-.+') | length) and (ocs_pods_ready.stdout | regex_findall('csi-cephfsplugin-.+Running') | length) != 0)
+            and ((ocs_pods_ready.stdout | regex_findall('csi-rbdplugin-.+Running') | length) == (ocs_pods_ready.stdout | regex_findall('csi-rbdplugin-.+') | length) and (ocs_pods_ready.stdout | regex_findall('csi-rbdplugin-.+Running') | length) != 0)
+            and ((ocs_pods_ready.stdout | regex_findall('rook-ceph-mon-.+Running') | length) == (ocs_pods_ready.stdout | regex_findall('rook-ceph-mon-.+') | length) and (ocs_pods_ready.stdout | regex_findall('rook-ceph-mon-.+Running') | length) != 0)
+            and ((ocs_pods_ready.stdout | regex_findall('rook-ceph-osd-\d-.+Running') | length) == (ocs_pods_ready.stdout | regex_findall('rook-ceph-osd-\d-.+') | length) and (ocs_pods_ready.stdout | regex_findall('rook-ceph-osd-\d-.+Running') | length) != 0)
+            and ((ocs_pods_ready.stdout | regex_findall('noobaa-core-0.+Running') | length) == 1)
+            and ((ocs_pods_ready.stdout | regex_findall('noobaa-db-pg-0.+Running') | length) == 1)
+    environment:
+      <<: *oc_env
+
+  - name: Enable Ceph tools pod
+    shell: "oc patch OCSInitialization ocsinit -n openshift-storage --type json --patch '[{ \"op\": \"replace\", \"path\": \"/spec/enableCephTools\", \"value\": true }]'"
+    environment:
+      <<: *oc_env
+
+  - debug:
+      msg:
+        - "You can now check the health of your OCS cluster via:"
+        - "oc rsh -n openshift-storage $(oc get pods -n openshift-storage -l app=rook-ceph-tools -o name) ceph -s"

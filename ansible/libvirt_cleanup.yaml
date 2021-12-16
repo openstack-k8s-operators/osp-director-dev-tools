@@ -15,9 +15,14 @@
     ignore_errors: true
 
   # only required now for cleanup existing envs without redeploy, could be removed soon
-  - name: make sure ibvirt network script is gone
+  - name: make sure libvirt network script is gone
     file:
       path: /etc/libvirt/hooks/network
+      state: absent
+
+  - name: Remove libvirt data disks (if any)
+    file:
+      path: "{{ ocp_storage_data_dir }}"
       state: absent
 
   - name: Restart libvirt

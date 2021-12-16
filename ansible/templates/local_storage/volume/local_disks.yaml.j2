@@ -9,23 +9,21 @@ spec:
     - matchExpressions:
         - key: kubernetes.io/hostname
           operator: In
+          values: 
+{% for n in range(ocp_num_storage_workers) %}
 {% if not (ocp_ai|bool) %}
-          values: {{ local_storage_workers }}
+          - "{{ ocp_cluster_name }}_worker_{{ n }}"
 {% else %}
-          values:
-{% for worker in local_storage_workers %}
-{% if ocp_cluster_name not in worker %}
-          - "{{ ocp_cluster_name }}-{{ worker }}"
-{% else %}
-          - "{{ worker }}"
+          - "{{ ocp_cluster_name }}-worker-{{ n }}"
 {% endif %}
 {% endfor %}
-{% endif %}
   storageClassDevices:
     - storageClassName: "local"
-      volumeMode: Filesystem
+      volumeMode: {{ local_storage_volume_mode | default('Filesystem', true) }}
+{% if (local_storage_volume_mode | default('Filesystem', true)) == "Filesystem" %}
       fsType: ext4
+{% endif %}
       devicePaths:
-{% for dev in local_storage_disks %}
+{% for dev in ocp_storage_data_disks %}
         - '/dev/{{ dev }}'
 {% endfor %}

@@ -2,7 +2,7 @@
 - name: Get current {{ domain }} VM attached disk count
   become: true
   become_user: root
-  shell: "virsh dumpxml {{ domain }} | grep \"source file='{{ local_storage_data_dir }}/{{ domain }}/local_storage_disk\" | wc -l"
+  shell: "virsh dumpxml {{ domain }} | grep \"source file='{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk\" | wc -l"
   register: cur_storage_disks
 
 - name: Change {{ domain }} VM specs
@@ -17,7 +17,7 @@
   - name: Detach data disks from {{ domain }} VM
     command: "virsh detach-disk {{ domain }} --target {{ disk }} --persistent"
     ignore_errors: yes
-    loop: "{{ local_storage_disks }}"
+    loop: "{{ ocp_storage_data_disks }}"
     loop_control:
       index_var: index
       loop_var: disk
@@ -25,8 +25,8 @@
   - name: Destroy local storage data disks for {{ domain }} VM
     file:
       state: absent
-      path: "{{ local_storage_data_dir }}/{{ domain }}/local_storage_disk_{{ index + 1 }}"
-    loop: "{{ local_storage_disks }}"
+      path: "{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk_{{ index + 1 }}"
+    loop: "{{ ocp_storage_data_disks }}"
     loop_control:
       index_var: index
       loop_var: disk
@@ -35,3 +35,8 @@
   virt:
     name: "{{ domain }}"
     state: destroyed
+
+- name: Start {{ domain }} VM
+  virt:
+    name: "{{ domain }}"
+    state: running
