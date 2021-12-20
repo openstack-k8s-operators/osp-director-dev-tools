@@ -1,4 +1,8 @@
+enable_freeipa: true
+
 osp_release_defaults:
+  tlse: true
+  networks: ipv4_subnet
   vmset:
     Controller:
       # Reset default Controller roleCount to 0

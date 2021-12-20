@@ -1,11 +1,8 @@
 ---
-openstackclient_networks:
-  - ctlplane
-  - external
-  - internal_api
-  - internal_api_leaf1
+enable_freeipa: true
 
 osp_release_defaults:
+  tlse: true
   networks: ipv4_subnet
   vmset:
     Controller:
@@ -24,21 +21,15 @@ osp_release_defaults:
   bmset:
     Compute:
       count: 0
-    ComputeLeaf1:
-      count: 1
+    ComputeHCILeaf1:
+      count: 2
       ctlplane_interface: enp7s0
       networks:
         - ctlplane
+        - external
         - internal_api_leaf1
-        - external
-        - tenant_leaf1
         - storage_leaf1
-    ComputeLeaf2:
-      count: 1
-      ctlplane_interface: enp7s0
-      networks:
-        - ctlplane
-        - internal_api_leaf2
-        - external
-        - tenant_leaf2
-        - storage_leaf2
+        - storage_mgmt_leaf1
+        - tenant_leaf1
+  extrafeatures:
+    - hci

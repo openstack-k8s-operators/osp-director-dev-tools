@@ -11,19 +11,27 @@ spec:
           node-role.kubernetes.io/worker: ""
         desiredState:
           interfaces:
+{% for ifcfg in nodeConfPolicy.interfaces %}
+{% if ifcfg.type == "bridge" %}
           - bridge:
               options:
                 stp:
                   enabled: false
               port:
-              - name: {{ nodeConfPolicy.interface }}
-            description: Linux bridge with {{ nodeConfPolicy.interface }} as a port
-            name: {{ nodeConfPolicy.bridge_name }}
-            state: up
+              - name: {{ ifcfg.interface }}
+            description: Linux bridge with {{ ifcfg.interface }} as a port
+            name: {{ ifcfg.name }}
             type: linux-bridge
-{% if nodeConfPolicy.mtu is defined %}
-            mtu: {{ nodeConfPolicy.mtu }}
+{% elif ifcfg.type ==  "ethernet" %}
+          - name: {{ ifcfg.interface }}
+            description: Configuring {{ ifcfg.interface }} on workers
+            type: ethernet
 {% endif %}
+            state: up
+{% if ifcfg.mtu is defined %}
+            mtu: {{ ifcfg.mtu }}
+{% endif %}
+{% endfor %}
 {% endfor %}
   domainName: {{ osp.domain_name }}
 {% if osp.dns_servers is defined and osp.dns_servers|length %}
@@ -33,7 +41,7 @@ spec:
   dnsSearchDomains : {{ osp.dns_search_domains }}
 {% endif %}
   networks:
-{% for id, net in osp.networks.items() %}
+{% for id, net in osp_networks.items() %}
   - name: {{ net.name }}
     nameLower: {{ net.name_lower }}
 {% if net.vip is defined %}

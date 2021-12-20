@@ -1,0 +1,72 @@
+---
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internal_api
+  - internal_api_leaf1
+
+osp_release_defaults:
+  networks: ipv4_subnet
+  vmset:
+    Controller:
+      # Reset default Controller roleCount to 0
+      count: 0
+    CtlNovaStdalone:
+      count: 1
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      storage_class: host-nfs-storageclass
+    Novacontrol:
+      count: 1
+      cores: 2
+      disk_size: 40
+      memory: 10
+      networks:
+        - ctlplane
+        - internal_api
+        - storage
+      storage_class: host-nfs-storageclass
+  bmset:
+    Compute:
+      count: 0
+    ComputeLeaf1:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf1
+        - external
+        - tenant_leaf1
+        - storage_leaf1
+    ComputeLeaf2:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf2
+        - external
+        - tenant_leaf2
+        - storage_leaf2
+  extrafeature:
+    - hci
+
+# phase2 tempest tests
+tempest_test_dict:
+  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+  includelist: []
+  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
+  excludelist:
+      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"

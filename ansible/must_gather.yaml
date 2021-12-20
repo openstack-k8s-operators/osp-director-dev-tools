@@ -35,4 +35,5 @@
       dest: "{{ _must_gather_dir }}.zip"
       format: zip
       remove: yes
+      mode: 0644
     when: must_gather_compress_logs|default(false)|bool

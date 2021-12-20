@@ -1,11 +1,1 @@
-parameter_defaults:
-  NeutronGlobalPhysnetMtu: 1350
-  NeutronBridgeMappings: datacentre:br-ex,tenant:br-tenant
-  NeutronNetworkType: geneve
-  NeutronNetworkVLANRanges: tenant:1000:2000
-  NeutronTunnelTypes: geneve
-  # update network config
-  ControllerNetworkConfigUpdate: True
-  ComputeNetworkConfigUpdate: True
-  ComputeLeaf1NetworkConfigUpdate: True
-  ComputeLeaf2NetworkConfigUpdate: True
+../17.0/network-environment.yaml.j2

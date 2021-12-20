@@ -5,10 +5,15 @@ openstackclient_networks:
   - internal_api
   - internal_api_leaf1
 
+enable_freeipa: true
 osp_release_defaults:
+  tlse: true
   networks: ipv6_subnet
   vmset:
     Controller:
+      # Reset default Controller roleCount to 0
+      count: 0
+    CtlNovaStdalone:
       count: 1
       cores: 6
       disk_size: 40
@@ -20,6 +25,16 @@ osp_release_defaults:
         - tenant
         - storage
         - storage_mgmt
+      storage_class: host-nfs-storageclass
+    Novacontrol:
+      count: 1
+      cores: 2
+      disk_size: 40
+      memory: 10
+      networks:
+        - ctlplane
+        - internal_api
+        - storage
       storage_class: host-nfs-storageclass
   bmset:
     Compute:
@@ -43,24 +58,21 @@ osp_release_defaults:
         - tenant_leaf2
         - storage_leaf2
   extrafeatures:
-    - ipv6
+  - hci
+  - ipv6
 
-# TODO: create good set of ipv6 tempest tests, right now disabled those which create floating IP, which is not the case in IPv6
+# phase2 tempest tests
 tempest_test_dict:
-  regex: ''
-  includelist:
-      - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
-      - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
-      - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
-      - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
+  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+  includelist: []
   # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
   excludelist:
-      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
+      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
-      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
-      - "^tempest.scenario.test_snapshot_pattern.TestSnapshotPattern.test_snapshot_pattern"
-      - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_volume_boot_pattern"
 
 tempest_enable_feature_dict:
   network:

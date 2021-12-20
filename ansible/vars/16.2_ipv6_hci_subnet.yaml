@@ -1,21 +1,21 @@
-# Note, this uses the centos7 image as the regexp matches with later releases
-openstackclient_image: quay.io/tripleotraincentos8/centos-binary-tripleoclient:current-tripleo
 osp_release_defaults:
-  release: train
-  container_tag: current-tripleo
-  #TODO: which ceph images tag to use for upstream train?
-  #ceph_tag: 5-12
-  #ceph_image: daemon
-  base_image_url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2
-  networks: ipv6
+  networks: ipv6_subnet
   extrafeatures:
     - ipv6
-
-ephemeral_heat:
-  heat_api_image: quay.io/tripleotraincentos8/centos-binary-heat-api:current-tripleo
-  heat_engine_image: quay.io/tripleotraincentos8/centos-binary-heat-engine:current-tripleo
-  mariadb_image: quay.io/tripleotraincentos8/centos-binary-mariadb:current-tripleo
-  rabbit_image: quay.io/tripleotraincentos8/centos-binary-rabbitmq:current-tripleo
+    - hci
+  bmset:
+    Compute:
+      count: 0
+    ComputeHCI:
+      count: 2
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
 
 # TODO: create good set of ipv6 tempest tests, right now disabled those which create floating IP, which is not the case in IPv6
 tempest_test_dict:

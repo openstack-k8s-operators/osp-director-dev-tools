@@ -1,7 +1,1 @@
-resource_registry:
-{% if "hci" in osp.extrafeatures %}
-  OS::TripleO::ComputeHCI::Net::SoftwareConfig: net-config-two-nic-vlan-computehci.yaml
-{% else %}
-  OS::TripleO::Compute::Net::SoftwareConfig: net-config-two-nic-vlan-compute.yaml
-{% endif %}
-
+../16.2/register-nic-templates.yaml.j2
