@@ -30,17 +30,6 @@
       state: directory
       mode: '0755'
 
-  - name: wait for OpenstackConfigGenerator finished rendering playbooks
-    shell: |
-      oc wait osconfiggenerator -n openstack --for condition=Finished default --timeout={{ default_timeout }}s
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    retries: 50
-    delay: 5
-    register: result
-    until: result.rc == 0
-
   - name: Register to subscription manager
     when: osp_registry_method == "rhsm"
     block:
@@ -98,24 +87,14 @@
     shell: |
       #!/bin/bash
       oc cp -n openstack {{ rhsm_yaml_dir }}/rhsm.yaml openstackclient:/home/cloud-admin/rhsm.yaml
-    environment:
-      <<: *oc_env
-    register: result
-
-  - name: Accept rendered playbooks to get the current inventory
-    shell: |
-      #!/bin/bash
-      set -e
-      oc rsh -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh -a
-    environment:
-      <<: *oc_env
-    register: playbooks_accept
-    when: result.rc == 0
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
 
   - name: run rhsm playbook via openstackclient
     shell: |
-      #!/bin/bash
-      oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/tripleo-ansible-inventory.yaml /home/cloud-admin/rhsm.yaml
+      oc rsh -n openstack openstackclient <<"EOF_RSH"
+        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/rhsm.yaml
+      EOF_RSH
     environment:
       <<: *oc_env
-    when: playbooks_accept.rc == 0
