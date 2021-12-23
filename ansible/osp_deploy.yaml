@@ -8,26 +8,62 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
-  - name: Set combined osp dict
+  - name: Set directory for generator yaml files
     set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+      deploy_yamls_dir: "{{ working_yamls_dir }}/deploy"
 
-  - name: Accept rendered playbooks
-    shell: |
-      #!/bin/bash
-      set -e
-      oc rsh -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh -a
+  - debug:
+      msg: "yamls will be written to {{ deploy_yamls_dir }} locally"
+
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ deploy_yamls_dir }}/"
+
+  - name: Create yaml dir
+    file:
+      path: "{{ deploy_yamls_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Lookup configVersion hash
+    shell: >
+      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -re .items[0].spec.hash
+    register: config_version_cmd
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    register: playbooks_accept
 
-  - name: Run playbooks, deployment log at {{ working_log_dir }}/osp-deploy.log
-    shell: |
-      #!/bin/bash
-      set -e
-      oc rsh -n openstack openstackclient timeout {{ osp.deploy_timeout }} /home/cloud-admin/tripleo-deploy.sh -p > {{ working_log_dir }}/osp-deploy.log 2>&1
+  - name: Set config_version fact
+    set_fact:
+      config_version: "{{ config_version_cmd.stdout }}"
+
+  - name: Render templates to yaml dir
+    template:
+      src: "osp/deploy/{{ item }}.j2"
+      dest: "{{ deploy_yamls_dir }}/{{ item }}"
+      mode: '0644'
+    with_items:
+    - "openstackdeploy.yaml"
+
+  - name: does the deployment already exist
+    shell: >
+      oc get -n openstack osdeploy default -o json --ignore-not-found
     environment:
       <<: *oc_env
-    when: playbooks_accept.rc == 0
+    register: deploy_switch
 
+  - name: Start deployment
+    shell: |
+      set -e
+      oc apply -n openstack -f "{{ deploy_yamls_dir }}/openstackdeploy.yaml"
+    environment:
+      <<: *oc_env
+    when: deploy_switch.stdout | length == 0
+
+  - name: wait for deployment to finish
+    shell: |
+      set -e
+      oc wait -n openstack osdeploy default --for condition=Finished --timeout="{{ (default_timeout * 25)|int }}s"
+    environment:
+      <<: *oc_env
