@@ -34,8 +34,8 @@
       name: local_storage
       tasks_from: cleanup
     vars:
-      domain: "{{ item }}"
-    with_items: "{{ local_storage_domains }}"
+      domain: "{{ ocp_cluster_name }}_worker_{{ item }}"
+    loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
     when: not (ocp_ai | bool)
 
   - name: Cleanup VM attached Local Storage for AI
@@ -43,8 +43,8 @@
       name: local_storage
       tasks_from: cleanup
     vars:
-      domain: "{{ (item | replace('_','-')) }}"
-    with_items: "{{ local_storage_domains }}"
+      domain: "{{ ocp_cluster_name }}-worker-{{ item }}"
+    loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
     when: (ocp_ai | bool)
 
   # NOTE: this can take awhile to terminate as the nodes will reboot above

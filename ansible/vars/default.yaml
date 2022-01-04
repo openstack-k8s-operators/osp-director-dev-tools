@@ -54,6 +54,17 @@ ocp_worker_memory: 30000
 ocp_worker_vcpu: 8
 ocp_worker_disk: 50
 
+# the following are used if local storage or OCS is enabled:
+# - "ocp_num_storage_workers" must be <= "ocp_num_workers"
+# - workers are enhanced to provide storage along with regular compute (kubelet) functionality
+ocp_num_storage_workers: 3
+ocp_storage_memory: 51200
+ocp_storage_vcpu: 10
+ocp_storage_data_dir: /home/local_storage/data
+ocp_storage_data_disks:
+  - sdb
+ocp_storage_data_disk_size: 150
+
 # reserved for future expansion. Can be 0 or 1 at this point
 ocp_num_bm_workers: 0
 
@@ -274,18 +285,11 @@ osp_rhel_subscription_repos:
   - rhceph-4-tools-for-rhel-8-x86_64-rpms
   - codeready-builder-for-rhel-8-x86_64-rpms
 
-# Local Storage Operator specific (only required if using local-storage operator)
-local_storage_domains:
-  - "{{ ocp_cluster_name }}_worker_0"
-  - "{{ ocp_cluster_name }}_worker_1"
-local_storage_workers:
-  - worker-0
-  - worker-1
-local_storage_data_dir: /home/local_storage/data
-local_storage_disks:
-  - vda
-  - vdb
-local_storage_disk_size: 50
+# OCS
+# NOTE: Only AI deployments currently support OCS, so even if "enable_ocs" is set to true for
+#       a dev-scripts deployment, it will not be honored
+enable_ocs: false
+ocs_version: "{{ 4.8 if ocp_version >= 4.8 else ocp_version }}"
 
 # Virtualized SRIOV (for dev/test)
 enable_virt_sriov: false

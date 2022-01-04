@@ -361,7 +361,8 @@
         uri: qemu:///system
       with_sequence: start=0 end={{ ocp_num_masters-1 }}
 
-    - name: define worker vms
+    - name: define worker vms when OCS disabled
+      when: not (enable_ocs | bool)
       vars:
         memory: "{{ ocp_worker_memory }}"
         vcpu: "{{ ocp_worker_vcpu }}"
@@ -375,6 +376,37 @@
         uri: qemu:///system
       with_sequence: start=0 end={{ ocp_num_workers+ocp_num_extra_workers-1 }}
 
+    - name: define worker vms when OCS enabled
+      when: (enable_ocs | bool)
+      block:
+      - name: define storage worker vms
+        vars:
+          memory: "{{ ocp_storage_memory }}"
+          vcpu: "{{ ocp_storage_vcpu }}"
+          role: worker
+          prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
+          bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
+        virt:
+          name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
+          command: define
+          xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
+          uri: qemu:///system
+        with_sequence: start=0 end={{ ocp_num_storage_workers-1 }}
+
+      - name: define non-storage and extra worker vms
+        vars:
+          memory: "{{ ocp_worker_memory }}"
+          vcpu: "{{ ocp_worker_vcpu }}"
+          role: worker
+          prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
+          bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
+        virt:
+          name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
+          command: define
+          xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
+          uri: qemu:///system
+        with_sequence: start={{ ocp_num_storage_workers }} end={{ ocp_num_workers+ocp_num_extra_workers-1 }}
+
     - name: Get worker domain names
       shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk '{print $2}'"
       register: worker_list
@@ -386,6 +418,18 @@
       loop_control:
         index_var: index
       register: extra_worker_uuids
+
+  ### OCS PREP (if requested)
+  - name: OCS and local storage injection, if requested
+    when: (enable_ocs | bool)
+    block:
+    - name: Create VM attached Local Storage for local-storage-operator for AI
+      include_role:
+        name: local_storage
+      vars:
+        ocs_local_storage: true
+        domain: "{{ ocp_cluster_name }}-worker-{{ item }}"
+      loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
 
   ### CRs
   - name: Create Metal3 extra baremetal hosts CRs

@@ -1,30 +1,36 @@
 ---
 - name: Get current {{ domain }} VM attached disk count
-  shell: "virsh dumpxml {{ domain }} | grep \"source file='{{ local_storage_data_dir }}/{{ domain }}/local_storage_disk\" | wc -l"
+  shell: "virsh dumpxml {{ domain }} | grep \"source file='{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk\" | wc -l"
   register: cur_storage_disks
 
 - name: Change {{ domain }} VM specs
   become: true
   become_user: root
-  when: (cur_storage_disks.stdout | int) != (local_storage_disks | length)
+  when: (cur_storage_disks.stdout | int) != (ocp_storage_data_disks | length)
   block:
 
   - name: Clear host VM memory cache
     shell: echo 3 | tee /proc/sys/vm/drop_caches
+    when: ocs_local_storage is undefined or not ocs_local_storage
+
+  - name: Set local storage data disk filesystem command (if this LSO usage is not for OCS)
+    set_fact:
+      local_storage_fs_cmd: 'mkfs.ext4 -m 0 "$fs"'
+    when: ocs_local_storage is undefined or not ocs_local_storage
 
   - name: Create local storage data disks for {{ domain }} VM
     shell: |
       set -e -o pipefail
 
-      for i in {1..{{ local_storage_disks | length }}}; do
-          fs="{{ local_storage_data_dir }}/{{ domain }}/local_storage_disk_${i}"
+      for i in {1..{{ ocp_storage_data_disks | length }}}; do
+          fs="{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk_${i}"
 
           if [ ! -f "$fs" ]; then
               # Create a sparse file of the correct size and populate it with an
-              # ext4  filesystem.
-              mkdir -p {{ local_storage_data_dir }}/{{ domain }}
-              truncate -s {{ local_storage_disk_size }}G $fs
-              mkfs.ext4 -m 0 "$fs"
+              # ext4 filesystem if necessary
+              mkdir -p {{ ocp_storage_data_dir }}/{{ domain }}
+              truncate -s {{ ocp_storage_data_disk_size }}G $fs
+              {{ local_storage_fs_cmd | default("", true) }}
 
               # Make world readable
               chown nobody.nobody "$fs"
@@ -33,13 +39,19 @@
       done
 
   - name: Stop {{ domain }} VM
-    virt:
-      name: "{{ domain }}"
-      state: destroyed
+    shell: |
+      virsh destroy --graceful {{ domain }}
+    when: ocs_local_storage is undefined or not ocs_local_storage
 
   - name: Attach data disks to {{ domain }} VM
-    command: "virsh attach-disk {{ domain }} --source {{ local_storage_data_dir }}/{{ domain }}/local_storage_disk_{{ index + 1 }} --target {{ disk }} --persistent"
-    loop: "{{ local_storage_disks }}"
+    command: "virsh attach-disk {{ domain }} --source {{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk_{{ index + 1 }} --target {{ disk }} --persistent"
+    loop: "{{ ocp_storage_data_disks }}"
     loop_control:
       index_var: index
       loop_var: disk
+
+  - name: Start {{ domain }} VM
+    virt:
+      name: "{{ domain }}"
+      state: running
+    when: ocs_local_storage is undefined or not ocs_local_storage

@@ -7,6 +7,19 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
+  - name: OCS validation checks
+    when: (enable_ocs | bool)
+    block:
+    - name: OCS is only allowed for AI
+      fail:
+        msg: "OCS is only allowed for AI deployments"
+      when: not (ocp_ai | bool)
+
+    - name: Number of storage workers must be 3, and must be <= ocp_num_workers
+      fail:
+        msg: "3 (non-extra) worker nodes are required for OCS"
+      when: ocp_num_storage_workers < 3 or ocp_num_storage_workers > ocp_num_workers
+
   - name: Disable existing repos
     block:
     - name: get existing repo files

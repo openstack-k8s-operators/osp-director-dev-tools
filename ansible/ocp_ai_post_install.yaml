@@ -6,6 +6,7 @@
 
   tasks:
   - name: Extra post-install steps for assisted installer
+    when: (ocp_ai | bool)
     block:
     - name: Include AI variables
       include_vars: vars/ocp_ai.yaml
@@ -82,5 +83,17 @@
       register: result
       until: result.rc == 0
 
-    when: ocp_ai|bool
+
+    ### OCS (if requested)
+    - name: Install Local Storage and OCS
+      when: (enable_ocs | bool)
+      block:
+      - name: Install Local Storage Operator
+        include_tasks: local_storage_tasks.yaml
+        vars:
+          local_storage_volume_mode: Block
+          ocs_local_storage: true
+
+      - name: Install OCS
+        include_tasks: ocs.yaml
 
