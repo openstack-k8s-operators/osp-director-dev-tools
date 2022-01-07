@@ -19,7 +19,7 @@
 
   - name: Lookup currentCSV for osp-director-operator
     shell: >
-      oc get -o json packagemanifest osp-director-operator | jq -re .status.channels[0].currentCSV
+      oc get -n {{ namespace }} -o json packagemanifest osp-director-operator | jq -re .status.channels[0].currentCSV
     register: _current_csv
     environment:
       <<: *oc_env
