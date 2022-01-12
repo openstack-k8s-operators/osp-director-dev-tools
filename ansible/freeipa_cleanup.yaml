@@ -15,13 +15,16 @@
       regexp: '# Forward to FreeIPA'
       state: absent
     when: not (ocp_ai|bool)
+    register: ds_dnsmasq
 
   - name: Reload NetworkManager
     service:
       name: NetworkManager
       state: reloaded
       enabled: yes
-    when: not (ocp_ai|bool)
+    when:
+      - not (ocp_ai|bool)
+      - ds_dnsmasq.changed
 
   - name: Update AI dnsmasq to stop forwarding to freeipa
     lineinfile:
@@ -29,12 +32,15 @@
       regexp: '# Forward to FreeIPA'
       state: absent
     when: ocp_ai|bool
+    register: ai_dnsmasq
 
   - name: Restart dnsmasq
     service:
       name: dnsmasq
       state: restarted
-    when: ocp_ai|bool
+    when:
+      - ocp_ai|bool
+      - ai_dnsmasq.changed
 
   - name: Stop FreeIPA
     service:
