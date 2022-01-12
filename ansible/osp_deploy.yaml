@@ -53,6 +53,14 @@
       <<: *oc_env
     register: deploy_switch
 
+  - name: Delete deployment (if it exists)
+    shell: |
+      set -e
+      oc delete -n openstack osdeploy default
+    environment:
+      <<: *oc_env
+    when: deploy_switch.stdout | length > 0
+
   - name: Start deployment
     shell: |
       set -e
