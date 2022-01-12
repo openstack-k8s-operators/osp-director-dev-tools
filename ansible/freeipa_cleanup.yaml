@@ -23,6 +23,19 @@
       enabled: yes
     when: not (ocp_ai|bool)
 
+  - name: Update AI dnsmasq to stop forwarding to freeipa
+    lineinfile:
+      path: /etc/dnsmasq.d/dnsmasq_ai.conf
+      regexp: '# Forward to FreeIPA'
+      state: absent
+    when: ocp_ai|bool
+
+  - name: Restart dnsmasq
+    service:
+      name: dnsmasq
+      state: restarted
+    when: ocp_ai|bool
+
   - name: Stop FreeIPA
     service:
       name: container-freeipa-server

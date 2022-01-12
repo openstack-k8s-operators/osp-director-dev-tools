@@ -7,6 +7,14 @@
 
   tasks:
 
+  - name: Install build dependencies
+    become: true
+    become_user: root
+    package:
+      name:
+        - skopeo
+        - jq
+
   - name: Set opm download url suffix
     set_fact: opm_url_suffix="latest/download"
     when: opm_version is undefined or opm_version == "latest"
