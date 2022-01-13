@@ -54,6 +54,8 @@
 
   - name: create datavolume for vmset roles
     include_tasks: datavolume_tasks.yaml
+    vars:
+      _datavolume: "{{ _role | lower }}-base-img"
     loop: "{{ osp.vmset.keys() | list }}"
     loop_control:
       loop_var: _role

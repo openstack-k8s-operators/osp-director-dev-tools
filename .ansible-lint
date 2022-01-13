@@ -4,3 +4,19 @@ skip_list:
   - '306'
   - '602'
   - '701'
+  - 'ignore-errors'
+
+warn_list:  # or 'skip_list' to silence them completely
+  - experimental  # all rules tagged as experimental
+  - unnamed-task  # All tasks should be named
+  
+exclude_paths:
+- ansible/files
+- ansible/roles/prepare_rhos_release
+- ansible/datavolume_tasks.yaml
+- ansible/extrafeature_heat_env.yaml
+- ansible/extrafeature_tarball_config.yaml
+- ansible/local_storage_tasks.yaml
+- ansible/ocs.yaml
+- ansible/pull-secret.yaml
+- ansible/virt_sriov_vm.yaml

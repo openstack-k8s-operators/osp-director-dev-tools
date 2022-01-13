@@ -8,3 +8,4 @@ collections:
   - name: ansible.posix
   - name: containers.podman
   - name: community.general
+  - name: community.libvirt

@@ -1,7 +1,3 @@
-- name: Set feature tarball dir
-  set_fact:
-    feature_dir: "{{ playbook_dir }}/files/osp/features/{{ osp.release }}/{{ feature }}"
-
 - name: Get stats of the local feature dir
   stat:
     path="{{ feature_dir }}"

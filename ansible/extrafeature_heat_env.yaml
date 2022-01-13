@@ -1,9 +1,6 @@
-- name: Set feature template dir
-  set_fact:
-    feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/{{ osp.release }}/{{ feature }}"
-
+---
 - name: Get stats of the local feature dir
-  stat:
+  ansible.builtin.stat:
     path="{{ feature_dir }}"
   delegate_to: localhost
   register: p

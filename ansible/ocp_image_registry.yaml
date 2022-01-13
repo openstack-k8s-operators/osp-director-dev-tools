@@ -27,7 +27,7 @@
       dest: "{{ registry_yaml_dir }}/"
       mode: '0644'
 
-  - name: Configure image registry
+  - name: Configure image registry # noqa var-spacing
     shell: |
       set -e
 

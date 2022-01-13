@@ -1,8 +1,4 @@
 ---
-- name: Set datavolume image fact
-  set_fact:
-    _datavolume: "{{ _role | lower }}-base-img"
-
 # Make sure we delete the datavolume e.g. when switch from rhel image to centos image
 # This won't solve the problem when the both images exist and we switch back.
 - name: delete {{ _datavolume }} datavolume if image got downloaded
