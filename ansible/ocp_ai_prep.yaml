@@ -559,7 +559,7 @@
         - OS_IMAGES
         - RELEASE_IMAGES
 
-    - name: Set assisted installer service default hardware requirements
+    - name: Set assisted installer service default hardware requirements # noqa var-spacing
       ansible.builtin.lineinfile:
         path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
         regexp: '^HW_VALIDATOR_REQUIREMENTS='

@@ -49,6 +49,8 @@
 
   # enable osp extra features parameters
   - include_tasks: extrafeature_heat_env.yaml
+    vars:
+      feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/{{ osp.release }}/{{ feature }}"
     loop: "{{ osp.extrafeatures }}"
     loop_control:
       loop_var: feature
@@ -70,6 +72,8 @@
 
   # enable osp tarball extra features
   - include_tasks: extrafeature_tarball_config.yaml
+    vars:
+      ffeature_dir: "{{ playbook_dir }}/files/osp/features/{{ osp.release }}/{{ feature }}"
     loop: "{{ osp.extrafeatures }}"
     loop_control:
       loop_var: feature

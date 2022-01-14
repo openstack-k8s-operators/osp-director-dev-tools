@@ -8,7 +8,7 @@
     - oc_local
 
   tasks:
-  - name: Configure custom (insecure) registries for downstream repos
+  - name: Configure custom (insecure) registries for downstream repos # noqa var-spacing
     shell: |
       set -e
 
