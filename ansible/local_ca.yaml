@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Include variables
+    include_vars: vars/default.yaml
+
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  # https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html/advanced_overcloud_customization/sect-enabling_ssltls_on_the_overcloud
+  - name: Create local CA and openstack cert
+    become: true
+    become_user: root
+    when: osp.tls_public_endpoints|default(false)|bool
+    block:
+      - name: Create local CA directories
+        file:
+          path: "{{ item }}"
+          state: directory
+          mode: '0755'
+        with_items:
+          - /opt/local_CA
+          - /opt/local_CA/private
+          - /opt/local_CA/certs
+          - /opt/local_CA/newcerts
+          - /opt/local_CA/crl
+          - /opt/local_CA/certs/openstack
+
+      - name: Create pki CA index
+        file:
+          path: /opt/local_CA/index.txt
+          state: touch
+          mode: '0644'
+          modification_time: preserve
+          access_time: preserve
+
+      - name: Create pki CA serial
+        copy:
+          dest: /opt/local_CA/serial
+          content: |
+            1000
+          force: no
+          mode: '0644'
+
+      - name: Create local CA
+        command:
+          cmd: openssl req -x509 -nodes -newkey rsa:4096 -keyout /opt/local_CA/private/cakey.pem -out /opt/local_CA/cacert.pem -days 7300 -extensions v3_ca -subj '/C=US/ST=North Carolina/L=Raleigh/O=Red Hat/OU=OSP Director Operator devtools/CN={{ ansible_fqdn }}' -batch
+          creates: /opt/local_CA/cacert.pem
+
+      - name: Create server key
+        command:
+          cmd: openssl genrsa -out /opt/local_CA/private/openstack.pem 2048
+          creates: /opt/local_CA/private/openstack.pem
+
+      - name: Create CSR template
+        template:
+          src: templates/local_CA/openssl.cnf.j2
+          dest: /opt/local_CA/certs/openstack/openssl.cnf
+
+      - name: Generate CSR
+        command:
+          cmd: openssl req -nodes -config /opt/local_CA/certs/openstack/openssl.cnf -new -out /opt/local_CA/certs/openstack/openstack.csr.pem -batch
+          creates: /opt/local_CA/certs/openstack/openstack.csr.pem
+
+      - name: Generate Certificate
+        command:
+          cmd: openssl ca -config /opt/local_CA/certs/openstack/openssl.cnf -in /opt/local_CA/certs/openstack/openstack.csr.pem -out /opt/local_CA/certs/openstack/openstack.crt.pem -batch -notext
+          creates: /opt/local_CA/certs/openstack/openstack.crt.pem

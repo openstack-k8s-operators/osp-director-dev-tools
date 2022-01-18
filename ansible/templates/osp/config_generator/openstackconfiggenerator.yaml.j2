@@ -8,6 +8,10 @@ spec:
   gitSecret: git-secret
   imageURL: {{ openstackclient_image }}
   heatEnvs:
+{%- if osp.tls_public_endpoints|default(false)|bool %}
+    - ssl/tls-endpoints-public-dns.yaml
+    - ssl/enable-tls.yaml
+{%- endif %}
 {%- if osp.tlse|default(false)|bool %}
     - ssl/tls-everywhere-endpoints-dns.yaml
     - services/haproxy-public-tls-certmonger.yaml

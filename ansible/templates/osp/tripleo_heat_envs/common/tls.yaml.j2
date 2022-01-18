@@ -1,0 +1,16 @@
+{% if osp.tlse|default(false)|bool %}
+parameter_defaults:
+  IdMServer: freeipa.{{ base_domain_name }}
+  IdMDomain: {{ osp.domain_name }}
+  IdMInstallClientPackages: true
+{% endif %}
+
+{% if osp.tlse|default(false)|bool or osp.tls_public_endpoints|default(false)|bool %}
+resource_registry:
+{% if osp.tlse|default(false)|bool %}
+  OS::TripleO::Services::IpaClient: deployment/ipa/ipaservices-baremetal-ansible.yaml
+{% endif %}
+{% if osp.tls_public_endpoints|default(false)|bool %}
+  OS::TripleO::Services::HAProxyPublicTLS: deployment/haproxy/haproxy-public-tls-inject.yaml
+{% endif %}
+{% endif %}

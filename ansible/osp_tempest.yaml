@@ -60,8 +60,8 @@
 
   - name: create tempest osclient
     shell: |
-      if oc get osclient/tempest; then
-        oc delete osclient tempest
+      if oc get -n openstack osclient/tempest; then
+        oc delete -n openstack osclient tempest
       fi
       oc apply -f {{ tempest_yaml_dir }}/tempest_openstackclient.yaml
     environment: &oc_env
@@ -73,8 +73,8 @@
       oc wait pod -n openstack tempest --for condition=Ready --timeout="{{ tempest_timeout }}s"
     environment:
       <<: *oc_env
-    retries: 10
-    delay: 5
+    retries: 12
+    delay: 10
     register: pod_result
     until: pod_result.rc == 0
 
@@ -89,8 +89,8 @@
       environment:
         <<: *oc_env
 
-    - name: Add CA cert
-      when: osp.tlse|default(false)|bool
+    - name: Add IPA CA cert
+      when: osp.tlse|default(false)|bool and not osp.tls_public_endpoints
       shell: |
         #!/bin/bash
         set -e

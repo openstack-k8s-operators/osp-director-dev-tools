@@ -14,6 +14,7 @@ spec:
   # tempest:x:42480:42480
   runUID: 42480
   runGID: 42480
+  caConfigMap: cacerts
   domainName: {{ osp.domain_name }}
 {% if osp.dns_search_domains is defined and osp.dns_search_domains|length %}
   dnsServers: {{ osp.dns_servers }}

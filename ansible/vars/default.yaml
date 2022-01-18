@@ -120,7 +120,7 @@ csv_version: latest
 ocp_network_type: OpenShiftSDN
 
 # image used to run tempest
-tempest_image: quay.io/openstack-k8s-operators/rhosp16-openstack-tempest:16.2_20210713.1
+tempest_image: docker-registry.upshift.redhat.com/openstack-k8s-operators/openstack-tempest:16.2_tempest_sudoers
 
 # tempest timeout in seconds
 tempest_timeout: 3600
@@ -273,6 +273,8 @@ osp_defaults:
   extrafeatures: []
   # Enable TLS everywhere
   tlse: false
+  # Enable TLS public_endpoints
+  tls_public_endpoints: true
 
 # overwrite elements from osp_defaults for a specific release
 osp_release_defaults: {}

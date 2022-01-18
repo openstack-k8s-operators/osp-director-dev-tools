@@ -44,3 +44,10 @@
     become_user: root
     ignore_errors: true
     command: podman exec freeipa-server /data/openstack_cleanup.sh
+
+  - name: Remove local CA
+    become: true
+    become_user: root
+    file:
+      path: /opt/local_CA
+      state: absent

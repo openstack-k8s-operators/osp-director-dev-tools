@@ -37,6 +37,7 @@
     - "osp-director_openstackcontrolplane.yaml"
     - "password-secret.yaml"
     - "idm-secret.yaml"
+    - "ca-certs-cm.yaml"
 
   - name: Start ctlplane
     shell: |
