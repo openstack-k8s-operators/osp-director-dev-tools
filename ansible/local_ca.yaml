@@ -57,6 +57,12 @@
           cmd: openssl genrsa -out /opt/local_CA/private/openstack.pem 2048
           creates: /opt/local_CA/private/openstack.pem
 
+      - name: Set server key owner
+        file:
+          path: /opt/local_CA/private/openstack.pem
+          owner: "{{ ansible_real_user_id }}"
+          group: "{{ ansible_real_group_id }}"
+
       - name: Create CSR template
         template:
           src: templates/local_CA/openssl.cnf.j2
