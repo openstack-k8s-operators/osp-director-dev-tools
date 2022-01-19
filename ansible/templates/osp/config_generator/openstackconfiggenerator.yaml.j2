@@ -1,3 +1,4 @@
+#jinja2: trim_blocks:False
 apiVersion: osp-director.openstack.org/v1beta1
 kind: OpenStackConfigGenerator
 metadata:
@@ -6,6 +7,12 @@ metadata:
 spec:
   gitSecret: git-secret
   imageURL: {{ openstackclient_image }}
+  heatEnvs:
+{%- if osp.tlse|default(false)|bool %}
+    - ssl/tls-everywhere-endpoints-dns.yaml
+    - services/haproxy-public-tls-certmonger.yaml
+    - ssl/enable-internal-tls.yaml
+{%- endif %}
   heatEnvConfigMap: heat-env-config
   tarballConfigMap: tripleo-tarball-config
 {% if ephemeral_heat is defined and ephemeral_heat|length %}

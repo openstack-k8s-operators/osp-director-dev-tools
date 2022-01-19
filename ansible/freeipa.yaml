@@ -118,10 +118,30 @@
           line: 'server=/{{ base_domain_name }}/10.89.0.2 # Forward to FreeIPA'
           regexp: '# Forward to FreeIPA'
         when: not (ocp_ai|bool)
+        register: ds_dnsmasq
 
       - name: Reload NetworkManager
         service:
           name: NetworkManager
           state: reloaded
           enabled: yes
-        when: not (ocp_ai|bool)
+        when:
+          - not (ocp_ai|bool)
+          - ds_dnsmasq.changed
+
+      - name: Update AI dnsmasq to forward to freeipa
+        lineinfile:
+          path: /etc/dnsmasq.d/dnsmasq_ai.conf
+          line: 'server=/{{ base_domain_name }}/10.89.0.2 # Forward to FreeIPA'
+          regexp: '# Forward to FreeIPA'
+          insertbefore: '^server='
+        when: ocp_ai|bool
+        register: ai_dnsmasq
+
+      - name: Restart dnsmasq
+        service:
+          name: dnsmasq
+          state: restarted
+        when:
+          - ocp_ai|bool
+          - ai_dnsmasq.changed

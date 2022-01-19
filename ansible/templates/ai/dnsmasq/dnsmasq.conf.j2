@@ -5,9 +5,6 @@ no-resolv
 no-hosts
 
 # Recursive DNS
-{% if enable_freeipa|default(false)|bool %}
-server=/test.metalkube.org/10.89.0.2
-{% endif %}
 {% for dns_server in ocp_ai_external_dns %}
 server={{ dns_server }}
 {% endfor %}
