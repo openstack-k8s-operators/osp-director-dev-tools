@@ -14,7 +14,8 @@
       tempest_yaml_dir: "{{ working_yamls_dir }}/tempest"
       tempest_working_dir: "{{ working_dir }}/tempest"
 
-  - debug:
+  - name: show yaml output dir
+    debug:
       msg:
       - "tempest yamls will be written to {{ tempest_yaml_dir }} locally"
       - "tempest config will be written to {{ tempest_working_dir }} locally"

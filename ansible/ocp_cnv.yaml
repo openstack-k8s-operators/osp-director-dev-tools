@@ -9,7 +9,8 @@
     set_fact:
       yaml_dir: "{{ working_yamls_dir }}/cnv"
 
-  - debug:
+  - name: show yaml output dir
+    debug:
       msg: "yamls will be written to {{ yaml_dir }} locally"
 
   - name: Clean yaml dir

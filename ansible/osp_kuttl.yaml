@@ -15,12 +15,14 @@
       osp_director_local_path: "{{ lookup('env','OSP_DIRECTOR_GIT_DIR') }}"
     when: lookup('env','OSP_DIRECTOR_GIT_DIR')|length != 0
 
-  - debug:
+  - name: show info
+    debug:
       msg:
       - "Kuttl working directory available locally {{ kuttl_working_dir }}"
       - "OSP Director Operator repo at {{ osp_director_working_path }}"
 
-  - debug:
+  - name: show local osp-d repo info
+    debug:
       msg:
       - "Local OSP Director Operator repo at {{ osp_director_local_path }}"
     when: (osp_director_local_path is defined and (osp_director_local_path|string|length != 0))

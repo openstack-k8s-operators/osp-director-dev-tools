@@ -7,7 +7,8 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
-  - debug:
+  - name: show dev-script info
+    debug:
       msg: |
         Executing dev-script. You can tail the logs at ~ocp/dev-script.log on
         the host for progress.

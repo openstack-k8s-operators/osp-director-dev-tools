@@ -23,7 +23,8 @@
       set_fact:
         fencing_yaml_dir: "{{ working_yamls_dir }}/fencing"
 
-    - debug:
+    - name: show yaml output dir
+      debug:
         msg: "yamls will be written to {{ fencing_yaml_dir }} locally"
 
     - name: Clean yaml dir

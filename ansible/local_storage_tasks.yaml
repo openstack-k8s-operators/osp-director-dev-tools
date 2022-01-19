@@ -42,7 +42,8 @@
   set_fact:
     local_storage_yaml_dir: "{{ working_yamls_dir }}/local_storage_operator"
 
-- debug:
+- name: show yaml output dir
+  debug:
     msg: "Operator yamls will be written to {{ local_storage_yaml_dir }} locally"
 
 - name: Create local yamldir for local_storage operator
@@ -86,7 +87,8 @@
   set_fact:
     local_storage_volume_yaml_dir: "{{ working_yamls_dir }}/local_storage_volume"
 
-- debug:
+- name: show yaml output dir
+  debug:
     msg: "Volume yamls will be written to {{ local_storage_volume_yaml_dir }} locally"
 
 - name: Create local yamldir

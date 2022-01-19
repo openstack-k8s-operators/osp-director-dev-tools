@@ -13,7 +13,8 @@
     set_fact:
       compute_yaml_dir: "{{ working_yamls_dir }}/compute"
 
-  - debug:
+  - name: show yaml output dir
+    debug:
       msg: "yamls will be written to {{ compute_yaml_dir }} locally"
 
   - name: Clean yaml dir
