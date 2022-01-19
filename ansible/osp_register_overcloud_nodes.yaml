@@ -16,7 +16,8 @@
     set_fact:
       rhsm_yaml_dir: "{{ working_yamls_dir }}/rhsm"
 
-  - debug:
+  - name: show yaml output dir
+    debug:
       msg: "yamls will be written to {{ rhsm_yaml_dir }} locally"
 
   - name: Clean yaml dir

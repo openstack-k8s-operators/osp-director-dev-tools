@@ -94,3 +94,24 @@ spec:
       attachConfiguration: {{ subnet.attach_config }}
 {% endfor %}
 {% endfor %}
+{% if osp.ovn_bridge_mac_mappings is defined %}
+  ovnBridgeMacMappings:
+{% if osp.ovn_bridge_mac_mappings.phys_networks is defined and osp.ovn_bridge_mac_mappings.phys_networks|length %}
+    physNetworks:
+{% for physnet in osp.ovn_bridge_mac_mappings.phys_networks %}
+    - macPrefix: {{ physnet.prefix  }}
+      name: {{ physnet.name }}
+{% endfor %}
+{% endif %}
+    preserveReservations: {{ osp.ovn_bridge_mac_mappings.preserve_reservations|default(true)|bool }}
+{% if osp.ovn_bridge_mac_mappings.static_reservations is defined and osp.ovn_bridge_mac_mappings.static_reservations|length %}
+    staticReservations:
+{% for node, reservations in osp.ovn_bridge_mac_mappings.static_reservations.items() %}
+      {{ node }}:
+        reservations:
+{% for physnet, reservation in reservations.items() %}
+          {{ physnet }}: {{ reservation }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+{% endif %}

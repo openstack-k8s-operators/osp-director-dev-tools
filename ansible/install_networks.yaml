@@ -17,7 +17,8 @@
     set_fact:
       network_yaml_dir: "{{ working_yamls_dir }}/networks"
 
-  - debug:
+  - name: show yaml output dir
+    debug:
       msg: "yamls will be written to {{ network_yaml_dir }} locally"
 
   - name: Clean yaml dir

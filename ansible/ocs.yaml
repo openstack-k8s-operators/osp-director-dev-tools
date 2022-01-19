@@ -78,7 +78,8 @@
     environment:
       <<: *oc_env
 
-  - debug:
+  - name: show OCS cluster info
+    debug:
       msg:
         - "You can now check the health of your OCS cluster via:"
         - "oc rsh -n openshift-storage $(oc get pods -n openshift-storage -l app=rook-ceph-tools -o name) ceph -s"

@@ -28,7 +28,8 @@
         dest: "{{ base_path }}/cluster_mgnt_roles/run_playbook.sh"
         mode: '0755'
 
-    - debug:
+    - name: show installer info
+      debug:
         msg: |
           Executing the assisted installer playbook. You can tail the logs at {{ base_path }}/ai.log on
           the host for progress.  Furthermore, you can view the assisted installer console by entering the
