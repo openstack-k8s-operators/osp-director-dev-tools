@@ -279,6 +279,10 @@
     become: true
     become_user: root
     block:
+    - name: set fact for total workers
+      set_fact:
+        total_workers: "{{ ocp_num_workers|int + ocp_num_extra_workers|int }}"
+
     - name: Delete existing VMs and disk QCOW2s (if any)
       shell: |
         for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
@@ -345,7 +349,8 @@
         virsh vol-create-as 'default'
         '{{ ocp_cluster_name }}-worker-{{ item }}'.qcow2 '{{ ocp_worker_disk }}'G
         --format qcow2
-      with_sequence: start=0 end={{ ocp_num_workers+ocp_num_extra_workers-1 }}
+      with_sequence: start=0 end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
+      when: total_workers|int > 0
 
     - name: define master vms
       vars:
@@ -362,7 +367,7 @@
       with_sequence: start=0 end={{ ocp_num_masters-1 }}
 
     - name: define worker vms when OCS disabled
-      when: not (enable_ocs | bool)
+      when: (not (enable_ocs | bool)) and total_workers|int > 0
       vars:
         memory: "{{ ocp_worker_memory }}"
         vcpu: "{{ ocp_worker_vcpu }}"
@@ -374,10 +379,10 @@
         command: define
         xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
         uri: qemu:///system
-      with_sequence: start=0 end={{ ocp_num_workers+ocp_num_extra_workers-1 }}
+      with_sequence: start=0 end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
 
     - name: define worker vms when OCS enabled
-      when: (enable_ocs | bool)
+      when: (enable_ocs | bool) and total_workers|int > 0
       block:
       - name: define storage worker vms
         vars:
@@ -394,6 +399,7 @@
         with_sequence: start=0 end={{ ocp_num_storage_workers-1 }}
 
       - name: define non-storage and extra worker vms
+        when: total_workers|int > 0
         vars:
           memory: "{{ ocp_worker_memory }}"
           vcpu: "{{ ocp_worker_vcpu }}"
@@ -405,7 +411,7 @@
           command: define
           xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
           uri: qemu:///system
-        with_sequence: start={{ ocp_num_storage_workers }} end={{ ocp_num_workers+ocp_num_extra_workers-1 }}
+        with_sequence: start={{ ocp_num_storage_workers if enable_ocs|bool else 0 }} end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
 
     - name: Get worker domain names
       shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk '{print $2}'"
