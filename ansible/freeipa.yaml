@@ -114,7 +114,7 @@
 
       - name: Update dev_script dnsmasq to forward to freeipa
         lineinfile:
-          path: /etc/NetworkManager/dnsmasq.d/openshift-ostest.conf
+          path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
           line: 'server=/{{ base_domain_name }}/10.89.0.2 # Forward to FreeIPA'
           regexp: '# Forward to FreeIPA'
         when: not (ocp_ai|bool)

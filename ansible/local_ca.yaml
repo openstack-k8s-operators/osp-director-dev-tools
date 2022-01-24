@@ -80,7 +80,7 @@
 
       - name: Add OSP public endpoint to dev_script dnsmasq
         lineinfile:
-          path: /etc/NetworkManager/dnsmasq.d/openshift-ostest.conf
+          path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
           line: 'address=/overcloud.{{ osp.domain_name }}/10.0.0.10 # OSP public endpoint'
           regexp: '# OSP public endpoint'
           insertafter: EOF
