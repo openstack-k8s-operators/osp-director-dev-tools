@@ -1,6 +1,6 @@
 ---
 ocp_ai_discovery_iso: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso"
-ocp_ai_onprem_env: "{{ lookup('url', 'https://raw.githubusercontent.com/openshift/assisted-service/master/onprem-environment', wantlist=True) }}"
+ocp_ai_onprem_env: "{{ lookup('url', 'https://raw.githubusercontent.com/openshift/assisted-service/v2.0.10/onprem-environment', wantlist=True) }}"
 
 # this address needs to be reachable from IPMI/iDRAC if BM worker is used 
 ocp_ai_discovery_iso_server: 192.168.111.1
