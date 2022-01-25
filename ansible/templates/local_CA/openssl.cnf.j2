@@ -166,7 +166,7 @@ organizationalUnitName          = Organizational Unit Name (eg, section)
 organizationalUnitName_default  = OSP Director Operator
 
 commonName                      = Common Name (eg, your name or your server\'s hostname)
-commonName_default              = overcloud.{{ osp.domain_name }}
+commonName_default              = {{ common_name }}
 commonName_max                  = 64
 
 emailAddress                    = Email Address
@@ -370,9 +370,9 @@ ess_cert_id_alg         = sha256        # algorithm to compute certificate
                                 # identifier (optional, default: sha1)
 
 [ alt_names ]
-IP.1 = 192.168.25.100
-IP.2 = 10.0.0.10
-DNS.1 = 192.168.25.100
-DNS.2 = 10.0.0.10
-DNS.3 = overcloud.{{ osp.domain_name }}
+IP.1 = {{ control_plane_ip_ctlplane }}
+IP.2 = {{ control_plane_ip_external }}
+DNS.1 = {{ control_plane_ip_ctlplane }}
+DNS.2 = {{ control_plane_ip_external }}
+DNS.3 = {{ control_plane_dns_name }}
 

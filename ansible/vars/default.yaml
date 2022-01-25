@@ -275,6 +275,8 @@ osp_defaults:
   tlse: false
   # Enable TLS public_endpoints
   tls_public_endpoints: true
+  # Use IP for TLS public endpoints (vs DNS name)
+  tls_public_endpoints_ip: false
 
 # overwrite elements from osp_defaults for a specific release
 osp_release_defaults: {}

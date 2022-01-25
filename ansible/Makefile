@@ -97,13 +97,6 @@ freeipa_cleanup: hosts local-defaults.yaml
 	-e @local-defaults.yaml \
 	freeipa_cleanup.yaml
 
-local_ca: hosts local-defaults.yaml
-	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts \
-	-e @vars/${OSP_RELEASE}.yaml \
-	-e @local-defaults.yaml \
-	local_ca.yaml
-
 cnv_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
@@ -136,7 +129,6 @@ openstack:
 	$(MAKE) datavolume
 	$(MAKE) networks
 	$(MAKE) git
-	$(MAKE) local_ca
 	$(MAKE) ctlplane
 	$(MAKE) computes
 	$(MAKE) osp_custom_config

@@ -28,6 +28,10 @@
       state: directory
       mode: '0755'
 
+  - name: Create local CA
+    include_tasks: local_ca_tasks.yaml
+    when: osp.tls_public_endpoints|default(false)|bool
+
   - name: Render templates to yaml dir
     template:
       src: "osp/ctlplane/{{ item }}.j2"
@@ -46,3 +50,7 @@
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: Create openstack cert
+    include_tasks: local_cert_tasks.yaml
+    when: osp.tls_public_endpoints|default(false)|bool
