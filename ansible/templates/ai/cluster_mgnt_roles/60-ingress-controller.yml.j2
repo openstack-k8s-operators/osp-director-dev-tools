@@ -11,4 +11,4 @@ spec:
     nodeSelector:
       matchLabels:
         node-role.kubernetes.io/master: ""
-  replicas: {{ ocp_ai_ingress_replicas | default(3, true) }}
+  replicas: {{ ocp_ai_ingress_replicas | default(2, true) }}
