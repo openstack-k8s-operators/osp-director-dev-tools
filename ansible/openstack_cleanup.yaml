@@ -16,9 +16,11 @@
       - "oc delete -n openstack openstackephemeralheat --all"
       - "oc delete -n openstack openstackbaremetalset --all"
       - "oc delete -n openstack openstackcontrolplane --all"
+      - "oc delete -n openstack openstackvmset --all"
       - "oc delete -n openstack openstackclient --all"
       - "oc delete -n openstack openstacknetconfig --all"
       - "oc delete -n openstack cm tripleo-deploy-config heat-env-config tripleo-tarball-config --ignore-not-found=true"
+      - "oc delete -n opensatck events --all"
 
   - name: delete playbooks git repo dir
     become: true

@@ -180,7 +180,7 @@ default_timeout: 240
 
 # openstackclient container image
 # TODO: change once we have a 16.2.2 tripleoclient image that includes ipa-client
-# openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
+#openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
 openstackclient_image: docker-registry.upshift.redhat.com/openstack-k8s-operators/openstack-tripleoclient:16.2_ipa_client
 openstackclient_storage_class: host-nfs-storageclass
 openstackclient_networks:
@@ -218,7 +218,6 @@ osp_defaults:
       networks:
         - ctlplane
         - internal_api
-        - external
         - tenant
         - storage
   # number of OSD disks per compute node

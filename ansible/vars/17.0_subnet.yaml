@@ -41,7 +41,6 @@ osp_release_defaults:
       networks:
         - ctlplane
         - internal_api_leaf1
-        - external
         - tenant_leaf1
         - storage_leaf1
     ComputeLeaf2:
@@ -50,6 +49,5 @@ osp_release_defaults:
       networks:
         - ctlplane
         - internal_api_leaf2
-        - external
         - tenant_leaf2
         - storage_leaf2
