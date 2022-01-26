@@ -180,7 +180,7 @@ default_timeout: 240
 
 # openstackclient container image
 # TODO: change once we have a 16.2.2 tripleoclient image that includes ipa-client
-#openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
+# openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
 openstackclient_image: docker-registry.upshift.redhat.com/openstack-k8s-operators/openstack-tripleoclient:16.2_ipa_client
 openstackclient_storage_class: host-nfs-storageclass
 openstackclient_networks:
@@ -255,11 +255,11 @@ osp_defaults:
       prefix: fa:16:3a
     - name: datacentre2
       prefix: fa:16:3b
-    preserve_reservations: true
     static_reservations:
       controller-0:
         datacentre: fa:16:3a:aa:aa:aa
         datacentre2: fa:16:3b:aa:aa:aa
+  preserve_reservations: true
   container_tag: 16.2_20211110.2
   ceph_image: rhceph
   ceph_tag: 4-59

@@ -20,7 +20,7 @@
       - "oc delete -n openstack openstackclient --all"
       - "oc delete -n openstack openstacknetconfig --all"
       - "oc delete -n openstack cm tripleo-deploy-config heat-env-config tripleo-tarball-config --ignore-not-found=true"
-      - "oc delete -n opensatck events --all"
+      - "oc delete -n openstack events --all"
 
   - name: delete playbooks git repo dir
     become: true
