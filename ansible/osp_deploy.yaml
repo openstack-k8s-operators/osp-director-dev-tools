@@ -72,6 +72,6 @@
   - name: wait for deployment to finish
     shell: |
       set -e
-      oc wait -n openstack osdeploy default --for condition=Finished --timeout="{{ (default_timeout * 25)|int }}s"
+      oc wait -n openstack osdeploy default --for condition=Finished --timeout="{{ (default_timeout * 40)|int }}s"
     environment:
       <<: *oc_env
