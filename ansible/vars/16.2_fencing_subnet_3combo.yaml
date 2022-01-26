@@ -1,0 +1,51 @@
+---
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internal_api
+  - internal_api_leaf1
+
+enable_fencing: true
+
+ocp_num_workers: 0
+ocp_master_memory: 80000
+ocp_master_vcpu: 24
+ocp_master_disk: 100
+
+osp_release_defaults:
+  networks: ipv4_subnet
+  vmset:
+    Controller:
+      count: 3
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      storage_class: host-nfs-storageclass
+  bmset:
+    Compute:
+      count: 0
+    ComputeLeaf1:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf1
+        - external
+        - tenant_leaf1
+        - storage_leaf1
+    ComputeLeaf2:
+      count: 1
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf2
+        - external
+        - tenant_leaf2
+        - storage_leaf2
