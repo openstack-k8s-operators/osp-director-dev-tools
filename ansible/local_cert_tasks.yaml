@@ -9,7 +9,7 @@
         oc get -n {{ namespace }} osnet ctlplane -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip 
       register: get_control_plane_ip_ctlplane
       until: get_control_plane_ip_ctlplane.stdout|trim|ipaddr != False
-      retries: 30
+      retries: 60
       delay: 10
       environment: &oc_env
         PATH: "{{ oc_env_path }}"
@@ -20,7 +20,7 @@
         oc get -n {{ namespace }} osnet external -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip 
       register: get_control_plane_ip_external
       until: get_control_plane_ip_external.stdout|trim|ipaddr != False
-      retries: 30
+      retries: 60
       delay: 10
       environment:
         <<: *oc_env
