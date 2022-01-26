@@ -11,12 +11,13 @@ warn_list:  # or 'skip_list' to silence them completely
   - unnamed-task  # All tasks should be named
   
 exclude_paths:
+- ansible/local-defaults.yaml
 - ansible/files
-- ansible/roles/prepare_rhos_release
-- ansible/datavolume_tasks.yaml
-- ansible/extrafeature_heat_env.yaml
-- ansible/extrafeature_tarball_config.yaml
-- ansible/local_storage_tasks.yaml
-- ansible/ocs.yaml
-- ansible/pull-secret.yaml
-- ansible/virt_sriov_vm.yaml
+
+kinds:
+  - tasks: "**/*_tasks.yaml"
+  - tasks: "**/extrafeature_heat_env.yaml"
+  - tasks: "**/extrafeature_tarball_config.yaml"
+  - tasks: "**/ocs.yaml"
+  - tasks: "**/pull-secret.yaml"
+  - tasks: "**/virt_sriov_vm.yaml"
