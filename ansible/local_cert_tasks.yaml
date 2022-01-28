@@ -1,0 +1,92 @@
+---
+# https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html/advanced_overcloud_customization/sect-enabling_ssltls_on_the_overcloud
+- name: Create openstack cert
+  become: true
+  become_user: root
+  block:
+    - name: Lookup ControlPlane IP on ctlplane network
+      shell: >
+        oc get -n {{ namespace }} osnet ctlplane -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip 
+      register: get_control_plane_ip_ctlplane
+      until: get_control_plane_ip_ctlplane.stdout|trim|ipaddr != False
+      retries: 60
+      delay: 10
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+
+    - name: Lookup ControlPlane IP on external network
+      shell: >
+        oc get -n {{ namespace }} osnet external -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip 
+      register: get_control_plane_ip_external
+      until: get_control_plane_ip_external.stdout|trim|ipaddr != False
+      retries: 60
+      delay: 10
+      environment:
+        <<: *oc_env
+
+    - name: Create server key
+      command:
+        cmd: openssl genrsa -out /opt/local_CA/private/openstack.pem 2048
+        creates: /opt/local_CA/private/openstack.pem
+
+    - name: Set server key owner
+      file:
+        path: /opt/local_CA/private/openstack.pem
+        owner: "{{ ansible_real_user_id }}"
+        group: "{{ ansible_real_group_id }}"
+
+    - name: Create CSR template
+      template:
+        src: templates/local_CA/openssl.cnf.j2
+        dest: /opt/local_CA/certs/openstack/openssl.cnf
+      vars:
+        control_plane_dns_name: "overcloud.{{ osp.domain_name }}"
+        control_plane_ip_ctlplane: "{{ get_control_plane_ip_ctlplane.stdout|trim }}"
+        control_plane_ip_external: "{{ get_control_plane_ip_external.stdout|trim }}"
+        common_name: "{{ control_plane_ip_external if osp.tls_public_endpoints_ip|default(false)|bool else control_plane_dns_name }}"
+
+    - name: Generate CSR
+      command:
+        cmd: openssl req -nodes -config /opt/local_CA/certs/openstack/openssl.cnf -new -out /opt/local_CA/certs/openstack/openstack.csr.pem -batch
+        creates: /opt/local_CA/certs/openstack/openstack.csr.pem
+
+    - name: Generate Certificate
+      command:
+        cmd: openssl ca -config /opt/local_CA/certs/openstack/openssl.cnf -in /opt/local_CA/certs/openstack/openstack.csr.pem -out /opt/local_CA/certs/openstack/openstack.crt.pem -batch -notext
+        creates: /opt/local_CA/certs/openstack/openstack.crt.pem
+
+    - name: Add OSP public endpoint to dev_script dnsmasq
+      lineinfile:
+        path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
+        line: 'address=/overcloud.{{ osp.domain_name }}/{{ get_control_plane_ip_external.stdout|trim }} # OSP public endpoint'
+        regexp: '# OSP public endpoint'
+        insertafter: EOF
+      when: not (ocp_ai|bool)
+      register: ds_dnsmasq
+
+    - name: Reload NetworkManager
+      service:
+        name: NetworkManager
+        state: reloaded
+        enabled: yes
+      when:
+        - not (ocp_ai|bool)
+        - ds_dnsmasq.changed
+
+    - name: Add OSP public endpoint to AI dnsmasq
+      lineinfile:
+        path: /etc/dnsmasq.d/dnsmasq_ai.conf
+        line: 'address=/overcloud.{{ osp.domain_name }}/{{ get_control_plane_ip_external.stdout|trim }} # OSP public endpoint'
+        regexp: '# OSP public endpoint'
+        insertafter: EOF
+      when: ocp_ai|bool
+      register: ai_dnsmasq
+
+    - name: Restart dnsmasq
+      service:
+        name: dnsmasq
+        state: restarted
+      when:
+        - ocp_ai|bool
+        - ai_dnsmasq.changed

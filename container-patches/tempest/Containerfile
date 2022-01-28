@@ -1,0 +1,6 @@
+FROM registry.redhat.io/rhosp-rhel8/openstack-tempest:16.2
+
+USER root
+ADD tempest_sudoers /etc/sudoers.d/tempest_sudoers
+RUN chmod 440 /etc/sudoers.d/tempest_sudoers
+USER tempest

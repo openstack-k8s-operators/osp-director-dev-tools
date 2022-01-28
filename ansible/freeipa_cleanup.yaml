@@ -11,7 +11,7 @@
 
   - name: Update dev_script dnsmasq to stop forwarding to freeipa
     lineinfile:
-      path: /etc/NetworkManager/dnsmasq.d/openshift-ostest.conf
+      path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
       regexp: '# Forward to FreeIPA'
       state: absent
     when: not (ocp_ai|bool)
