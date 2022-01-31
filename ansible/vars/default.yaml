@@ -209,6 +209,8 @@ osp_defaults:
         - storage
         - storage_mgmt
       storage_class: host-nfs-storageclass
+      storage_access_mode: ReadWriteMany
+      storage_volume_mode: Filesystem
   # OSP compute OCP worker settings
   bmset:
     Compute:
