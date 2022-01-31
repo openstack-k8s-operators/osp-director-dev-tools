@@ -35,6 +35,8 @@ spec:
       diskSize: {{ role.disk_size }}
       baseImageVolumeName: {{ name|lower }}-base-img
       storageClass: {{ role.storage_class }}
+      storageAccessMode:  {{ role.storage_access_mode | default('ReadWriteMany', true) }}
+      storageVolumeMode: {{ role.storage_volume_mode | default('Filesystem', true) }}
 {% endif %}
 {% endfor %}
   enableFencing: {{ enable_fencing }}
