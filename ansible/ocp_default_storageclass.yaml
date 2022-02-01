@@ -9,9 +9,9 @@
     - size: 4
       number: 16
     - size: 128
-      number: 8
-    - size: 128
       number: 4
+    - size: 128
+      number: 8
       shared: true
     exports: "{{ pvs | expand_pvs | list }}"
 
@@ -91,6 +91,11 @@
   - name: Set directory for host-nfs-storageclass yaml files
     set_fact:
       yaml_dir: "{{ working_yamls_dir }}/host-nfs-storageclass"
+
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ yaml_dir }}/"
 
   - name: Create local yamldir
     file:

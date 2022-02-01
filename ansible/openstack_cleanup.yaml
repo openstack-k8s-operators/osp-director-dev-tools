@@ -7,7 +7,7 @@
   tasks:
   - name: openstack cleanup
     command: "{{ item }}"
-    environment:
+    environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
     ignore_errors: true
@@ -28,6 +28,15 @@
     file:
       path: /home/git/playbooks.git
       state: absent
+
+  - name: Remove bindings of PV's in Failed or Released state
+    environment:
+      <<: *oc_env
+    shell: |
+      #!/bin/bash
+      for i in $(oc get pv | egrep "Failed|Released" | awk {'print $1'}); do
+        oc patch pv $i --type='json' -p='[{"op": "remove", "path": "/spec/claimRef"}]'
+      done
 
   - name: Detach additional Ceph OSD disks
     become: true
