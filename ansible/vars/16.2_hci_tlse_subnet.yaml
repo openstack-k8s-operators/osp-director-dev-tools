@@ -26,7 +26,6 @@ osp_release_defaults:
       ctlplane_interface: enp7s0
       networks:
         - ctlplane
-        - external
         - internal_api_leaf1
         - storage_leaf1
         - storage_mgmt_leaf1

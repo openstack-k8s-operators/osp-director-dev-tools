@@ -12,7 +12,6 @@ osp_release_defaults:
       networks:
         - ctlplane
         - internal_api
-        - external
         - tenant
         - storage
         - storage_mgmt

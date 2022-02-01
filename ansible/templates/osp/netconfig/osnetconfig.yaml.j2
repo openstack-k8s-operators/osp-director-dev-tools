@@ -103,7 +103,6 @@ spec:
       name: {{ physnet.name }}
 {% endfor %}
 {% endif %}
-    preserveReservations: {{ osp.ovn_bridge_mac_mappings.preserve_reservations|default(true)|bool }}
 {% if osp.ovn_bridge_mac_mappings.static_reservations is defined and osp.ovn_bridge_mac_mappings.static_reservations|length %}
     staticReservations:
 {% for node, reservations in osp.ovn_bridge_mac_mappings.static_reservations.items() %}
@@ -115,3 +114,4 @@ spec:
 {% endfor %}
 {% endif %}
 {% endif %}
+  preserveReservations: {{ osp.preserve_reservations|default(true)|bool }}

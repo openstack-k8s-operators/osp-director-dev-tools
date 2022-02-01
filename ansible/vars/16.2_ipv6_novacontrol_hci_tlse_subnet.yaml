@@ -39,22 +39,20 @@ osp_release_defaults:
   bmset:
     Compute:
       count: 0
-    ComputeLeaf1:
+    ComputeHCILeaf1:
       count: 1
       ctlplane_interface: enp7s0
       networks:
         - ctlplane
         - internal_api_leaf1
-        - external
         - tenant_leaf1
         - storage_leaf1
-    ComputeLeaf2:
+    ComputeHCILeaf2:
       count: 1
       ctlplane_interface: enp7s0
       networks:
         - ctlplane
         - internal_api_leaf2
-        - external
         - tenant_leaf2
         - storage_leaf2
   extrafeatures:

@@ -220,7 +220,6 @@ osp_defaults:
       networks:
         - ctlplane
         - internal_api
-        - external
         - tenant
         - storage
   # number of OSD disks per compute node
@@ -258,11 +257,11 @@ osp_defaults:
       prefix: fa:16:3a
     - name: datacentre2
       prefix: fa:16:3b
-    preserve_reservations: true
     static_reservations:
       controller-0:
         datacentre: fa:16:3a:aa:aa:aa
         datacentre2: fa:16:3b:aa:aa:aa
+  preserve_reservations: true
   container_tag: 16.2_20211110.2
   ceph_image: rhceph
   ceph_tag: 4-59
