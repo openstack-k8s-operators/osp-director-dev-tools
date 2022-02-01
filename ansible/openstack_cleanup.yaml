@@ -12,7 +12,9 @@
       KUBECONFIG: "{{ kubeconfig }}"
     ignore_errors: true
     with_items:
+      - "oc delete -n openstack openstackdeploy --all"
       - "oc delete -n openstack openstackconfiggenerator --all"
+      - "oc delete -n openstack openstackconfigversion --all"
       - "oc delete -n openstack openstackephemeralheat --all"
       - "oc delete -n openstack openstackbaremetalset --all"
       - "oc delete -n openstack openstackcontrolplane --all"
