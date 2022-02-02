@@ -216,3 +216,52 @@ osp_networks:
         - destination: 172.20.1.0/24
           nexthop: 172.20.2.1
       attach_config: br-osp
+osp_reservations:
+  openstackclient-0:
+    ip_reservations:
+      ctlplane: 192.168.25.251
+      external: 10.0.0.251
+      internal_api: 172.17.0.251
+  controlplane:
+    ip_reservations:
+      ctlplane: 192.168.25.10
+      external: 10.0.0.10
+      internal_api: 172.17.0.10
+      storage: 172.18.0.10
+      storage_mgmt: 172.19.0.10
+  controller-0:
+    ip_reservations:
+      ctlplane: 192.168.25.20
+      external: 10.0.0.20
+      internal_api: 172.17.0.20
+      storage: 172.18.0.20
+      storage_mgmt: 172.19.0.20
+      tenant: 172.20.0.20
+    mac_reservations:
+      datacentre: fa:16:3a:aa:aa:aa
+      datacentre2: fa:16:3b:aa:aa:aa
+  controller-1:
+    ip_reservations:
+      ctlplane: 192.168.25.30
+      external: 10.0.0.30
+      internal_api: 172.17.0.30
+      storage: 172.18.0.30
+      storage_mgmt: 172.19.0.30
+      tenant: 172.20.0.30
+    macReservations:
+      datacentre: fa:16:3a:aa:aa:bb
+      datacentre2: fa:16:3b:aa:aa:bb
+  compute-0:
+    ip_reservations:
+      ctlplane: 192.168.25.40
+      internal_api: 172.17.0.40
+      storage: 172.18.0.40
+      tenant: 172.20.0.40
+    macReservations:
+      datacentre: fa:16:3a:bb:bb:bb
+  computeleaf1-0:
+    ip_reservations:
+      ctlplane: 192.168.25.50
+      internal_api_leaf1: 172.17.1.40
+      storage_leaf1: 172.18.1.40
+      tenant_leaf1: 172.20.1.40
