@@ -12,22 +12,41 @@
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Accept rendered playbooks
+  - name: check for v1.2.x /home/cloud-admin/tripleo-deploy.sh
     shell: |
       #!/bin/bash
       set -e
-      oc rsh -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh -a
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: playbooks_accept
+      oc rsh -n openstack openstackclient find /home/cloud-admin/tripleo-deploy.sh
+    ignore_errors: true
+    register: v_1_2
 
-  - name: Run playbooks, deployment log at {{ working_log_dir }}/osp-deploy.log
+  - name: run v1.2.x deploy
+    when: v_1_2.rc == 0
+    block:
+    - name: Accept rendered playbooks
+      shell: |
+        #!/bin/bash
+        set -e
+        oc rsh -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh -a
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      register: playbooks_accept
+
+    - name: Run playbooks, deployment log at {{ working_log_dir }}/osp-deploy.log
+      shell: |
+        #!/bin/bash
+        set -e
+        oc rsh -n openstack openstackclient timeout {{ osp.deploy_timeout }} /home/cloud-admin/tripleo-deploy.sh -p > {{ working_log_dir }}/osp-deploy.log 2>&1
+      environment:
+        <<: *oc_env
+      when: playbooks_accept.rc == 0
+
+  - name: run master /usr/local/bin/tripleo-deploy.sh
     shell: |
       #!/bin/bash
       set -e
-      oc rsh -n openstack openstackclient timeout {{ osp.deploy_timeout }} /home/cloud-admin/tripleo-deploy.sh -p > {{ working_log_dir }}/osp-deploy.log 2>&1
+      oc rsh -n openstack openstackclient timeout {{ osp.deploy_timeout }} /usr/local/bin/tripleo-deploy.sh > {{ working_log_dir }}/osp-deploy.log 2>&1
     environment:
       <<: *oc_env
-    when: playbooks_accept.rc == 0
-
+    when: v_1_2.rc == 1

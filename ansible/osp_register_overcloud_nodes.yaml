@@ -103,20 +103,9 @@
       <<: *oc_env
     register: result
 
-  - name: Accept rendered playbooks to get the current inventory
-    shell: |
-      #!/bin/bash
-      set -e
-      oc rsh -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh -a
-    environment:
-      <<: *oc_env
-    register: playbooks_accept
-    when: result.rc == 0
-
   - name: run rhsm playbook via openstackclient
     shell: |
       #!/bin/bash
-      oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/tripleo-ansible-inventory.yaml /home/cloud-admin/rhsm.yaml
+      oc rsh -n openstack openstackclient ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/rhsm.yaml
     environment:
       <<: *oc_env
-    when: playbooks_accept.rc == 0
