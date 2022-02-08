@@ -55,7 +55,7 @@
     - name: Run TripleO fencing overrides playbook via openstackclient
       shell: |
         #!/bin/bash
-        oc rsh -n {{ namespace }} openstackclient ansible-playbook -i /home/cloud-admin/playbooks/tripleo-ansible/tripleo-ansible-inventory.yaml /home/cloud-admin/tripleo_fencing_overrides.yaml
+        oc rsh -n {{ namespace }} openstackclient ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/tripleo_fencing_overrides.yaml
       environment:
         <<: *oc_env
     when: max_vm_role_count|int > 2
