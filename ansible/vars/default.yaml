@@ -257,10 +257,6 @@ osp_defaults:
       prefix: fa:16:3a
     - name: datacentre2
       prefix: fa:16:3b
-    static_reservations:
-      controller-0:
-        datacentre: fa:16:3a:aa:aa:aa
-        datacentre2: fa:16:3b:aa:aa:aa
   preserve_reservations: true
   container_tag: 16.2_20211110.2
   ceph_image: rhceph
