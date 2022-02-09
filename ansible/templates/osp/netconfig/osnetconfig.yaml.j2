@@ -28,6 +28,10 @@ spec:
             type: ethernet
 {% endif %}
             state: up
+            ipv4:
+              enabled: false
+            ipv6:
+              enabled: false
 {% if ifcfg.mtu is defined %}
             mtu: {{ ifcfg.mtu }}
 {% endif %}
