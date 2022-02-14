@@ -40,6 +40,7 @@
       template:
         src: templates/local_CA/openssl.cnf.j2
         dest: /opt/local_CA/certs/openstack/openssl.cnf
+        mode: "0644"
       vars:
         control_plane_dns_name: "overcloud.{{ osp.domain_name }}"
         control_plane_ip_ctlplane: "{{ get_control_plane_ip_ctlplane.stdout|trim }}"
