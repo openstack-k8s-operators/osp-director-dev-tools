@@ -17,6 +17,7 @@
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
+    when: not (ocp_ai | bool)
 
   - name: wait for the machine config pools to update for image registry customizations
     shell: |
@@ -34,3 +35,4 @@
     ignore_errors: yes
     retries: "{{ (default_timeout / 5)|int }}"
     delay: 5
+    when: not (ocp_ai | bool)
