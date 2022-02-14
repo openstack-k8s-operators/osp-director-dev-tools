@@ -181,7 +181,7 @@ default_timeout: 240
 # openstackclient container image
 # TODO: change once we have a 16.2.2 tripleoclient image that includes ipa-client
 # openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
-openstackclient_image: docker-registry.upshift.redhat.com/openstack-k8s-operators/openstack-tripleoclient:16.2_ipa_client
+openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp16-openstack-tripleoclient:16.2_20220209.2
 openstackclient_storage_class: host-nfs-storageclass
 openstackclient_networks:
   - ctlplane
@@ -258,7 +258,7 @@ osp_defaults:
     - name: datacentre2
       prefix: fa:16:3b
   preserve_reservations: true
-  container_tag: 16.2_20211110.2
+  container_tag: 16.2_20220209.2
   ceph_image: rhceph
   ceph_tag: 4-59
   # OSP deployment timeout
@@ -310,7 +310,12 @@ virt_sriov_domains:
   - "{{ ocp_cluster_name }}_worker_3"
   - "{{ ocp_cluster_name }}_worker_4"
 
+# enable fencing on overcloud controllers
 enable_fencing: false
+# fencing agent packages to be installed until available via RHEL channels and auto installed by tripleo
+fencing_agent_packages:
+  - https://people.redhat.com/~mschuppe/fence_agents/fence-agents-common-4.2.1-65.el8_4.2.osptest.noarch.rpm
+  - https://people.redhat.com/~mschuppe/fence_agents/fence-agents-kubevirt-4.2.1-65.el8_4.2.osptest.x86_64.rpm
 
 # HTTP Proxy
 http_proxy: ""

@@ -149,7 +149,14 @@ register_overcloud_nodes: hosts local-defaults.yaml
 	-i hosts \
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
-	osp_register_overcloud_nodes.yaml \
+	osp_register_overcloud_nodes.yaml
+	$(MAKE) fencing_prep
+
+fencing_prep: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
 	osp_tripleo_fencing_overrides.yaml
 
 openstack_cleanup: hosts local-defaults.yaml
