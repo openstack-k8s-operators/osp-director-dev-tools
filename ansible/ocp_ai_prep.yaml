@@ -653,6 +653,21 @@
           insertafter: '^\s\s\s\s-\s50-master-scheduler\.yml'
           line: '    - 60-ingress-controller.yml'
 
+    - name: Add custom registries manifest
+      block:
+      - name: Create custom registries manifest
+        template:
+          src: ai/cluster_mgnt_roles/70-image.yml.j2
+          dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/70-image.yml.j2"
+          mode: '0664'
+
+      - name: Inject custom registries manifest
+        lineinfile:
+          path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
+          regexp: '^\s\s\s\s-\s70-image\.yml'
+          insertafter: '^\s\s\s\s-\s60-ingress-controller\.yml'
+          line: '    - 70-image.yml'
+
     - name: Force serial execution of boot_iso role
       replace:
         after: "Mounting, Booting the Assisted Installer Discovery ISO"
