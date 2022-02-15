@@ -544,6 +544,12 @@
         regexp: 'SERVICE_BASE_URL=.*'
         replace: 'SERVICE_BASE_URL=http://192.168.111.1:{{ ocp_ai_service_port | default("8090", true) }}'
 
+    - name: Set assisted installer service image
+      ansible.builtin.lineinfile:
+        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
+        regexp: '^OAS_IMAGE='
+        line: 'OAS_IMAGE={{ ocp_ai_service_image | default("quay.io/ocpmetal/assisted-service:latest", true) }}'
+
     - name: Create dict of upstream AI onprem variables
       set_fact:
         ocp_ai_onprem_env_dict: "{{ ocp_ai_onprem_env_dict|default({}) | combine( {item.split('=')[0]: item.split('=')[1]} ) }}"
