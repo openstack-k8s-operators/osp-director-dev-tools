@@ -26,4 +26,7 @@ ocp_ai_prov_bridge_worker_mac_prefix: 3c:fd:fe:78:cd:1
 # ocp_ai_service_store_dir: defaults to "/opt/assisted-service"
 # ocp_ai_service_port: defaults to "8090"
 
+# for now pin the ai image to a more stable tag - lastest started to fail on Feb 14th
+ocp_ai_service_image: quay.io/ocpmetal/assisted-service:v2.0.11
+
 ocp_ai_libvirt_storage_dir: /var/lib/libvirt/images
