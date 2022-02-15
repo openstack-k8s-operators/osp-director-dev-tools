@@ -3,48 +3,12 @@
   become: true
 
   tasks:
-  - name: Install Kubevirt fencing agent dependencies
-    shell: |
-      #!/bin/bash
-      /usr/libexec/platform-python -m pip install openshift
-
-  # Note: can be removed when is available https://review.opendev.org/q/topic:%22fence_kubevirt%22
-  - name: Pre-install certain packages
+  - name: Pre-install fencing agents which support fence_kubevirt
     package:
       state: installed
-      name: "{{ '{{' }} item {{ '}}' }}"
-    with_items:
-      - puppet-tripleo
-      - puppet-pacemaker
-      - patch
-      - patchutils
-
-  - name: Get noarch fencing agent dependencies
-    shell: |
-      curl -S http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/noarch/ | grep "href=\"fence-agents" | cut -d '"' -f 6 | awk '{print "http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/noarch/"$1}'
-    register: fence_agent_noarch_deps
-  
-  # Using yum module instead of package module here because the latter fails GPG key validation
-  - name: Pre-install latest fencing agents
-    yum:
-      name: "{{ '{{' }} fence_agent_noarch_deps.stdout_lines | join(',') {{ '}}' }}, http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-redfish-4.2.1-82.el8.x86_64.rpm, http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-kdump-4.2.1-82.el8.x86_64.rpm,  http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-kubevirt-4.2.1-82.el8.x86_64.rpm, http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/fence-agents/4.2.1/82.el8/x86_64/fence-agents-all-4.2.1-82.el8.x86_64.rpm"
-      state: installed
+      name:
+{% for pkg in fencing_agent_packages %}
+        - {{ pkg }}
+{% endfor %}
       disable_gpg_check: yes
       validate_certs: no
-
-  # Note: can be removed when is available https://review.opendev.org/q/topic:%22fence_kubevirt%22
-  - name: Apply patches to puppet modules on controller VMs
-    shell: |
-      #!/bin/bash
-      set -x
-      if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~806924/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/pacemaker -p1; then
-        curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~806924/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/pacemaker -b -z .orig -p1
-      fi
-      if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~807299/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/pacemaker -p1; then
-        curl https://review.opendev.org/changes/openstack%2Fpuppet-pacemaker~807299/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/pacemaker -b -z .orig -p1
-      fi
-      if [[ "{{ osp.release }}" == "16.2" ]]; then
-        if ! curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~810682/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -R -s -f --dry-run -d /usr/share/openstack-puppet/modules/tripleo -p1; then
-          curl https://review.opendev.org/changes/openstack%2Fpuppet-tripleo~810682/revisions/1/patch?download | base64 -d | filterdiff -p1 -x 'spec/*' | patch -d /usr/share/openstack-puppet/modules/tripleo -b -z .orig -p1
-        fi
-      fi

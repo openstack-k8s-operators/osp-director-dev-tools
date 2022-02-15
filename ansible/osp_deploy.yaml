@@ -12,7 +12,8 @@
     set_fact:
       deploy_yamls_dir: "{{ working_yamls_dir }}/deploy"
 
-  - debug:
+  - name: show yaml output dir
+    debug:
       msg: "yamls will be written to {{ deploy_yamls_dir }} locally"
 
   - name: Clean yaml dir
