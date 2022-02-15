@@ -71,7 +71,38 @@
 
   - name: wait for deployment to finish
     shell: |
+      #!/bin/bash
       set -e
-      oc wait -n openstack osdeploy default --for condition=Finished --timeout="{{ (default_timeout * 40)|int }}s"
+
+      CUR_TIME=$(date +%s)
+      END_TIME=$(($CUR_TIME+{{ (default_timeout * 40)|int }}))
+
+      while [ "$CUR_TIME" -le "$END_TIME" ]; 
+      do
+        STATUS=$(oc get osdeploy -n openstack default | grep -v NAME | tail -1 | awk {'print $2'})
+        STATUS_CODE=$?
+
+        if [ $STATUS_CODE -ne 0 ];
+        then
+          echo non-zero \"oc get osdeploy\" status code: $STATUS_CODE
+        fi
+
+        if [ "$STATUS" == "Finished" ];
+        then
+          exit 0
+        elif [ "$STATUS" == "Error" ];
+        then
+          oc logs $(oc get pod -l job-name=deploy-openstack-default -o name) > {{ working_log_dir }}/osp-deploy.log
+          echo Deployment hit an error. Please see OCP osdeploy logs in {{ working_log_dir }}/osp-deploy.log
+          exit 1
+        fi
+
+        sleep 5
+
+        CUR_TIME=$(date +%s)
+      done
+
+      echo Neither \"Error\" nor \"Finished\" encountered before timeout. Exiting
+      exit 1
     environment:
       <<: *oc_env
