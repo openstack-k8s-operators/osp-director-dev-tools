@@ -1,0 +1,15 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: localhost
+  vars_files: "vars/default.yaml"
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Deploy cnosp operators
+    include_role:
+      name: cnosp
+      tasks_from: olm
+    vars:
+      _cnv_version: "{{ cnosp_cnv_version }}"
+

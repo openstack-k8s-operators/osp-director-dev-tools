@@ -1,0 +1,51 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: ovn-northd
+  namespace: openstack
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ovn-northd
+  template:
+    metadata:
+      labels:
+        app: ovn-northd
+        kubernetes.io/os: "linux"
+    spec:
+      containers:
+      # ovn-northd: convert network objects in nbdb to flows in sbdb
+      - name: northd
+        image: "quay.io/mbooth/ovn-central:trunk"
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -xe -o pipefail
+
+          echo "$(date -Iseconds) - starting ovn-northd"
+          exec /opt/bin/ovn-northd \
+            --no-chdir "-vconsole:${OVN_LOG_LEVEL}" -vfile:off \
+            --ovnnb-db "${NB_CONNECTION}" \
+            --ovnsb-db "${SB_CONNECTION}"
+        env:
+        - name: OVN_LOG_LEVEL
+          value: info 
+        - name: OVN_RUNDIR
+          value: /tmp
+        - name: NB_CONNECTION
+          valueFrom:
+            configMapKeyRef:
+              name: ovn-connection
+              key: NBConnection
+        - name: SB_CONNECTION
+          valueFrom:
+            configMapKeyRef:
+              name: ovn-connection
+              key: SBConnection
+        resources:
+          requests:
+            cpu: 10m
+            memory: 300Mi
+        terminationMessagePolicy: FallbackToLogsOnError

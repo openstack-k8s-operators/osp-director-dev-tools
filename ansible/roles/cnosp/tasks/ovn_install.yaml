@@ -1,0 +1,67 @@
+---
+- name: Set directory for ovn yaml files
+  set_fact:
+    ovn_yaml_dir: "{{ working_yamls_dir }}/ovn"
+
+- name: show yaml output dir
+  debug:
+    msg: "yamls will be written to {{ ovn_yaml_dir }} locally"
+
+- name: Clean yaml dir
+  file:
+    state: absent
+    path: "{{ ovn_yaml_dir }}/"
+
+- name: Create yaml dir
+  file:
+    path: "{{ ovn_yaml_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy deployment yamls to working dir
+  copy:
+    src: "{{ item }}"
+    dest: "{{ ovn_yaml_dir }}/"
+    mode: '0644'
+  with_fileglob:
+  - "ovn/*"
+
+- name: Deploy OVN
+  shell: |
+    oc apply -f "{{ ovn_yaml_dir }}"
+
+    # Unlike a deployment, you can't wait for a StatefulSet to become
+    # available. For us, it's sufficient that at least 1 node is available.
+    # ovn-ovsdb-0 will always be brought up first.
+    oc wait -n openstack pod/ovn-ovsdb-0 \
+        --for condition=Ready --timeout={{ default_timeout }}s
+  environment: &oc_env
+    PATH: "{{ oc_env_path }}"
+    KUBECONFIG: "{{ kubeconfig }}"
+
+- name: Get service IP addresses
+  shell: |
+    set -e -o pipefail
+
+    oc get -n openstack svc -l app=ovn-ovsdb -o json | jq -re '.items[].spec.clusterIP'
+  register: ovn_ovsdb_ips
+  environment:
+    <<: *oc_env
+
+- name: Construct connection strings for nb and sb databases
+  set_fact:
+    ovn_nb_connection: "{{ ovn_nb_connection }}{{ (ovn_nb_connection|length > 0) | ternary(',', '', omit) }}tcp:{{ item }}:6641"
+    ovn_sb_connection: "{{ ovn_sb_connection }}{{ (ovn_sb_connection|length > 0) | ternary(',', '', omit) }}tcp:{{ item }}:6642"
+  loop: "{{ ovn_ovsdb_ips.stdout_lines }}"
+  vars:
+    ovn_nb_connection: ""
+    ovn_sb_connection: ""
+
+- name: Create config map
+  shell: |
+    oc create configmap -n openstack ovn-connection \
+        --dry-run=client --save-config=true -o json \
+        --from-literal=NBConnection={{ ovn_nb_connection }} \
+        --from-literal=SBConnection={{ ovn_sb_connection }} | oc apply -f -
+  environment:
+    <<: *oc_env

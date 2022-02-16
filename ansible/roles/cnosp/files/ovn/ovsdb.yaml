@@ -1,0 +1,195 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ovn-ovsdb
+  namespace: openstack
+spec:
+  replicas: 3
+  serviceName: ovn-ovsdb
+  selector:
+    matchLabels:
+      app: ovn-ovsdb
+  template:
+    metadata:
+      labels:
+        app: ovn-ovsdb
+        kubernetes.io/os: "linux"
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - ovn-ovsdb
+            topologyKey: kubernetes.io/hostname
+
+      # The only privilege required by this service is to use hostPort, and
+      # that's a temporary hack for development use only.
+      serviceAccountName: openstack-proto
+      containers:
+
+      # nbdb: the northbound, or logical network object DB. In raft mode
+      - name: nbdb
+        image: &image "quay.io/mbooth/ovn-central:trunk"
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -xe -o pipefail
+
+          # See the comment on the override-local-service-ip to see what this
+          # is about
+          export SERVER_NAME="$(hostname).openstack.svc.cluster.local"
+
+          # The StatefulSet ensures that the first node to come up will be node
+          # zero. Below we configure node zero to initialise a new cluster
+          # database if none exists already. Other nodes will initialise their
+          # database by connecting to node zero. This is only relevant to
+          # bootstrapping, and doesn't imply that node zero is the leader.
+
+          initialiser="ovn-ovsdb-0"
+
+          echo "$(date -Iseconds) - starting nbdb"
+          if [[ "$(hostname)" == "${initialiser}" ]]; then
+            /cluster-create
+          else
+            /cluster-join any "tcp:${initialiser}.openstack.svc.cluster.local:6643"
+          fi
+          exec /dbserver
+        env:
+        - name: DB_TYPE
+          value: NB
+        - name: OVN_RUNDIR
+          value: /ovn-run
+        - name: OVN_DBDIR
+          value: /var/lib/openvswitch
+        - name: OVN_LOG_LEVEL
+          value: info
+        volumeMounts: &pod_mounts
+        - mountPath: /var/lib/openvswitch/
+          name: data
+        - mountPath: /ovn-run
+          name: ovn-run
+        - mountPath: /etc/hosts
+          name: hosts
+          subPath: hosts
+        resources:
+          requests:
+            cpu: 10m
+            memory: 300Mi
+        ports:
+        - name: nb-db-port
+          containerPort: 6641
+        - name: nb-db-raft-port
+          containerPort: 6643
+        terminationMessagePolicy: FallbackToLogsOnError
+
+      # sbdb: The southbound, or flow DB. In raft mode
+      - name: sbdb
+        image: *image
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -xe -o pipefail
+
+          # See the comment on the override-local-service-ip to see what this
+          # is about
+          export SERVER_NAME="$(hostname).openstack.svc.cluster.local"
+
+          # The StatefulSet ensures that the first node to come up will be node
+          # zero. Below we configure node zero to initialise a new cluster
+          # database if none exists already. Other nodes will initialise their
+          # database by connecting to node zero. This is only relevant to
+          # bootstrapping, and doesn't imply that node zero is the leader.
+
+          initialiser="ovn-ovsdb-0"
+
+          echo "$(date -Iseconds) - starting nbdb"
+          if [[ "$(hostname)" == "${initialiser}" ]]; then
+            /cluster-create
+          else
+            /cluster-join any "tcp:${initialiser}.openstack.svc.cluster.local:6644"
+          fi
+          exec /dbserver
+        env:
+        - name: DB_TYPE
+          value: SB
+        - name: OVN_RUNDIR
+          value: /ovn-run
+        - name: OVN_DBDIR
+          value: /var/lib/openvswitch
+        - name: OVN_LOG_LEVEL
+          value: info
+        volumeMounts: *pod_mounts
+        ports:
+        - name: sb-db-port
+          containerPort: 6642
+        - name: sb-db-raft-port
+          containerPort: 6644
+        terminationMessagePolicy: FallbackToLogsOnError
+
+      initContainers:
+      # ovsdb adds 'cluster-local-addr' to the shared cluster table, and also
+      # binds to it locally. Therefore it must be possible for the local pod to
+      # bind to this name, and for other pods to route to it.
+      #
+      # Ideally we would use the pod's IP address from the statefulset service,
+      # i.e.:
+      #   ovn-ovsdb-0.ovn-ovsdb.openstack.svc.cluster.local
+      # however, there are 2 problems which combine to mean we can't do this:
+      # * This name is only available from DNS while the pod is running
+      # * ovs-dbserver treats DNS names which don't currently resolve as a
+      #   syntax error and fails to start.
+      # So while a running pod will re-resolve a name which disappears and
+      # comes back with a different IP, it won't start at all unless all other
+      # pods are running (or all lower ordered pods during initial startup).
+      # This means that it's not possible to recover from a situation where 2
+      # pods go down.
+      #
+      # We also create an independent service for each node in the cluster.
+      # These services always resolve in DNS whether the pod is up or not, but
+      # they're not local addresses, so we can't bind to them.
+      #
+      # Enter this hack: we add the service name for the local node to
+      # /etc/hosts. This means that the local node can bind to it, because it's
+      # a local IP address, and other nodes can always resolve the name and
+      # connect to it when it's up.
+      - name: override-local-service-ip
+        image: *image
+        securityContext:
+          runAsUser: 0
+        imagePullPolicy: Always
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        command:
+          - /bin/bash
+          - -c
+          - |
+            set -e -o pipefail
+
+            cp /etc/hosts /hosts-new
+            echo "$POD_IP $(hostname).openstack.svc.cluster.local" >> /hosts-new/hosts
+        volumeMounts:
+        - mountPath: /hosts-new
+          name: hosts
+
+      volumes:
+      - name: ovn-run
+        emptyDir: {}
+      - name: hosts
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
