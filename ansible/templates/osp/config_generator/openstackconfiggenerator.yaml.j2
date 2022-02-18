@@ -6,7 +6,6 @@ metadata:
   namespace: openstack
 spec:
   gitSecret: git-secret
-  imageURL: {{ openstackclient_image }}
   heatEnvs:
 {%- if osp.tls_public_endpoints|default(false)|bool %}
 {%- if osp.tls_public_endpoints_ip|default(false)|bool %}
@@ -23,10 +22,3 @@ spec:
 {%- endif %}
   heatEnvConfigMap: heat-env-config
   tarballConfigMap: tripleo-tarball-config
-{% if ephemeral_heat is defined and ephemeral_heat|length %}
-  ephemeralHeatSettings:
-    heatAPIImageURL: {{ ephemeral_heat.heat_api_image }}
-    heatEngineImageURL: {{ ephemeral_heat.heat_engine_image }}
-    mariadbImageURL: {{ ephemeral_heat.mariadb_image }}
-    rabbitImageURL: {{ ephemeral_heat.rabbit_image }}
-{% endif %}

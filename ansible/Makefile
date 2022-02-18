@@ -137,6 +137,13 @@ openstack:
 	$(MAKE) osp_deploy
 	$(MAKE) must_gather
 
+patch_csv: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+        -e @vars/${OSP_RELEASE}.yaml \
+        -e @local-defaults.yaml \
+        patch_csv.yaml
+
 osp_deploy: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
@@ -254,7 +261,8 @@ olm: hosts local-defaults.yaml
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	install_namespace.yaml \
-	olm.yaml
+	olm.yaml \
+	patch_csv.yaml
 
 olm_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
