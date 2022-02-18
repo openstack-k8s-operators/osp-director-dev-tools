@@ -589,7 +589,7 @@
         aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster
       register: assisted_service_ready
       until: '"Dns Domain" in assisted_service_ready.stdout'
-      retries: 60
+      retries: "{{ default_timeout|int }}"
       delay: 10
       environment:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin

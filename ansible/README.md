@@ -22,7 +22,7 @@ git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
 If not already installed, install the required dependencies
 
 ```
-dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
+dnf install -y ansible git libvirt-client python3-netaddr python3-lxml jq
 ```
 
 > NOTE: make sure you install ansible >= 2.9 otherwise ansible collections will not work correctly
@@ -169,14 +169,14 @@ Now you can access the OCP console using your local web browser: <https://consol
 
 You can also access the OCP CLI:
 
-IPI: 
+IPI:
 ```
 su - ocp
 export KUBECONFIG=/home/ocp/dev-scripts/ocp/ostest/auth/kubeconfig
 oc get pods -n openstack
 ```
 
-AI: 
+AI:
 ```
 su - ocp
 export KUBECONFIG=/home/ocp/cluster_mgnt_roles/kubeconfig.ostest
@@ -216,7 +216,7 @@ make destroy_ocp
 
 #### Delete OSP overcloud only
 
-NOTE: This deletes the overcloud and the OCP resources that are associated with it.  
+NOTE: This deletes the overcloud and the OCP resources that are associated with it.
       It does not remove the OCP cluster nor the OSP-D operator, however.
 
 ```
@@ -225,8 +225,8 @@ make openstack_cleanup
 
 #### Delete the operator only
 
-NOTE: This deletes the OSP-D operator, but leaves any resources it deployed intact.  
-      However, if those resources later change and would require OCP reconciliation, 
+NOTE: This deletes the OSP-D operator, but leaves any resources it deployed intact.
+      However, if those resources later change and would require OCP reconciliation,
       the OSP-D operator will obviously not be present to act upon them.
 
 ```
