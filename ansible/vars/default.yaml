@@ -82,9 +82,10 @@ ocp_cluster_name: ostest
 ocp_domain_name: "{{ base_domain_name }}"
 
 # Released version of the opm package (can be set to 'latest')
-opm_version: v1.12.5
+opm_version: latest
 
 # operator-sdk version to use (must be specific version)
+#sdk_version: v0.19.2 - cnosp is right now based on that version
 sdk_version: v1.13.1
 
 # golang version
@@ -332,3 +333,5 @@ must_gather_image: quay.io/openstack-k8s-operators/must-gather:0.0.2
 # Optional directory to save must-gather information, defaults to "{{ working_log_dir }}"
 # must_gather_directory: "{{ working_log_dir }}"
 must_gather_compress_logs: false
+
+cnosp_cnv_version: 0.0.1

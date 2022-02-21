@@ -1,0 +1,20 @@
+ovs-pki -d /tmp/ovs-pki init
+ovs-pki -d /tmp/ovs-pki req default -u
+
+* writes default-{req,privkey}.pem to current directory
+
+ovs-pki -d /tmp/ovs-pki self-sign default
+
+* writes default-cert.pem to current directory
+
+kubectl create secret tls ovn-cert --cert=ovn-cert.pem --key=ovn-privkey.pem
+kubectl create configmap ovn-ca --from-file=/tmp/ovs-pki/controllerca/cacert.pem
+
+ovsdb-tool create-cluster \
+    /var/lib/openvswitch/ovnnb_db.db \
+    /usr/share/openvswitch/ovn-nb.ovsschema \
+    ssl:ovn-ovsdb-0.openstack.svc.cluster.local:6641
+
+ovsdb-tool db-cid /var/lib/openvswitch/ovnnb_db.db
+ovsdb-tool db-sid /var/lib/openvswitch/ovnnb_db.db
+ovsdb-tool db-local-address /var/lib/openvswitch/ovnnb_db.db

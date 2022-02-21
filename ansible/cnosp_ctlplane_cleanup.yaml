@@ -1,0 +1,21 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Delete the ctlplane
+    include_role:
+      name: cnosp
+      tasks_from: ctlplane_cleanup
+
+  - name: Delete OVN
+    include_role:
+      name: cnosp
+      tasks_from: ovn_cleanup
+
+  - name: Delete cnosp openstackclient
+    include_role:
+      name: cnosp
+      tasks_from: openstackclient_cleanup

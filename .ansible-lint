@@ -13,6 +13,7 @@ warn_list:  # or 'skip_list' to silence them completely
 exclude_paths:
 - ansible/local-defaults.yaml
 - ansible/files
+- ansible/roles/cnosp/files
 
 kinds:
   - tasks: "**/*_tasks.yaml"

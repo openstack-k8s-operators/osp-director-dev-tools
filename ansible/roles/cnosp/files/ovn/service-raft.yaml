@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ovn-ovsdb
+  namespace: openstack
+spec:
+  selector:
+    app: ovn-ovsdb
+  ports:
+  - name: north-raft
+    port: 6643
+    protocol: TCP
+    targetPort: 6643
+  - name: south-raft
+    port: 6644
+    protocol: TCP
+    targetPort: 6644
+  clusterIP: None
+  type: ClusterIP

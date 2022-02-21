@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cinder-config-data-custom
+  namespace: openstack
+data:
+  cinder.conf: |
+    [DEFAULT]
+    # cinder-backup
+    backup_driver = cinder.backup.drivers.nfs.NFSBackupDriver
+    backup_share = 192.168.111.1:/home/nfs/cinder-backup

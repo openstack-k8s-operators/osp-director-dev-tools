@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ovn-ovsdb-0
+  namespace: openstack
+  labels:
+    app: ovn-ovsdb
+spec:
+  selector:
+    app: ovn-ovsdb
+    statefulset.kubernetes.io/pod-name: ovn-ovsdb-0
+  ports:
+  - name: north
+    port: 6641
+    protocol: TCP
+    targetPort: 6641
+  - name: south
+    port: 6642
+    protocol: TCP
+    targetPort: 6642
+  - name: north-raft
+    port: 6643
+    protocol: TCP
+    targetPort: 6643
+  - name: south-raft
+    port: 6644
+    protocol: TCP
+    targetPort: 6644

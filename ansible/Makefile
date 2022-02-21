@@ -283,6 +283,7 @@ nfs_cleanup: hosts
 	"set -x; \
 	 rm -f /etc/exports.d/host-nfs-storageclass.exports; \
 	 rm -f /etc/exports.d/glance.exports; \
+	 rm -f /etc/exports.d/cinder*.exports; \
 	 exportfs -ra; \
 	 umount -d /home/nfs/pv-*; \
 	 rm -rf /home/nfs; \
@@ -310,3 +311,31 @@ demo: hosts
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	demo.yaml
+
+cnosp:
+	$(MAKE) cnosp_install
+	$(MAKE) cnosp_ctlplane_deploy
+
+cnosp_install: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+        -e @vars/${OSP_RELEASE}.yaml \
+        -e @local-defaults.yaml \
+	install_namespace.yaml \
+        cnosp_olm.yaml
+
+cnosp_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+        -e @vars/${OSP_RELEASE}.yaml \
+        -e @local-defaults.yaml \
+        cnosp_olm_cleanup.yaml
+
+cnosp_ctlplane_deploy: hosts local-defaults.yaml
+	# NOTE: requires 'make cnosp_install'
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	cnosp_ctlplane_deploy.yaml
+
+cnosp_ctlplane_cleanup: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts -e @local-defaults.yaml \
+	cnosp_ctlplane_cleanup.yaml
