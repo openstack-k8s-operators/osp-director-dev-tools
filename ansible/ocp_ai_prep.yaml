@@ -544,6 +544,12 @@
         regexp: 'SERVICE_BASE_URL=.*'
         replace: 'SERVICE_BASE_URL=http://192.168.111.1:{{ ocp_ai_service_port | default("8090", true) }}'
 
+    - name: Set assisted installer service image
+      ansible.builtin.lineinfile:
+        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
+        regexp: '^OAS_IMAGE='
+        line: 'OAS_IMAGE={{ ocp_ai_service_image | default("quay.io/ocpmetal/assisted-service:latest", true) }}'
+
     - name: Create dict of upstream AI onprem variables
       set_fact:
         ocp_ai_onprem_env_dict: "{{ ocp_ai_onprem_env_dict|default({}) | combine( {item.split('=')[0]: item.split('=')[1]} ) }}"
@@ -652,6 +658,21 @@
           regexp: '^\s\s\s\s-\s60-ingress-controller\.yml'
           insertafter: '^\s\s\s\s-\s50-master-scheduler\.yml'
           line: '    - 60-ingress-controller.yml'
+
+    - name: Add custom registries manifest
+      block:
+      - name: Create custom registries manifest
+        template:
+          src: ai/cluster_mgnt_roles/70-image.yml.j2
+          dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/70-image.yml.j2"
+          mode: '0664'
+
+      - name: Inject custom registries manifest
+        lineinfile:
+          path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
+          regexp: '^\s\s\s\s-\s70-image\.yml'
+          insertafter: '^\s\s\s\s-\s60-ingress-controller\.yml'
+          line: '    - 70-image.yml'
 
     - name: Force serial execution of boot_iso role
       replace:

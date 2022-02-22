@@ -53,6 +53,8 @@
   # * can not use nmcli module https://github.com/ansible/ansible/issues/48055
   # * don't apply these persistent, in case of a host reboot those need to be reapplied
   - name: Create IPv4 gateways on isolated vlan networks
+    become: true
+    become_user: root
     vars:
       cidr_suffix: "{{ item.1.ipv4.cidr | regex_search('.*/(.+)', '\\1') | first }}"
     shell: |
@@ -72,6 +74,8 @@
     - item.1.ipv4.gateway is defined
 
   - name: Create IPv6 gateways on isolated vlan networks
+    become: true
+    become_user: root
     vars:
       cidr_suffix: "{{ item.1.ipv6.cidr | regex_search('.*/(.+)', '\\1') | first }}"
     shell: |

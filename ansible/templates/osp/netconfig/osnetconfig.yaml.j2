@@ -28,6 +28,10 @@ spec:
             type: ethernet
 {% endif %}
             state: up
+            ipv4:
+              enabled: false
+            ipv6:
+              enabled: false
 {% if ifcfg.mtu is defined %}
             mtu: {{ ifcfg.mtu }}
 {% endif %}
@@ -103,15 +107,23 @@ spec:
       name: {{ physnet.name }}
 {% endfor %}
 {% endif %}
-{% if osp.ovn_bridge_mac_mappings.static_reservations is defined and osp.ovn_bridge_mac_mappings.static_reservations|length %}
-    staticReservations:
-{% for node, reservations in osp.ovn_bridge_mac_mappings.static_reservations.items() %}
-      {{ node }}:
-        reservations:
-{% for physnet, reservation in reservations.items() %}
-          {{ physnet }}: {{ reservation }}
-{% endfor %}
+{% endif %}
+{% if osp_reservations is defined and osp_reservations|length %}
+  reservations:
+{% for node, reservations in osp_reservations.items() %}
+    {{ node }}:
+{% if reservations.ip_reservations is defined and reservations.ip_reservations|length %}
+      ipReservations:
+{% for subnet, reservation in reservations.ip_reservations.items() %}
+        {{ subnet  }}: {{ reservation }}
 {% endfor %}
 {% endif %}
+{% if reservations.mac_reservations is defined and reservations.mac_reservations|length %}
+      macReservations:
+{% for physnet, reservation in reservations.mac_reservations.items() %}
+        {{ physnet }}: {{ reservation }}
+{% endfor %}
+{% endif %}
+{% endfor %}
 {% endif %}
   preserveReservations: {{ osp.preserve_reservations|default(true)|bool }}

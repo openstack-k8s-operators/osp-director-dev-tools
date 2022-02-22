@@ -51,6 +51,8 @@
             --run-command 'sed -i -e "s/^\(GRUB_CMDLINE_LINUX=.*\)net.ifnames=0 \(.*\)/\1\2/" /etc/default/grub' \
             --run-command 'grub2-mkconfig -o /etc/grub2.cfg' \
             --run-command 'rm -f /etc/sysconfig/network-scripts/ifcfg-ens* /etc/sysconfig/network-scripts/ifcfg-eth*'
+        environment:
+          LIBGUESTFS_BACKEND: direct
 
   - name: create datavolume for vmset roles
     include_tasks: datavolume_tasks.yaml
