@@ -41,7 +41,7 @@
           ip: 10.89.0.2
           conmon_pidfile: /run/podman-freeipa-server-conman.pid
           hostname: freeipa.test.metalkube.org
-          image: quay.io/freeipa/freeipa-server:centos-8
+          image: quay.io/freeipa/freeipa-server:centos-8-stream
           #FIXME: need this to workaround a bug in podman ansible module
           stop_signal: 37
           env:
