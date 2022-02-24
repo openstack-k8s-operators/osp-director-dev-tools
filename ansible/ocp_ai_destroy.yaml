@@ -15,6 +15,7 @@
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
+
   ### DNSMASQ
 
   - name: Remove dnsmasq conf
@@ -37,6 +38,7 @@
     service:
       name: dnsmasq
       state: stopped
+
 
   ### VMs
 
@@ -80,13 +82,12 @@
       state: absent
 
 
-  ### ASSISTED INSTALLER SERVICE SCRIPT
+  ### ASSISTED INSTALLER SERVICE CONTAINERS
 
-  - name: Stop and remove assisted installer service container
+  - name: Stop and remove assisted installer service containers
     shell: |
-      ./stop-assisted-service.sh
-    args:
-      chdir: "{{ base_path }}/assisted-service-onprem"
+      podman pod stop assisted-service;
+      podman pod rm assisted-service -f
     ignore_errors: true
 
   - name: Remove Postgres data store
