@@ -40,7 +40,6 @@ spec:
 {% endif %}
 {% endfor %}
   enableFencing: {{ enable_fencing }}
-{% if osp.release == "train" %}
-  # for upstream train release the image URLs are different, force the release via parameter
-  openStackRelease: {{ osp.release }}
+{% if osp.release is defined %}
+  openStackRelease: "{{ osp.release }}"
 {% endif %}
