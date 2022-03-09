@@ -47,6 +47,7 @@ osp_release_defaults:
         - internal_api_leaf1
         - tenant_leaf1
         - storage_leaf1
+        - storage_mgmt_leaf1
     ComputeHCILeaf2:
       count: 1
       ctlplane_interface: enp7s0
@@ -55,6 +56,7 @@ osp_release_defaults:
         - internal_api_leaf2
         - tenant_leaf2
         - storage_leaf2
+        - storage_mgmt_leaf2
   extrafeatures:
   - hci
   - ipv6
