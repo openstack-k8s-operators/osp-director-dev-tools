@@ -165,7 +165,7 @@ Now you can access the OCP console using your local web browser: <https://consol
 | ------------ | ------------ |
 | User | `kubeadmin` |
 | Pwd (IPI) | `/home/ocp/dev-scripts/ocp/ostest/auth/kubeadmin-password` |
-| Pwd (AI) | `/home/ocp/cluster_mgnt_roles/kubeadmin-password.ostest` |
+| Pwd (AI) | `/home/ocp/crucible/kubeadmin-password.ostest` |
 
 You can also access the OCP CLI:
 
@@ -179,7 +179,7 @@ oc get pods -n openstack
 AI: 
 ```
 su - ocp
-export KUBECONFIG=/home/ocp/cluster_mgnt_roles/kubeconfig.ostest
+export KUBECONFIG=/home/ocp/crucible/kubeconfig.ostest
 oc get pods -n openstack
 ```
 
