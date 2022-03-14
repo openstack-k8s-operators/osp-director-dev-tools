@@ -1,0 +1,48 @@
+---
+openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_defaults.container_tag }}
+osp_rhos_release_compose: passed_phase1
+ephemeral_heat:
+  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
+  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
+  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
+  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internal_api
+  - internal_api_leaf1
+
+osp_release_defaults:
+  release: 17.0
+  container_tag: 17.0_20220124.1
+  ceph_tag: 5-102
+  networks: ipv4_subnet
+  vmset:
+    Controller:
+      count: 1
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      storage_class: host-nfs-storageclass
+  bmset:
+    Compute:
+      count: 0
+    ComputeHCILeaf1:
+      count: 2
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api_leaf1
+        - storage_leaf1
+        - storage_mgmt_leaf1
+        - tenant_leaf1
+  extrafeatures:
+    - hci
