@@ -18,8 +18,9 @@ ocp_release_type: ga
 # - Assisted installer is used to install OCP instead of dev-scripts
 # - Thus, dev-scripts related variables are ignored, and ...
 # - ocp_release_type is ignored
-# - ocp_version must be 4.7 (for now)
-# - ocp_release_image is ignored (for now)
+# - ocp_version must be 4.6+
+# - ocp_minor_version is ignored
+# - ocp_release_image is ignored
 # - Other OCP AI variables are stored in vars/ocp_ai.yaml to reduce clutter in this file
 # NOTE: This variable should be set to true in local-defaults.yaml as opposed to changing it here,
 #       otherwise our playbooks seem to be flaky with executing the AI logic
@@ -189,6 +190,7 @@ openstackclient_networks:
   - internal_api
 
 nfs_server: '192.168.25.1'
+ntp_server: pool.ntp.org
 
 osp_defaults:
   release: 16.2

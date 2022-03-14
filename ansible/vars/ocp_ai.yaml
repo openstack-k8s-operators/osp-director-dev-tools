@@ -1,7 +1,4 @@
 ---
-ocp_ai_discovery_iso: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso"
-ocp_ai_onprem_env: "{{ lookup('url', 'https://raw.githubusercontent.com/openshift/assisted-service/v2.0.10/onprem-environment', wantlist=True) }}"
-
 # this address needs to be reachable from IPMI/iDRAC if BM worker is used 
 ocp_ai_discovery_iso_server: 192.168.111.1
 
@@ -11,10 +8,8 @@ ocp_ai_external_dns:
   - 10.10.160.2
   - 10.5.30.160
 
-# ocp_ai_service_repo: defaults to "https://github.com/sonofspike/assisted-service-onprem.git"
-# ocp_ai_service_branch: defaults to "feb00ba10823ab04ec489a05ce8eb543ec688fda"
-# ocp_ai_ansible_repo: defaults to "https://github.com/openstack-k8s-operators/cluster_mgnt_roles.git"
-# ocp_ai_ansible_branch: defaults to "master"
+# ocp_ai_ansible_repo: defaults to "https://github.com/openstack-k8s-operators/crucible.git"
+# ocp_ai_ansible_branch: defaults to "f32b46317e5bb25fffe16c93fdc0f87a72d423bf"
 
 ocp_ai_bm_bridge_master_mac_prefix: 3c:fd:fe:78:ab:0
 ocp_ai_bm_bridge_worker_mac_prefix: 3c:fd:fe:78:ab:1
@@ -23,10 +18,8 @@ ocp_ai_prov_bridge_worker_mac_prefix: 3c:fd:fe:78:cd:1
 
 # ocp_ai_sushy_port: defaults to "8082"
 
-# ocp_ai_service_store_dir: defaults to "/opt/assisted-service"
-# ocp_ai_service_port: defaults to "8090"
-
-# for now pin the ai image to a more stable tag - lastest started to fail on Feb 14th
-ocp_ai_service_image: quay.io/ocpmetal/assisted-service:v2.0.11
-
 ocp_ai_libvirt_storage_dir: /var/lib/libvirt/images
+
+# Pin aicli to a version that uses AI API v1 by default, as this is the API version
+# that Crucible uses for the time being
+ocp_ai_cli_version: "99.0.202112021829.202103111306"
