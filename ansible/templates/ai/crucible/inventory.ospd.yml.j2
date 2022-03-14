@@ -87,7 +87,11 @@ all:
     # first one found will be used
     # note: paths should be absolute
     pull_secret_lookup_paths:
-      - {{ base_path }}/pull-secret
+{% if secrets_repo is undefined %}
+      - "{{ base_path }}/pull-secret"
+{% else %}
+      - "{{ secrets_repo_path }}/pull-secret"
+{% endif %}
 
     # Configure possible paths for the ssh public key used for debugging
     # first one found will be used
