@@ -309,6 +309,7 @@ ocs_version: "{{ 4.8 if ocp_version >= 4.8 else ocp_version }}"
 # Virtualized SRIOV (for dev/test)
 enable_virt_sriov: false
 virt_sriov_repo: https://github.com/marcel-apf/qemu.git
+#virt_sriov_branch: defaults to "HEAD"
 virt_sriov_domains:
   - "{{ ocp_cluster_name }}_worker_3"
   - "{{ ocp_cluster_name }}_worker_4"
