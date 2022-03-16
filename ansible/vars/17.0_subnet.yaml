@@ -1,6 +1,6 @@
 ---
-openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_defaults.container_tag }}
-osp_rhos_release_compose: passed_phase1
+osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/17.0-RHEL-8/passed_phase1/container_image_prepare.yaml
+
 ephemeral_heat:
   heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
   heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
@@ -14,9 +14,6 @@ openstackclient_networks:
   - internal_api_leaf1
 
 osp_release_defaults:
-  release: 17.0
-  container_tag: 17.0_20220214.1
-  ceph_tag: 5-102
   networks: ipv4_subnet
   vmset:
     Controller:

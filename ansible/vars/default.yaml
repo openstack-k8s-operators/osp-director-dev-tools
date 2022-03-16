@@ -120,7 +120,7 @@ csv_version: latest
 ocp_network_type: OpenShiftSDN
 
 # image used to run tempest
-tempest_image: docker-registry.upshift.redhat.com/openstack-k8s-operators/openstack-tempest:16.2_tempest_sudoers
+tempest_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tempest:{{ osp_defaults.container_tag }}"
 
 # tempest timeout in seconds
 tempest_timeout: 3600
@@ -178,10 +178,13 @@ nfs_export_dir: /home/nfs
 
 default_timeout: 240
 
+# Compose file to fetch if specified, used to populate osp_release_auto dict
+# for auto switch of compose to use for OSP deployment
+osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/16.2-RHEL-8/passed_phase2/container_image_prepare.yaml
+
 # openstackclient container image
-# TODO: change once we have a 16.2.2 tripleoclient image that includes ipa-client
-# openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
-openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp16-openstack-tripleoclient:{{ osp_defaults.container_tag }}
+openstackclient_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tripleoclient:{{ osp_defaults.container_tag }}"
+
 openstackclient_storage_class: host-nfs-storageclass
 openstackclient_networks:
   - ctlplane
@@ -198,7 +201,7 @@ external_dns:
   - 10.5.30.160
 
 osp_defaults:
-  release: 16.2
+  release: "{{ osp_release_auto.release }}"
   # use http://download.devel.redhat.com to get the local mirror depending on where the server is
   base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/992/images/rhel-guest-image-8.4-992.x86_64.qcow2
   # OSP controller VM sizing
@@ -272,9 +275,9 @@ osp_defaults:
     - name: datacentre2
       prefix: fa:16:3b
   preserve_reservations: true
-  container_tag: 16.2_20220310.1
-  ceph_image: rhceph
-  ceph_tag: 4-59
+  container_tag: "{{ osp_release_auto.tag }}"
+  ceph_image: "{{ osp_release_auto.ceph_image }}" # note for OSP17.0 its ceph_image
+  ceph_tag: "{{ osp_release_auto.ceph_tag }}" # note for OSP17.0 its ceph_tag
   # OSP deployment timeout
   deploy_timeout: 90m
   # extra features to enable
@@ -297,8 +300,8 @@ osp_local: {}
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
-osp_rhos_release_compose: passed_phase2
-osp_rhel_subscription_release: 8.4
+osp_rhos_release_compose: "{{ osp_release_auto.compose }}"
+osp_rhel_subscription_release: "{{ osp_release_auto.rhel_version }}"
 osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-baseos-eus-rpms
   - rhel-8-for-x86_64-appstream-eus-rpms
