@@ -51,7 +51,8 @@
       - name: Include rhel-subscription info
         include_vars: vars/rhel-subscription.yaml
       rescue:
-      - fail:
+      - name: fail if required subscription information was not provided
+        fail:
           msg: |
             vars/rhel-subscription.yaml is not present. You must create this
             file manually. The format of the file is:
@@ -62,7 +63,8 @@
     - name: use secrets_repo
       when: secrets_repo is defined
       block:
-      - set_fact:
+      - name: set secrets_repo_path from provided secrets_repo
+        set_fact:
           secrets_repo_path: "{{ ansible_env.HOME }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
       - name: create base dir for secrets_repo repo
         file:
@@ -79,7 +81,8 @@
       - name: Include rhel-subscription info
         include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
       rescue:
-      - fail:
+      - name: fail if required subscription information file is not in repo
+        fail:
           msg: |
             rhel-subscription.yaml is not present in {{ secrets_repo }}. You must create this
             file. The format of the file is:

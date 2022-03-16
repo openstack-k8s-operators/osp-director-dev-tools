@@ -6,10 +6,8 @@ skip_list:
   - '701'
   - 'ignore-errors'
 
-warn_list:  # or 'skip_list' to silence them completely
-  - experimental  # all rules tagged as experimental
-  - unnamed-task  # All tasks should be named
-  
+#warn_list:  # or 'skip_list' to silence them completely
+ 
 exclude_paths:
 - ansible/local-defaults.yaml
 - ansible/files
