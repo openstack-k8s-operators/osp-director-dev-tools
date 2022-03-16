@@ -1,11 +1,7 @@
 ---
-openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_defaults.container_tag }}
-osp_rhos_release_compose: passed_phase1
+osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/17.0-RHEL-8/passed_phase1/container_image_prepare.yaml
 
 osp_release_defaults:
-  release: 17.0
-  container_tag: 17.0_20220214.1
-  ceph_tag: 5-102
   networks: ipv6_subnet
   vmset:
     Controller:
