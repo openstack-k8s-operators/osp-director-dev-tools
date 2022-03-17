@@ -171,6 +171,16 @@ resources:
           params:
             $network_config:
               network_config:
+              # Disable BMH provisioning interface
+              - type: interface
+                name: nic1
+                use_dhcp: false
+                defroute: no
+              # Disable OCP cluster interface
+              - type: interface
+                name: nic2
+                use_dhcp: false
+                defroute: no
               - type: ovs_bridge
                 name: br-tenant
                 mtu:
