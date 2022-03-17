@@ -5,14 +5,16 @@
 {%- endfor %}
 {% set min_viable_mtu = mtu_list | max %}
 network_config:
+# Disable BMH provisioning interface
 - type: interface
   name: nic1
   mtu: 1500
-  use_dhcp: true
+  use_dhcp: false
+# Disable OCP cluster interface
 - type: interface
   name: nic2
   mtu: 1500
-  use_dhcp: true
+  use_dhcp: false
 {% for network in networks_all if network not in networks_skip_config|default([]) %}
 {% if network == 'External' %}
 - type: ovs_bridge
