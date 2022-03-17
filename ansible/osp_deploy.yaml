@@ -77,6 +77,7 @@
 
       CUR_TIME=$(date +%s)
       END_TIME=$(($CUR_TIME+{{ (default_timeout * 40)|int }}))
+      RETVAL=99
 
       while [ "$CUR_TIME" -le "$END_TIME" ]; 
       do
@@ -86,16 +87,18 @@
         if [ $STATUS_CODE -ne 0 ];
         then
           echo non-zero \"oc get osdeploy\" status code: $STATUS_CODE
-        fi
-
-        if [ "$STATUS" == "Finished" ];
-        then
-          exit 0
-        elif [ "$STATUS" == "Error" ];
-        then
-          oc logs $(oc get pod -l job-name=deploy-openstack-default -o name) > {{ working_log_dir }}/osp-deploy.log
-          echo Deployment hit an error. Please see OCP osdeploy logs in {{ working_log_dir }}/osp-deploy.log
-          exit 1
+        else
+          if [ "$STATUS" == "Finished" ];
+          then
+            echo Deployment finished
+            RETVAL=0
+            break
+          elif [ "$STATUS" == "Error" ];
+          then
+            echo Deployment hit an error
+            RETVAL=1
+            break
+          fi
         fi
 
         sleep 5
@@ -103,7 +106,25 @@
         CUR_TIME=$(date +%s)
       done
 
-      echo Neither \"Error\" nor \"Finished\" encountered before timeout. Exiting
-      exit 1
+      if [ $RETVAL -eq 99 ];
+      then
+        echo Neither \"Error\" nor \"Finished\" encountered before timeout. Exiting
+        RETVAL=1
+      fi
+
+      echo OCP osdeploy logs in {{ working_log_dir }}/osp-deploy.log
+      oc logs -n openstack jobs/deploy-openstack-default > {{ working_log_dir }}/osp-deploy.log
+      exit $RETVAL
+    register: deployment
+    ignore_errors: true
     environment:
       <<: *oc_env
+
+  - name: Deployment wait output
+    debug:
+      msg: "{{ deployment.stdout.split('\n') }}"
+
+  - name: Deployment failed or timed out
+    fail:
+      msg: Deployment failed or timed out, check output {{ working_log_dir }}/osp-deploy.log
+    when: deployment.rc == 1
