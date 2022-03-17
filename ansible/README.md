@@ -4,7 +4,7 @@
 
 #### Provision the host
 
-Provision a host with RHEL 8.3 or CentOS should also work with at least 128GB of RAM
+Provision a host with RHEL 8.5 or CentOS should also work with at least 128GB of RAM
 
 #### Clone the repository to the beaker host
 
@@ -22,10 +22,10 @@ git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
 If not already installed, install the required dependencies
 
 ```
-dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
+dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make
 ```
 
-> NOTE: make sure you install ansible >= 2.9 otherwise ansible collections will not work correctly
+> NOTE: make sure you install ansible >= 2.9.27 otherwise ansible collections will not work correctly
 
 #### Create local-defaults.yaml file with personal information
 
