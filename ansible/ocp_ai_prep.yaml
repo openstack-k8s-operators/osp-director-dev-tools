@@ -589,11 +589,11 @@
           after: "assisted_service_openshift_versions_defaults:"
           before: "assisted_installer_images:"
           regexp: 'release_image:.*release_{{ ocp_version | replace(".", "\.") }}.*'
-          replace: 'release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"'
+          replace: 'release_image: "{{ ocp_release_image }}"'
 
       - name: Get RHCOS image version raw data for {{ ocp_version }}.{{ ocp_minor_version }}
         uri:
-          url: "https://amd64.ocp.releases.ci.openshift.org/releasestream/4-stable/release/{{ ocp_version }}.{{ ocp_minor_version }}"
+          url: "{{ ocp_release_data_url }}"
           method: GET
           status_code: [200]
           return_content: True
