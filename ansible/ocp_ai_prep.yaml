@@ -529,7 +529,7 @@
         repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/crucible.git', true) }}"
         dest: "{{ base_path }}/crucible"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('f32b46317e5bb25fffe16c93fdc0f87a72d423bf', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('9b7fb26e3e57163933f36f2c27f46e79287f5e62', true) }}"
 
     - name: Configure inventory variables
       template:
@@ -636,20 +636,6 @@
         path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/network.yml"
         regexp: '\(setup_ntp_service\s\|\sdefault\(True\)\)\s!=\sTrue'
         replace: 'false'
-
-    # Needed until https://github.com/redhat-partner-solutions/crucible/issues/96 is fixed
-    - name: Fix "generate SSH keys" check
-      replace:
-        path: "{{ base_path }}/crucible/deploy_cluster.yml"
-        regexp: 'GENERATE_SSH_KEYS'
-        replace: 'generate_ssh_keys'
-
-    # Needed until https://github.com/redhat-partner-solutions/crucible/issues/95 is fixed
-    - name: Workaround for Crucible "fetched" dir issue
-      file:
-        path: "{{ base_path }}/crucible/fetched"
-        state: directory
-        recurse: yes
 
     - name: Create assisted installer service bash script
       template:
