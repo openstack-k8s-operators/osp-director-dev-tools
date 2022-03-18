@@ -12,6 +12,7 @@ base_domain_name: test.metalkube.org
 ocp_version: 4.7
 ocp_minor_version: 9
 ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"
+ocp_release_data_url: "https://amd64.ocp.releases.ci.openshift.org/releasestream/4-stable/release/{{ ocp_version }}.{{ ocp_minor_version }}"
 ocp_release_type: ga
 
 # If set to true:
@@ -19,8 +20,6 @@ ocp_release_type: ga
 # - Thus, dev-scripts related variables are ignored, and ...
 # - ocp_release_type is ignored
 # - ocp_version must be 4.6+
-# - ocp_minor_version is ignored
-# - ocp_release_image is ignored
 # - Other OCP AI variables are stored in vars/ocp_ai.yaml to reduce clutter in this file
 # NOTE: This variable should be set to true in local-defaults.yaml as opposed to changing it here,
 #       otherwise our playbooks seem to be flaky with executing the AI logic
