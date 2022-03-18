@@ -188,7 +188,7 @@ openstackclient_networks:
   - external
   - internal_api
 
-nfs_server: '192.168.25.1'
+nfs_server: '172.22.0.1'
 ntp_server: pool.ntp.org
 
 osp_defaults:
@@ -217,7 +217,7 @@ osp_defaults:
     Compute:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api
@@ -231,11 +231,18 @@ osp_defaults:
   ceph_num_osd_disk_size: 20
   domain_name: "osptest.{{ base_domain_name }}"
   dns_servers:
-    - 192.168.25.1
+    - 192.168.111.1
   dns_search_domains:
     - "osptest.{{ base_domain_name }}"
     - "{{ base_domain_name }}"
   attach_configs:
+    br-ctlplane:
+      interfaces:
+      - type: bridge
+        name: br-ctlplane
+        interface: enp1s0
+        dhcp: true
+        mtu: 1500
     br-osp:
       interfaces:
       - type: bridge

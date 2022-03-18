@@ -29,9 +29,19 @@ spec:
 {% endif %}
             state: up
             ipv4:
+{% if ifcfg.dhcp is defined %}
+              dhcp: true
+              enabled: true
+{% else %}
               enabled: false
+{% endif %}
             ipv6:
+{% if ifcfg.dhcp is defined %}
+              dhcp: true
+              enabled: true
+{% else %}
               enabled: false
+{% endif %}
 {% if ifcfg.mtu is defined %}
             mtu: {{ ifcfg.mtu }}
 {% endif %}

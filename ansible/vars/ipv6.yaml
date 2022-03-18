@@ -8,11 +8,11 @@ osp_networks:
     subnets:
     - name: ctlplane
       ipv4:
-        cidr: 192.168.25.0/24
-        gateway: 192.168.25.1
+        cidr: 172.22.0.0/24
+        gateway: 172.22.0.1
         allocation:
-          start: 192.168.25.100
-          end: 192.168.25.250
+          start: 172.22.0.100
+          end: 172.22.0.250
       attach_config: br-osp
   internalapi:
     name: InternalApi
@@ -81,19 +81,19 @@ osp_networks:
 osp_reservations:
   openstackclient-0:
     ip_reservations:
-      ctlplane: 192.168.25.251
+      ctlplane: 172.22.0.251
       external: 2001:db8:fd00:1000::251
       internal_api: fd00:fd00:fd00:2000::251
   controlplane:
     ip_reservations:
-      ctlplane: 192.168.25.10
+      ctlplane: 172.22.0.110
       external: 2001:db8:fd00:1000::10
       internal_api: fd00:fd00:fd00:2000::10
       storage: fd00:fd00:fd00:3000::10
       storage_mgmt: fd00:fd00:fd00:4000::10
   controller-0:
     ip_reservations:
-      ctlplane: 192.168.25.20
+      ctlplane: 172.22.0.120
       external: 2001:db8:fd00:1000::20
       internal_api: fd00:fd00:fd00:2000::20
       storage: fd00:fd00:fd00:3000::20
@@ -104,7 +104,7 @@ osp_reservations:
       datacentre2: fa:16:3b:aa:aa:aa
   controller-1:
     ip_reservations:
-      ctlplane: 192.168.25.30
+      ctlplane: 172.22.0.130
       external: 2001:db8:fd00:1000::30
       internal_api: fd00:fd00:fd00:2000::30
       storage: fd00:fd00:fd00:3000::30
@@ -115,7 +115,7 @@ osp_reservations:
       datacentre2: fa:16:3b:aa:aa:bb
   compute-0:
     ip_reservations:
-      ctlplane: 192.168.25.40
+      ctlplane: 172.22.0.140
       internal_api: fd00:fd00:fd00:2000::40
       storage: fd00:fd00:fd00:3000::40
       tenant: 172.20.0.40
