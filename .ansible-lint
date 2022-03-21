@@ -6,11 +6,13 @@ skip_list:
   - '701'
   - 'ignore-errors'
 
-#warn_list:  # or 'skip_list' to silence them completely
- 
+# warn_list: # or 'skip_list' to silence them completely
+
 exclude_paths:
-- ansible/local-defaults.yaml
-- ansible/files
+  - ansible/local-defaults.yaml
+  - ansible/files
+  - ansible/roles/cnosp/files
+  - .github/workflows
 
 kinds:
   - tasks: "**/*_tasks.yaml"
