@@ -5,11 +5,19 @@
 {%- endfor %}
 {% set min_viable_mtu = mtu_list | max %}
 network_config:
-# Disable BMH provisioning interface
+# BMH provisioning interface used for ctlplane
 - type: interface
   name: nic1
   mtu: 1500
   use_dhcp: false
+  dns_servers: {{ ctlplane_dns_nameservers }}
+  domain: {{ dns_search_domains }}
+  addresses:
+  - ip_netmask: {{ ctlplane_ip }}/{{ ctlplane_subnet_cidr }}
+  routes:
+  - ip_netmask: 0.0.0.0/0
+    next_hop: {{ ctlplane_gateway_ip }}
+    default: true
 # Disable OCP cluster interface
 - type: interface
   name: nic2
@@ -39,14 +47,6 @@ network_config:
   name: br-tenant
   mtu: {{ min_viable_mtu }}
   use_dhcp: false
-  dns_servers: {{ ctlplane_dns_nameservers }}
-  domain: {{ dns_search_domains }}
-  addresses:
-  - ip_netmask: {{ ctlplane_ip }}/{{ ctlplane_subnet_cidr }}
-  routes:
-  - ip_netmask: 0.0.0.0/0
-    next_hop: {{ ctlplane_gateway_ip }}
-    default: true
   members:
   - type: interface
     name: nic4

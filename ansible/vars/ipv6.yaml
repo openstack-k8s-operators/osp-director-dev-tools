@@ -4,7 +4,6 @@ osp_networks:
     name: Control
     name_lower: ctlplane
     is_control_plane: true
-    mtu: 9000
     subnets:
     - name: ctlplane
       ipv4:
@@ -13,7 +12,7 @@ osp_networks:
         allocation:
           start: 172.22.0.100
           end: 172.22.0.250
-      attach_config: br-osp
+      attach_config: br-ctlplane
   internalapi:
     name: InternalApi
     name_lower: internal_api

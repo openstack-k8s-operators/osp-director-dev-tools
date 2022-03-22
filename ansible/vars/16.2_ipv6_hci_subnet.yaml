@@ -8,7 +8,7 @@ osp_release_defaults:
       count: 0
     ComputeHCI:
       count: 2
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api

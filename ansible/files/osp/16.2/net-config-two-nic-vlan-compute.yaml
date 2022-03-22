@@ -170,7 +170,7 @@ resources:
           params:
             $network_config:
               network_config:
-              # BMH provisioning interface switch to ctlplane
+              # BMH provisioning interface used for ctlplane
               - type: interface
                 name: nic1
                 mtu:
