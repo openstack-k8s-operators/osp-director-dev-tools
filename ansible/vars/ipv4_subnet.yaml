@@ -4,16 +4,15 @@ osp_networks:
     name: Control
     name_lower: ctlplane
     is_control_plane: true
-    mtu: 9000
     subnets:
     - name: ctlplane
       ipv4:
         cidr: 172.22.0.0/24
-        gateway: 172.22.0..1
+        gateway: 172.22.0.1
         allocation:
           start: 172.22.0.100
           end: 172.22.0.254
-      attach_config: br-osp
+      attach_config: br-ctlplane
   external:
     name: External
     name_lower: external
