@@ -56,15 +56,6 @@
         cmd: openssl ca -config /opt/local_CA/certs/openstack/openssl.cnf -in /opt/local_CA/certs/openstack/openstack.csr.pem -out /opt/local_CA/certs/openstack/openstack.crt.pem -batch -notext
         creates: /opt/local_CA/certs/openstack/openstack.crt.pem
 
-    - name: Reload NetworkManager
-      service:
-        name: NetworkManager
-        state: reloaded
-        enabled: yes
-      when:
-        - not (ocp_ai|bool)
-        - ds_dnsmasq.changed
-
     - name: Add OSP public endpoint to ctlplane dnsmasq
       lineinfile:
         path: /etc/dnsmasq.d/ctlplane.conf

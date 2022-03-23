@@ -63,36 +63,13 @@
       path: /opt/local_CA
       state: absent
 
-  - name: Remove OSP public endpoint from dev_script dnsmasq
+  - name: Remove OSP public endpoint from ctlplane dnsmasq
     become: true
     become_user: root
-    lineinfile:
-      path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
-      regexp: '# OSP public endpoint'
+    file:
+      path: /etc/dnsmasq.d/ctlplane.conf
       state: absent
-    when: not (ocp_ai|bool)
-    register: ds_dnsmasq
-
-  - name: Reload NetworkManager
-    become: true
-    become_user: root
-    service:
-      name: NetworkManager
-      state: reloaded
-      enabled: yes
-    when:
-      - not (ocp_ai|bool)
-      - ds_dnsmasq.changed
-
-  - name: Remove OSP public endpoint from AI dnsmasq
-    become: true
-    become_user: root
-    lineinfile:
-      path: /etc/dnsmasq.d/dnsmasq_ai.conf
-      regexp: '# OSP public endpoint'
-      state: absent
-    when: ocp_ai|bool
-    register: ai_dnsmasq
+    register: ctlplane_dnsmasq
 
   - name: Restart dnsmasq
     become: true
@@ -101,5 +78,4 @@
       name: dnsmasq
       state: restarted
     when:
-      - ocp_ai|bool
-      - ai_dnsmasq.changed
+      - ctlplane_dnsmasq.changed
