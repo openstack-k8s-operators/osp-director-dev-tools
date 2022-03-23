@@ -5,7 +5,7 @@ no-resolv
 no-hosts
 
 # Recursive DNS
-{% for dns_server in ocp_ai_external_dns %}
+{% for dns_server in external_dns %}
 server={{ dns_server }}
 {% endfor %}
 

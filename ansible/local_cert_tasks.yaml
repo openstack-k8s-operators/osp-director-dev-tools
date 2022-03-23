@@ -56,15 +56,6 @@
         cmd: openssl ca -config /opt/local_CA/certs/openstack/openssl.cnf -in /opt/local_CA/certs/openstack/openstack.csr.pem -out /opt/local_CA/certs/openstack/openstack.crt.pem -batch -notext
         creates: /opt/local_CA/certs/openstack/openstack.crt.pem
 
-    - name: Add OSP public endpoint to dev_script dnsmasq
-      lineinfile:
-        path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
-        line: 'address=/overcloud.{{ osp.domain_name }}/{{ get_control_plane_ip_external.stdout|trim }} # OSP public endpoint'
-        regexp: '# OSP public endpoint'
-        insertafter: EOF
-      when: not (ocp_ai|bool)
-      register: ds_dnsmasq
-
     - name: Reload NetworkManager
       service:
         name: NetworkManager
@@ -74,19 +65,17 @@
         - not (ocp_ai|bool)
         - ds_dnsmasq.changed
 
-    - name: Add OSP public endpoint to AI dnsmasq
+    - name: Add OSP public endpoint to ctlplane dnsmasq
       lineinfile:
-        path: /etc/dnsmasq.d/dnsmasq_ai.conf
+        path: /etc/dnsmasq.d/ctlplane.conf
         line: 'address=/overcloud.{{ osp.domain_name }}/{{ get_control_plane_ip_external.stdout|trim }} # OSP public endpoint'
         regexp: '# OSP public endpoint'
         insertafter: EOF
-      when: ocp_ai|bool
-      register: ai_dnsmasq
+      register: ctlplane_dnsmasq
 
     - name: Restart dnsmasq
       service:
         name: dnsmasq
         state: restarted
       when:
-        - ocp_ai|bool
-        - ai_dnsmasq.changed
+        - ctlplane_dnsmasq.changed
