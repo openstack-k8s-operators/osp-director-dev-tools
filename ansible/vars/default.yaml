@@ -192,6 +192,12 @@ openstackclient_networks:
 nfs_server: '172.22.0.1'
 ntp_server: pool.ntp.org
 
+external_dns:
+  - 10.11.5.19
+  - 10.38.5.26
+  - 10.10.160.2
+  - 10.5.30.160
+
 osp_defaults:
   release: 16.2
   # use http://download.devel.redhat.com to get the local mirror depending on where the server is
@@ -232,7 +238,7 @@ osp_defaults:
   ceph_num_osd_disk_size: 20
   domain_name: "osptest.{{ base_domain_name }}"
   dns_servers:
-    - 192.168.111.1
+    - 172.22.0.1
   dns_search_domains:
     - "osptest.{{ base_domain_name }}"
     - "{{ base_domain_name }}"

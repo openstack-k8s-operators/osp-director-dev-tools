@@ -2,12 +2,6 @@
 # this address needs to be reachable from IPMI/iDRAC if BM worker is used 
 ocp_ai_discovery_iso_server: 192.168.111.1
 
-ocp_ai_external_dns:
-  - 10.11.5.19
-  - 10.38.5.26
-  - 10.10.160.2
-  - 10.5.30.160
-
 # ocp_ai_ansible_repo: defaults to "https://github.com/openstack-k8s-operators/crucible.git"
 # ocp_ai_ansible_branch: defaults to "9b7fb26e3e57163933f36f2c27f46e79287f5e62"
 
