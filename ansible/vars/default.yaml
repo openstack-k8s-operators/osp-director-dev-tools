@@ -178,9 +178,10 @@ nfs_export_dir: /home/nfs
 
 default_timeout: 240
 
-# Compose file to fetch if specified, used to populate osp_release_auto dict
-# for auto switch of compose to use for OSP deployment
-osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/16.2-RHEL-8/passed_phase2/container_image_prepare.yaml
+# OSP release and compose file to fetch if specified. This is used to populate osp_release_auto dict
+osp_release_auto_version: 16.2-RHEL-8
+osp_release_auto_compose: passed_phase2
+osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/container_image_prepare.yaml
 
 # openstackclient container image
 openstackclient_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tripleoclient:{{ osp_defaults.container_tag }}"
