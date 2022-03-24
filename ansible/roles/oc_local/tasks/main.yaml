@@ -54,12 +54,14 @@
     # therefore can not just be included as var file
     - name: Read "{{ osp_release_auto_file }}" content
       set_fact:
-        osp_release_auto_content: "{{ lookup('file', '{{ osp_release_auto_file }}') }}"
+        osp_release_auto_content: "{{ lookup('file', '{{ osp_release_auto_file }}') | default({}) }}"
 
     - name: Create osp_release_auto dict from input of "{{ osp_release_auto_file }}"
       set_fact:
         osp_release_auto: "{{ osp_release_auto | default({}) | combine ({ item.key : item.value }) }}"
+      when: osp_release_auto_content is defined
       with_items:
+        - { 'key': 'debug' , 'value': "{{ osp_release_auto_content }}"}
         - { 'key': 'namespace' , 'value': "{{ osp_release_auto_content | regex_search('namespace: (.+)', '\\1') | first }}"}
         - { 'key': 'prefix' , 'value': "{{ osp_release_auto_content | regex_search('prefix: (.+)', '\\1') | first }}"}
         - { 'key': 'name_prefix' , 'value': "{{ osp_release_auto_content | regex_search('name_prefix: (.+)', '\\1') | first }}"}

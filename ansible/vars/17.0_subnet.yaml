@@ -1,5 +1,6 @@
 ---
-osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/17.0-RHEL-8/passed_phase1/container_image_prepare.yaml
+osp_release_auto_version: 17.0-RHEL-8
+osp_release_auto_compose: passed_phase1
 
 ephemeral_heat:
   heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
