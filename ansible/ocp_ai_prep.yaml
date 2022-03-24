@@ -202,7 +202,6 @@
     # FIXME: Use firewalld rich-rules instead?
     - name: Add direct firewall rules for BM bridge
       shell: |
-        firewall-cmd --direct --permanent --add-rule ipv4 nat POSTROUTING 0 -o "{{ ocp_ai_ext_intf.stdout }}" -j MASQUERADE;
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_cluster_name }}bm" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" -m state --state RELATED,ESTABLISHED -j ACCEPT;
         firewall-cmd --reload

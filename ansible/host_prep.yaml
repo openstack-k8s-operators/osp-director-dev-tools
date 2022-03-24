@@ -283,3 +283,21 @@
   - name: Configure NFS server
     import_role:
       name: nfs_server
+
+  - name: masquerade all outgoing traffic
+    block:
+    - name: Acquire default external interface
+      shell: |
+        ip r | grep default | head -1 | cut -d ' ' -f 5
+      register: ext_intf
+
+    - name: Fail when unable to determine external interface
+      fail:
+        msg: |
+          Unable to determine external interface
+      when: ext_intf.stdout == ""
+
+    - name: Make sure all outgoing traffic via ext_intf get masqueraded
+      shell: |
+        firewall-cmd --direct --permanent --add-rule ipv4 nat POSTROUTING 0 -o "{{ ext_intf.stdout }}" -j MASQUERADE;
+        firewall-cmd --reload
