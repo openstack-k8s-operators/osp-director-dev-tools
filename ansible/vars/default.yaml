@@ -9,8 +9,8 @@ dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 base_domain_name: test.metalkube.org
 
 # To set a specific release to install.
-ocp_version: 4.7
-ocp_minor_version: 9
+ocp_version: 4.8
+ocp_minor_version: 35
 ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"
 ocp_release_data_url: "https://amd64.ocp.releases.ci.openshift.org/releasestream/4-stable/release/{{ ocp_version }}.{{ ocp_minor_version }}"
 ocp_release_type: ga
@@ -101,7 +101,7 @@ sriov_version: "{{ ocp_version }}"
 perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
-cnv_hyperconverged_operator_version: 2.6.2
+cnv_hyperconverged_operator_version: 4.8.4
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
@@ -189,8 +189,14 @@ openstackclient_networks:
   - external
   - internal_api
 
-nfs_server: '192.168.25.1'
+nfs_server: '172.22.0.1'
 ntp_server: pool.ntp.org
+
+external_dns:
+  - 10.11.5.19
+  - 10.38.5.26
+  - 10.10.160.2
+  - 10.5.30.160
 
 osp_defaults:
   release: 16.2
@@ -218,7 +224,7 @@ osp_defaults:
     Compute:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api
@@ -232,11 +238,18 @@ osp_defaults:
   ceph_num_osd_disk_size: 20
   domain_name: "osptest.{{ base_domain_name }}"
   dns_servers:
-    - 192.168.25.1
+    - 172.22.0.1
   dns_search_domains:
     - "osptest.{{ base_domain_name }}"
     - "{{ base_domain_name }}"
   attach_configs:
+    br-ctlplane:
+      interfaces:
+      - type: bridge
+        name: br-ctlplane
+        interface: enp1s0
+        dhcp: true
+        mtu: 1500
     br-osp:
       interfaces:
       - type: bridge

@@ -156,7 +156,7 @@ sudo dnf install sshuttle
 # on RHEL
 sudo pip install sshuttle
 
-sshuttle -r <user>@<virthost> 192.168.111.0/24 192.168.25.0/24
+sshuttle -r <user>@<virthost> 192.168.111.0/24 172.22.0.0/24
 ```
 
 Now you can access the OCP console using your local web browser: <https://console-openshift-console.apps.ostest.test.metalkube.org>
@@ -193,7 +193,7 @@ oc exec -it -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh
 ```
 
 #### Access OSP
-You can also access the OSP console using your local web browser: <http://192.168.25.100>
+You can also access the OSP console using your local web browser: <http://172.22.0.100>
 
 | <!-- --> | <!-- --> |
 | ------------ | ------------ |

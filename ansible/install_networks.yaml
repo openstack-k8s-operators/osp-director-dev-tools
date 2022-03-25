@@ -105,3 +105,22 @@
     when:
     - item.1.vlan is defined
     - item.1.ipv6.gateway is defined
+
+  - name: Create forwarding dnsmasq on ctlplane network
+    become: true
+    become_user: root
+    block:
+    - name: Create ctlplane dnsmasq conf
+      template:
+        src: "dnsmasq/ctlplane.conf.j2"
+        dest: "/etc/dnsmasq.d/ctlplane.conf"
+        mode: '0644'
+      register: ctlplane_dnsmasq
+
+    - name: Restart dnsmasq
+      service:
+        name: dnsmasq
+        state: restarted
+        enabled: yes
+      when:
+      - ctlplane_dnsmasq.changed

@@ -13,6 +13,7 @@
         repo: "{{ dev_scripts_repo | default('https://github.com/openshift-metal3/dev-scripts.git', true) }}"
         dest: "{{ base_path }}/dev-scripts"
         version: "{{ dev_scripts_branch | default('HEAD', true) }}"
+        force: yes
 
     - name: Copy the config_example.sh to config_$USER.sh
       copy:
@@ -53,6 +54,13 @@
         - { Item: 'WORKER_MEMORY=.*', Value: 'WORKER_MEMORY={{ ocp_worker_memory }}' }
         - { Item: 'WORKER_VCPU=.*', Value: 'WORKER_VCPU={{ ocp_worker_vcpu }}' }
         - { Item: 'WORKING_DIR=', Value: 'WORKING_DIR={{ base_path }}' }
+
+    # because we are stuck to a specific dev-scripts release right now, set provisioningDHCPRange hard in the ocp_install_env.sh
+    - name: set metal3 provisioning dhcp range
+      lineinfile:
+        dest: "{{ base_path }}/dev-scripts/ocp_install_env.sh"
+        insertafter: '^ *provisioningNetworkInterface:.*'
+        line: '    provisioningDHCPRange: 172.22.0.10,172.22.0.50'
 
     - name: set CI_TOKEN from ansible vars in {{ base_path }}/dev-scripts/config_$USER.sh
       lineinfile:

@@ -154,7 +154,6 @@ resources:
         yaql:
           expression: $.data.max()
           data:
-            - {get_param: ControlPlaneMtu}
             - {get_param: StorageMtu}
             - {get_param: InternalApiMtu}
             - {get_param: TenantMtu}
@@ -171,10 +170,11 @@ resources:
           params:
             $network_config:
               network_config:
-              - type: ovs_bridge
-                name: br-tenant
+              # BMH provisioning interface used for ctlplane
+              - type: interface
+                name: nic1
                 mtu:
-                  get_attr: [MinViableMtu, value]
+                  get_param: ControlPlaneMtu
                 use_dhcp: false
                 dns_servers:
                   get_param: DnsServers
@@ -192,6 +192,16 @@ resources:
                     - - default: true
                         next_hop:
                           get_param: ControlPlaneDefaultRoute
+              # Disable OCP cluster interface
+              - type: interface
+                name: nic2
+                use_dhcp: false
+                defroute: no
+              - type: ovs_bridge
+                name: br-tenant
+                mtu:
+                  get_attr: [MinViableMtu, value]
+                use_dhcp: false
                 members:
                 - type: interface
                   name: nic4

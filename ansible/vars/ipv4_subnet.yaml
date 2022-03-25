@@ -4,16 +4,15 @@ osp_networks:
     name: Control
     name_lower: ctlplane
     is_control_plane: true
-    mtu: 9000
     subnets:
     - name: ctlplane
       ipv4:
-        cidr: 192.168.25.0/24
-        gateway: 192.168.25.1
+        cidr: 172.22.0.0/24
+        gateway: 172.22.0.1
         allocation:
-          start: 192.168.25.100
-          end: 192.168.25.250
-      attach_config: br-osp
+          start: 172.22.0.100
+          end: 172.22.0.254
+      attach_config: br-ctlplane
   external:
     name: External
     name_lower: external
@@ -219,19 +218,19 @@ osp_networks:
 osp_reservations:
   openstackclient-0:
     ip_reservations:
-      ctlplane: 192.168.25.251
+      ctlplane: 172.22.0.251
       external: 10.0.0.251
       internal_api: 172.17.0.251
   controlplane:
     ip_reservations:
-      ctlplane: 192.168.25.10
+      ctlplane: 172.22.0.110
       external: 10.0.0.10
       internal_api: 172.17.0.10
       storage: 172.18.0.10
       storage_mgmt: 172.19.0.10
   controller-0:
     ip_reservations:
-      ctlplane: 192.168.25.20
+      ctlplane: 172.22.0.120
       external: 10.0.0.20
       internal_api: 172.17.0.20
       storage: 172.18.0.20
@@ -242,7 +241,7 @@ osp_reservations:
       datacentre2: fa:16:3b:aa:aa:aa
   controller-1:
     ip_reservations:
-      ctlplane: 192.168.25.30
+      ctlplane: 172.22.0.130
       external: 10.0.0.30
       internal_api: 172.17.0.30
       storage: 172.18.0.30
@@ -253,7 +252,7 @@ osp_reservations:
       datacentre2: fa:16:3b:aa:aa:bb
   compute-0:
     ip_reservations:
-      ctlplane: 192.168.25.40
+      ctlplane: 172.22.0.140
       internal_api: 172.17.0.40
       storage: 172.18.0.40
       tenant: 172.20.0.40
@@ -261,7 +260,7 @@ osp_reservations:
       datacentre: fa:16:3a:bb:bb:bb
   computeleaf1-0:
     ip_reservations:
-      ctlplane: 192.168.25.50
+      ctlplane: 172.22.0.150
       internal_api_leaf1: 172.17.1.40
       storage_leaf1: 172.18.1.40
       tenant_leaf1: 172.20.1.40
