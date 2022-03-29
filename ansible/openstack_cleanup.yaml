@@ -81,3 +81,8 @@
       state: restarted
     when:
       - ctlplane_dnsmasq.changed
+
+  - name: Remove "{{ working_vars_dir }}"
+    file:
+      path: "{{ working_vars_dir }}"
+      state: absent
