@@ -52,7 +52,7 @@
   - name: wait for osnetcfg to have configured interfaces + networks
     shell: |
       set -e
-      oc wait osnetcfg --for condition=provisioned -n {{ namespace }} openstacknetconfig --timeout="{{ (default_timeout * 2)|int }}s"
+      oc wait osnetcfg --for condition=configured -n {{ namespace }} openstacknetconfig --timeout="{{ (default_timeout * 2)|int }}s"
     environment:
       <<: *oc_env
 
