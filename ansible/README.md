@@ -1,12 +1,12 @@
 # openstack-k8s/ansible
 
-### Provisioning steps
+## Provisioning steps
 
-#### Provision the host
+### Provision the host
 
 Provision a host with RHEL 8.5 or CentOS should also work with at least 128GB of RAM
 
-#### Clone the repository to the beaker host
+### Clone the repository to the beaker host
 
 The ansible playbooks can be used as any user, but this user needs to be able to
 get root priviledges to the host via passwordless sudo.
@@ -17,7 +17,7 @@ dnf install -y git
 git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
 ```
 
-#### Install Dependencies
+### Install Dependencies
 
 If not already installed, install the required dependencies
 
@@ -27,7 +27,7 @@ dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make
 
 > NOTE: make sure you install ansible >= 2.9.27 otherwise ansible collections will not work correctly
 
-#### Create local-defaults.yaml file with personal information
+### Create local-defaults.yaml file with personal information
 
 First create the following files relative to the project root:
 
@@ -60,7 +60,7 @@ into place inside this project.
 Also follow either the "IPI install" or "Assisted install" instructions below,
 depending on which deployment method you prefer to use
 
-##### Installer Provisioned Infrastructure (IPI) install via dev-scripts
+#### Installer Provisioned Infrastructure (IPI) install via dev-scripts
 
 Create `local-defaults.yaml` file with a setting for `ci_token`
 or export CI_TOKEN shell variable in your environment.
@@ -82,7 +82,7 @@ If using CI_TOKEN as shell variable, which has precedence over
 export CI_TOKEN: <TOKEN>
 ```
 
-##### Assisted Installer (AI) install via assisted service
+#### Assisted Installer (AI) install via assisted service
 
 Create `local-defaults.yaml` file with settings like so:
 
@@ -90,7 +90,7 @@ Create `local-defaults.yaml` file with settings like so:
 ocp_ai: true
 ```
 
-##### 3-master-worker-combo nodes install via AI
+#### 3-master-worker-combo nodes install via AI
 
 We support the ability to deploy a cluster without dedicated workers -- instead using the master nodes as both
 masters and workers -- through our assisted installer integration.  To do so, set the following variables in
@@ -107,7 +107,87 @@ ocp_master_disk: 50
 Note that `ocp_num_extra_workers` still defaults to 2 in `vars/default.yaml`, meaning 2 extra VMs will be created
 for use as OSP compute nodes.  You may obviously change this if needed.
 
-#### Install all steps using the Makefile
+#### Baremetal install via AI
+
+*WARNING: Currently experimental and not fully-tested!*
+
+If you wish to install either baremetal OCP master and/or worker nodes, using AI is required:
+
+```
+ocp_ai: true
+```
+
+In order to establish connectivity with the DHCP/DNS server that this tool configures, an interface
+must be chosen on the provisioning host to attach to the OCP SDN bridge created there.  This interface
+should be connected to the same layer 2 network to which the baremetal OCP cluster nodes are also
+connected.
+
+```
+ocp_bm_interface: <some interface>
+```
+
+Furthermore, it should be noted that all baremetal node BMC endpoints must be routable from the provisioning
+host.  Additionally, "extra" baremetal workers (those to be used as OSP computes) must be connected to a layer 2
+provisioning network that the OCP masters also can reach, as this is needed for provisioning purposes by Metal3.
+
+Assuming network considerations have been accounted for, one can then set the `ocp_num_(masters|workers|extra_workers)` 
+count(s) to `0` for the respective roles that you desire to deploy against baremetal:
+
+```
+ocp_num_masters: 0
+ocp_num_workers: 0
+ocp_num_extra_workers: 0
+```
+
+From there you would then provide baremetal details for any role for which you have set the `ocp_num_*` 
+count to `0`:
+
+```
+ocp_bm_masters:
+  master-0:
+    vendor: somevendor          # Node's vendor (a general idea of supported vendors can be sussed-out here):
+                                # https://github.com/redhat-partner-solutions/crucible/tree/main/roles/boot_iso/tasks
+    bm_mac: XX:XX:XX:XX:XX:XX   # Node's MAC for interface on OCP SDN network
+    bmc_address: X.X.X.X        # Node's BMC endpoint
+    bmc_username: username      # Node's BMC username
+    bmc_password: password      # Node's BMC password
+    root_device: /dev/sda       # optional, defaults to /dev/sda
+  master-1:
+    ...
+  master-2:
+    ...
+
+ocp_bm_workers:
+  worker-0:
+    vendor: somevendor          # (see vendor note above)
+    bm_mac: XX:XX:XX:XX:XX:XX   # Node's MAC for interface on OCP SDN network
+    bmc_address: X.X.X.X        # Node's BMC endpoint
+    bmc_username: username      # Node's BMC username
+    bmc_password: password      # Node's BMC password
+    root_device: /dev/sda       # optional, defaults to /dev/sda
+  worker-1:
+    ...
+
+ocp_bm_extra_workers:
+  worker-2:
+    vendor: somevendor          # (see vendor note above)
+    bm_mac: XX:XX:XX:XX:XX:XX   # optional, if for some reason the OSP compute needs an assigned IP on the OCP network
+    prov_mac: XX:XX:XX:XX:XX:XX # extra workers use Metal3, which uses provisioning network MAC
+    bmc_protocol: someprotocol  # extra workers use Metal3, which need this extra detail (this is related to vendor, 
+                                # but is not necessarily deterministic -- thus we require you to explicitly provide it)
+    bmc_address: X.X.X.X        # Node's BMC endpoint
+    bmc_username: username      # Node's BMC username
+    bmc_password: password      # Node's BMC password
+    root_device: /dev/sda       # optional, defaults to /dev/sda
+  worker-3:
+    ...
+```
+
+It is possible to mix virtual and baremetal nodes, but not within the same role (masters or workers).  You could,
+for instance, set `ocp_num_masters: 3` and then define `ocp_bm_workers` if you wanted a virtual control plane
+for OCP but baremetal for any hosted workload.
+
+### Install all steps using the Makefile
 
 There is a Makefile which runs all the steps per default
 
@@ -131,7 +211,7 @@ The version specific defaults are located in vars/X.Y.yaml.
 prepare_host.yaml will delete the home lvs and grow the root partition to max.
 In case there is data stored on /home, make a backup!
 
-#### When installation finished
+### When installation finished
 
 On the local system add the required entries to your local /etc/hosts. The previous used ansible playbook also outputs the information:
 
@@ -141,7 +221,7 @@ cat <<EOF >> /etc/hosts
 EOF
 ```
 
-#### Access OCP
+### Access OCP
 **Note**
 The cluster name is used in the hostname records, where `ostest` is the default in the OCP installer.
 Update the above example to use the cluster name set in the vars file.
@@ -183,7 +263,7 @@ export KUBECONFIG=/home/ocp/crucible/kubeconfig.ostest
 oc get pods -n openstack
 ```
 
-#### Install OSP
+### Install OSP
 
 If you ran all targets in the makefile (i.e. you invoked `make` without specifying a specific target) then the OSP deployment steps are also executed after the OCP cluster installation is finished. You can find the deployment logs at `/root/ostest-working/logs/osp-deploy.log` (if you changed the name of your cluster from the default `ostest` your local path will be different to reflect the cluster name).
 
@@ -192,7 +272,7 @@ If you need to run the OpenStack installation manually after the OCP cluster is 
 oc exec -it -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh
 ```
 
-#### Access OSP
+### Access OSP
 You can also access the OSP console using your local web browser: <http://172.22.0.100>
 
 | <!-- --> | <!-- --> |
@@ -204,9 +284,9 @@ You can also access the OSP console using your local web browser: <http://172.22
 oc exec -it openstackclient -n openstack -- cat /home/cloud-admin/.config/openstack/clouds.yaml | grep -w password
 ```
 
-### Cleanup options
+## Cleanup options
 
-#### Delete OCP env
+### Delete OCP env
 
 NOTE: This destroys the OCP cluster, and thus the OSP-D operator and any deployed overcloud!
 
@@ -214,7 +294,7 @@ NOTE: This destroys the OCP cluster, and thus the OSP-D operator and any deploye
 make destroy_ocp
 ```
 
-#### Delete OSP overcloud only
+### Delete OSP overcloud only
 
 NOTE: This deletes the overcloud and the OCP resources that are associated with it.  
       It does not remove the OCP cluster nor the OSP-D operator, however.
@@ -223,7 +303,7 @@ NOTE: This deletes the overcloud and the OCP resources that are associated with 
 make openstack_cleanup
 ```
 
-#### Delete the operator only
+### Delete the operator only
 
 NOTE: This deletes the OSP-D operator, but leaves any resources it deployed intact.  
       However, if those resources later change and would require OCP reconciliation, 
@@ -233,7 +313,7 @@ NOTE: This deletes the OSP-D operator, but leaves any resources it deployed inta
 make olm_cleanup
 ```
 
-#### Tempest to run functional test
+### Tempest to run functional test
 
 Create a tempest pod in OCP to run it. Tempest run is triggerd in an initContainer that we can wait
 for the "normal" pod container which just runs a sleep to come up in ready state.

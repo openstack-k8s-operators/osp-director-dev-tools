@@ -44,6 +44,7 @@
 
 
   ### BRIDGES
+
   - name: Prepare bridges
     become: true
     become_user: root
@@ -100,14 +101,14 @@
 
       - name: Add BM interface to BM bridge
         community.general.nmcli:
-          conn_name: "bridge-slave-{{ ocp_bm_int }}"
+          conn_name: "bridge-slave-{{ ocp_bm_interface }}"
           type: bridge-slave
-          ifname: "{{ ocp_bm_int }}"
+          ifname: "{{ ocp_bm_interface }}"
           autoconnect: yes
           hairpin: no
           master: "{{ ocp_cluster_name }}bm"
           state: present
-        when: ocp_bm_int is defined
+        when: ocp_bm_interface is defined and ocp_bm_interface != ""
 
       - name: Create provisioning bridge
         community.general.nmcli:
@@ -343,7 +344,8 @@
         virsh vol-create-as 'default'
         '{{ ocp_cluster_name }}-master-{{ item }}'.qcow2 '{{ ocp_master_disk }}'G
         --format qcow2
-      with_sequence: start=0 end={{ ocp_num_masters-1 }}
+      with_sequence: start=0 end={{ ocp_num_masters-1 if ocp_num_masters > 0 else 0 }}
+      when: ocp_num_masters > 0
 
     - name: Create worker vm storage
       command: >
@@ -355,8 +357,8 @@
 
     - name: define master vms
       vars:
-        memory: "{{ ocp_master_memory }}"
-        vcpu: "{{ ocp_master_vcpu }}"
+        memory: "{{ ocp_storage_memory if (enable_ocs|bool and ocp_worker_count|int < ocp_num_storage_workers) else ocp_master_memory }}"
+        vcpu: "{{ ocp_storage_vcpu if (enable_ocs|bool and ocp_worker_count|int < ocp_num_storage_workers) else ocp_master_vcpu }}"
         role: master
         prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_master_mac_prefix }}"
         bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_master_mac_prefix }}"
@@ -365,7 +367,8 @@
         command: define
         xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
         uri: qemu:///system
-      with_sequence: start=0 end={{ ocp_num_masters-1 }}
+      with_sequence: start=0 end={{ ocp_num_masters-1 if ocp_num_masters > 0 else 0 }}
+      when: ocp_num_masters > 0
 
     - name: define worker vms when OCS disabled
       when: (not (enable_ocs | bool)) and total_workers|int > 0
@@ -398,9 +401,9 @@
           xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
           uri: qemu:///system
         with_sequence: start=0 end={{ ocp_num_storage_workers-1 }}
+        when: ocp_num_workers >= ocp_num_storage_workers
 
       - name: define non-storage and extra worker vms
-        when: total_workers|int > 0
         vars:
           memory: "{{ ocp_worker_memory }}"
           vcpu: "{{ ocp_worker_vcpu }}"
@@ -412,7 +415,7 @@
           command: define
           xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
           uri: qemu:///system
-        with_sequence: start={{ ocp_num_storage_workers if enable_ocs|bool else 0 }} end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
+        with_sequence: start={{ ocp_num_storage_workers if (enable_ocs|bool and ocp_num_workers >= ocp_num_storage_workers) else 0 }} end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
 
     - name: Get worker domain names
       shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk '{print $2}'"
@@ -427,18 +430,24 @@
       register: extra_worker_uuids
 
   ### OCS PREP (if requested)
-  - name: OCS and local storage injection, if requested
-    when: (enable_ocs | bool)
+
+  - name: OCS and local storage injection, if requested and only if backed by VMs
+    when: (enable_ocs | bool) and
+          (
+            (ocp_num_masters >= ocp_num_storage_workers and ocp_bm_masters | default({}) | length < 1) 
+            or (ocp_num_workers >= ocp_num_storage_workers and ocp_bm_workers | default({}) | length < 1)
+          )
     block:
     - name: Create VM attached Local Storage for local-storage-operator for AI
       include_role:
         name: local_storage
       vars:
         ocs_local_storage: true
-        domain: "{{ ocp_cluster_name }}-worker-{{ item }}"
+        domain: "{{ ocp_cluster_name }}-{{ 'worker' if ocp_num_workers >= ocp_num_storage_workers else 'master' }}-{{ item }}"
       loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
 
   ### CRs
+  
   - name: Create Metal3 extra baremetal hosts CRs
     block:
     - name: Include oc_local role
@@ -465,7 +474,7 @@
         mode: '0664'
 
     delegate_to: localhost
-    when: ocp_num_extra_workers > 0
+    when: ocp_extra_worker_count|int > 0
 
 
   ### SUSHY-TOOLS

@@ -281,7 +281,20 @@ all:
         masters:
           vars:
             role: master
-            vendor: KVM # this example is a virtual control plane
+{% if ocp_bm_masters | default({}, true) | length > 0 %}
+          hosts:
+{% for name, master in ocp_bm_masters.items() %}
+            {{ ocp_cluster_name }}-{{ name }}:
+              vendor: {{ master.vendor }}
+              ansible_host: {{ ocp_ai_bm_cidr_prefix }}.1{{ loop.index0 }}
+              mac: "{{ master.bm_mac }}"
+              bmc_address: {{ master.bmc_address }}
+              bmc_user: {{ master.bmc_username }}
+              bmc_password: {{ master.bmc_password | b64encode }}
+              installation_disk_path: {{ master.root_device | default ("/dev/sda") }}
+{% endfor %}
+{% elif ocp_num_masters > 0 %}
+            vendor: KVM
             bmc_address: "{{ ocp_ai_bm_cidr_prefix }}.1:{{ ocp_ai_sushy_port | default('8082', true) }}" # port can be changed using sushy_tools_port on the vm_host
             vm_host: vm_host1
             vm_spec:
@@ -294,18 +307,31 @@ all:
               ansible_host: {{ ocp_ai_bm_cidr_prefix }}.1{{ i }}
               mac: "{{ ocp_ai_bm_bridge_master_mac_prefix }}{{ i }}"
 {% endfor %}
+{% endif %}
 
         workers:
           vars:
             role: worker
-            vendor: KVM # this example is a virtual control plane
+{% if ocp_bm_workers | default({}, true) | length > 0 %}
+          hosts:
+{% for name, worker in ocp_bm_workers.items() %}
+            {{ ocp_cluster_name }}-{{ name }}:
+              vendor: {{ worker.vendor }}
+              ansible_host: {{ ocp_ai_bm_cidr_prefix }}.2{{ loop.index0 }}
+              mac: "{{ worker.bm_mac }}"
+              bmc_address: {{ worker.bmc_address }}
+              bmc_user: {{ worker.bmc_username }}
+              bmc_password: {{ worker.bmc_password | b64encode }}
+              installation_disk_path: {{ worker.root_device | default ("/dev/sda") }}
+{% endfor %}
+{% elif ocp_num_workers > 0 %}
+            vendor: KVM
             bmc_address: "{{ ocp_ai_bm_cidr_prefix }}.1:{{ ocp_ai_sushy_port | default('8082', true) }}" # port can be changed using sushy_tools_port on the vm_host
             vm_host: vm_host1
             vm_spec:
               cpu_cores: {{ ocp_worker_vcpu }}
               ram_mib: {{ ocp_worker_memory }}
               disk_size_gb: {{ ocp_worker_disk }}
-{% if ocp_num_workers > 0 %}
           hosts:
 {% for i in range(0, ocp_num_workers) %}
             {{ ocp_cluster_name }}-worker-{{ i }}:

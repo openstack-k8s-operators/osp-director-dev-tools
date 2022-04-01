@@ -20,11 +20,42 @@ spec:
   online: false
   bootMACAddress: {{ ocp_ai_prov_bridge_worker_mac_prefix }}{{ i }}
   bmc:
-    address: redfish+http://192.168.111.1:{{ ocp_ai_sushy_port | default('8082', true) }}/redfish/v1/Systems/{{ extra_worker_uuids.results[i].stdout }}
+    address: redfish+http://{{ ocp_ai_bm_cidr_prefix }}.1:{{ ocp_ai_sushy_port | default('8082', true) }}/redfish/v1/Systems/{{ extra_worker_uuids.results[i].stdout }}
     credentialsName: openshift-worker-{{ i }}-bmc-secret
   hardwareProfile: unknown
   bootMode: legacy
   rootDeviceHints:
     deviceName: /dev/sda
 
+{% endfor %}
+{% for name, worker in (ocp_bm_extra_workers | default({})).items() %}
+{% with worker_index = ocp_bm_workers | default({}) | length + loop.index0 %}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openshift-worker-{{ worker_index }}-bmc-secret
+  namespace: openshift-machine-api
+type: Opaque
+data:
+  username: {{ worker["bmc_username"] }}
+  password: {{ worker["bmc_password"] }}
+
+---
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: openshift-worker-{{ worker_index }}
+  namespace: openshift-machine-api
+spec:
+  online: false
+  bootMACAddress: {{ worker["prov_mac"] }}
+  bmc:
+    address: {{ worker["bmc_protocol"] | default("ipmi") }}://{{ worker["bmc_address"] }}
+    credentialsName: openshift-worker-{{ worker_index }}-bmc-secret
+  hardwareProfile: unknown
+  bootMode: legacy
+  rootDeviceHints:
+    deviceName: {{ worker["root_device"] | default("/dev/sda") }}
+{% endwith %}
 {% endfor %}

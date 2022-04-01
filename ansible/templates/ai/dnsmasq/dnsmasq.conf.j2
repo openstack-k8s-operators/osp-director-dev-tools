@@ -55,6 +55,13 @@ address=/master-{{ i }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix 
 ptr-record=1{{ i }}.{{ ocp_ai_bm_cidr_rev_suffix }},master-{{ i }}.{{ ocp_ai_full_cluster_name }}
 {% endfor %}
 
+{% for name, master in (ocp_bm_masters | default({})).items() %}
+# Master-{{ loop.index0 }}
+dhcp-host={{ master["bm_mac"] }},{{ ocp_ai_bm_cidr_prefix }}.1{{ loop.index0 }},master-{{ loop.index0 }}.{{ ocp_ai_full_cluster_name }}
+address=/master-{{ loop.index0 }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.1{{ loop.index0 }}
+ptr-record=1{{ loop.index0 }}.{{ ocp_ai_bm_cidr_rev_suffix }},master-{{ loop.index0 }}.{{ ocp_ai_full_cluster_name }}
+{% endfor %}
+
 {% for i in range(0, ocp_num_workers + ocp_num_extra_workers) %}
 # Worker-{{ i }}
 dhcp-host={{ ocp_ai_bm_bridge_worker_mac_prefix }}{{ i }},{{ ocp_ai_bm_cidr_prefix }}.2{{ i }},worker-{{ i }}.{{ ocp_ai_full_cluster_name }}
@@ -62,11 +69,22 @@ address=/worker-{{ i }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix 
 ptr-record=2{{ i }}.{{ ocp_ai_bm_cidr_rev_suffix }},worker-{{ i }}.{{ ocp_ai_full_cluster_name }}
 {% endfor %}
 
-{% for i in range(0, ocp_num_bm_workers) %}
-# BM Worker-{{ i }}
-dhcp-host={{ ocp_bm_worker_mac }},{{ ocp_ai_bm_cidr_prefix }}.3{{ i }},bm-worker-{{ i }}.{{ ocp_ai_full_cluster_name }}
-address=/bm-worker-{{ i }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.3{{ i }}
-ptr-record=3{{ i }}.{{ ocp_ai_bm_cidr_rev_suffix }},bm-worker-{{ i }}.{{ ocp_ai_full_cluster_name }}
+{% for name, worker in (ocp_bm_workers | default({})).items() %}
+# worker-{{ loop.index0 }}
+dhcp-host={{ worker["bm_mac"] }},{{ ocp_ai_bm_cidr_prefix }}.2{{ loop.index0 }},worker-{{ loop.index0 }}.{{ ocp_ai_full_cluster_name }}
+address=/worker-{{ loop.index0 }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.2{{ loop.index0 }}
+ptr-record=2{{ loop.index0 }}.{{ ocp_ai_bm_cidr_rev_suffix }},worker-{{ loop.index0 }}.{{ ocp_ai_full_cluster_name }}
+{% endfor %}
+
+{% for name, worker in (ocp_bm_extra_workers | default({})).items() %}
+{% if (worker["bm_mac"] | default("")) != "" %}
+{% with worker_index = ocp_bm_workers | default({}) | length + loop.index0 %}
+# worker-{{ worker_index }}
+dhcp-host={{ worker["bm_mac"] }},{{ ocp_ai_bm_cidr_prefix }}.2{{ worker_index }},worker-{{ worker_index }}.{{ ocp_ai_full_cluster_name }}
+address=/worker-{{ worker_index }}.{{ ocp_ai_full_cluster_name }}/{{ ocp_ai_bm_cidr_prefix }}.2{{ worker_index }}
+ptr-record=2{{ worker_index }}.{{ ocp_ai_bm_cidr_rev_suffix }},worker-{{ worker_index }}.{{ ocp_ai_full_cluster_name }}
+{% endwith %}
+{% endif %}
 {% endfor %}
 
 #
