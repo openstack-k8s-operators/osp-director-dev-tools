@@ -32,7 +32,7 @@
 
       - name: Create schedule CR
         template:
-          src: ai/cluster_mgnt_roles/50-master-scheduler.yml.j2
+          src: ai/crucible/50-master-scheduler.yml.j2
           dest: "{{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml"
           mode: '0664'
 
@@ -41,7 +41,7 @@
           oc apply -f {{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml
         environment: &oc_env
           PATH: "{{ oc_env_path }}"
-          KUBECONFIG: "{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}"
+          KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
       when: ocp_num_workers > 0
 
 

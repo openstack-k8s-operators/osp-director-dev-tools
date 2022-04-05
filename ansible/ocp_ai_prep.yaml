@@ -16,11 +16,13 @@
     become_user: root
     pip:
       name: aicli
+      version: "{{ ocp_ai_cli_version }}"
       executable: /usr/bin/pip-3
 
   - name: Install assisted installer CLI - user directory
     pip:
       name: aicli
+      version: "{{ ocp_ai_cli_version }}"
       extra_args: "--user"
       executable: /usr/bin/pip-3
 
@@ -200,7 +202,6 @@
     # FIXME: Use firewalld rich-rules instead?
     - name: Add direct firewall rules for BM bridge
       shell: |
-        firewall-cmd --direct --permanent --add-rule ipv4 nat POSTROUTING 0 -o "{{ ocp_ai_ext_intf.stdout }}" -j MASQUERADE;
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_cluster_name }}bm" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" -m state --state RELATED,ESTABLISHED -j ACCEPT;
         firewall-cmd --reload
@@ -318,7 +319,7 @@
           virsh pool-destroy default
           virsh pool-undefine default
         register: virsh_pool_destroy
-        failed_when: virsh_pool_destroy.stderr != "" and "Storage pool not found" not in virsh_pool_destroy.stderr
+        failed_when: virsh_pool_destroy.stderr != "" and "Storage pool not found" not in virsh_pool_destroy.stderr and "storage pool 'default' is not active" not in virsh_pool_destroy.stderr
 
       - name: Remove any storage pools currently using {{ ocp_ai_libvirt_storage_dir }}
         shell: |
@@ -507,98 +508,8 @@
         enabled: yes
 
 
-  ### ASSISTED INSTALLER SERVICE SCRIPT
+  ### ASSISTED INSTALLER SERVICE VIA CRUCIBLE
 
-  - name: Prepare assisted installer service
-    become: true
-    become_user: root
-    block:
-    - name: Clone the assisted installer service repo
-      git:
-        repo: "{{ ocp_ai_service_repo | default('https://github.com/sonofspike/assisted-service-onprem.git', true) }}"
-        dest: "{{ base_path }}/assisted-service-onprem"
-        force: yes
-        version: "{{ ocp_ai_service_branch | default('feb00ba10823ab04ec489a05ce8eb543ec688fda', true) }}"
-
-    - name: Create assisted installer service storage directory
-      file:
-        path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-service', true) }}"
-        state: directory
-        mode: '0755'
-
-    - name: Set assisted installer service storage directory
-      replace:
-        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
-        regexp: 'OAS_HOSTDIR=.*'
-        replace: 'OAS_HOSTDIR={{ ocp_ai_service_store_dir | default("/opt/assisted-service", true) }}'
-
-    - name: Set assisted installer service discovery ISO location
-      replace:
-        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
-        regexp: 'BASE_OS_IMAGE=.*'
-        replace: 'BASE_OS_IMAGE={{ ocp_ai_discovery_iso }}'
-
-    - name: Set assisted installer service base URL
-      replace:
-        path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
-        regexp: 'SERVICE_BASE_URL=.*'
-        replace: 'SERVICE_BASE_URL=http://192.168.111.1:{{ ocp_ai_service_port | default("8090", true) }}'
-
-    - name: Set assisted installer service image
-      ansible.builtin.lineinfile:
-        path: "{{ base_path }}/assisted-service-onprem/start-assisted-service.sh"
-        regexp: '^OAS_IMAGE='
-        line: 'OAS_IMAGE={{ ocp_ai_service_image | default("quay.io/ocpmetal/assisted-service:latest", true) }}'
-
-    - name: Create dict of upstream AI onprem variables
-      set_fact:
-        ocp_ai_onprem_env_dict: "{{ ocp_ai_onprem_env_dict|default({}) | combine( {item.split('=')[0]: item.split('=')[1]} ) }}"
-      with_items:
-        - "{{ ocp_ai_onprem_env }}"
-
-    - name: Remove deprecated OPENSHIFT_VERSION onprem env var
-      replace:
-        path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
-        regexp: 'OPENSHIFT_VERSIONS=.*'
-        replace: ''
-
-    - name: Inject OCP release image onprem env vars
-      lineinfile:
-        path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
-        state: present
-        line: '{{ item }}={{ ocp_ai_onprem_env_dict[item] }}'
-      with_items:
-        - OS_IMAGES
-        - RELEASE_IMAGES
-
-    - name: Set assisted installer service default hardware requirements # noqa var-spacing
-      ansible.builtin.lineinfile:
-        path: "{{ base_path }}/assisted-service-onprem/onprem-environment"
-        regexp: '^HW_VALIDATOR_REQUIREMENTS='
-        line: 'HW_VALIDATOR_REQUIREMENTS=[{"version":"default","master":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10},"sno":{"cpu_cores":8,"ram_mib":32768,"disk_size_gb":30,"installation_disk_speed_threshold_ms":10}}]'
-
-    - name: Start assisted installer service container
-      shell: |
-        ./stop-assisted-service.sh;
-        ./start-assisted-service.sh
-      args:
-        chdir: "{{ base_path }}/assisted-service-onprem"
-
-    - name: Wait until the assisted installer service is fully available
-      shell: |
-        aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster
-      register: assisted_service_ready
-      until: '"Dns Domain" in assisted_service_ready.stdout'
-      retries: 60
-      delay: 10
-      environment:
-        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
-
-
-  ### ASSISTED INSTALLER EXECUTION PLAYBOOKS
-
-  # Work-around as invoking lookup plugin inside inventory.ospd.j2 template
-  # fails. This is because ansible user is different then id_rsa.pub one.
   - name: Register SSH public key
     become: true
     become_user: root
@@ -614,78 +525,145 @@
 
     - name: Clone the assisted installer playbooks repo
       git:
-        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/cluster_mgnt_roles.git', true) }}"
-        dest: "{{ base_path }}/cluster_mgnt_roles"
+        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/crucible.git', true) }}"
+        dest: "{{ base_path }}/crucible"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('master', true) }}"
-
-    # HACK: Remove old, bad logic from SoS so that it works with latest AI service (we never needed it anyhow)
-    # Once this logic is fixed upstream in SoS, we can remove this task
-    - name: Remove problematic SoS create-cluster logic
-      replace:
-        path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
-        after: '##### TO REMOVE ####'
-        before: '#TODO: Apply manifests before cluster installation'
-        regexp: '^(.+)$'
-        replace: '# \1'
-
-    - name: Add schedulable-master manifest
-      block:
-      - name: Create schedulable-master manifest
-        template:
-          src: ai/cluster_mgnt_roles/50-master-scheduler.yml.j2
-          dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/50-master-scheduler.yml.j2"
-          mode: '0664'
-
-      - name: Inject schedulable-master manifest
-        lineinfile:
-          path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
-          regexp: '^\s\s\s\s-\s50-master-scheduler\.yml'
-          insertafter: '^\s\s\s\s-\s50-worker-remove-ipi-leftovers\.yml'
-          line: '    - 50-master-scheduler.yml'
-
-    - name: Add ingress controller manifest
-      block:
-      - name: Create ingress controller manifest
-        template:
-          src: ai/cluster_mgnt_roles/60-ingress-controller.yml.j2
-          dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/60-ingress-controller.yml.j2"
-          mode: '0664'
-
-      - name: Inject ingress controller manifest
-        lineinfile:
-          path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
-          regexp: '^\s\s\s\s-\s60-ingress-controller\.yml'
-          insertafter: '^\s\s\s\s-\s50-master-scheduler\.yml'
-          line: '    - 60-ingress-controller.yml'
-
-    - name: Add custom registries manifest
-      block:
-      - name: Create custom registries manifest
-        template:
-          src: ai/cluster_mgnt_roles/70-image.yml.j2
-          dest: "{{ base_path }}/cluster_mgnt_roles/create_cluster/templates/70-image.yml.j2"
-          mode: '0664'
-
-      - name: Inject custom registries manifest
-        lineinfile:
-          path: "{{ base_path }}/cluster_mgnt_roles/create_cluster/tasks/main.yml"
-          regexp: '^\s\s\s\s-\s70-image\.yml'
-          insertafter: '^\s\s\s\s-\s60-ingress-controller\.yml'
-          line: '    - 70-image.yml'
-
-    - name: Force serial execution of boot_iso role
-      replace:
-        after: "Mounting, Booting the Assisted Installer Discovery ISO"
-        before: "- boot_iso"
-        path: "{{ base_path }}/cluster_mgnt_roles/deploy_cluster.yml"
-        regexp: 'strategy: free'
-        replace: 'serial: 1'
+        version: "{{ ocp_ai_ansible_branch | default('9b7fb26e3e57163933f36f2c27f46e79287f5e62', true) }}"
 
     - name: Configure inventory variables
       template:
-          src: ai/cluster_mgnt_roles/inventory.ospd.j2
-          dest: "{{ base_path }}/cluster_mgnt_roles/inventory.ospd"
-          mode: '0664'
+        src: ai/crucible/inventory.ospd.yml.j2
+        dest: "{{ base_path }}/crucible/inventory.ospd.yml"
+        mode: '0664'
       vars:
-          ssh_pub_key: "{{ ssh_root_pub_key.stdout }}"
+        ssh_pub_key: "{{ ssh_root_pub_key.stdout }}"
+
+    - name: Configure inventory vault variables
+      template:
+        src: ai/crucible/inventory.vault.ospd.yml.j2
+        dest: "{{ base_path }}/crucible/inventory.vault.ospd.yml"
+        mode: '0664'
+
+    - name: Create custom registries manifest
+      template:
+        src: ai/crucible/03-custom-registries.yml.j2
+        dest: "{{ base_path }}/crucible/roles/create_cluster/templates/03-custom-registries.yml.j2"
+        mode: '0664'
+
+    - name: Override Crucible OCP version constraint
+      replace:
+        path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/cluster.yml"
+        regexp: 'openshift_full_version in supported_ocp_versions'
+        replace: 'openshift_full_version is defined'
+
+    - name: Override/inject OCP live ISO version
+      replace:
+        path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
+        after: "assisted_service_openshift_versions_defaults:"
+        before: "assisted_installer_images:"
+        regexp: 'dependencies/rhcos/{{ ocp_version | replace(".", "\.") }}/.*iso'
+        replace: 'dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso'
+
+    - name: Override/inject OCP live rootfs version
+      replace:
+        path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
+        after: "assisted_service_openshift_versions_defaults:"
+        before: "assisted_installer_images:"
+        regexp: 'dependencies/rhcos/{{ ocp_version | replace(".", "\.") }}/.*img'
+        replace: 'dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live-rootfs.x86_64.img'
+
+    - name: Override/inject desired OCP version (display_name/release_version)
+      replace:
+        path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
+        after: "assisted_service_openshift_versions_defaults:"
+        before: "assisted_installer_images:"
+        regexp: '{{ ocp_version | replace(".", "\.") }}\.\d+'
+        replace: '{{ ocp_version }}.{{ ocp_minor_version }}'
+
+    - name: Inject specific RHCOS image version
+      block:
+      - name: Inject RHCOS image tag
+        replace:
+          path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
+          after: "assisted_service_openshift_versions_defaults:"
+          before: "assisted_installer_images:"
+          regexp: 'release_image:.*release_{{ ocp_version | replace(".", "\.") }}.*'
+          replace: 'release_image: "{{ ocp_release_image }}"'
+
+      - name: Get RHCOS image version raw data for {{ ocp_version }}.{{ ocp_minor_version }}
+        uri:
+          url: "{{ ocp_release_data_url }}"
+          method: GET
+          status_code: [200]
+          return_content: True
+        register: rhcos_image_version_raw_data
+
+      - name: Get RHCOS image version for {{ ocp_version }}.{{ ocp_minor_version }}
+        set_fact:
+          rhcos_image_version: "{{ rhcos_image_version_raw_data.content | regex_search('second_release=([^&]+)', '\\1') | default ([''], true) | first }}"
+          rhcos_image_version_alt: "{{ rhcos_image_version_raw_data.content | regex_search('/\\?release=([^&]+)', '\\1') | default ([''], true) | first }}"
+
+      - name: Fail when an RHCOS version cannot be determined
+        fail:
+          msg: "Unable to determine RHCOS version for OCP version {{ ocp_version }}.{{ ocp_minor_version }}"
+        when: rhcos_image_version == "" and rhcos_image_version_alt == ""
+
+      - name: Inject RHCOS image version
+        replace:
+          path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
+          after: "assisted_service_openshift_versions_defaults:"
+          before: "assisted_installer_images:"
+          regexp: 'rhcos_version:\s{{ ocp_version | replace(".", "") }}\..+'
+          replace: 'rhcos_version: {{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}'
+
+    - name: Force linear execution of boot_iso role
+      block:
+      - name: Force linear execution
+        replace:
+          path: "{{ base_path }}/crucible/playbooks/boot_iso.yml"
+          regexp: 'strategy:\s.+'
+          replace: 'strategy: linear'
+
+      - name: Force linear execution, part 2
+        replace:
+          path: "{{ base_path }}/crucible/playbooks/boot_iso.yml"
+          regexp: 'serial:\s.+'
+          replace: 'serial: 1'
+
+    - name: Remove NTP validation due to prevelance of random false-negatives
+      replace:
+        path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/network.yml"
+        regexp: '\(setup_ntp_service\s\|\sdefault\(True\)\)\s!=\sTrue'
+        replace: 'false'
+
+    - name: Create assisted installer service bash script
+      template:
+        src: ai/crucible/deploy_ai_service.sh.j2
+        dest: "{{ base_path }}/crucible/deploy_ai_service.sh"
+        mode: '0755'
+
+    - name: Create assisted installer deploy-cluster bash script
+      template:
+        src: ai/crucible/deploy_cluster.sh.j2
+        dest: "{{ base_path }}/crucible/deploy_cluster.sh"
+        mode: '0755'
+
+    - name: Install Crucible Ansible dependencies
+      shell: |
+        ansible-galaxy collection install -r requirements.yml
+      args:
+        chdir: "{{ base_path }}/crucible"
+
+    - name: Show assisted service info
+      debug:
+        msg: |
+          Deploying the assisted installer service containers. You can tail the logs at {{ base_path }}/ai_service.log on
+          the host for progress.
+
+    - name: Deploy the assisted installer service
+      shell: |
+        ./deploy_ai_service.sh
+      args:
+        chdir: "{{ base_path }}/crucible"
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: false

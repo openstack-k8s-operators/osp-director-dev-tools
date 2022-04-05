@@ -60,7 +60,8 @@
     - name: use secrets_repo
       when: secrets_repo is defined
       block:
-      - set_fact:
+      - name: set secrets_repo_path from configured secrets_repo
+        set_fact:
           secrets_repo_path: "{{ ansible_env.HOME }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
       - name: create base dir for secrets_repo repo
         file:
@@ -119,11 +120,13 @@
 
     - name: validation and tweaks for assisted installer
       block:
-      - fail:
+      - name: fail if RHEL version < 8.3
+        fail:
           msg: RHEL 8.3+ is required for the assisted installer deployments
         when: ansible_distribution != "RedHat" or ansible_distribution_version|float < 8.3
 
-      - fail:
+      - name: fail if OCP version <= 4.6
+        fail:
           msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP greater than 4.6 is currently supported for assisted installer deployments."
         when: ocp_version <= 4.6
       when: ocp_ai|bool
@@ -280,3 +283,21 @@
   - name: Configure NFS server
     import_role:
       name: nfs_server
+
+  - name: masquerade all outgoing traffic
+    block:
+    - name: Acquire default external interface
+      shell: |
+        ip r | grep default | head -1 | cut -d ' ' -f 5
+      register: ext_intf
+
+    - name: Fail when unable to determine external interface
+      fail:
+        msg: |
+          Unable to determine external interface
+      when: ext_intf.stdout == ""
+
+    - name: Make sure all outgoing traffic via ext_intf get masqueraded
+      shell: |
+        firewall-cmd --direct --permanent --add-rule ipv4 nat POSTROUTING 0 -o "{{ ext_intf.stdout }}" -j MASQUERADE;
+        firewall-cmd --reload

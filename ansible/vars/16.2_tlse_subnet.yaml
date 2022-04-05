@@ -29,7 +29,7 @@ osp_release_defaults:
       count: 0
     ComputeLeaf1:
       count: 1
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api_leaf1
@@ -37,7 +37,7 @@ osp_release_defaults:
         - storage_leaf1
     ComputeLeaf2:
       count: 1
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api_leaf2

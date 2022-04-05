@@ -1,17 +1,48 @@
 ---
-osp_release_auto_version: 17.0-RHEL-8
-osp_release_auto_compose: passed_phase1
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internal_api
+  - internal_api_leaf1
 
 osp_release_defaults:
-  networks: ipv6
+  tlse: true
+  networks: ipv6_subnet
+  vmset:
+    Controller:
+      count: 1
+      cores: 6
+      disk_size: 40
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      storage_class: host-nfs-storageclass
+  bmset:
+    Compute:
+      count: 0
+    ComputeLeaf1:
+      count: 1
+      ctlplane_interface: enp1s0
+      networks:
+        - ctlplane
+        - internal_api_leaf1
+        - tenant_leaf1
+        - storage_leaf1
+    ComputeLeaf2:
+      count: 1
+      ctlplane_interface: enp1s0
+      networks:
+        - ctlplane
+        - internal_api_leaf2
+        - tenant_leaf2
+        - storage_leaf2
   extrafeatures:
     - ipv6
-
-ephemeral_heat:
-  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
-  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
-  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
-  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
 
 # TODO: create good set of ipv6 tempest tests, right now disabled those which create floating IP, which is not the case in IPv6
 tempest_test_dict:
