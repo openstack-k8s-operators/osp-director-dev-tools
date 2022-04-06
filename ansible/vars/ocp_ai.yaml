@@ -17,3 +17,6 @@ ocp_ai_libvirt_storage_dir: /var/lib/libvirt/images
 # Pin aicli to a version that uses AI API v1 by default, as this is the API version
 # that Crucible uses for the time being
 ocp_ai_cli_version: "99.0.202112021829.202103111306"
+
+# Pin aicli client library version to a AI-API-v1-friendly version by default
+ocp_ai_cli_lib_version: "2.1.1.post1"
