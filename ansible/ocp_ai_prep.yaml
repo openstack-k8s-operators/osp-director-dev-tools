@@ -26,6 +26,21 @@
       extra_args: "--user"
       executable: /usr/bin/pip-3
 
+  - name: Install assisted installed CLI lib
+    become: true
+    become_user: root
+    pip:
+      name: assisted-service-client
+      version: "{{ ocp_ai_cli_lib_version }}"
+      executable: /usr/bin/pip-3
+
+  - name: Install assisted installed CLI lib - user directory
+    pip:
+      name: assisted-service-client
+      version: "{{ ocp_ai_cli_lib_version }}"
+      extra_args: "--user"
+      executable: /usr/bin/pip-3
+
 
   ### ADDITIONAL SET-FACTS
 
