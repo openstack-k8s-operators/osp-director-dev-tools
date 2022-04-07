@@ -21,7 +21,7 @@
   args:
     chdir: "{{ repo_dir }}"
 
-- name: build CSV manifest locally
+- name: build CSV manifest {{ _csv_version }} locally
   command: /bin/bash "{{ repo_dir }}/scripts/build-manifests.sh"
   args:
     chdir: "{{ repo_dir }}"
