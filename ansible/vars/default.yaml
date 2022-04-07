@@ -353,4 +353,4 @@ must_gather_image: quay.io/openstack-k8s-operators/must-gather:0.0.2
 # must_gather_directory: "{{ working_log_dir }}"
 must_gather_compress_logs: false
 
-cnosp_cnv_version: 0.0.1
+cnosp_csv_version: 0.0.1

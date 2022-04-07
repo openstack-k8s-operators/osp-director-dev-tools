@@ -11,5 +11,5 @@
       name: cnosp
       tasks_from: olm
     vars:
-      _cnv_version: "{{ cnosp_cnv_version }}"
+      _csv_version: "{{ cnosp_csv_version }}"
 
