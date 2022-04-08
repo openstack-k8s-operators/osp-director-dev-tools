@@ -280,7 +280,6 @@ osp_defaults:
     Controller:
       count: 1
       cores: 6
-      disk_size: 40
       memory: 20
       networks:
         - ctlplane
@@ -289,9 +288,17 @@ osp_defaults:
         - tenant
         - storage
         - storage_mgmt
-      storage_class: host-nfs-storageclass
-      storage_access_mode: ReadWriteMany
-      storage_volume_mode: Filesystem
+      root_disk:
+        disk_size: 40
+        storage_class: host-nfs-storageclass
+        storage_access_mode: ReadWriteMany
+        storage_volume_mode: Filesystem
+      additional_disks:
+        - name: datadisk
+          disk_size: 1
+          storage_class: host-nfs-storageclass
+          storage_access_mode: ReadWriteMany
+          storage_volume_mode: Filesystem
   # OSP compute OCP worker settings
   bmset:
     Compute:
