@@ -9,7 +9,7 @@ dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 base_domain_name: test.metalkube.org
 
 # registries to add to /etc/containers/registries.conf registries.insecure section
-podman_insecure_registies:
+podman_insecure_registries:
   - default-route-openshift-image-registry.apps.{{ ocp_cluster_name }}.{{ base_domain_name }}
 
 # To set a specific release to install.

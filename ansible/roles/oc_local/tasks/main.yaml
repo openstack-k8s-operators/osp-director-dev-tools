@@ -74,11 +74,11 @@
         - { 'key': 'rhel_version' , 'value': "{{ osp_release_auto_content | regex_search('rhel_version: (.+)', '\\1') | first }}"}
 
 - name: add insecure registies to /etc/containers/registries.conf
-  when: podman_insecure_registies is defined
+  when: podman_insecure_registries is defined
   block:
   - name: generate _registries string
     set_fact:
-      _registries: "'{{ \"', '\".join(podman_insecure_registies)}}'"
+      _registries: "'{{ \"', '\".join(podman_insecure_registries)}}'"
 
   - name: add {{ _registries }} to registries.insecure
     become: true

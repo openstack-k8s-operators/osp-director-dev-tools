@@ -1,0 +1,23 @@
+---
+- hosts: convergence_base
+  vars_files: vars/default.yaml
+  become: true
+
+  tasks:
+  - name: remove custom insecure registies entries in /etc/containers/registries.conf
+    when: podman_insecure_registries is defined
+    block:
+    - name: generate _registries string
+      set_fact:
+        _registries: "'{{ \"', '\".join(podman_insecure_registries)}}'"
+
+    - name: "remove {{ _registries }} from registries.insecure"
+      become: true
+      become_user: root
+      community.general.ini_file:
+        path: /etc/containers/registries.conf
+        section: registries.insecure
+        option: registries
+        value: "[{{ _registries }}]"
+        state: absent
+        exclusive: yes
