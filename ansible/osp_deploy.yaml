@@ -27,9 +27,9 @@
       state: directory
       mode: '0755'
 
-  - name: Lookup configVersion hash
+  - name: Lookup configVersion name
     shell: >
-      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -re .items[0].spec.hash
+      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -re .items[0].metadata.name
     register: config_version_cmd
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
