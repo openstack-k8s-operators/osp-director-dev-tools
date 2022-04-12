@@ -23,3 +23,6 @@
 
 - name: Cleanup libvirt resources
   import_playbook: libvirt_cleanup.yaml
+
+- name: Cleanup local registry.conf
+  import_playbook: registry_conf_cleanup.yaml
