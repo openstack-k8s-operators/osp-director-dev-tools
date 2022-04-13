@@ -1,4 +1,9 @@
 ---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
 - hosts: convergence_base
   become: true
   become_user: root
