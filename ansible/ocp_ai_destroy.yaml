@@ -100,12 +100,12 @@
 
   - name: Delete BM interface to BM bridge if defined
     community.general.nmcli:
-      conn_name: "bridge-slave-{{ ocp_bm_int }}"
+      conn_name: "bridge-slave-{{ ocp_bm_interface }}"
       type: bridge-slave
-      ifname: "{{ ocp_bm_int }}"
+      ifname: "{{ ocp_bm_interface }}"
       master: "{{ ocp_cluster_name }}bm"
       state: absent
-    when: ocp_bm_int is defined
+    when: ocp_bm_interface is defined and ocp_bm_interface != ""
 
   - name: Delete AI bridges
     block:

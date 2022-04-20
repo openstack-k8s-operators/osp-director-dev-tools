@@ -45,6 +45,10 @@ ocp_release_type: ga
 # https://github.com/openshift-metal3/dev-scripts/pull/969
 ocp_ip_stack: v4
 
+#
+# BEGIN - VM node configuration
+#
+
 # size the OCP VM resources
 ocp_num_masters: 3
 ocp_num_workers: 3
@@ -59,27 +63,88 @@ ocp_worker_vcpu: 8
 ocp_worker_disk: 50
 
 # the following are used if local storage or OCS is enabled:
-# - "ocp_num_storage_workers" must be <= "ocp_num_workers"
-# - workers are enhanced to provide storage along with regular compute (kubelet) functionality
+# - "ocp_num_storage_workers" must be...
+#   * >= 3
+#   * <= "ocp_num_workers" if virtual worker nodes are used
+#   * <= "ocp_bm_workers|length" if baremetal worker nodes are used
+#   * <= "ocp_num_masters" if only virtual master/worker combo nodes are used
+#   * <= "ocp_bm_masters|length" if only baremetal master/worker combo nodes are used
+#   * <= "ocp_num_masters" or <= "ocp_bm_masters|length" if > "ocp_nm_workers" and > "ocp_bm_workers|length"
+# - nodes are enhanced to provide storage along with regular compute (kubelet) functionality
 ocp_num_storage_workers: 3
-ocp_storage_memory: 51200
-ocp_storage_vcpu: 10
-ocp_storage_data_dir: /home/local_storage/data
 ocp_storage_data_disks:
   - sdb
 ocp_storage_data_disk_size: 150
+# The following are only used if targetted nodes are virtual
+ocp_storage_memory: 51200
+ocp_storage_vcpu: 12
+ocp_storage_data_dir: /home/local_storage/data
 
-# reserved for future expansion. Can be 0 or 1 at this point
-ocp_num_bm_workers: 0
+#
+# END - VM node configuration
+#
 
-# required if ocp_num_bm_workers == 1
-#ocp_bm_worker_vendor: Dell
-#ocp_bm_worker_bmc_address: 10.16.231.76
-#ocp_bm_worker_bmc_user: root
-#ocp_bm_worker_bmc_password: calvin
-#ocp_bm_worker_mac: 40:a6:b7:2b:19:01
-#ocp_bm_worker_ip: 192.168.111.30
-#ocp_bm_int: ens3f0
+#
+# BEGIN - BM node configuration (optional)
+#
+# WARNING: Currently experimental and not fully-tested!
+#
+# NOTE: Only works with "ocp_ai: true" deployments!
+#
+
+# Which interface on the prov host will be attached to the OCP baremetal
+# bridge to establish connectivity with the baremetal nodes' network
+ocp_bm_interface: ""
+
+ocp_bm_masters: {}
+# ocp_bm_masters:
+#   master-0:
+#     vendor: Dell
+#     bm_mac: 40:a6:b7:2b:19:01   # AI uses baremetal (OCP) network MAC
+#     bmc_address: 10.10.1.5
+#     bmc_username: username
+#     bmc_password: password
+#     root_device: /dev/sda       # optional, defaults to /dev/sda
+#   master-1:
+#     ...
+#   master-2:
+#     ...
+ocp_bm_workers: {}
+# ocp_bm_workers:
+#   worker-0:
+#     vendor: Dell
+#     bm_mac: 40:a6:b7:2b:20:01   # AI uses baremetal (OCP) network MAC
+#     bmc_address: 10.10.1.15
+#     bmc_username: username
+#     bmc_password: password
+#     root_device: /dev/sda       # optional, defaults to /dev/sda
+#   worker-1:
+#     ...
+ocp_bm_extra_workers: {}
+# ocp_bm_extra_workers:
+#   worker-2:
+#     vendor: Dell
+#     bm_mac: 40:a6:b7:2b:20:03   # optional, if for some reason the OSP compute needs an assigned IP on the OCP network
+#     prov_mac: 4b:40:40:40:40:01 # extra workers use Metal3, which uses provisioning network MAC
+#     bmc_protocol: idrac         # extra workers use Metal3, which need this extra detail
+#     bmc_address: 10.10.1.17
+#     bmc_username: username
+#     bmc_password: password
+#     root_device: /dev/sda       # optional, defaults to /dev/sda
+#   worker-3:
+#     ...
+
+#
+# END - BM node configuration (optional)
+#
+
+# These are used to simplify considerations for masters and workers
+# across virtual and baremetal options.  *** Please leave them as they are ***
+### LEAVE AS-IS vvv
+ocp_master_count: "{{ ocp_num_masters + ocp_bm_masters|default({})|length }}" # DO NOT EDIT
+ocp_worker_count: "{{ ocp_num_workers + ocp_bm_workers|default({})|length }}" # DO NOT EDIT
+ocp_extra_worker_count: "{{ ocp_num_extra_workers + ocp_bm_extra_workers|default({})|length }}" # DO NOT EDIT
+### LEAVE AS-IS ^^^
 
 # OCP cluster name
 ocp_cluster_name: ostest
