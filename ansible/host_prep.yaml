@@ -7,6 +7,38 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
+  - name: validate proper number of workers (>= 2), if explicit workers are requestd
+    fail:
+      msg: If workers are requested, a minimum of 2 is required
+    when: (ocp_worker_count|int > 0 and ocp_worker_count|int < 2)
+
+  - name: validation for virtual clusters vs baremetal
+    block:
+    - name: fail if baremetal nodes are requested and AI is not
+      # NOTE: Extra baremetal workers (ocp_bm_extra_workers) should be fine with either dev-scripts or AI
+      fail:
+        msg: baremetal nodes are currently only supported for AI deployments
+      when: not ocp_ai|bool and (ocp_bm_masters | default({}) | length > 0 or ocp_bm_workers | default({}) | length > 0)
+
+    - name: fail if virtual and baremetal nodes of the same role are requested
+      fail:
+        msg: Cannot mix virtual and baremetal nodes of the same role
+      when: (ocp_bm_masters | default({}) | length > 0 and ocp_num_masters > 0) or
+            (ocp_bm_workers | default({}) | length > 0 and (ocp_num_workers > 0 or ocp_num_extra_workers > 0))
+
+  - name: validation and tweaks for assisted installer
+    block:
+    - name: fail if RHEL version < 8.3
+      fail:
+        msg: RHEL 8.3+ is required for the assisted installer deployments
+      when: ansible_distribution != "RedHat" or ansible_distribution_version|float < 8.3
+
+    - name: fail if OCP version <= 4.6
+      fail:
+        msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP greater than 4.6 is currently supported for assisted installer deployments."
+      when: ocp_version <= 4.6
+    when: ocp_ai|bool
+
   - name: OCS validation checks
     when: (enable_ocs | bool)
     block:
@@ -17,8 +49,12 @@
 
     - name: Number of storage workers must be 3, and must be <= ocp_num_workers
       fail:
-        msg: "3 (non-extra) worker nodes are required for OCS"
-      when: ocp_num_storage_workers < 3 or ocp_num_storage_workers > ocp_num_workers
+        msg: "3 (non-extra) worker (or master/worker combo) nodes are required for OCS"
+      when: ocp_num_storage_workers < 3
+            or (
+                ocp_num_storage_workers > ocp_worker_count|int
+                and ocp_num_storage_workers > ocp_master_count|int
+               )
 
   - name: Disable existing repos
     block:
@@ -118,18 +154,6 @@
     - name: enable rhel-8-for-x86_64-appstream-rpms and advanced-virt-for-rhel-8-x86_64-rpms
       command: subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms --enable=advanced-virt-for-rhel-8-x86_64-rpms --enable=openstack-16-for-rhel-8-x86_64-rpms
 
-    - name: validation and tweaks for assisted installer
-      block:
-      - name: fail if RHEL version < 8.3
-        fail:
-          msg: RHEL 8.3+ is required for the assisted installer deployments
-        when: ansible_distribution != "RedHat" or ansible_distribution_version|float < 8.3
-
-      - name: fail if OCP version <= 4.6
-        fail:
-          msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP greater than 4.6 is currently supported for assisted installer deployments."
-        when: ocp_version <= 4.6
-      when: ocp_ai|bool
 
   - name: install packages and enable services
     block:

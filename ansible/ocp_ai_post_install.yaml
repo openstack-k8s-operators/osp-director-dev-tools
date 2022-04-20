@@ -14,7 +14,8 @@
 
     ### UN-SCHEDULABLE MASTERS
 
-    - name: Unschedule masters for AI
+    - name: Unschedulable masters for AI
+      when: ocp_worker_count|int > 0 and (not enable_ocs|bool or ocp_worker_count|int > 2)
       block:
       - name: Set directory for storing schedule/ingress yaml files
         set_fact:
@@ -42,7 +43,6 @@
         environment: &oc_env
           PATH: "{{ oc_env_path }}"
           KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
-      when: ocp_num_workers > 0
 
 
     ### PROVISIONING NETWORK
@@ -71,6 +71,7 @@
 
 
     ### OCS (if requested)
+
     - name: Install Local Storage and OCS
       when: (enable_ocs | bool)
       block:
@@ -82,4 +83,3 @@
 
       - name: Install OCS
         include_tasks: ocs.yaml
-

@@ -14,7 +14,7 @@ spec:
 {% if not (ocp_ai|bool) %}
           - "{{ ocp_cluster_name }}_worker_{{ n }}"
 {% else %}
-          - "{{ ocp_cluster_name }}-worker-{{ n }}"
+          - "{{ ocp_cluster_name }}-{{ 'worker' if ocp_worker_count|int >= ocp_num_storage_workers else 'master' }}-{{ n }}"
 {% endif %}
 {% endfor %}
   storageClassDevices:
