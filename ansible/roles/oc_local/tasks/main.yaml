@@ -75,18 +75,10 @@
 
 - name: add insecure registies to /etc/containers/registries.conf
   when: podman_insecure_registries is defined
-  block:
-  - name: generate _registries string
-    set_fact:
-      _registries: "'{{ \"', '\".join(podman_insecure_registries)}}'"
+  become: true
+  become_user: root
+  template:
+    src: registries.conf.j2
+    dest: /etc/containers/registries.conf.d/osp-director-dev-tools.conf
+    mode: '0644'
 
-  - name: add {{ _registries }} to registries.insecure
-    become: true
-    become_user: root
-    community.general.ini_file:
-      path: /etc/containers/registries.conf
-      section: registries.insecure
-      option: registries
-      value: "[{{ _registries }}]"
-      mode: '0644'
-      backup: yes

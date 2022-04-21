@@ -1,0 +1,5 @@
+{% for location in podman_insecure_registries|default([]) %}
+[[registry]]
+location = "{{ location }}"
+insecure = true
+{% endfor %}
