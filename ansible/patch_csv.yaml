@@ -13,6 +13,9 @@
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
+    # Can fail if the csv is modified while we alter it
+    retries: 5
+    delay: 30
     vars:
       jq_set_csv_envvar: '(.items[].spec.install.spec.deployments[].spec.template.spec.containers[] | select(.env != null) | .env[] | select(.name==$envvar)).value |= $envval'
     shell: |
@@ -28,10 +31,28 @@
       \ {% endif %}
       | oc replace -f -
 
-  - name: Remove existing openstackclient CR
+  - name: Update openstackclient and provision server images
     environment:
       <<: *oc_env
-    ignore_errors: true
-    command: oc delete openstackclient -n openstack openstackclient
+    when: false
+    shell: |
+      set -e
 
+      if oc get openstackclient -n openstack openstackclient; then
+        oc get openstackclient -n openstack openstackclient -o json \
+        | jq 'del( .spec.imageURL )' \
+        | oc replace -f -
+        if oc get pods -n openstack openstackclient; then
+          oc delete pod -n openstack openstackclient
+          oc wait -n openstack --for=condition=Ready pod/openstackclient --timeout="{{ (default_timeout * 5)|int }}s"
+        fi
+      fi
+
+      # oc get openstackprovisionserver -n openstack openstack -o json \
+      # | jq 'del( .spec.agentImageUrl, .spec.apacheImageUrl, .spec.downloaderImageUrl)' \
+      # | oc replace -f -
+
+      if oc get openstackprovisionserver -n openstack openstack; then
+        oc wait --for=condition=Provisioned openstackprovisionserver/openstack --timeout="{{ (default_timeout * 5)|int }}s"
+      fi
 

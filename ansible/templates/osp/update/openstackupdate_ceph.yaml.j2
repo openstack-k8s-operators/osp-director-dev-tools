@@ -1,0 +1,10 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackDeploy
+metadata:
+  name: update-controllers
+spec:
+  configVersion: {{ config_version }}
+  configGenerator: update
+  mode: external-update
+  ansibleSettings:
+    tags: ceph

@@ -2,7 +2,11 @@
 apiVersion: osp-director.openstack.org/v1beta1
 kind: OpenStackConfigGenerator
 metadata:
+{%- if osp_update|default(false)|bool %}
+  name: update
+{%- else %}
   name: default
+{%- endif %}
   namespace: openstack
 spec:
   gitSecret: git-secret
@@ -15,10 +19,18 @@ spec:
 {%- endif %}
     - ssl/enable-tls.yaml
 {%- endif %}
+{%- if osp_update|default(false)|bool %}
+    - lifecycle/update-prepare.yaml
+{%- endif %}
 {%- if osp.tlse|default(false)|bool %}
     - ssl/tls-everywhere-endpoints-dns.yaml
     - services/haproxy-public-tls-certmonger.yaml
     - ssl/enable-internal-tls.yaml
 {%- endif %}
-  heatEnvConfigMap: heat-env-config
-  tarballConfigMap: tripleo-tarball-config
+{%- if osp_update|default(false)|bool %}
+  heatEnvConfigMap: heat-env-config-update
+  tarballConfigMap: tripleo-tarball-config-update
+{%- else %}
+  heatEnvConfigMap: heat-env-config-deploy
+  tarballConfigMap: tripleo-tarball-config-deploy
+{%- endif %}

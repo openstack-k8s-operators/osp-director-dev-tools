@@ -5,8 +5,9 @@
   - oc_local
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
   - name: Set directory for generator yaml files
     set_fact:

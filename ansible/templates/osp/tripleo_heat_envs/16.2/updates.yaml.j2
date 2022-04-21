@@ -1,0 +1,6 @@
+parameter_defaults:
+{% if osp_registry_method == "rhsm" %}
+  SkipRhelEnforcement: false
+{% else %}
+  SkipRhelEnforcement: true
+{% endif %}
