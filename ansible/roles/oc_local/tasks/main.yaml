@@ -49,6 +49,7 @@
         dest: "{{ osp_release_auto_file }}"
         mode: '0644'
         timeout: 30
+        force: true
 
     # dict container-image-prepare is not conform with ansible var naming convention.
     # therefore can not just be included as var file
