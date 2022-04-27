@@ -1,27 +1,34 @@
 {% if "hci" in osp.extrafeatures %}
 resource_registry:
+{% if osp.release|int >= 17 %}
+  OS::TripleO::Services::CephMgr: deployment/cephadm/ceph-mgr.yaml
+  OS::TripleO::Services::CephMon: deployment/cephadm/ceph-mon.yaml
+  OS::TripleO::Services::CephOSD: deployment/cephadm/ceph-osd.yaml
+  OS::TripleO::Services::CephClient: deployment/cephadm/ceph-client.yaml
+{% else %}
   OS::TripleO::Services::CephMgr: deployment/ceph-ansible/ceph-mgr.yaml
   OS::TripleO::Services::CephMon: deployment/ceph-ansible/ceph-mon.yaml
   OS::TripleO::Services::CephOSD: deployment/ceph-ansible/ceph-osd.yaml
   OS::TripleO::Services::CephClient: deployment/ceph-ansible/ceph-client.yaml
 {% endif %}
+{% endif %}
 
 parameter_defaults:
 {% if "hci" in osp.extrafeatures %}
-  # CephAnsibleRepo can be removed when ceph-ansible is in official tripleoclient image
+{% if osp.release|int >= 17 %}
+  CephDynamicSpec: true
+  CephSpecFqdn: true
+  CephConfigOverrides:
+    rgw_swift_enforce_content_length: true
+    rgw_swift_versioning_enabled: true
+    osd:
+      osd_memory_target_autotune: true
+      osd_numa_auto_affinity: true
+    mgr:
+      mgr/cephadm/autotune_memory_target_ratio: 0.2
+{% else %}
   CephAnsibleRepo: "rhelosp-ceph-4-tools"
   CephAnsiblePlaybookVerbosity: 3
-  CinderEnableIscsiBackend: false
-  CinderEnableRbdBackend: true
-  CinderBackupBackend: ceph
-  CinderEnableNfsBackend: false
-  NovaEnableRbdBackend: true
-  GlanceBackend: rbd
-  CinderRbdPoolName: "volumes"
-  NovaRbdPoolName: "vms"
-  GlanceRbdPoolName: "images"
-  CephPoolDefaultPgNum: 32
-  CephPoolDefaultSize: 2
   CephAnsibleDisksConfig:
     devices:
 {% for disk in osp.ceph_osd_disks %}
@@ -34,6 +41,18 @@ parameter_defaults:
   CephConfigOverrides:
     rgw_swift_enforce_content_length: true
     rgw_swift_versioning_enabled: true
+{% endif %}
+  CinderEnableIscsiBackend: false
+  CinderEnableRbdBackend: true
+  CinderBackupBackend: ceph
+  CinderEnableNfsBackend: false
+  NovaEnableRbdBackend: true
+  GlanceBackend: rbd
+  CinderRbdPoolName: "volumes"
+  NovaRbdPoolName: "vms"
+  GlanceRbdPoolName: "images"
+  CephPoolDefaultPgNum: 32
+  CephPoolDefaultSize: 2
 {% else %}
   GlanceEnabledImportMethods: web-download
   GlanceNetappNfsEnabled: False
