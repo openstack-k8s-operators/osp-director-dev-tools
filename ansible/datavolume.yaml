@@ -49,6 +49,7 @@
           set -e
           virt-customize -a "{{ osp_base_image_url_path }}" \
             --run-command 'sed -i -e "s/^\(GRUB_CMDLINE_LINUX=.*\)net.ifnames=0 \(.*\)/\1\2/" /etc/default/grub' \
+            --run-command 'grubby --remove-args="net.ifnames=0" --update-kernel=$(grubby --default-kernel)' \
             --run-command 'grub2-mkconfig -o /etc/grub2.cfg' \
             --run-command 'rm -f /etc/sysconfig/network-scripts/ifcfg-ens* /etc/sysconfig/network-scripts/ifcfg-eth*'
         environment:
