@@ -1,4 +1,4 @@
-apiVersion: osp-director.openstack.org/v1beta1
+apiVersion: osp-director.openstack.org/v1beta2
 kind: OpenStackControlPlane
 metadata:
   name: overcloud
@@ -25,11 +25,22 @@ spec:
 {% endfor %}
       cores: {{ role.cores }}
       memory: {{ role.memory }}
-      diskSize: {{ role.disk_size }}
-      baseImageVolumeName: {{ name|lower }}-base-img
-      storageClass: {{ role.storage_class }}
-      storageAccessMode:  {{ role.storage_access_mode | default('ReadWriteMany', true) }}
-      storageVolumeMode: {{ role.storage_volume_mode | default('Filesystem', true) }}
+      rootDisk:
+        diskSize: {{ role.root_disk.disk_size }}
+        baseImageVolumeName: {{ name|lower }}-base-img
+        storageClass: {{ role.root_disk.storage_class }}
+        storageAccessMode:  {{ role.root_disk.storage_access_mode | default('ReadWriteMany', true) }}
+        storageVolumeMode: {{ role.root_disk.storage_volume_mode | default('Filesystem', true) }}
+{% if role.additional_disks is defined and role.additional_disks|length %}
+      additionalDisks:
+{% for disk in role.additional_disks %}
+        - name: {{ disk.name }}
+          diskSize: {{ disk.disk_size }}
+          storageClass: {{ disk.storage_class }}
+          storageAccessMode:  {{ disk.storage_access_mode | default('ReadWriteMany', true) }}
+          storageVolumeMode: {{ disk.storage_volume_mode | default('Filesystem', true) }}
+{% endfor %}
+{% endif %}
 {% endif %}
 {% endfor %}
   enableFencing: {{ enable_fencing }}
