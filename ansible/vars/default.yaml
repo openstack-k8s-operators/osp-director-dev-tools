@@ -155,10 +155,13 @@ opm_version: latest
 
 # operator-sdk version to use (must be specific version)
 #sdk_version: v0.19.2 - cnosp is right now based on that version
-sdk_version: v1.18.1
+sdk_version: v1.20.0
+
+# kuttl version
+kuttl_version: 0.12.1
 
 # golang version
-go_version: 1.17.8
+go_version: 1.17.9
 
 # kustomize version to use (must be specific version)
 kustomize_version: v4.0.1
