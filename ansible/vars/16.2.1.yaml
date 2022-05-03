@@ -1,1 +1,3 @@
 osp_release_auto_compose: z1
+# Need 16.2.2 or newer so that tempest has sudo
+tempest_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp16-openstack-tempest:16.2.2

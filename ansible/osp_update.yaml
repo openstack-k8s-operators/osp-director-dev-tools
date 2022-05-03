@@ -1,97 +1,63 @@
 ---
-- hosts: localhost
-  vars_files: vars/default.yaml
-  roles:
-    - oc_local
 
-  tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
-      osp_update: true
+- name: Overcloud node repo setup
+  import_playbook: osp_register_overcloud_nodes.yaml
 
-  - name: Set directory for generator yaml files
-    set_fact:
-      update_yamls_dir: "{{ working_yamls_dir }}/update"
+- name: Generate update custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    custom_config_name: update
+    custom_config_action: update
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ update_yamls_dir }} locally"
+- name: Disable fencing
+  import_playbook: osp_disable_fencing.yaml
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ update_yamls_dir }}/"
+- name: Update Prepare config generate
+  import_playbook: config_generator.yaml
+  vars:
+    config_generator_name: update
+    config_generator_action: update
 
-  - name: Create yaml dir
-    file:
-      path: "{{ update_yamls_dir }}"
-      state: directory
-      mode: '0755'
+- name: Update Controllers deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: update
+    deploy_name: update-ctlrs
+    deploy_mode: update
+    deploy_advanced_settings:
+      limit: pacemaker
 
-  - name: Set directory for generator yaml files
-    set_fact:
-      config_generator_yaml_dir: "{{ update_yamls_dir }}/config_generator"
+- name: Update Computes deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: update
+    deploy_name: update-compute
+    deploy_mode: update
+    deploy_advanced_settings:
+      limit: nova_compute
 
-  - name: Create yaml dir
-    file:
-      path: "{{ config_generator_yaml_dir }}"
-      state: directory
-      mode: '0755'
+- name: Update Ceph deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: update
+    deploy_name: update-ceph
+    deploy_mode: externalUpdate
+    deploy_advanced_settings:
+      tags:
+        - ceph
 
-  - name: Render templates to yaml dir
-    template:
-      src: "osp/config_generator/{{ item }}.j2"
-      dest: "{{ config_generator_yaml_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - "openstackconfiggenerator.yaml"
+- name: Online data migration deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: update
+    deploy_name: update-online-migration
+    deploy_mode: externalUpdate
+    deploy_advanced_settings:
+      tags:
+        - online_upgrade
 
-  - name: does the config generator already exist
-    shell: >
-      oc get -n openstack osconfiggenerator update -o json --ignore-not-found
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: config_generator_switch
+- name: Generate update converge custom config
+  import_playbook: osp_custom_config.yaml
 
-  - name: Start config generator
-    shell: |
-      set -e
-      oc apply -n openstack -f "{{ config_generator_yaml_dir }}/openstackconfiggenerator.yaml"
-    environment:
-      <<: *oc_env
-    when: config_generator_switch.stdout | length == 0
-
-  - name: wait for config generator to finish
-    shell: |
-      set -e
-      oc wait -n openstack osconfiggenerator update --for condition=Finished --timeout="{{ (default_timeout * 5)|int }}s"
-    environment:
-      <<: *oc_env
-
-	# TODO: disable fencing
-
-  - name: Lookup configVersion hash
-    shell: >
-      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -re .items[0].spec.hash
-    register: config_version_cmd
-    environment:
-      <<: *oc_env
-
-  - name: Set config_version fact
-    set_fact:
-      config_version: "{{ config_version_cmd.stdout }}"
-
-  - name: Render templates to yaml dir
-    template:
-      src: "osp/update/{{ item }}.j2"
-      dest: "{{ update_yamls_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - "openstackupdate_controllers.yaml"
-    - "openstackupdate_computes.yaml"
-    - "openstackupdate_ceph.yaml"
-    - "openstackupdate_datamigration.yaml"
-  
-  # TODO: run them
+- name: Update converge deployment
+  import_playbook: osp_deployment.yaml

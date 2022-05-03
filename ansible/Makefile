@@ -3,8 +3,6 @@ ifndef OSP_RELEASE
 OSP_RELEASE = 16.2
 endif
 
-ANSIBLE_EXTRA_ARGS=
-
 default: \
   ocp_install \
   cnv_install \
@@ -133,17 +131,14 @@ openstack:
 	$(MAKE) git
 	$(MAKE) ctlplane
 	$(MAKE) computes
-	$(MAKE) osp_custom_config
-	$(MAKE) config_generator
-	$(MAKE) register_overcloud_nodes
+	$(MAKE) patch_csv
 	$(MAKE) osp_deploy
 	$(MAKE) must_gather
 
 openstack_update:
-	$(MAKE) ANSIBLE_EXTRA_ARGS='-e osp_update=true' patch_csv
-	$(MAKE) ANSIBLE_EXTRA_ARGS='-e osp_update=true' osp_custom_config
-	$(MAKE) ANSIBLE_EXTRA_ARGS='-e osp_update=true' register_overcloud_nodes
-	$(MAKE) ANSIBLE_EXTRA_ARGS='-e osp_update=true' osp_update
+	$(MAKE) patch_csv
+	$(MAKE) osp_update
+	$(MAKE) must_gather
 
 osp_update:
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -244,10 +239,9 @@ datavolume_cleanup: hosts local-defaults.yaml
 osp_custom_config: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
-	${ANSIBLE_EXTRA_ARGS} \
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
-	osp_tripleo_deploy.yaml
+	osp_custom_config.yaml
 
 osp_content: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

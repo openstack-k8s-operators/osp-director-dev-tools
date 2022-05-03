@@ -11,19 +11,10 @@
 
   - name: Set directory for the tripleo deployment files
     set_fact:
-      ooo_yaml_dir: "{{ working_yamls_dir }}/deploy/tripleo_heat_envs"
-      ooo_tarball_dir: "{{ working_yamls_dir }}/deploy/tripleo_deploy_tarball"
-      heat_env_cm: heat-env-config-deploy
-      tripleo_tarball_cm: tripleo-tarball-config-deploy
-    when: not osp_update|default(false)|bool
-
-  - name: Set directory for the tripleo deployment files
-    set_fact:
-      ooo_yaml_dir: "{{ working_yamls_dir }}/update/tripleo_heat_envs"
-      ooo_tarball_dir: "{{ working_yamls_dir }}/update/tripleo_deploy_tarball"
-      heat_env_cm: heat-env-config-update
-      tripleo_tarball_cm: tripleo-tarball-config-update
-    when: osp_update|default(false)|bool
+      ooo_yaml_dir: "{{ working_yamls_dir }}/{{ custom_config_name|default('deploy') }}/tripleo_heat_envs"
+      ooo_tarball_dir: "{{ working_yamls_dir }}/{{ custom_config_name|default('deploy') }}/tripleo_deploy_tarball"
+      heat_env_cm: heat-env-config-{{ custom_config_name|default('deploy') }}
+      tripleo_tarball_cm: tripleo-tarball-config-{{ custom_config_name|default('deploy') }}
 
   - name: Make sure to cleanup previous yaml dirs
     file:
@@ -118,7 +109,6 @@
     with_items:
       - glance
       - glance-staging
-    when: not osp_update|default(false)|bool
 
   - name: Configure glance export
     become: true
@@ -131,10 +121,8 @@
     with_items:
       - glance
       - glance-staging
-    when: not osp_update|default(false)|bool
 
   - name: Export NFS share to the server
     become: true
     become_user: root
     command: "exportfs -r"
-    when: not osp_update|default(false)|bool

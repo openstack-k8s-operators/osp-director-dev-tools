@@ -11,7 +11,7 @@
 
   - name: Set directory for generator yaml files
     set_fact:
-      config_generator_yaml_dir: "{{ working_yamls_dir }}/config_generator"
+      config_generator_yaml_dir: "{{ working_yamls_dir }}/config_generator_{{ config_generator_name|default('default') }}"
 
   - name: show yaml output dir
     debug:
@@ -36,25 +36,17 @@
     with_items:
     - "openstackconfiggenerator.yaml"
 
-  - name: does the config generator already exist
-    shell: >
-      oc get -n openstack osconfiggenerator default -o json --ignore-not-found
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: config_generator_switch
-
   - name: Start config generator
     shell: |
       set -e
       oc apply -n openstack -f "{{ config_generator_yaml_dir }}/openstackconfiggenerator.yaml"
-    environment:
-      <<: *oc_env
-    when: config_generator_switch.stdout | length == 0
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
 
   - name: wait for config generator to finish
     shell: |
       set -e
-      oc wait -n openstack osconfiggenerator default --for condition=Finished --timeout="{{ (default_timeout * 5)|int }}s"
+      oc wait -n openstack osconfiggenerator {{ config_generator_name|default('default') }} --for condition=Finished --timeout="{{ (default_timeout * 5)|int }}s"
     environment:
       <<: *oc_env
