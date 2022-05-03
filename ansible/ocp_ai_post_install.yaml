@@ -69,20 +69,6 @@
       environment:
         <<: *oc_env
 
-    - name: Pause for 15 seconds to allow Metal3 to begin reconciliation
-      pause:
-        seconds: 15
-
-    - name: Wait for Metal3 pod to restart
-      shell: |
-        oc wait deployment --for condition=available -n openshift-machine-api metal3 --timeout={{ default_timeout }}s
-      environment:
-        <<: *oc_env
-      retries: 5
-      delay: 5
-      register: result
-      until: result.rc == 0
-
 
     ### OCS (if requested)
 

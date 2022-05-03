@@ -56,6 +56,19 @@
     environment:
       <<: *oc_env
 
+  # For virtualized 3-combo-node deployments, switch Metal3 provisioning network to the OSP control plane bridge
+  - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
+    when: ocp_worker_count|int < 1 and ocp_num_masters > 0
+    block:
+    - name: Get name of OSP control plane bridge on OCP nodes
+      shell: |
+        oc get osnet -n {{ namespace }} ctlplane -o json | jq -r '.spec.attachConfiguration'
+      register: osnetconfig_ctlplane_intf
+
+    - name: Patch Metal3 Provisioning CR with desired interface name
+      shell: |
+        oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "{{ osnetconfig_ctlplane_intf.stdout }}"}]'
+
   # Notes:
   # * can not use nmcli module https://github.com/ansible/ansible/issues/48055
   # * don't apply these persistent, in case of a host reboot those need to be reapplied
