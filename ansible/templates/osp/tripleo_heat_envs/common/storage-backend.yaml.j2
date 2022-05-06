@@ -13,6 +13,15 @@ resource_registry:
 {% endif %}
 {% endif %}
 
+{% if "external_ceph" in osp.extrafeatures %}
+resource_registry:
+{% if osp.release|int >= 17 %}
+  OS::TripleO::Services::CephExternal: deployment/cephadm/ceph-client.yaml
+{% else %}
+  OS::TripleO::Services::CephExternal: deployment/ceph-ansible/ceph-client.yaml
+{% endif %}
+{% endif %}
+
 parameter_defaults:
 {% if "hci" in osp.extrafeatures %}
 {% if osp.release|int >= 17 %}
@@ -53,6 +62,20 @@ parameter_defaults:
   GlanceRbdPoolName: "images"
   CephPoolDefaultPgNum: 32
   CephPoolDefaultSize: 2
+{% elif "external_ceph" in osp.extrafeatures %}
+    CinderEnableIscsiBackend: false
+    CinderEnableRbdBackend: true
+    CinderEnableNfsBackend: false
+    NovaEnableRbdBackend: true
+    GlanceBackend: rbd
+    CinderRbdPoolName: '{{ external_ceph_data.cinder_rbd_pool_name }}'
+    NovaRbdPoolName: '{{ external_ceph_data.nova_rbd_pool_name }}'
+    GlanceRbdPoolName: '{{ external_ceph_data.glance_rbd_pool_name }}'
+    CinderBackupRbdPoolName: '{{ external_ceph_data.cinder_backup_rbd_pool_name }}'
+    CephClientUserName: '{{ external_ceph_data.ceph_client_user_name }}'
+    CephClusterFSID: '{{ external_ceph_data.ceph_cluster_fsid }}'
+    CephExternalMonHost: '{{ external_ceph_data.ceph_external_mon_host }}'
+    CephClientKey: '{{ external_ceph_data.ceph_client_key }}'
 {% else %}
   GlanceEnabledImportMethods: web-download
   GlanceNetappNfsEnabled: False

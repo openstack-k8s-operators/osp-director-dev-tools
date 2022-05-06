@@ -1,0 +1,26 @@
+---
+osp_release_auto_version: 17.0-RHEL-9
+osp_release_auto_compose: passed_phase1
+ephemeral_heat:
+  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
+  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
+  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
+  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+
+osp_release_defaults:
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.0/20220428.0/images/rhel-guest-image-9.0-20220428.0.x86_64.qcow2
+  extrafeatures:
+    - external_ceph
+
+# 16 requires RHCSv4 in RDU
+# 17 requires RHCSv5 in TLV
+# https://code.engineering.redhat.com/gerrit/c/rhos-infrared/+/313490
+external_ceph_data:
+  cinder_rbd_pool_name: ''
+  nova_rbd_pool_name: ''
+  glance_rbd_pool_name: ''
+  cinder_backup_rbd_pool_name: ''
+  ceph_client_user_name: ''
+  ceph_cluster_fsid: ''
+  ceph_external_mon_host: ''
+  ceph_client_key: ''
