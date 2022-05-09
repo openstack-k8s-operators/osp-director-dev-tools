@@ -96,15 +96,22 @@ ocp_storage_data_dir: /home/local_storage/data
 # bridge to establish connectivity with the baremetal nodes' network
 ocp_bm_interface: ""
 
+# Which interface on the prov host has connectivity to BMCs on baremetal nodes
+ocp_bmc_interface: ""
+
 ocp_bm_masters: {}
 # ocp_bm_masters:
 #   master-0:
 #     vendor: Dell
+#     bm_interface: ens1f2        # AI uses baremetal (OCP) network interface
 #     bm_mac: 40:a6:b7:2b:19:01   # AI uses baremetal (OCP) network MAC
 #     bmc_address: 10.10.1.5
 #     bmc_username: username
 #     bmc_password: password
 #     root_device: /dev/sda       # optional, defaults to /dev/sda
+#     disabled_interfaces:        # optional, if you need to disable interfaces
+#     - name: eno1
+#       mac: 34:73:5a:9d:ee:dd
 #   master-1:
 #     ...
 #   master-2:
@@ -113,11 +120,15 @@ ocp_bm_workers: {}
 # ocp_bm_workers:
 #   worker-0:
 #     vendor: Dell
+#     bm_interface: ens1f2        # AI uses baremetal (OCP) network interface
 #     bm_mac: 40:a6:b7:2b:20:01   # AI uses baremetal (OCP) network MAC
 #     bmc_address: 10.10.1.15
 #     bmc_username: username
 #     bmc_password: password
 #     root_device: /dev/sda       # optional, defaults to /dev/sda
+#     disabled_interfaces:        # optional, if you need to disable interfaces
+#     - name: eno1
+#       mac: 34:73:5a:9d:ee:ff
 #   worker-1:
 #     ...
 ocp_bm_extra_workers: {}
@@ -144,6 +155,7 @@ ocp_bm_extra_workers: {}
 ocp_master_count: "{{ ocp_num_masters + ocp_bm_masters|default({})|length }}" # DO NOT EDIT
 ocp_worker_count: "{{ ocp_num_workers + ocp_bm_workers|default({})|length }}" # DO NOT EDIT
 ocp_extra_worker_count: "{{ ocp_num_extra_workers + ocp_bm_extra_workers|default({})|length }}" # DO NOT EDIT
+ocp_cluster_has_bm: "{{ (ocp_bm_masters|default({})|length > 0 or ocp_bm_workers|default({})|length > 0)|bool }}"
 ### LEAVE AS-IS ^^^
 
 # OCP cluster name
