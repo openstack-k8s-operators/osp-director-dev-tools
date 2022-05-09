@@ -28,6 +28,11 @@
       path: "/etc/NetworkManager/conf.d/dnsmasq.conf"
       state: absent
 
+  - name: Remove dnsmasq leases
+    file:
+      path: "/var/lib/dnsmasq/dnsmasq.leases"
+      state: absent
+
   - name: Restart NetworkManager
     service:
       name: NetworkManager
@@ -86,13 +91,13 @@
 
   - name: Stop and remove assisted installer service containers
     shell: |
-      podman pod stop assisted-service;
-      podman pod rm assisted-service -f
+      podman pod stop assisted-installer;
+      podman pod rm assisted-installer -f
     ignore_errors: true
 
   - name: Remove Postgres data store
     file:
-      path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-service', true) }}/data/postgresql"
+      path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-installer', true) }}/data/postgresql"
       state: absent
 
 

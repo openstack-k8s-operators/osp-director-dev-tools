@@ -38,8 +38,8 @@ metadata:
   namespace: openshift-machine-api
 type: Opaque
 data:
-  username: {{ worker["bmc_username"] }}
-  password: {{ worker["bmc_password"] }}
+  username: {{ worker["bmc_username"] | b64encode }}
+  password: {{ worker["bmc_password"] | b64encode }}
 
 ---
 apiVersion: metal3.io/v1alpha1
