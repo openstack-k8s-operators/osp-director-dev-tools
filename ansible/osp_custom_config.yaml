@@ -66,11 +66,9 @@
 
   - name: copy {{tripleo_tarball_cm}} {{ osp.release }} custom tripleo tarball files
     copy:
-      src: "{{ item }}"
+      src: "osp/{{ osp.release }}/"
       dest: "{{ ooo_tarball_dir }}/"
       mode: '0644'
-    with_fileglob:
-    - osp/{{ osp.release }}/*
 
   # enable osp tarball extra features
   - include_tasks: extrafeature_tarball_config.yaml

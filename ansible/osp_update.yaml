@@ -1,13 +1,13 @@
 ---
 
-- name: Overcloud node repo setup
-  import_playbook: osp_register_overcloud_nodes.yaml
-
 - name: Generate update custom config
   import_playbook: osp_custom_config.yaml
   vars:
     custom_config_name: update
     custom_config_action: update
+
+- name: Overcloud node repo setup
+  import_playbook: osp_register_overcloud_nodes.yaml
 
 - name: Disable fencing
   import_playbook: osp_disable_fencing.yaml

@@ -30,6 +30,7 @@
       {% if ephemeral_heat.rabbit_image is defined %} | jq --arg envvar 'RABBITMQ_IMAGE_URL_DEFAULT' --arg envval '{{ ephemeral_heat.rabbit_image }}' '{{ jq_set_csv_envvar }}' {% endif %} \
       \ {% endif %}
       | oc replace -f -
+      sleep 30
 
   - name: Delete any ephemeralheat instances
     environment:
@@ -54,6 +55,15 @@
       osclient_exists: "{{ osclient_check_exists.rc == 0 }}"
       osprovsrv_exists: "{{ osprovsrv_check_exists.rc == 0 }}"
 
+  - name: Wait for CSV update
+    command: oc get csv -n openstack --template='{{'{{'}} eq (index .items 0).status.phase "Succeeded" {{'}}'}}'
+    environment:
+      <<: *oc_env
+    retries: 10
+    delay: 30
+    register: csv_update_check
+    until: csv_update_check.stdout.find("true") != -1
+
   - name: Update openstackclient CR
     environment:
       <<: *oc_env
@@ -77,7 +87,9 @@
       <<: *oc_env
     command: oc get pod -n openstack openstackclient --template='{{'{{'}} eq (index .status.containerStatuses 0).image "{{ openstackclient_image }}" {{'}}'}}'
     register: osclient_pod_status_check
-    until: osclient_pod_status_check.stdout.find("true") != 1
+    until: osclient_pod_status_check.stdout.find("true") != -1
+    retries: 20
+    delay: 30
     when: osclient_exists|bool
 
   - name: Wait for openstackclient pod to be ready
