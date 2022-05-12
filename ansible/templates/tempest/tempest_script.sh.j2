@@ -1,6 +1,9 @@
 # Set the exit status for the command
 set -e
 
++# RHEL9 workaroud, allow LEGACY cryptographic policies for SHA1
++sudo update-crypto-policies --set LEGACY
+
 PUB_NETWORK_ID=$(openstack --os-cloud overcloud network list -f value -c ID --name public)
 if [ -z "$PUB_NETWORK_ID" ]; then
   openstack --os-cloud overcloud network create public --external  --provider-network-type flat --provider-physical-network datacentre
