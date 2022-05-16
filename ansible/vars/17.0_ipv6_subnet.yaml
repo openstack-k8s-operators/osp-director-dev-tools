@@ -1,11 +1,8 @@
 ---
-openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp17-openstack-tripleoclient:17.0_20220124.1
-osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
+osp_release_auto_version: 17.0-RHEL-8
+osp_release_auto_compose: passed_phase1
 
 osp_release_defaults:
-  release: 17.0
-  container_tag: 17.0_20220124.1
-  ceph_tag: 5-67
   networks: ipv6_subnet
   vmset:
     Controller:
@@ -26,7 +23,7 @@ osp_release_defaults:
       count: 0
     ComputeLeaf1:
       count: 1
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api_leaf1
@@ -34,7 +31,7 @@ osp_release_defaults:
         - storage_leaf1
     ComputeLeaf2:
       count: 1
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api_leaf2

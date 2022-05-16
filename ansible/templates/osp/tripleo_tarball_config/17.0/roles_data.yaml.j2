@@ -497,3 +497,143 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+###############################################################################
+# Role: ComputeHCILeaf1                                                       #
+###############################################################################
+- name: ComputeHCILeaf1
+  description: |
+    ComputeHCILeaf1 Node role hosting Ceph OSD too
+  tags:
+    - compute
+  networks:
+    InternalApi:
+      subnet: internal_api_leaf1_subnet
+    Tenant:
+      subnet: tenant_leaf1_subnet
+    Storage:
+      subnet: storage_leaf1_subnet
+    StorageMgmt:
+      subnet: storage_mgmt_leaf1_subnet
+  RoleParametersDefault:
+    TunedProfileName: "throughput-performance"
+    NovaComputeStartupDelay: 180
+  # CephOSD present so serial has to be 1
+  update_serial: 1
+  ServicesDefault:
+    - OS::TripleO::Services::Aide
+    - OS::TripleO::Services::AuditD
+    - OS::TripleO::Services::BootParams
+    - OS::TripleO::Services::CACerts
+    - OS::TripleO::Services::CephClient
+    - OS::TripleO::Services::CephExternal
+    - OS::TripleO::Services::CephOSD
+    - OS::TripleO::Services::Collectd
+    - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::ComputeNeutronCorePlugin
+    - OS::TripleO::Services::ComputeNeutronL3Agent
+    - OS::TripleO::Services::ComputeNeutronMetadataAgent
+    - OS::TripleO::Services::ComputeNeutronOvsAgent
+    - OS::TripleO::Services::Frr
+    - OS::TripleO::Services::IpaClient
+    - OS::TripleO::Services::Ipsec
+    - OS::TripleO::Services::Iscsid
+    - OS::TripleO::Services::Kernel
+    - OS::TripleO::Services::LoginDefs
+    - OS::TripleO::Services::MetricsQdr
+    - OS::TripleO::Services::Multipathd
+    - OS::TripleO::Services::MySQLClient
+    - OS::TripleO::Services::NeutronBgpVpnBagpipe
+    - OS::TripleO::Services::NeutronLinuxbridgeAgent
+    - OS::TripleO::Services::NeutronVppAgent
+    - OS::TripleO::Services::NovaAZConfig
+    - OS::TripleO::Services::NovaCompute
+    - OS::TripleO::Services::NovaLibvirt
+    - OS::TripleO::Services::NovaLibvirtGuests
+    - OS::TripleO::Services::NovaMigrationTarget
+    - OS::TripleO::Services::ContainersLogrotateCrond
+    - OS::TripleO::Services::Podman
+    - OS::TripleO::Services::Rear
+    - OS::TripleO::Services::Rhsm
+    - OS::TripleO::Services::Rsyslog
+    - OS::TripleO::Services::RsyslogSidecar
+    - OS::TripleO::Services::Securetty
+    - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
+    - OS::TripleO::Services::Timesync
+    - OS::TripleO::Services::Timezone
+    - OS::TripleO::Services::TripleoFirewall
+    - OS::TripleO::Services::TripleoPackages
+    - OS::TripleO::Services::Tuned
+    - OS::TripleO::Services::Vpp
+    - OS::TripleO::Services::OVNController
+    - OS::TripleO::Services::OVNMetadataAgent
+###############################################################################
+# Role: ComputeHCILeaf2                                                       #
+###############################################################################
+- name: ComputeHCILeaf2
+  description: |
+    ComputeHCILeaf2 Node role hosting Ceph OSD too
+  tags:
+    - compute
+  networks:
+    InternalApi:
+      subnet: internal_api_leaf2_subnet
+    Tenant:
+      subnet: tenant_leaf2_subnet
+    Storage:
+      subnet: storage_leaf2_subnet
+    StorageMgmt:
+      subnet: storage_mgmt_leaf2_subnet
+  RoleParametersDefault:
+    TunedProfileName: "throughput-performance"
+    NovaComputeStartupDelay: 180
+  # CephOSD present so serial has to be 1
+  update_serial: 1
+  ServicesDefault:
+    - OS::TripleO::Services::Aide
+    - OS::TripleO::Services::AuditD
+    - OS::TripleO::Services::BootParams
+    - OS::TripleO::Services::CACerts
+    - OS::TripleO::Services::CephClient
+    - OS::TripleO::Services::CephExternal
+    - OS::TripleO::Services::CephOSD
+    - OS::TripleO::Services::Collectd
+    - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::ComputeNeutronCorePlugin
+    - OS::TripleO::Services::ComputeNeutronL3Agent
+    - OS::TripleO::Services::ComputeNeutronMetadataAgent
+    - OS::TripleO::Services::ComputeNeutronOvsAgent
+    - OS::TripleO::Services::Frr
+    - OS::TripleO::Services::IpaClient
+    - OS::TripleO::Services::Ipsec
+    - OS::TripleO::Services::Iscsid
+    - OS::TripleO::Services::Kernel
+    - OS::TripleO::Services::LoginDefs
+    - OS::TripleO::Services::MetricsQdr
+    - OS::TripleO::Services::Multipathd
+    - OS::TripleO::Services::MySQLClient
+    - OS::TripleO::Services::NeutronBgpVpnBagpipe
+    - OS::TripleO::Services::NeutronLinuxbridgeAgent
+    - OS::TripleO::Services::NeutronVppAgent
+    - OS::TripleO::Services::NovaAZConfig
+    - OS::TripleO::Services::NovaCompute
+    - OS::TripleO::Services::NovaLibvirt
+    - OS::TripleO::Services::NovaLibvirtGuests
+    - OS::TripleO::Services::NovaMigrationTarget
+    - OS::TripleO::Services::ContainersLogrotateCrond
+    - OS::TripleO::Services::Podman
+    - OS::TripleO::Services::Rear
+    - OS::TripleO::Services::Rhsm
+    - OS::TripleO::Services::Rsyslog
+    - OS::TripleO::Services::RsyslogSidecar
+    - OS::TripleO::Services::Securetty
+    - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
+    - OS::TripleO::Services::Timesync
+    - OS::TripleO::Services::Timezone
+    - OS::TripleO::Services::TripleoFirewall
+    - OS::TripleO::Services::TripleoPackages
+    - OS::TripleO::Services::Tuned
+    - OS::TripleO::Services::Vpp
+    - OS::TripleO::Services::OVNController
+    - OS::TripleO::Services::OVNMetadataAgent

@@ -54,6 +54,14 @@ parameters:
       Unless the default is changed, the parameter is automatically resolved
       from the subnet host_routes attribute.
     type: json
+  StorageRoutes:
+    default: []
+    description: >
+      Routes for the storage network traffic.
+      JSON route e.g. [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+      Unless the default is changed, the parameter is automatically resolved
+      from the subnet host_routes attribute.
+    type: json
   StorageMgmtIpSubnet:
     default: ''
     description: IP address/subnet on the storage_mgmt network
@@ -69,6 +77,14 @@ parameters:
       StorageMgmt network.
     type: number
   StorageMgmtInterfaceRoutes:
+    default: []
+    description: >
+      Routes for the storage_mgmt network traffic.
+      JSON route e.g. [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+      Unless the default is changed, the parameter is automatically resolved
+      from the subnet host_routes attribute.
+    type: json
+  StorageMgmtRoutes:
     default: []
     description: >
       Routes for the storage_mgmt network traffic.
@@ -98,6 +114,14 @@ parameters:
       Unless the default is changed, the parameter is automatically resolved
       from the subnet host_routes attribute.
     type: json
+  InternalApiRoutes:
+    default: []
+    description: >
+      Routes for the internal_api network traffic.
+      JSON route e.g. [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+      Unless the default is changed, the parameter is automatically resolved
+      from the subnet host_routes attribute.
+    type: json
   TenantIpSubnet:
     default: ''
     description: IP address/subnet on the tenant network
@@ -113,6 +137,14 @@ parameters:
       Tenant network.
     type: number
   TenantInterfaceRoutes:
+    default: []
+    description: >
+      Routes for the tenant network traffic.
+      JSON route e.g. [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+      Unless the default is changed, the parameter is automatically resolved
+      from the subnet host_routes attribute.
+    type: json
+  TenantRoutes:
     default: []
     description: >
       Routes for the tenant network traffic.
@@ -170,10 +202,11 @@ resources:
           params:
             $network_config:
               network_config:
-              - type: ovs_bridge
-                name: br-tenant
+              # BMH provisioning interface used for ctlplane
+              - type: interface
+                name: nic1
                 mtu:
-                  get_attr: [MinViableMtu, value]
+                  get_param: ControlPlaneMtu
                 use_dhcp: false
                 dns_servers:
                   get_param: DnsServers
@@ -191,6 +224,16 @@ resources:
                     - - default: true
                         next_hop:
                           get_param: ControlPlaneDefaultRoute
+              # Disable OCP cluster interface
+              - type: interface
+                name: nic2
+                use_dhcp: false
+                defroute: no
+              - type: ovs_bridge
+                name: br-tenant
+                mtu:
+                  get_attr: [MinViableMtu, value]
+                use_dhcp: false
                 members:
                 - type: interface
                   name: nic4
@@ -208,6 +251,7 @@ resources:
                       get_param: StorageIpSubnet
                   routes:
                     list_concat_unique:
+                      - get_param: StorageRoutes
                       - get_param: StorageInterfaceRoutes
                 - type: vlan
                   mtu:
@@ -219,6 +263,7 @@ resources:
                       get_param: StorageMgmtIpSubnet
                   routes:
                     list_concat_unique:
+                      - get_param: StorageMgmtRoutes
                       - get_param: StorageMgmtInterfaceRoutes
                 - type: vlan
                   mtu:
@@ -230,6 +275,7 @@ resources:
                       get_param: InternalApiIpSubnet
                   routes:
                     list_concat_unique:
+                      - get_param: InternalApiRoutes
                       - get_param: InternalApiInterfaceRoutes
                 - type: vlan
                   mtu:
@@ -241,6 +287,7 @@ resources:
                       get_param: TenantIpSubnet
                   routes:
                     list_concat_unique:
+                      - get_param: TenantRoutes
                       - get_param: TenantInterfaceRoutes
               - type: ovs_bridge
                 # This will default to br-ex, anything else requires specific

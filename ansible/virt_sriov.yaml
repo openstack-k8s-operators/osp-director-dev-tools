@@ -21,6 +21,7 @@
         git:
           repo: "{{ virt_sriov_repo | default('https://github.com/marcel-apf/qemu.git', true) }}"
           dest: "{{ base_path }}/qemu"
+          version: "{{ virt_sriov_branch | default('HEAD', true) }}"
 
       - name: Initialize custom QEMU repo
         shell: |

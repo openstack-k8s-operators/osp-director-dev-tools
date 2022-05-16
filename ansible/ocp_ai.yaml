@@ -16,33 +16,33 @@
     become_user: ocp
     block:
     - name: Delete existing AI cluster (if any)
-      command: "aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete cluster {{ ocp_cluster_name }}"
+      shell: |
+        CLUSTER=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster | grep {{ ocp_cluster_name }})
+        while [[ "$CLUSTER" != "" ]];
+        do
+          aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete cluster $(echo "$CLUSTER" | head -1 | awk '{print $4}')
+          CLUSTER=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster | grep {{ ocp_cluster_name }})
+        done
       environment:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
       register: delete_ai_cluster
       failed_when: delete_ai_cluster.stderr != "" and "Cluster {{ ocp_cluster_name }} not found" not in delete_ai_cluster.stderr
 
-    - name: Create assisted installer execution bash script
-      template:
-        src: ai/cluster_mgnt_roles/run_playbook.sh.j2
-        dest: "{{ base_path }}/cluster_mgnt_roles/run_playbook.sh"
-        mode: '0755'
-
     - name: show installer info
       debug:
         msg: |
-          Executing the assisted installer playbook. You can tail the logs at {{ base_path }}/ai.log on
+          Executing the assisted installer playbook.  You can tail the logs at {{ base_path }}/ai.log on
           the host for progress.  Furthermore, you can view the assisted installer console by entering the
-          URL http://192.168.111.1:8888/clusters/.  If you do not have direct access to that IP from
+          URL http://192.168.111.1:8080/clusters/.  If you do not have direct access to that IP from
           your browser, you can use a tool like "sshuttle" to provide connectivity like so:
           sshuttle --dns -r <user>@<cluster host> 192.168.111.0/24.  You would then hit this
-          URL in your browser: http://<cluster host>:8888/clusters/
+          URL in your browser: http://<cluster host>:8080/clusters/
 
     - name: Run the assisted installer playbook
       shell: |
-        ./run_playbook.sh
+        ./deploy_cluster.sh
       args:
-        chdir: "{{ base_path }}/cluster_mgnt_roles"
+        chdir: "{{ base_path }}/crucible"
       environment:
         ANSIBLE_HOST_KEY_CHECKING: false
 
@@ -51,13 +51,13 @@
         aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
         aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
       args:
-        chdir: "{{ base_path }}/cluster_mgnt_roles"
+        chdir: "{{ base_path }}/crucible"
       environment:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
 
     - name: Set kubeconfig fact
       set_fact:
-        ai_kubeconfig: lookup('file', '{{ base_path }}/cluster_mgnt_roles/kubeconfig.{{ ocp_cluster_name }}')
+        ai_kubeconfig: lookup('file', '{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}')
 
   - name: Create assisted installer kubeconfig locally
     block:
@@ -70,7 +70,7 @@
 
     - name: Render kubeconfig
       template:
-        src: ai/cluster_mgnt_roles/kubeconfig.j2
+        src: ai/crucible/kubeconfig.j2
         dest: "{{ working_dir }}/kubeconfig"
         mode: '0664'
 

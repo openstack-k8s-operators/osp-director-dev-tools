@@ -19,6 +19,7 @@ osp_release_defaults:
   #TODO: which ceph images tag to use for upstream train?
   #ceph_tag: 5-12
   #ceph_image: daemon
+  networks: ipv4_subnet
   vmset:
     Controller:
       count: 1
@@ -38,7 +39,7 @@ osp_release_defaults:
       count: 0
     ComputeLeaf1:
       count: 1
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api_leaf1
@@ -46,7 +47,7 @@ osp_release_defaults:
         - storage_leaf1
     ComputeLeaf2:
       count: 1
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api_leaf2

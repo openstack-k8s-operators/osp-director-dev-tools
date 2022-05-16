@@ -1,6 +1,21 @@
 ---
 osp_release_auto_version: 17.0-RHEL-8
 osp_release_auto_compose: passed_phase1
+osp_release_defaults:
+  bmset:
+    Compute:
+      count: 0
+    ComputeHCI:
+      count: 2
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api
+        - tenant
+        - storage
+        - storage_mgmt
+  extrafeatures:
+    - hci
 ephemeral_heat:
   heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
   heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo

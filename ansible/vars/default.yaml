@@ -9,17 +9,17 @@ dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 base_domain_name: test.metalkube.org
 
 # To set a specific release to install.
-ocp_version: 4.7
-ocp_minor_version: 9
+ocp_version: 4.8
+ocp_minor_version: 35
 ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"
+ocp_release_data_url: "https://amd64.ocp.releases.ci.openshift.org/releasestream/4-stable/release/{{ ocp_version }}.{{ ocp_minor_version }}"
 ocp_release_type: ga
 
 # If set to true:
 # - Assisted installer is used to install OCP instead of dev-scripts
 # - Thus, dev-scripts related variables are ignored, and ...
 # - ocp_release_type is ignored
-# - ocp_version must be 4.7 (for now)
-# - ocp_release_image is ignored (for now)
+# - ocp_version must be 4.6+
 # - Other OCP AI variables are stored in vars/ocp_ai.yaml to reduce clutter in this file
 # NOTE: This variable should be set to true in local-defaults.yaml as opposed to changing it here,
 #       otherwise our playbooks seem to be flaky with executing the AI logic
@@ -100,7 +100,7 @@ sriov_version: "{{ ocp_version }}"
 perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
-cnv_hyperconverged_operator_version: 2.6.2
+cnv_hyperconverged_operator_version: 4.8.4
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
@@ -116,11 +116,12 @@ director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 # CSV version is used for both the CSV version and container image tag
 csv_version: 1.2.2
 
+
 #ocp_network_type: OVNKubernetes
 ocp_network_type: OpenShiftSDN
 
 # image used to run tempest
-tempest_image: docker-registry.upshift.redhat.com/openstack-k8s-operators/openstack-tempest:16.2_tempest_sudoers
+tempest_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tempest:{{ osp_defaults.container_tag }}"
 
 # tempest timeout in seconds
 tempest_timeout: 3600
@@ -178,20 +179,31 @@ nfs_export_dir: /home/nfs
 
 default_timeout: 240
 
+# OSP release and compose file to fetch if specified. This is used to populate osp_release_auto dict
+osp_release_auto_version: 16.2-RHEL-8
+osp_release_auto_compose: passed_phase2
+osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/container_image_prepare.yaml
+
 # openstackclient container image
-# TODO: change once we have a 16.2.2 tripleoclient image that includes ipa-client
-# openstackclient_image: registry.redhat.io/rhosp-rhel8/openstack-tripleoclient:16.2
-openstackclient_image: registry-proxy.engineering.redhat.com/rh-osbs/rhosp16-openstack-tripleoclient:16.2_20220209.2
+openstackclient_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tripleoclient:{{ osp_defaults.container_tag }}"
+
 openstackclient_storage_class: host-nfs-storageclass
 openstackclient_networks:
   - ctlplane
   - external
   - internal_api
 
-nfs_server: '192.168.25.1'
+nfs_server: '172.22.0.1'
+ntp_server: pool.ntp.org
+
+external_dns:
+  - 10.11.5.19
+  - 10.38.5.26
+  - 10.10.160.2
+  - 10.5.30.160
 
 osp_defaults:
-  release: 16.2
+  release: "{{ osp_release_auto.release }}"
   # use http://download.devel.redhat.com to get the local mirror depending on where the server is
   base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/992/images/rhel-guest-image-8.4-992.x86_64.qcow2
   # OSP controller VM sizing
@@ -216,7 +228,7 @@ osp_defaults:
     Compute:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
-      ctlplane_interface: enp7s0
+      ctlplane_interface: enp1s0
       networks:
         - ctlplane
         - internal_api
@@ -230,11 +242,18 @@ osp_defaults:
   ceph_num_osd_disk_size: 20
   domain_name: "osptest.{{ base_domain_name }}"
   dns_servers:
-    - 192.168.25.1
+    - 172.22.0.1
   dns_search_domains:
     - "osptest.{{ base_domain_name }}"
     - "{{ base_domain_name }}"
   attach_configs:
+    br-ctlplane:
+      interfaces:
+      - type: bridge
+        name: br-ctlplane
+        interface: enp1s0
+        dhcp: true
+        mtu: 1500
     br-osp:
       interfaces:
       - type: bridge
@@ -258,9 +277,9 @@ osp_defaults:
     - name: datacentre2
       prefix: fa:16:3b
   preserve_reservations: true
-  container_tag: 16.2_20220209.2
-  ceph_image: rhceph
-  ceph_tag: 4-59
+  container_tag: "{{ osp_release_auto.tag }}"
+  ceph_image: "{{ osp_release_auto.ceph_image }}" # note for OSP17.0 its ceph_image
+  ceph_tag: "{{ osp_release_auto.ceph_tag }}" # note for OSP17.0 its ceph_tag
   # OSP deployment timeout
   deploy_timeout: 90m
   # extra features to enable
@@ -283,8 +302,8 @@ osp_local: {}
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
-osp_rhos_release_compose: passed_phase2
-osp_rhel_subscription_release: 8.4
+osp_rhos_release_compose: "{{ osp_release_auto.compose }}"
+osp_rhel_subscription_release: "{{ osp_release_auto.rhel_version }}"
 osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-baseos-eus-rpms
   - rhel-8-for-x86_64-appstream-eus-rpms
@@ -306,6 +325,7 @@ ocs_version: "{{ 4.8 if ocp_version >= 4.8 else ocp_version }}"
 # Virtualized SRIOV (for dev/test)
 enable_virt_sriov: false
 virt_sriov_repo: https://github.com/marcel-apf/qemu.git
+#virt_sriov_branch: defaults to "HEAD"
 virt_sriov_domains:
   - "{{ ocp_cluster_name }}_worker_3"
   - "{{ ocp_cluster_name }}_worker_4"

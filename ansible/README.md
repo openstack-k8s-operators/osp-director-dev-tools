@@ -4,7 +4,7 @@
 
 #### Provision the host
 
-Provision a host with RHEL 8.3 or CentOS should also work with at least 128GB of RAM
+Provision a host with RHEL 8.5 or CentOS should also work with at least 128GB of RAM
 
 #### Clone the repository to the beaker host
 
@@ -22,10 +22,10 @@ git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
 If not already installed, install the required dependencies
 
 ```
-dnf install -y ansible git libvirt-client python3-netaddr python3-lxml
+dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make
 ```
 
-> NOTE: make sure you install ansible >= 2.9 otherwise ansible collections will not work correctly
+> NOTE: make sure you install ansible >= 2.9.27 otherwise ansible collections will not work correctly
 
 #### Create local-defaults.yaml file with personal information
 
@@ -156,7 +156,7 @@ sudo dnf install sshuttle
 # on RHEL
 sudo pip install sshuttle
 
-sshuttle -r <user>@<virthost> 192.168.111.0/24 192.168.25.0/24
+sshuttle -r <user>@<virthost> 192.168.111.0/24 172.22.0.0/24
 ```
 
 Now you can access the OCP console using your local web browser: <https://console-openshift-console.apps.ostest.test.metalkube.org>
@@ -165,7 +165,7 @@ Now you can access the OCP console using your local web browser: <https://consol
 | ------------ | ------------ |
 | User | `kubeadmin` |
 | Pwd (IPI) | `/home/ocp/dev-scripts/ocp/ostest/auth/kubeadmin-password` |
-| Pwd (AI) | `/home/ocp/cluster_mgnt_roles/kubeadmin-password.ostest` |
+| Pwd (AI) | `/home/ocp/crucible/kubeadmin-password.ostest` |
 
 You can also access the OCP CLI:
 
@@ -179,7 +179,7 @@ oc get pods -n openstack
 AI: 
 ```
 su - ocp
-export KUBECONFIG=/home/ocp/cluster_mgnt_roles/kubeconfig.ostest
+export KUBECONFIG=/home/ocp/crucible/kubeconfig.ostest
 oc get pods -n openstack
 ```
 
@@ -193,7 +193,7 @@ oc exec -it -n openstack openstackclient /home/cloud-admin/tripleo-deploy.sh
 ```
 
 #### Access OSP
-You can also access the OSP console using your local web browser: <http://192.168.25.100>
+You can also access the OSP console using your local web browser: <http://172.22.0.100>
 
 | <!-- --> | <!-- --> |
 | ------------ | ------------ |

@@ -1,7 +1,7 @@
 ---
-openstackclient_image: quay.io/tripleowallaby/openstack-tripleoclient:current-tripleo
+osp_release_auto_version: 17.0-RHEL-8
+osp_release_auto_compose: passed_phase1
 
-osp_rhos_release_compose: latest-RHOS-17-RHEL-8.4
 ephemeral_heat:
   heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
   heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
@@ -15,11 +15,7 @@ openstackclient_networks:
   - internal_api_leaf1
 
 osp_release_defaults:
-  release: wallaby
-  container_tag: current-tripleo
-  base_image_url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2
-  ceph_tag: 5-12
-  networks: ipv6_subnet
+  networks: ipv4_subnet
   vmset:
     Controller:
       count: 1
@@ -37,19 +33,14 @@ osp_release_defaults:
   bmset:
     Compute:
       count: 0
-    ComputeLeaf1:
-      count: 1
-      ctlplane_interface: enp1s0
+    ComputeHCILeaf1:
+      count: 2
+      ctlplane_interface: enp7s0
       networks:
         - ctlplane
         - internal_api_leaf1
-        - tenant_leaf1
         - storage_leaf1
-    ComputeLeaf2:
-      count: 1
-      ctlplane_interface: enp1s0
-      networks:
-        - ctlplane
-        - internal_api_leaf2
-        - tenant_leaf2
-        - storage_leaf2
+        - storage_mgmt_leaf1
+        - tenant_leaf1
+  extrafeatures:
+    - hci
