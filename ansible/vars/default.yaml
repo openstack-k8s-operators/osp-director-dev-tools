@@ -413,10 +413,10 @@ virt_sriov_domains:
 
 # enable fencing on overcloud controllers
 enable_fencing: false
-# fencing agent packages to be installed until available via RHEL channels and auto installed by tripleo
+# Note, does not yet work on RHEL9, RHEL9 availability is tracked via https://bugzilla.redhat.com/show_bug.cgi?id=2000954
 fencing_agent_packages:
-  - https://people.redhat.com/~mschuppe/fence_agents/fence-agents-common-4.2.1-65.el8_4.2.osptest.noarch.rpm
-  - https://people.redhat.com/~mschuppe/fence_agents/fence-agents-kubevirt-4.2.1-65.el8_4.2.osptest.x86_64.rpm
+  - fence-agents-common
+  - fence-agents-kubevirt
 
 # HTTP Proxy
 http_proxy: ""
