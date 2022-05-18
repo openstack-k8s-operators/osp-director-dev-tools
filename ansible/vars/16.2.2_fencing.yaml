@@ -1,5 +1,5 @@
 ---
-osp_release_auto_compose: passed_phase2
+osp_release_auto_compose: z2
 
 enable_fencing: true
 
