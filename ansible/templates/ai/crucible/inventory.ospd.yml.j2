@@ -36,6 +36,7 @@ all:
     # # The default is OpenShift SDN unless otherwise specified.
     # network_type: OVNKubernetes
     # network_type: OpenShiftSDN
+    network_type: {{ ocp_network_type }}
 
     ######################################
     # Prerequisite Service Configuration #
