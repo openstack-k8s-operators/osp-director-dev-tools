@@ -22,6 +22,26 @@
       - "oc delete -n openstack cm tripleo-deploy-config heat-env-config tripleo-tarball-config --ignore-not-found=true"
       - "oc delete -n openstack events --all"
 
+  # For virtualized 3-combo-node deployments, switch Metal3 provisioning network back to the default provisioning interface
+  - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
+    when: ocp_worker_count|int < 1 and ocp_num_masters > 0
+    block:
+    - name: Reset AI provisioning interface
+      when: ocp_ai|bool
+      block:
+      - name: Include AI variables
+        include_vars: vars/ocp_ai.yaml
+
+      - name: Reset AI provisioning interface
+        shell: |
+          oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "{{ ocp_ai_prov_interface }}"}]'
+        ignore_errors: true
+
+    - name: Reset dev-scripts provisioning interface
+      when: not (ocp_ai|bool)
+      shell: |
+        oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "enp1s0"}]'
+
   - name: delete playbooks git repo dir
     become: true
     become_user: root
