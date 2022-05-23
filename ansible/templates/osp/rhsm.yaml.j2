@@ -29,7 +29,7 @@
       name: tripleocurrent
       description: TripleO current repo
       file: tripleo_current
-      baseurl: https://trunk.rdoproject.org/centos8/component/tripleo/current/
+      baseurl: "https://trunk.rdoproject.org/{{ centos_release }}/component/tripleo/current/"
       gpgcheck: no
   - name: install tripleo-repos
     dnf:
@@ -38,7 +38,8 @@
       disable_gpg_check: true
   - name: run tripleo-repos
     shell: |
-      tripleo-repos -d centos8 -b {{ osp.release }} current-tripleo
+      tripleo-repos -d {{ centos_release }} -b {{ osp.release }} current-tripleo
+{% if centos_release == "train" %}
   # TODO: move command list to vars file to make it possible to be version specific
   - name: disable container-tools:rhel8 and enable container-tools:3.0
     shell: |
@@ -49,5 +50,6 @@
       dnf module enable perl-IO-Socket-SSL:2.066 -y
       dnf module enable perl-libwww-perl:6.34 -y
       dnf clean metadata
+{% endif %}
 {% endif %}
 
