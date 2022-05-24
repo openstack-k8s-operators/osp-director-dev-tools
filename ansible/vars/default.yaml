@@ -253,9 +253,7 @@ default_timeout: 240
 
 # OSP release and compose file to fetch if specified. This is used to populate osp_release_auto dict
 osp_release_auto_version: 16.2-RHEL-8
-# temporary pin to RHOS-16.2-RHEL-8-20220329.n.2 because of https://bugzilla.redhat.com/show_bug.cgi?id=2080869
-#osp_release_auto_compose: passed_phase2
-osp_release_auto_compose: RHOS-16.2-RHEL-8-20220329.n.2
+osp_release_auto_compose: passed_phase2
 osp_release_auto_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/container_image_prepare.yaml
 
 # openstackclient container image
