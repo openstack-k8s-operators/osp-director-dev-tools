@@ -79,6 +79,16 @@
             rhel_subscription_activation_key: <activation key>
             rhel_subscription_org_id: "xxxxxxx"
 
+  - name: set centos8 version
+    when: osp.release == "train"
+    set_fact:
+      centos_release: centos8
+
+  - name: set centos9 version
+    when: osp.release == "wallaby"
+    set_fact:
+      centos_release: centos9
+
   - name: Render templates to yaml dir
     template:
       src: "osp/{{ item }}.j2"
