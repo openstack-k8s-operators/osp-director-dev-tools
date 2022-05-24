@@ -28,6 +28,19 @@
       register: delete_ai_cluster
       failed_when: delete_ai_cluster.stderr != "" and "Cluster {{ ocp_cluster_name }} not found" not in delete_ai_cluster.stderr
 
+    - name: Delete existing AI infraenv (if any)
+      shell: |
+        INFRAENV=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list infraenv | grep {{ ocp_cluster_name }})
+        while [[ "$INFRAENV" != "" ]];
+        do
+          aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete infraenv $(echo "$INFRAENV" | head -1 | awk '{print $4}')
+          INFRAENV=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list infraenv | grep {{ ocp_cluster_name }})
+        done
+      environment:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+      register: delete_ai_infraenv
+      failed_when: delete_ai_infraenv.stderr != "" and "Infraenv {{ ocp_cluster_name }} not found" not in delete_ai_infraenv.stderr
+
     - name: show installer info
       debug:
         msg: |
