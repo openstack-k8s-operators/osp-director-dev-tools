@@ -28,36 +28,39 @@
       state: directory
       mode: '0755'
 
-  - name: Ensure that {{ base_path }}/pool exists
-    file:
-      path: "{{ base_path }}/pool"
-      state: directory
-      mode: '0755'
-    become: true
-    become_user: root
+  - name: VM OSP compute ceph disks
+    when: ocp_num_extra_workers > 0
+    block:
+    - name: Ensure that {{ base_path }}/pool exists
+      file:
+        path: "{{ base_path }}/pool"
+        state: directory
+        mode: '0755'
+      become: true
+      become_user: root
 
-  - name: Detach additional Ceph OSD disks
-    shell: |
-      #!/bin/bash
-      for domain in $(virsh list --inactive --name); do
-        for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
-          virsh detach-disk  ${domain} ${disk} --persistent
-          rm -f {{ base_path }}/pool/${domain}-ceph-disk-${disk}.qcow2
+    - name: Detach additional Ceph OSD disks
+      shell: |
+        #!/bin/bash
+        for domain in $(virsh list --inactive --name); do
+          for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
+            virsh detach-disk  ${domain} ${disk} --persistent
+            rm -f {{ base_path }}/pool/${domain}-ceph-disk-${disk}.qcow2
+          done
         done
-      done
-    become: true
-    become_user: root
+      become: true
+      become_user: root
 
-  - name: Create additional Ceph OSD disks
-    shell: |
-      #!/bin/bash
-      for domain in $(virsh list --inactive --name); do
-        qemu-img create -f qcow2 -o preallocation=falloc {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp.ceph_num_osd_disk_size }}G
-        virsh attach-disk ${domain} --source {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 --target {{ item }} --persistent
-      done
-    with_items: "{{ osp.ceph_osd_disks }}"
-    become: true
-    become_user: root
+    - name: Create additional Ceph OSD disks
+      shell: |
+        #!/bin/bash
+        for domain in $(virsh list --inactive --name); do
+          qemu-img create -f qcow2 -o preallocation=falloc {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp.ceph_num_osd_disk_size }}G
+          virsh attach-disk ${domain} --source {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 --target {{ item }} --persistent
+        done
+      with_items: "{{ osp.ceph_osd_disks }}"
+      become: true
+      become_user: root
 
   - name: register dev-scripts prepared extra_hosts
     shell: |
@@ -78,7 +81,7 @@
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    when: ocp_ai|bool and ocp_num_extra_workers > 0
+    when: ocp_ai|bool and ocp_extra_worker_count|int > 0
 
   # render openstackbaremetalset.yaml per bmset
   - name: Render templates to yaml dir

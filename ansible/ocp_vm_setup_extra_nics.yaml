@@ -5,185 +5,189 @@
   - oc_local
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
-
-  - name: check if osp network already exists
-    become: true
-    become_user: root
-    shell: >
-      virsh net-info ospnetwork
-    ignore_errors: true
-    register: ospnetwork_exist
-
-  - name: check if osp external network already exists
-    become: true
-    become_user: root
-    shell: >
-      virsh net-info external
-    ignore_errors: true
-    register: extnetwork_exist
-
-  - name: create osp networks
-    when: ospnetwork_exist.rc == 1 or extnetwork_exist.rc == 1
+  - name: Setup extra VM nics
+    # Only do this if virtualized dedicated workers or virtualized master-worker nodes are present
+    when: (ocp_num_workers > 0 or (ocp_num_workers < 1 and ocp_bm_workers|default({})|length < 1 and ocp_num_masters > 1))
     block:
-    - name: create osp network directory
-      file:
-        path: "{{ working_dir }}/osp-network"
-        state: directory
-        mode: '0755'
+    - name: Include variables
+      include_vars: vars/default.yaml
 
-    - name: copy osp network files to {{ working_dir }}/osp-network
-      copy:
-        src:  "{{ item }}"
-        dest: "{{ working_dir }}/osp-network/"
-        mode: 0644
-      with_items:
-        - files/ospnetwork.xml
-        - files/externalnetwork.xml
-
-    - name: Define ospnetwork libvirt network
+    - name: check if osp network already exists
       become: true
       become_user: root
-      command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
-      when: ospnetwork_exist.rc == 1
+      shell: >
+        virsh net-info ospnetwork
+      ignore_errors: true
+      register: ospnetwork_exist
 
-    - name: Define external libvirt network
+    - name: check if osp external network already exists
       become: true
       become_user: root
-      command: "virsh net-define {{ working_dir }}/osp-network/externalnetwork.xml"
-      when: extnetwork_exist.rc == 1
+      shell: >
+        virsh net-info external
+      ignore_errors: true
+      register: extnetwork_exist
 
-    - name: set accept_ra = 2  due to "enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss"
-      become: true
-      become_user: root
-      sysctl:
-        name: net.ipv6.conf.all.accept_ra
-        value: '2'
-        sysctl_file: /etc/sysctl.d/90-network.conf
+    - name: create osp networks
+      when: ospnetwork_exist.rc == 1 or extnetwork_exist.rc == 1
+      block:
+      - name: create osp network directory
+        file:
+          path: "{{ working_dir }}/osp-network"
+          state: directory
+          mode: '0755'
 
-    - name: Start the osp networks
+      - name: copy osp network files to {{ working_dir }}/osp-network
+        copy:
+          src:  "{{ item }}"
+          dest: "{{ working_dir }}/osp-network/"
+          mode: 0644
+        with_items:
+          - files/ospnetwork.xml
+          - files/externalnetwork.xml
+
+      - name: Define ospnetwork libvirt network
+        become: true
+        become_user: root
+        command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
+        when: ospnetwork_exist.rc == 1
+
+      - name: Define external libvirt network
+        become: true
+        become_user: root
+        command: "virsh net-define {{ working_dir }}/osp-network/externalnetwork.xml"
+        when: extnetwork_exist.rc == 1
+
+      - name: set accept_ra = 2  due to "enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss"
+        become: true
+        become_user: root
+        sysctl:
+          name: net.ipv6.conf.all.accept_ra
+          value: '2'
+          sysctl_file: /etc/sysctl.d/90-network.conf
+
+      - name: Start the osp networks
+        become: true
+        become_user: root
+        shell: |
+          set -e
+          virsh net-start --network {{ item }}
+          virsh net-autostart --network {{ item }}
+        register: network_start
+        failed_when: network_start.stderr != "" and "network is already active" not in network_start.stderr
+        with_items:
+          - external
+          - ospnetwork
+
+    # on CI runs it has seen that the network interface was still down
+    # lets make sure the OSP network interfaces are up
+    - name: make sure the network interfaces are up
       become: true
       become_user: root
       shell: |
         set -e
-        virsh net-start --network {{ item }}
-        virsh net-autostart --network {{ item }}
-      register: network_start
-      failed_when: network_start.stderr != "" and "network is already active" not in network_start.stderr
+        ip link set {{ item }} up
       with_items:
-        - external
-        - ospnetwork
+          - external
+          - ospnetwork
 
-  # on CI runs it has seen that the network interface was still down
-  # lets make sure the OSP network interfaces are up
-  - name: make sure the network interfaces are up
-    become: true
-    become_user: root
-    shell: |
-      set -e
-      ip link set {{ item }} up
-    with_items:
-        - external
-        - ospnetwork
-
-  - name: Attach OSP networks to OCP worker VMs
-    become: true
-    become_user: root
-    block:
-    - name: get active worker nodes, if they exist
-      shell: >
-          echo $(virsh list --name | grep worker)
-      register: worker_ocp_active_dedicated
-      when: ocp_num_workers > 0
-
-    - name: get active master nodes and count them as workers, if this cluster has no dedicated workers
-      shell: >
-          echo $(virsh list --name | grep master)
-      register: worker_ocp_active_masters
-      when: ocp_num_workers < 1
-
-    - name: set active worker nodes fact, if dedicated workers exist
-      set_fact:
-        worker_ocp_active: "{{ worker_ocp_active_dedicated.stdout_lines }}"
-      when: "'stdout_lines' in worker_ocp_active_dedicated and worker_ocp_active_dedicated.stdout_lines|length > 0"
-
-    - name: set active worker nodes fact, if no dedicated workers exist
-      set_fact:
-        worker_ocp_active: "{{ worker_ocp_active_masters.stdout_lines }}"
-      when: "'stdout_lines' in worker_ocp_active_masters and worker_ocp_active_masters.stdout_lines|length > 0"
-
-    - name: get inactive worker nodes
-      shell: >
-          echo $(virsh list --inactive --name | grep worker)
-      register: worker_ocp_inactive
-
-    - name: Attach/detach network interfaces for INACTIVE workers
-      when: worker_ocp_inactive.stdout_lines|length > 0
+    - name: Attach OSP networks to OCP worker VMs
+      become: true
+      become_user: root
       block:
-      - name: Detach network interface from INACTIVE worker VM's if this is a rerun of the playbook
-        shell: |
-          ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
-          for mac in $ifmacs; do
-            virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent
-          done
-        with_nested:
-        - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
-        - ['external', 'ospnetwork']
-        ignore_errors: true
+      - name: get active worker nodes, if they exist
+        shell: >
+            echo $(virsh list --name | grep worker)
+        register: worker_ocp_active_dedicated
+        when: ocp_num_workers > 0
 
-      - name: Attach the osp network to INACTIVE worker VM's
-        command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent"
-        with_nested:
-        - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
-        - ['external', 'ospnetwork']
+      - name: get active master nodes and count them as workers, if this cluster has no dedicated workers
+        shell: >
+            echo $(virsh list --name | grep master)
+        register: worker_ocp_active_masters
+        when: ocp_num_workers < 1
 
-    - name: Attach/detach network interfaces for ACTIVE workers
-      when: worker_ocp_active|length > 0
-      block:
-      - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
-        shell: |
-          ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
-          for mac in $ifmacs; do
-            virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent --live
-          done
-        with_nested:
-        - "{{ worker_ocp_active[0].split(' ') }}"
-        - ['external',  'ospnetwork']
-        ignore_errors: true
+      - name: set active worker nodes fact, if dedicated workers exist
+        set_fact:
+          worker_ocp_active: "{{ worker_ocp_active_dedicated.stdout_lines }}"
+        when: "'stdout_lines' in worker_ocp_active_dedicated and worker_ocp_active_dedicated.stdout_lines|length > 0"
 
-      - name: Attach the osp network to ACTIVE worker VM's
-        when: not (ocp_ai|bool)
+      - name: set active worker nodes fact, if no dedicated workers exist
+        set_fact:
+          worker_ocp_active: "{{ worker_ocp_active_masters.stdout_lines }}"
+        when: "'stdout_lines' in worker_ocp_active_masters and worker_ocp_active_masters.stdout_lines|length > 0"
+
+      - name: get inactive worker nodes
+        shell: >
+            echo $(virsh list --inactive --name | grep worker)
+        register: worker_ocp_inactive
+
+      - name: Attach/detach network interfaces for INACTIVE workers
+        when: worker_ocp_inactive.stdout_lines|length > 0
         block:
-        # HACK to fix dev-scripts bug
-        # It's not possible to hot-plug 2 nics with the default libvirt pci topology
-        # The "right way" to fix this is to add more pci root ports at VM create.
-        # However the VM xml is managed deep in the openshift installer (terraform libvirt plugin)
-        #
-        # Instead we gracefully stop the VM to attach the nics (libvirt adds the root ports implicitly)
-        # Sushy-tools is paused while this is being done so that it and metal3/ironic do not react to the
-        # power state changing.
-
-        - name: pause sushy-tools
-          command:
-            cmd: podman pause sushy-tools
-
-        - name: attach interfaces to vm
+        - name: Detach network interface from INACTIVE worker VM's if this is a rerun of the playbook
           shell: |
-            virsh destroy {{ item }} --graceful
-            for net in "external" "ospnetwork"; do
-              virsh attach-interface {{ item }} bridge ${net} --model virtio --persistent --config
+            ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
+            for mac in $ifmacs; do
+              virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent
             done
-            virsh start {{ item }}
-          with_items: "{{ worker_ocp_active[0].split(' ') }}"
+          with_nested:
+          - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+          - ['external', 'ospnetwork']
+          ignore_errors: true
 
-        - name: unpause sushy-tools
-          command:
-            cmd: podman unpause sushy-tools
+        - name: Attach the osp network to INACTIVE worker VM's
+          command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent"
+          with_nested:
+          - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+          - ['external', 'ospnetwork']
 
-      - name: Attach the osp network to ACTIVE worker VM's
-        command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config"
-        with_nested:
-        - "{{ worker_ocp_active[0].split(' ') }}"
-        - ['external', 'ospnetwork']
-        when: ocp_ai|bool
+      - name: Attach/detach network interfaces for ACTIVE workers
+        when: worker_ocp_active|length > 0
+        block:
+        - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
+          shell: |
+            ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
+            for mac in $ifmacs; do
+              virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent --live
+            done
+          with_nested:
+          - "{{ worker_ocp_active[0].split(' ') }}"
+          - ['external',  'ospnetwork']
+          ignore_errors: true
+
+        - name: Attach the osp network to ACTIVE worker VM's
+          when: not (ocp_ai|bool)
+          block:
+          # HACK to fix dev-scripts bug
+          # It's not possible to hot-plug 2 nics with the default libvirt pci topology
+          # The "right way" to fix this is to add more pci root ports at VM create.
+          # However the VM xml is managed deep in the openshift installer (terraform libvirt plugin)
+          #
+          # Instead we gracefully stop the VM to attach the nics (libvirt adds the root ports implicitly)
+          # Sushy-tools is paused while this is being done so that it and metal3/ironic do not react to the
+          # power state changing.
+
+          - name: pause sushy-tools
+            command:
+              cmd: podman pause sushy-tools
+
+          - name: attach interfaces to vm
+            shell: |
+              virsh destroy {{ item }} --graceful
+              for net in "external" "ospnetwork"; do
+                virsh attach-interface {{ item }} bridge ${net} --model virtio --persistent --config
+              done
+              virsh start {{ item }}
+            with_items: "{{ worker_ocp_active[0].split(' ') }}"
+
+          - name: unpause sushy-tools
+            command:
+              cmd: podman unpause sushy-tools
+
+        - name: Attach the osp network to ACTIVE worker VM's
+          command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config"
+          with_nested:
+          - "{{ worker_ocp_active[0].split(' ') }}"
+          - ['external', 'ospnetwork']
+          when: ocp_ai|bool
