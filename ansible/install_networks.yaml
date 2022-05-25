@@ -59,6 +59,8 @@
   # For virtualized 3-combo-node deployments, switch Metal3 provisioning network to the OSP control plane bridge
   - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
     when: ocp_worker_count|int < 1 and ocp_num_masters > 0
+    environment:
+      <<: *oc_env
     block:
     - name: Get name of OSP control plane bridge on OCP nodes
       shell: |

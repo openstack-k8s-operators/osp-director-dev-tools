@@ -17,7 +17,7 @@
       - ocs-storage-cluster
       - ocs-sub
 
-  - name: Label {{ ocp_num_storage_workers }} workers as OCS-capable
+  - name: Label {{ ocp_num_storage_workers }} nodes as OCS-capable
     shell: |
         oc label node/{{ node }} cluster.ocs.openshift.io/openshift-storage='' --overwrite=true;
         oc label node/{{ node }} topology.rook.io/rack=rack{{ node_index }} --overwrite=true
@@ -25,7 +25,7 @@
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
     vars:
-      node: "{{ ocp_cluster_name }}-worker-{{ item }}"
+      node: "{{ ocp_cluster_name }}-{{ 'worker' if ocp_worker_count|int >= ocp_num_storage_workers else 'master' }}-{{ item }}"
     loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
     loop_control:
       index_var: node_index
