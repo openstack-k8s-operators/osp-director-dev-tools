@@ -101,4 +101,4 @@
       become_user: root
       package:
         name:  kubevirt-virtctl
-        state: installed
+        state: latest
