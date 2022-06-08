@@ -115,15 +115,23 @@
           state: present
 
       - name: Add BM interface to BM bridge
-        community.general.nmcli:
-          conn_name: "bridge-slave-{{ ocp_bm_interface }}"
-          type: bridge-slave
-          ifname: "{{ ocp_bm_interface }}"
-          autoconnect: yes
-          hairpin: no
-          master: "{{ ocp_cluster_name }}bm"
-          state: present
         when: ocp_bm_interface is defined and ocp_bm_interface != ""
+        block:
+        - name: Make sure old BM interface connection is down
+          shell: |
+            /usr/bin/nmcli con down {{ ocp_bm_interface }}
+          register: bm_intf_down
+          failed_when: bm_intf_down.stderr != "" and "no active connection provided" not in bm_intf_down.stderr
+
+        - name: Add BM interface to BM bridge
+          community.general.nmcli:
+            conn_name: "bridge-slave-{{ ocp_bm_interface }}"
+            type: bridge-slave
+            ifname: "{{ ocp_bm_interface }}"
+            autoconnect: yes
+            hairpin: no
+            master: "{{ ocp_cluster_name }}bm"
+            state: present
 
       - name: Create provisioning bridge
         community.general.nmcli:
@@ -552,7 +560,13 @@
         repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/crucible.git', true) }}"
         dest: "{{ base_path }}/crucible"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('9b7fb26e3e57163933f36f2c27f46e79287f5e62', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('apiV2', true) }}"
+
+    - name: Get BMC-network-connected interface's IP for baremetal deployments
+      when: ocp_cluster_has_bm|bool
+      shell: |
+        /usr/bin/nmcli -g ip4.address device show {{ ocp_bmc_interface }} | cut -d '/' -f 1
+      register: ocp_bmc_interface_ip
 
     - name: Configure inventory variables
       template:
@@ -566,12 +580,6 @@
       template:
         src: ai/crucible/inventory.vault.ospd.yml.j2
         dest: "{{ base_path }}/crucible/inventory.vault.ospd.yml"
-        mode: '0664'
-
-    - name: Create custom registries manifest
-      template:
-        src: ai/crucible/03-custom-registries.yml.j2
-        dest: "{{ base_path }}/crucible/roles/create_cluster/templates/03-custom-registries.yml.j2"
         mode: '0664'
 
     - name: Override Crucible OCP version constraint
@@ -640,7 +648,8 @@
           regexp: 'rhcos_version:\s{{ ocp_version | replace(".", "") }}\..+'
           replace: 'rhcos_version: {{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}'
 
-    - name: Force linear execution of boot_iso role
+    - name: Force linear execution of boot_iso role when KVM nodes present
+      when: ocp_num_masters > 0 or ocp_num_workers > 0
       block:
       - name: Force linear execution
         replace:
