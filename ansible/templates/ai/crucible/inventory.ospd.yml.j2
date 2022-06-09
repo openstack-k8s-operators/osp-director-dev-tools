@@ -38,6 +38,27 @@ all:
     # network_type: OpenShiftSDN
     network_type: {{ ocp_network_type }}
 
+    assisted_installer_hardware_validation:
+    - version: default
+{% if ocp_num_masters > 0 %}
+      master:
+        cpu_cores: {{ ocp_master_vcpu }}
+        ram_mib: {{ ocp_master_memory }}
+        disk_size_gb: {{ ocp_master_disk }}
+        installation_disk_speed_threshold_ms: 10
+        network_latency_threshold_ms: 100
+        packet_loss_percentage: 0
+{% endif %}
+{% if ocp_num_workers > 0 %}
+      worker:
+        cpu_cores: {{ ocp_worker_vcpu }}
+        ram_mib: {{ ocp_worker_memory }}
+        disk_size_gb: {{ ocp_worker_disk }}
+        installation_disk_speed_threshold_ms: 10
+        network_latency_threshold_ms: 1000
+        packet_loss_percentage: 10
+{% endif %}
+
     ######################################
     # Prerequisite Service Configuration #
     ######################################
