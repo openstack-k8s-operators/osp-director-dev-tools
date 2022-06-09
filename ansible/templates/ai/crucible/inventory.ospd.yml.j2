@@ -40,24 +40,25 @@ all:
 
     assisted_installer_hardware_validation:
     - version: default
-{% if ocp_num_masters > 0 %}
       master:
-        cpu_cores: {{ ocp_master_vcpu }}
-        ram_mib: {{ ocp_master_memory }}
-        disk_size_gb: {{ ocp_master_disk }}
+        cpu_cores: {{ ocp_master_vcpu|default(4) }}
+        ram_mib: {{ ocp_master_memory|default(16384) }}
+        disk_size_gb: {{ ocp_master_disk|default(120) }}
         installation_disk_speed_threshold_ms: 10
         network_latency_threshold_ms: 100
         packet_loss_percentage: 0
-{% endif %}
-{% if ocp_num_workers > 0 %}
       worker:
-        cpu_cores: {{ ocp_worker_vcpu }}
-        ram_mib: {{ ocp_worker_memory }}
-        disk_size_gb: {{ ocp_worker_disk }}
+        cpu_cores: {{ ocp_worker_vcpu|default(2) }}
+        ram_mib: {{ ocp_worker_memory|default(8192) }}
+        disk_size_gb: {{ ocp_worker_disk|default(120) }}
         installation_disk_speed_threshold_ms: 10
         network_latency_threshold_ms: 1000
         packet_loss_percentage: 10
-{% endif %}
+      sno:
+        cpu_cores: {{ ocp_master_vcpu|default(8) }}
+        ram_mib: {{ ocp_master_memory|default(16384) }}
+        disk_size_gb: {{ ocp_master_disk|default(120) }}
+        installation_disk_speed_threshold_ms: 10
 
     ######################################
     # Prerequisite Service Configuration #
