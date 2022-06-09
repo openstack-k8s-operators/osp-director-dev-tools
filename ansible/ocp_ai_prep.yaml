@@ -582,6 +582,12 @@
         dest: "{{ base_path }}/crucible/inventory.vault.ospd.yml"
         mode: '0664'
 
+    - name: Add Crucible template to inject Red Hat CA
+      template:
+        src: ai/crucible/50-RH-Root-CA.yml.j2
+        dest: "{{ base_path }}/crucible/roles/patch_cluster/templates/50-RH-Root-CA.yml.j2"
+        mode: '0664'
+
     - name: Override Crucible OCP version constraint
       replace:
         path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/cluster.yml"
