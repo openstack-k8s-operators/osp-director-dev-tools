@@ -159,3 +159,17 @@
   - name: Delete AI podman images
     shell: |
       for i in $(podman images | grep -E '(assisted-service|ocp-metal-ui)' | awk '{print $3}'); do podman rmi $i; done
+
+  - name: Cleanup crucible
+    become: true
+    become_user: ocp
+    block:
+    - name: Cleanup crucible repo
+      file:
+        path: "{{ base_path }}/crucible"
+        state: absent
+
+    - name: Cleanup ansible
+      file:
+        path: "{{ base_path }}/.ansible"
+        state: absent
