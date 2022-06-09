@@ -278,7 +278,7 @@ openstackclient_networks:
   - internal_api
 
 nfs_server: '172.22.0.1'
-ntp_server: pool.ntp.org
+ntp_server: "{{ 'clock.redhat.com' if 'redhat.com' in ansible_fqdn else 'pool.ntp.org' }}"
 
 external_dns:
   - 10.11.5.19

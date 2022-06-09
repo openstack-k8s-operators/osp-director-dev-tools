@@ -5,6 +5,11 @@
     mode: 0755
   register: working_directory
 
+- name: Gather facts
+  setup:
+    gather_subset:
+      - min
+
 - name: Get working directory absolute path
   set_fact:
     working_dir: "{{ working_directory.path }}"
