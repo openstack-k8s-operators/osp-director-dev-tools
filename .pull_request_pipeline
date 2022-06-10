@@ -7,14 +7,6 @@ pipeline {
             }
 
             steps {
-                parallel (
-                  "Use dev-scripts OCP installer":
-                    {
-                      build job: 'osp-director-dev-tools-pr',
-                                parameters: [
-                                    string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
-                                ]
-                    },
                   "Use Assisted Installer" :
                     {
                       build job: 'osp-director-dev-tools-ai-pr',
@@ -22,7 +14,6 @@ pipeline {
                                     string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
                                 ]
                     }
-                )
             }
         }
 
