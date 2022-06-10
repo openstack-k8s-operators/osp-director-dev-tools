@@ -103,34 +103,49 @@
 
   ### BRIDGES
 
-  - name: Delete BM interface to BM bridge if defined
-    community.general.nmcli:
-      conn_name: "bridge-slave-{{ ocp_bm_interface }}"
-      type: bridge-slave
-      ifname: "{{ ocp_bm_interface }}"
-      master: "{{ ocp_cluster_name }}bm"
+  - name: Delete existing bridges (if any)
+    nmcli:
+      conn_name: "{{ item }}"
+      type: bridge
       state: absent
-    when: ocp_bm_interface is defined and ocp_bm_interface != ""
+    with_items:
+      - "{{ ocp_cluster_name }}bm"
+      - "{{ ocp_cluster_name }}pr"
+      - "ospnetwork"
+      - "external"
 
-  - name: Delete AI bridges
-    block:
-    - name: Delete existing bridges (if any)
-      community.general.nmcli:
-        conn_name: "{{ ocp_cluster_name }}{{ item }}"
-        type: bridge
-        state: absent
-      with_items:
-        - bm
-        - pr
+  - name: Make sure bridge ifcfg files are removed
+    file:
+      path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
+      state: absent
+    with_items:
+      - "{{ ocp_cluster_name }}bm"
+      - "{{ ocp_cluster_name }}pr"
+      - "ospnetwork"
+      - "external"
 
-    - name: Make sure bridge ifcfg files are removed
-      file:
-        path: "/etc/sysconfig/network-scripts/ifcfg-{{ ocp_cluster_name }}{{ item }}"
-        state: absent
-      with_items:
-        - bm
-        - pr
-    ignore_errors: true
+  - name: Delete existing bridge slaves (if any)
+    nmcli:
+      conn_name: "bridge-slave-{{ item }}"
+      type: bridge-slave
+      state: absent
+    when: item != ""
+    with_items:
+      - "{{ ocp_bm_prov_interface }}"
+      - "{{ ocp_bm_interface }}"
+      - "{{ osp_bm_interface }}"
+      - "{{ osp_ext_bm_interface }}"
+
+  - name: Make sure bridge slave ifcfg files are removed
+    file:
+      path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ item }}"
+      state: absent
+    when: item != ""
+    with_items:
+      - "{{ ocp_bm_prov_interface }}"
+      - "{{ ocp_bm_interface }}"
+      - "{{ osp_bm_interface }}"
+      - "{{ osp_ext_bm_interface }}"
 
   ### remove osp_base_image
 

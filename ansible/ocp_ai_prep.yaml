@@ -99,6 +99,7 @@
           - "{{ ocp_cluster_name }}bm"
           - "{{ ocp_cluster_name }}pr"
           - "ospnetwork"
+          - "external"
 
       - name: Make sure bridge ifcfg files are removed
         file:
@@ -108,6 +109,30 @@
           - "{{ ocp_cluster_name }}bm"
           - "{{ ocp_cluster_name }}pr"
           - "ospnetwork"
+          - "external"
+
+      - name: Delete existing bridge slaves (if any)
+        nmcli:
+          conn_name: "bridge-slave-{{ item }}"
+          type: bridge-slave
+          state: absent
+        when: item != ""
+        with_items:
+          - "{{ ocp_bm_prov_interface }}"
+          - "{{ ocp_bm_interface }}"
+          - "{{ osp_bm_interface }}"
+          - "{{ osp_ext_bm_interface }}"
+
+      - name: Make sure bridge slave ifcfg files are removed
+        file:
+          path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ item }}"
+          state: absent
+        when: item != ""
+        with_items:
+          - "{{ ocp_bm_prov_interface }}"
+          - "{{ ocp_bm_interface }}"
+          - "{{ osp_bm_interface }}"
+          - "{{ osp_ext_bm_interface }}"
 
       - name: Create BM bridge
         community.general.nmcli:
@@ -150,12 +175,108 @@
           ip4: "172.22.0.1/24"
           state: present
 
+      - name: Add prov interface to prov bridge
+        when: ocp_bm_prov_interface is defined and ocp_bm_prov_interface != ""
+        block:
+        - name: Make sure old prov interface connection is down
+          shell: |
+            /usr/bin/nmcli con down {{ ocp_bm_prov_interface }}
+          register: prov_intf_down
+          failed_when: prov_intf_down.stderr != "" and "no active connection provided" not in prov_intf_down.stderr
+
+        - name: Add prov interface to prov bridge
+          nmcli:
+            conn_name: "bridge-slave-{{ ocp_bm_prov_interface }}"
+            type: bridge-slave
+            ifname: "{{ ocp_bm_prov_interface }}"
+            autoconnect: yes
+            hairpin: no
+            master: "{{ ocp_cluster_name }}pr"
+            state: present
+
       - name: Reload bridges
         shell: |
           /usr/bin/nmcli con reload {{ ocp_cluster_name }}{{ item }}; /usr/bin/nmcli con up {{ ocp_cluster_name }}{{ item }}
         with_items:
           - bm
           - pr
+
+      # We have to do this here due to the way firewalld works.  If we wait to do it post-install,
+      # we would need to virsh destroy/start the VMs and podman restart certain containers to make
+      # sure the bridges work properly with the firewall.  This covers both the fully-virtualized
+      # and hybrid (virt/BM) use-cases
+      - name: Prepare OSP bridges for potential future use with virtualized OCP nodes
+        # Only do this if virtualized dedicated workers or virtualized master-worker nodes are present
+        when: (ocp_num_workers > 0 or (ocp_num_workers < 1 and ocp_bm_workers|default({})|length < 1 and ocp_num_masters > 1))
+        block:
+        - name: check if osp network already exists
+          shell: >
+            /usr/bin/nmcli con show ospnetwork
+          ignore_errors: true
+          register: ospnetwork_exist
+
+        - name: check if osp external network already exists
+          shell: >
+            /usr/bin/nmcli con show external
+          ignore_errors: true
+          register: extnetwork_exist
+
+        - name: create osp networks
+          when: "'no such connection profile' in ospnetwork_exist.stderr or 'no such connection profile' in extnetwork_exist.stderr"
+          block:
+          - name: Create ospnetwork bridge
+            shell: |
+              /usr/bin/nmcli connection add ifname ospnetwork type bridge con-name ospnetwork stp no ipv4.method disabled ipv6.method disabled
+            register: add_ospnetwork_bridge
+            failed_when: add_ospnetwork_bridge.stderr != '' and 'There is another connection with the name' not in add_ospnetwork_bridge.stderr
+
+          - name: Handle ospnetwork interface, if necessary
+            when: osp_bm_interface is defined and osp_bm_interface != ""
+            block:
+            - name: Check if ospnetwork interface is already attached to ospnetwork bridge
+              shell: |
+                /usr/bin/nmcli con show bridge-slave-{{ osp_bm_interface }}
+              ignore_errors: true
+              register: check_ospnetwork_bridge_exists
+
+            - name: Add ospnetwork interface to ospnetwork bridge
+              shell: |
+                /usr/bin/nmcli con add type bridge-slave ifname {{ osp_bm_interface }} master ospnetwork
+              when: check_ospnetwork_bridge_exists.stderr != "" and 'no such connection profile' in check_ospnetwork_bridge_exists.stderr
+
+          - name: Create osp external bridge
+            nmcli:
+              conn_name: "external"
+              type: bridge
+              ifname: "external"
+              autoconnect: yes
+              stp: off
+              ip4: "10.0.0.1/24"
+              state: present
+
+          - name: Add external interface to osp external bridge
+            nmcli:
+              conn_name: "bridge-slave-{{ osp_ext_bm_interface }}"
+              type: bridge-slave
+              ifname: "{{ osp_ext_bm_interface }}"
+              autoconnect: yes
+              hairpin: no
+              master: "external"
+              state: present
+            when: osp_ext_bm_interface is defined and osp_ext_bm_interface != ""
+
+          - name: set accept_ra = 2  due to "enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss"
+            sysctl:
+              name: net.ipv6.conf.all.accept_ra
+              value: '2'
+              sysctl_file: /etc/sysctl.d/90-network.conf
+
+          - name: Reload bridges
+            shell: |
+              /usr/bin/nmcli con reload {{ item }}; /usr/bin/nmcli con up {{ item }}
+            with_items:
+              - ospnetwork
+              - external
 
 
   ### FIREWALL
@@ -229,12 +350,27 @@
         - 68
         - 69
 
-    # FIXME: Use firewalld rich-rules instead?
     - name: Add direct firewall rules for BM bridge
       shell: |
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_cluster_name }}bm" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" -m state --state RELATED,ESTABLISHED -j ACCEPT;
         firewall-cmd --reload
+
+    # We have to do this here due to the way firewalld works.  If we wait to do it post-install,
+    # we would need to virsh destroy/start the VMs and podman restart certain containers to make
+    # sure the bridges work properly with the firewall.  This covers both the fully-virtualized
+    # and hybrid (virt/BM) use-cases
+    - name: Prepare firewall for future use with virtualized OCP nodes
+      # Only do this if virtualized dedicated workers or virtualized master-worker nodes are present
+      when: (ocp_num_workers > 0 or (ocp_num_workers < 1 and ocp_bm_workers|default({})|length < 1 and ocp_num_masters > 1))
+      block:
+      - name: Add external and ospnetwork bridges to libvirt zone -- and enable forwarding
+        shell: |
+          firewall-cmd --zone libvirt --change-interface external --permanent
+          firewall-cmd --zone libvirt --change-interface ospnetwork --permanent
+          firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "external" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
+          firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "external" -m state --state RELATED,ESTABLISHED -j ACCEPT;
+          firewall-cmd --reload
 
 
   ### HTTP STORE
