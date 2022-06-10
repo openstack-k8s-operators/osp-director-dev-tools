@@ -1,9 +1,9 @@
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  name: rh-root-ca
+  name: rh-root-ca-{{ ocp_node_role }}
   labels:
-    machineconfiguration.openshift.io/role: worker
+    machineconfiguration.openshift.io/role: {{ ocp_node_role }}
 spec:
   config:
     ignition:
