@@ -7,22 +7,10 @@ pipeline {
             }
 
             steps {
-                parallel (
-                  "Use dev-scripts OCP installer":
-                    {
-                      build job: 'osp-director-dev-tools-pr',
-                                parameters: [
-                                    string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
-                                ]
-                    },
-                  "Use Assisted Installer" :
-                    {
-                      build job: 'osp-director-dev-tools-ai-pr',
-                                parameters: [
-                                    string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
-                                ]
-                    }
-                )
+                build job: 'DFG-ospk8s-osp-director-dev-tools-ai-pr', 
+                    parameters: [
+                        string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID))
+                    ]
             }
         }
 
@@ -35,7 +23,7 @@ pipeline {
             }
 
             steps {
-                build job: 'osp-director-dev-tools-merge'
+                build job: 'DFG-ospk8s-osp-director-dev-tools-merge'
             }
         }
     }
