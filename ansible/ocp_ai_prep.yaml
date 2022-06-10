@@ -57,6 +57,12 @@
     set_fact:
       ocp_ai_bm_cidr_rev_suffix: "111.168.192"
 
+  - name: Set fact for ocp node roles
+    set_fact:
+      ocp_node_roles:
+        - master
+        - worker
+        - worker-sriov
 
   ### BRIDGES
 
@@ -585,8 +591,11 @@
     - name: Add Crucible template to inject Red Hat CA
       template:
         src: ai/crucible/50-RH-Root-CA.yml.j2
-        dest: "{{ base_path }}/crucible/roles/patch_cluster/templates/50-RH-Root-CA.yml.j2"
+        dest: "{{ base_path }}/crucible/roles/patch_cluster/templates/50-{{ ocp_node_role }}-RH-Root-CA.yml.j2"
         mode: '0664'
+      loop_control:
+        loop_var: ocp_node_role
+      loop: "{{ ocp_node_roles }}"
 
     - name: Override Crucible OCP version constraint
       replace:
