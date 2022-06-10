@@ -136,7 +136,6 @@
         state: absent
         activationkey: "{{ rhel_subscription_activation_key }}"
         org_id: "{{ rhel_subscription_org_id }}"
-        pool: '^(Red Hat Enterprise Server for x86_64)$'
       when: manual_rhel_subscription is undefined
 
     - name: Register with activationkey and consume subscriptions matching Red Hat Enterprise Server
@@ -147,7 +146,7 @@
         force_register: yes
         activationkey: "{{ rhel_subscription_activation_key }}"
         org_id: "{{ rhel_subscription_org_id }}"
-        pool: '^(Red Hat Enterprise Server for x86_64)$'
+        pool: "{{ rhel_subscription_pool|default('^OpenShift Employee Subscription$') }}"
         server_hostname: "{{ rhel_subscription_server_hostname|default(omit) }}"
       when: manual_rhel_subscription is undefined
 
