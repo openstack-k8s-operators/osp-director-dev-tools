@@ -591,37 +591,29 @@
     - name: Override/inject OCP live ISO version
       replace:
         path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
-        after: "assisted_service_openshift_versions_defaults:"
-        before: "assisted_installer_images:"
+        after: "assisted_installer_os_images_defualts:"
+        before: "assisted_installer_release_images_defaults:"
         regexp: 'dependencies/rhcos/{{ ocp_version | replace(".", "\.") }}/.*iso'
         replace: 'dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso'
 
     - name: Override/inject OCP live rootfs version
       replace:
         path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
-        after: "assisted_service_openshift_versions_defaults:"
-        before: "assisted_installer_images:"
+        after: "assisted_installer_os_images_defualts:"
+        before: "assisted_installer_release_images_defaults:"
         regexp: 'dependencies/rhcos/{{ ocp_version | replace(".", "\.") }}/.*img'
         replace: 'dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live-rootfs.x86_64.img'
 
     - name: Override/inject desired OCP version (display_name/release_version)
       replace:
         path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
-        after: "assisted_service_openshift_versions_defaults:"
-        before: "assisted_installer_images:"
+        after: "assisted_installer_release_images_defaults:"
+        before: "assisted_installer_hardware_validation:"
         regexp: '{{ ocp_version | replace(".", "\.") }}\.\d+'
         replace: '{{ ocp_version }}.{{ ocp_minor_version }}'
 
     - name: Inject specific RHCOS image version
       block:
-      - name: Inject RHCOS image tag
-        replace:
-          path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
-          after: "assisted_service_openshift_versions_defaults:"
-          before: "assisted_installer_images:"
-          regexp: 'release_image:.*release_{{ ocp_version | replace(".", "\.") }}.*'
-          replace: 'release_image: "{{ ocp_release_image }}"'
-
       - name: Get RHCOS image version raw data for {{ ocp_version }}.{{ ocp_minor_version }}
         uri:
           url: "{{ ocp_release_data_url }}"
@@ -643,10 +635,18 @@
       - name: Inject RHCOS image version
         replace:
           path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
-          after: "assisted_service_openshift_versions_defaults:"
-          before: "assisted_installer_images:"
-          regexp: 'rhcos_version:\s{{ ocp_version | replace(".", "") }}\..+'
-          replace: 'rhcos_version: {{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}'
+          after: "assisted_installer_os_images_defualts:"
+          before: "assisted_installer_release_images_defaults:"
+          regexp: 'version:\s"{{ ocp_version | replace(".", "") }}\..+'
+          replace: 'version: "{{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}"'
+
+      - name: Override release image URL
+        replace:
+          path: "{{ base_path }}/crucible/roles/setup_assisted_installer/defaults/main.yml"
+          after: 'cpu_architecture: "x86_64"'
+          before: 'version: "{{ ocp_version }}.{{ ocp_minor_version }}"'
+          regexp: 'url:\s"quay.io/openshift-release-dev/ocp-release{\%\sif\s''release_{{ ocp_version }}.*'
+          replace: 'url: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"'
 
     - name: Force linear execution of boot_iso role when KVM nodes present
       when: ocp_num_masters > 0 or ocp_num_workers > 0
