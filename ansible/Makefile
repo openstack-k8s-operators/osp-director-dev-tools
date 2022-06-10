@@ -1,4 +1,4 @@
-# make openstack OSP_RELEASE=17.0
+# make openstack OSP_RELEASE=17.0 asdfad
 ifndef OSP_RELEASE
 OSP_RELEASE = 16.2
 endif
