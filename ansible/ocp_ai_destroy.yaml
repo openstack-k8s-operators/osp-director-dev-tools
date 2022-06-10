@@ -162,7 +162,6 @@
 
   - name: Cleanup crucible
     become: true
-    become_user: ocp
     block:
     - name: Cleanup crucible repo
       file:
