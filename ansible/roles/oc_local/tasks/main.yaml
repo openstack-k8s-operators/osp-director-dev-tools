@@ -1,4 +1,6 @@
 - name: Create local working directory
+  become: true
+  become_user: root
   file:
     state: directory
     path: "{{ local_working_dir }}"
@@ -29,6 +31,8 @@
     k8s_operators_dir: "{{ working_src_dir }}/github.com/openstack-k8s-operators"
 
 - name: Create common subdirectories
+  become: true
+  become_user: root
   file:
     path: "{{ item }}"
     state: directory
@@ -43,6 +47,8 @@
 
 - name: pull "{{ osp_release_auto_url }}" if defined and include as var file
   when: osp_release_auto_url is defined
+  become: true
+  become_user: root
   block:
     - name: Register osp_release_auto_url
       set_fact:
