@@ -91,7 +91,7 @@
         failed_when: dev_scripts_br_rm.stderr != "" and "no network with matching name" not in dev_scripts_br_rm.stderr and "is not active" not in dev_scripts_br_rm.stderr
 
       - name: Delete existing bridges (if any)
-        community.general.nmcli:
+        nmcli:
           conn_name: "{{ item }}"
           type: bridge
           state: absent
@@ -109,8 +109,29 @@
           - "{{ ocp_cluster_name }}pr"
           - "ospnetwork"
 
+      - name: Delete existing bridge slaves (if any)
+        nmcli:
+          conn_name: "bridge-slave-{{ item }}"
+          type: bridge-slave
+          state: absent
+        when: item != ""
+        with_items:
+          - "{{ ocp_bm_prov_interface }}"
+          - "{{ ocp_bm_interface }}"
+          - "{{ osp_bm_interface }}"
+
+      - name: Make sure bridge slave ifcfg files are removed
+        file:
+          path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ item }}"
+          state: absent
+        when: item != ""
+        with_items:
+          - "{{ ocp_bm_prov_interface }}"
+          - "{{ ocp_bm_interface }}"
+          - "{{ osp_bm_interface }}"
+
       - name: Create BM bridge
-        community.general.nmcli:
+        nmcli:
           conn_name: "{{ ocp_cluster_name }}bm"
           type: bridge
           ifname: "{{ ocp_cluster_name }}bm"
@@ -130,7 +151,7 @@
           failed_when: bm_intf_down.stderr != "" and "no active connection provided" not in bm_intf_down.stderr
 
         - name: Add BM interface to BM bridge
-          community.general.nmcli:
+          nmcli:
             conn_name: "bridge-slave-{{ ocp_bm_interface }}"
             type: bridge-slave
             ifname: "{{ ocp_bm_interface }}"
@@ -140,7 +161,7 @@
             state: present
 
       - name: Create provisioning bridge
-        community.general.nmcli:
+        nmcli:
           conn_name: "{{ ocp_cluster_name }}pr"
           type: bridge
           ifname: "{{ ocp_cluster_name }}pr"
@@ -149,6 +170,25 @@
           # TODO: Support any netmask?
           ip4: "172.22.0.1/24"
           state: present
+
+      - name: Add prov interface to prov bridge
+        when: ocp_bm_prov_interface is defined and ocp_bm_prov_interface != ""
+        block:
+        - name: Make sure old prov interface connection is down
+          shell: |
+            /usr/bin/nmcli con down {{ ocp_bm_prov_interface }}
+          register: prov_intf_down
+          failed_when: prov_intf_down.stderr != "" and "no active connection provided" not in prov_intf_down.stderr
+
+        - name: Add prov interface to prov bridge
+          nmcli:
+            conn_name: "bridge-slave-{{ ocp_bm_prov_interface }}"
+            type: bridge-slave
+            ifname: "{{ ocp_bm_prov_interface }}"
+            autoconnect: yes
+            hairpin: no
+            master: "{{ ocp_cluster_name }}pr"
+            state: present
 
       - name: Reload bridges
         shell: |
@@ -232,6 +272,7 @@
     # FIXME: Use firewalld rich-rules instead?
     - name: Add direct firewall rules for BM bridge
       shell: |
+        firewall-cmd --zone=libvirt --add-masquerade --permanent
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_cluster_name }}bm" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
         firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" -m state --state RELATED,ESTABLISHED -j ACCEPT;
         firewall-cmd --reload

@@ -104,7 +104,7 @@
   ### BRIDGES
 
   - name: Delete BM interface to BM bridge if defined
-    community.general.nmcli:
+    nmcli:
       conn_name: "bridge-slave-{{ ocp_bm_interface }}"
       type: bridge-slave
       ifname: "{{ ocp_bm_interface }}"
@@ -115,7 +115,7 @@
   - name: Delete AI bridges
     block:
     - name: Delete existing bridges (if any)
-      community.general.nmcli:
+      nmcli:
         conn_name: "{{ ocp_cluster_name }}{{ item }}"
         type: bridge
         state: absent
@@ -131,6 +131,30 @@
         - bm
         - pr
     ignore_errors: true
+
+  - name: Delete osp network bridge
+    nmcli:
+      conn_name: ospnetwork
+      type: bridge
+      state: absent
+
+  - name: Make sure osp network ifcfg files are removed
+    file:
+      path: /etc/sysconfig/network-scripts/ifcfg-ospnetwork
+      state: absent
+
+  - name: Delete osp network bridge slave (if any)
+    nmcli:
+      conn_name: "bridge-slave-{{ osp_bm_interface }}"
+      type: bridge-slave
+      state: absent
+    when: osp_bm_interface|default("") != ""
+
+  - name: Make sure osp network bridge slave is removed (if any)
+    file:
+      path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ osp_bm_interface }}"
+      state: absent
+    when: osp_bm_interface|default("") != ""
 
   ### remove osp_base_image
 

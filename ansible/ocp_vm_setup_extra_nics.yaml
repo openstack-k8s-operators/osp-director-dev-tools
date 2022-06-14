@@ -16,9 +16,39 @@
       become: true
       become_user: root
       shell: >
-        virsh net-info ospnetwork
+        /usr/bin/nmcli con show ospnetwork
       ignore_errors: true
       register: ospnetwork_exist
+
+    - name: create ospnetwork
+      when: "'no such connection profile' in ospnetwork_exist.stderr"
+      become: true
+      become_user: root
+      block:
+      - name: Create ospnetwork bridge
+        shell: |
+          /usr/bin/nmcli connection add ifname ospnetwork type bridge con-name ospnetwork stp no ipv4.method disabled ipv6.method disabled
+        register: add_ospnetwork_bridge
+        failed_when: add_ospnetwork_bridge.stderr != '' and 'There is another connection with the name' not in add_ospnetwork_bridge.stderr
+
+      - name: Handle ospnetwork interface, if necessary
+        when: osp_bm_interface is defined and osp_bm_interface != ""
+        block:
+        - name: Check if ospnetwork interface is already attached to ospnetwork bridge
+          shell: |
+            /usr/bin/nmcli con show bridge-slave-{{ osp_bm_interface }}
+          ignore_errors: true
+          register: check_ospnetwork_bridge_exists
+
+        - name: Add ospnetwork interface to ospnetwork bridge
+          shell: |
+            /usr/bin/nmcli con add type bridge-slave ifname {{ osp_bm_interface }} master ospnetwork
+          when: check_ospnetwork_bridge_exists.stderr != "" and 'no such connection profile' in check_ospnetwork_bridge_exists.stderr
+
+        - name: Reload bridge
+          shell: |
+            /usr/bin/nmcli con reload ospnetwork
+
 
     - name: check if osp external network already exists
       become: true
@@ -28,8 +58,8 @@
       ignore_errors: true
       register: extnetwork_exist
 
-    - name: create osp networks
-      when: ospnetwork_exist.rc == 1 or extnetwork_exist.rc == 1
+    - name: create osp external network
+      when: extnetwork_exist.rc == 1
       block:
       - name: create osp network directory
         file:
@@ -37,20 +67,13 @@
           state: directory
           mode: '0755'
 
-      - name: copy osp network files to {{ working_dir }}/osp-network
+      - name: copy osp external network files to {{ working_dir }}/osp-network
         copy:
           src:  "{{ item }}"
           dest: "{{ working_dir }}/osp-network/"
           mode: 0644
         with_items:
-          - files/ospnetwork.xml
           - files/externalnetwork.xml
-
-      - name: Define ospnetwork libvirt network
-        become: true
-        become_user: root
-        command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
-        when: ospnetwork_exist.rc == 1
 
       - name: Define external libvirt network
         become: true
@@ -66,7 +89,7 @@
           value: '2'
           sysctl_file: /etc/sysctl.d/90-network.conf
 
-      - name: Start the osp networks
+      - name: Start the osp external networks
         become: true
         become_user: root
         shell: |
@@ -77,7 +100,6 @@
         failed_when: network_start.stderr != "" and "network is already active" not in network_start.stderr
         with_items:
           - external
-          - ospnetwork
 
     # on CI runs it has seen that the network interface was still down
     # lets make sure the OSP network interfaces are up
