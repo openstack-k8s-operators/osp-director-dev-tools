@@ -5,6 +5,8 @@ openstackclient_networks:
   - internal_api
   - internal_api_leaf1
 
+enable_freeipa: true
+
 osp_release_defaults:
   tlse: true
   networks: ipv6_subnet
