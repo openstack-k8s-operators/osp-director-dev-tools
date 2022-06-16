@@ -8,76 +8,117 @@
   - name: Setup extra VM nics
     # Only do this if virtualized dedicated workers or virtualized master-worker nodes are present
     when: (ocp_num_workers > 0 or (ocp_num_workers < 1 and ocp_bm_workers|default({})|length < 1 and ocp_num_masters > 1))
+    become: true
+    become_user: root
     block:
     - name: Include variables
       include_vars: vars/default.yaml
 
     - name: check if osp network already exists
-      become: true
-      become_user: root
       shell: >
-        virsh net-info ospnetwork
+        /usr/bin/nmcli con show ospnetwork
       ignore_errors: true
       register: ospnetwork_exist
 
     - name: check if osp external network already exists
-      become: true
-      become_user: root
       shell: >
-        virsh net-info external
+        /usr/bin/nmcli con show external
       ignore_errors: true
       register: extnetwork_exist
 
     - name: create osp networks
-      when: ospnetwork_exist.rc == 1 or extnetwork_exist.rc == 1
+      when: "'no such connection profile' in ospnetwork_exist.stderr or 'no such connection profile' in extnetwork_exist.stderr"
       block:
-      - name: create osp network directory
-        file:
-          path: "{{ working_dir }}/osp-network"
-          state: directory
-          mode: '0755'
+      - name: Set combined osp dict
+        set_fact:
+          osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-      - name: copy osp network files to {{ working_dir }}/osp-network
-        copy:
-          src:  "{{ item }}"
-          dest: "{{ working_dir }}/osp-network/"
-          mode: 0644
-        with_items:
-          - files/ospnetwork.xml
-          - files/externalnetwork.xml
+      - name: Find requested MTU for ospnetwork bridge and interface
+        set_fact:
+          ospnetwork_bridge_mtu: "{{ osp.attach_configs['br-osp'] | community.general.json_query('interfaces[?type==`bridge`].mtu') | first }}"
+          ospnetwork_intf_mtu: "{{ osp.attach_configs['br-osp'] | community.general.json_query('interfaces[?type==`ethernet`].mtu') | first }}"
 
-      - name: Define ospnetwork libvirt network
-        become: true
-        become_user: root
-        command: "virsh net-define {{ working_dir }}/osp-network/ospnetwork.xml"
-        when: ospnetwork_exist.rc == 1
+      - name: Create ospnetwork bridge
+        shell: |
+          /usr/bin/nmcli connection add ifname ospnetwork type bridge con-name ospnetwork stp no ipv4.method disabled ipv6.method disabled ethernet.mtu {{ ospnetwork_bridge_mtu }}
+        register: add_ospnetwork_bridge
+        failed_when: add_ospnetwork_bridge.stderr != '' and 'There is another connection with the name' not in add_ospnetwork_bridge.stderr
 
-      - name: Define external libvirt network
-        become: true
-        become_user: root
-        command: "virsh net-define {{ working_dir }}/osp-network/externalnetwork.xml"
-        when: extnetwork_exist.rc == 1
+      - name: Handle ospnetwork interface, if necessary
+        when: osp_bm_interface is defined and osp_bm_interface != ""
+        block:
+        - name: Make sure old OSP interface is down
+          shell: |
+            /usr/bin/nmcli con down {{ osp_bm_interface }}
+          ignore_errors: true
+
+        - name: Check if ospnetwork interface is already attached to ospnetwork bridge
+          shell: |
+            /usr/bin/nmcli con show bridge-slave-{{ osp_bm_interface }}
+          ignore_errors: true
+          register: check_ospnetwork_bridge_exists
+
+        - name: Add ospnetwork interface to ospnetwork bridge
+          shell: |
+            /usr/bin/nmcli con add type bridge-slave ifname {{ osp_bm_interface }} master ospnetwork ethernet.mtu {{ ospnetwork_intf_mtu }}
+          when: check_ospnetwork_bridge_exists.stderr != "" and 'no such connection profile' in check_ospnetwork_bridge_exists.stderr
+
+      - name: Create osp external bridge (if IP set)
+        nmcli:
+          conn_name: "external"
+          type: bridge
+          ifname: "external"
+          autoconnect: yes
+          stp: off
+          ip4: "{{ osp_ext_bridge_ip }}"
+          state: present
+        when: osp_ext_bridge_ip|default != ""
+
+      - name: Create osp external bridge (if IP unset)
+        shell: |
+          /usr/bin/nmcli connection add ifname external type bridge con-name external stp no ipv4.method disabled ipv6.method disabled
+        register: add_external_bridge
+        failed_when: add_external_bridge.stderr != '' and 'There is another connection with the name' not in add_external_bridge.stderr
+        when: osp_ext_bridge_ip|default == ""
+
+      - name: Handle external interface, if necessary
+        when: osp_ext_bm_interface is defined and osp_ext_bm_interface != ""
+        block:
+        - name: Make sure old external OSP interface is down
+          shell: |
+            /usr/bin/nmcli con down {{ osp_ext_bm_interface }}
+          ignore_errors: true
+
+        - name: Check if external interface is already attached to external bridge
+          shell: |
+            /usr/bin/nmcli con show bridge-slave-{{ osp_ext_bm_interface }}
+          ignore_errors: true
+          register: check_external_bridge_exists
+
+        - name: Add external interface to external bridge
+          shell: |
+            /usr/bin/nmcli con add type bridge-slave ifname {{ osp_ext_bm_interface }} master external
+          when: check_external_bridge_exists.stderr != "" and 'no such connection profile' in check_external_bridge_exists.stderr
+
+
+      - name: Add OSP bridges to libvirt zone
+        command: "firewall-cmd --zone libvirt --change-interface {{ item.0 }} {{ item.1 }}"
+        with_nested:
+          - ['external', 'ospnetwork']
+          - ['', '--permanent']
 
       - name: set accept_ra = 2  due to "enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss"
-        become: true
-        become_user: root
         sysctl:
           name: net.ipv6.conf.all.accept_ra
           value: '2'
           sysctl_file: /etc/sysctl.d/90-network.conf
 
-      - name: Start the osp networks
-        become: true
-        become_user: root
+      - name: Reload bridges
         shell: |
-          set -e
-          virsh net-start --network {{ item }}
-          virsh net-autostart --network {{ item }}
-        register: network_start
-        failed_when: network_start.stderr != "" and "network is already active" not in network_start.stderr
+          /usr/bin/nmcli con reload {{ item }}; /usr/bin/nmcli con up {{ item }}
         with_items:
-          - external
           - ospnetwork
+          - external
 
     # on CI runs it has seen that the network interface was still down
     # lets make sure the OSP network interfaces are up
