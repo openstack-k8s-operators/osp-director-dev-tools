@@ -35,12 +35,16 @@
       - name: Reset AI provisioning interface
         shell: |
           oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "{{ ocp_ai_prov_interface }}"}]'
+        environment:
+          <<: *oc_env
         ignore_errors: true
 
     - name: Reset dev-scripts provisioning interface
       when: not (ocp_ai|bool)
       shell: |
         oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "enp1s0"}]'
+      environment:
+          <<: *oc_env
 
   - name: delete playbooks git repo dir
     become: true
