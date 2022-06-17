@@ -131,11 +131,28 @@ openstack:
 	$(MAKE) git
 	$(MAKE) ctlplane
 	$(MAKE) computes
-	$(MAKE) osp_custom_config
-	$(MAKE) config_generator
-	$(MAKE) register_overcloud_nodes
+	$(MAKE) patch_csv
 	$(MAKE) osp_deploy
 	$(MAKE) must_gather
+
+openstack_update:
+	$(MAKE) patch_csv
+	$(MAKE) osp_update
+	$(MAKE) must_gather
+
+osp_update:
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_update.yaml
+
+patch_csv: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+        -e @vars/${OSP_RELEASE}.yaml \
+        -e @local-defaults.yaml \
+        patch_csv.yaml
 
 osp_deploy: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -224,7 +241,7 @@ osp_custom_config: hosts local-defaults.yaml
 	-i hosts \
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
-	osp_tripleo_deploy.yaml
+	osp_custom_config.yaml
 
 osp_content: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -254,7 +271,8 @@ olm: hosts local-defaults.yaml
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	install_namespace.yaml \
-	olm.yaml
+	olm.yaml \
+	patch_csv.yaml
 
 olm_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

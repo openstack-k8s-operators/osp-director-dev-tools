@@ -3,7 +3,7 @@ ansible-galaxy collection install -r requirements.yml
 colRet=$?
 set -e
 if [ $colRet -ne 0 ]; then
-  ANSIBLE_DIR="~/.ansible/collections/ansible_collections"
+  ANSIBLE_DIR="$HOME/.ansible/collections/ansible_collections"
   PODMAN_GIT_DIR="$ANSIBLE_DIR/containers/podman"
   COMMUNITY_GENERAL_GIT_DIR="$ANSIBLE_DIR/community/general"
   echo "Installing Ansible Podman Collections using git"

@@ -1,0 +1,116 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+    - oc_local
+
+  tasks:
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  - name: Update CSV
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    # Can fail if the csv is modified while we alter it
+    retries: 5
+    delay: 30
+    vars:
+      jq_set_csv_envvar: '(.items[].spec.install.spec.deployments[].spec.template.spec.containers[] | select(.env != null) | .env[] | select(.name==$envvar)).value |= $envval'
+    shell: |
+      set -e
+      oc get csv -n openstack -o json \
+      | jq --arg envvar 'OPENSTACKCLIENT_IMAGE_URL_DEFAULT' --arg envval '{{ openstackclient_image }}' '{{ jq_set_csv_envvar }}' \
+      {% if osp.release != 16.2 %} | jq --arg envvar 'OPENSTACK_RELEASE_DEFAULT' --arg envval '"{{ osp.release }}"' '{{ jq_set_csv_envvar }}' {% endif %} \
+      \ {% if ephemeral_heat is defined and ephemeral_heat|length %}
+      {% if ephemeral_heat.heat_api_image is defined %} | jq --arg envvar 'HEAT_API_IMAGE_URL_DEFAULT' --arg envval '{{ ephemeral_heat.heat_api_image }}' '{{ jq_set_csv_envvar }}' {% endif %} \
+      {% if ephemeral_heat.heat_engine_image is defined %} | jq --arg envvar 'HEAT_ENGINE_IMAGE_URL_DEFAULT' --arg envval '{{ ephemeral_heat.heat_engine_image }}' '{{ jq_set_csv_envvar }}' {% endif %} \
+      {% if ephemeral_heat.mariadb_image is defined %} | jq --arg envvar 'MARIADB_IMAGE_URL_DEFAULT' --arg envval '{{ ephemeral_heat.mariadb_image }}' '{{ jq_set_csv_envvar }}' {% endif %} \
+      {% if ephemeral_heat.rabbit_image is defined %} | jq --arg envvar 'RABBITMQ_IMAGE_URL_DEFAULT' --arg envval '{{ ephemeral_heat.rabbit_image }}' '{{ jq_set_csv_envvar }}' {% endif %} \
+      \ {% endif %}
+      | oc replace -f -
+      sleep 30
+
+  - name: Delete any ephemeralheat instances
+    environment:
+      <<: *oc_env
+    command: oc delete -n openstack openstackephemeralheat --all
+
+  - name: Check if openstackclient exists
+    environment:
+      <<: *oc_env
+    ignore_errors: true
+    command: oc get openstackclient -n openstack openstackclient -o name
+    register: osclient_check_exists
+
+  - name: Check if provisionserver exists
+    environment:
+      <<: *oc_env
+    ignore_errors: true
+    command: oc get openstackprovisionserver -n openstack openstack -o name
+    register: osprovsrv_check_exists
+
+  - set_fact:
+      osclient_exists: "{{ osclient_check_exists.rc == 0 }}"
+      osprovsrv_exists: "{{ osprovsrv_check_exists.rc == 0 }}"
+
+  - name: Wait for CSV update
+    command: oc get csv -n openstack --template='{{'{{'}} eq (index .items 0).status.phase "Succeeded" {{'}}'}}'
+    environment:
+      <<: *oc_env
+    retries: 10
+    delay: 30
+    register: csv_update_check
+    until: csv_update_check.stdout.find("true") != -1
+
+  - name: Update openstackclient CR
+    environment:
+      <<: *oc_env
+    shell: |
+      oc get openstackclient -n openstack openstackclient -o json \
+        | jq 'del( .spec.imageURL )' \
+        | oc replace -f -
+    when: osclient_exists|bool
+
+  - name: Update provisionserver CR
+    environment:
+      <<: *oc_env
+    shell: |
+      oc get openstackprovisionserver -n openstack openstack -o json \
+          | jq 'del( .spec.agentImageUrl, .spec.apacheImageUrl, .spec.downloaderImageUrl)' \
+          | oc replace -f -
+    when: osprovsrv_exists|bool
+
+  - name: Wait for openstackclient to reconcile
+    environment:
+      <<: *oc_env
+    command: oc get pod -n openstack openstackclient --template='{{'{{'}} eq (index .status.containerStatuses 0).image "{{ openstackclient_image }}" {{'}}'}}'
+    register: osclient_pod_status_check
+    until: osclient_pod_status_check.stdout.find("true") != -1
+    retries: 20
+    delay: 30
+    when: osclient_exists|bool
+
+  - name: Wait for openstackclient pod to be ready
+    environment:
+      <<: *oc_env
+    command: oc wait -n openstack --for=condition=Ready pod/openstackclient --timeout="{{ (default_timeout * 5)|int }}s"
+    when: osclient_exists|bool
+
+  - name: Wait for openstackclient network
+    environment:
+      <<: *oc_env
+    command:
+      cmd: oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory -m ping all"
+    register: osclient_network_check
+    until: osclient_network_check.rc == 0
+    retries: 20
+    delay: 30
+    when: osclient_exists|bool
+
+  - name: Wait for openstackprovisionserver to reconcile
+    environment:
+      <<: *oc_env
+    command: oc wait -n openstack --for=condition=Provisioned openstackprovisionserver/openstack --timeout="{{ (default_timeout * 5)|int }}s"
+    when: osprovsrv_exists|bool

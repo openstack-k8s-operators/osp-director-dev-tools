@@ -1,0 +1,9 @@
+parameter_defaults:
+{% if custom_config_action|default('deploy') == "update" %}
+  EnableFencing: false
+{% endif %}
+{% if osp_registry_method == "rhsm" %}
+  SkipRhelEnforcement: false
+{% else %}
+  SkipRhelEnforcement: true
+{% endif %}

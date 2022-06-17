@@ -1,10 +1,14 @@
 apiVersion: osp-director.openstack.org/v1beta1
 kind: OpenStackDeploy
 metadata:
-  name: default
+  name: {{ deploy_name|default('default') }}
 spec:
-  configVersion: {{ config_version }}
-  configGenerator: default
-{% if openstackdeploy_image is defined %}
-  imageURL: {{ openstackdeploy_image }}
+  configVersion: {{ config_version.hash }}
+  configGenerator: {{ config_version.configGeneratorName }}
+{% if deploy_mode|default('') != '' %}
+  mode: {{ deploy_mode }}
+{% endif %}
+{% if (deploy_advanced_settings|default({})) %}
+  advancedSettings:
+    {{ deploy_advanced_settings|to_nice_yaml|indent(4) }}
 {% endif %}

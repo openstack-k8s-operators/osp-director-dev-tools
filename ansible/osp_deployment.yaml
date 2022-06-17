@@ -1,0 +1,131 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  - name: Set directory for generator yaml files
+    set_fact:
+      deploy_yamls_dir: "{{ working_yamls_dir }}/deploy_{{ deploy_name|default('default') }}"
+
+  - name: show yaml output dir
+    debug:
+      msg: "yamls will be written to {{ deploy_yamls_dir }} locally"
+
+  - name: Clean yaml dir
+    file:
+      state: absent
+      path: "{{ deploy_yamls_dir }}/"
+
+  - name: Create yaml dir
+    file:
+      path: "{{ deploy_yamls_dir }}"
+      state: directory
+      mode: '0755'
+
+  # TODO: filter by configGeneratorName
+  - name: Lookup configVersion
+    shell: >
+      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -e '.items[0].spec | {hash,configGeneratorName}'
+    register: config_version_cmd
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: Set config_version fact
+    set_fact:
+      config_version: "{{ config_version_cmd.stdout | from_json }}"
+
+  - name: Render templates to yaml dir
+    template:
+      src: "osp/deploy/{{ item }}.j2"
+      dest: "{{ deploy_yamls_dir }}/{{ item }}"
+      mode: '0644'
+    with_items:
+    - "openstackdeploy.yaml"
+
+  - name: does the deployment already exist
+    shell: >
+      oc get -n openstack osdeploy {{ deploy_name|default('default') }} -o json --ignore-not-found
+    environment:
+      <<: *oc_env
+    register: deploy_switch
+
+  - name: Delete deployment (if it exists)
+    shell: |
+      set -e
+      oc delete -n openstack osdeploy {{ deploy_name|default('default') }}
+    environment:
+      <<: *oc_env
+    when: deploy_switch.stdout | length > 0
+
+  - name: Start deployment
+    shell: |
+      set -e
+      oc apply -n openstack -f "{{ deploy_yamls_dir }}/openstackdeploy.yaml"
+    environment:
+      <<: *oc_env
+
+  - name: wait for deployment to finish
+    shell: |
+      #!/bin/bash
+      set -e
+
+      CUR_TIME=$(date +%s)
+      END_TIME=$(($CUR_TIME+{{ (default_timeout * 40)|int }}))
+      RETVAL=99
+
+      while [ "$CUR_TIME" -le "$END_TIME" ]; 
+      do
+        STATUS=$(oc get osdeploy -n openstack {{ deploy_name|default('default') }} | grep -v NAME | tail -1 | awk {'print $2'})
+        STATUS_CODE=$?
+
+        if [ $STATUS_CODE -ne 0 ];
+        then
+          echo non-zero \"oc get osdeploy\" status code: $STATUS_CODE
+        else
+          if [ "$STATUS" == "Finished" ];
+          then
+            echo Deployment finished
+            RETVAL=0
+            break
+          elif [ "$STATUS" == "Error" ];
+          then
+            echo Deployment hit an error
+            RETVAL=1
+            break
+          fi
+        fi
+
+        sleep 5
+
+        CUR_TIME=$(date +%s)
+      done
+
+      if [ $RETVAL -eq 99 ];
+      then
+        echo Neither \"Error\" nor \"Finished\" encountered before timeout. Exiting
+        RETVAL=1
+      fi
+
+      echo OCP osdeploy logs in {{ working_log_dir }}/osp-deploy-{{ deploy_name|default('default') }}.log
+      oc logs -n openstack jobs/deploy-openstack-{{ deploy_name|default('default') }} > {{ working_log_dir }}/osp-deploy-{{ deploy_name|default('default') }}.log
+      exit $RETVAL
+    register: deployment
+    ignore_errors: true
+    environment:
+      <<: *oc_env
+
+  - name: Deployment wait output
+    debug:
+      msg: "{{ deployment.stdout.split('\n') }}"
+
+  - name: Deployment failed or timed out
+    fail:
+      msg: Deployment failed or timed out, check output {{ working_log_dir }}/osp-deploy-{{ deploy_name|default('default') }}.log
+    when: deployment.rc == 1

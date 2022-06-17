@@ -11,8 +11,10 @@
 
   - name: Set directory for the tripleo deployment files
     set_fact:
-      ooo_yaml_dir: "{{ working_yamls_dir }}/tripleo_heat_envs"
-      ooo_tarball_dir: "{{ working_yamls_dir }}/tripleo_deploy_tarball"
+      ooo_yaml_dir: "{{ working_yamls_dir }}/{{ custom_config_name|default('deploy') }}/tripleo_heat_envs"
+      ooo_tarball_dir: "{{ working_yamls_dir }}/{{ custom_config_name|default('deploy') }}/tripleo_deploy_tarball"
+      heat_env_cm: heat-env-config-{{ custom_config_name|default('deploy') }}
+      tripleo_tarball_cm: tripleo-tarball-config-{{ custom_config_name|default('deploy') }}
 
   - name: Make sure to cleanup previous yaml dirs
     file:
@@ -57,18 +59,16 @@
 
   - name: create heat-env-config ConfigMap
     shell: |
-      oc create configmap -n openstack heat-env-config --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
+      oc create configmap -n openstack {{heat_env_cm}} --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: copy tripleo-tarball-config {{ osp.release }} custom tripleo tarball files
+  - name: copy {{tripleo_tarball_cm}} {{ osp.release }} custom tripleo tarball files
     copy:
-      src: "{{ item }}"
+      src: "osp/{{ osp.release }}/"
       dest: "{{ ooo_tarball_dir }}/"
       mode: '0644'
-    with_fileglob:
-    - osp/{{ osp.release }}/*
 
   # enable osp tarball extra features
   - include_tasks: extrafeature_tarball_config.yaml
@@ -78,7 +78,7 @@
     loop_control:
       loop_var: feature
 
-  - name: render tripleo-tarball-config templates to yaml dir
+  - name: render {{tripleo_tarball_cm}} templates to yaml dir
     template:
       src: "{{ item }}"
       dest: "{{ ooo_tarball_dir }}/{{ item | basename | splitext | first }}"
@@ -86,11 +86,11 @@
     with_fileglob:
     - "templates/osp/tripleo_tarball_config/{{ osp.release }}/*.j2"
 
-  - name: create tripleo-tarball-config ConfigMap with tarball
+  - name: create {{tripleo_tarball_cm}} ConfigMap with tarball
     shell: |
       cd {{ ooo_tarball_dir }}
       tar -cvzf tarball-config.tar.gz *
-      oc create configmap -n openstack tripleo-tarball-config --from-file=tarball-config.tar.gz --dry-run -o yaml | oc apply -f -
+      oc create configmap -n openstack {{tripleo_tarball_cm}} --from-file=tarball-config.tar.gz --dry-run -o yaml | oc apply -f -
       rm tarball-config.tar.gz
     environment:
       <<: *oc_env
