@@ -101,7 +101,7 @@ ocp_ai: true
 ocp_num_workers: 0
 ocp_master_memory: 40000
 ocp_master_vcpu: 12
-ocp_master_disk: 50
+ocp_master_disk: 120
 ```
 
 Note that `ocp_num_extra_workers` still defaults to 2 in `vars/default.yaml`, meaning 2 extra VMs will be created
@@ -127,7 +127,13 @@ ocp_bm_interface: <some interface>
 ```
 
 Furthermore, it should be noted that all baremetal node BMC endpoints must be routable from the provisioning
-host.  Additionally, "extra" baremetal workers (those to be used as OSP computes) must be connected to a layer 2
+host.  The interface on the provisioning host that is able to reach the baremetal node BMCs must be specified:
+
+```
+ocp_bmc_interface: <some interface>
+```
+
+Additionally, "extra" baremetal workers (those to be used as OSP computes) must be connected to a layer 2
 provisioning network that the OCP masters also can reach, as this is needed for provisioning purposes by Metal3.
 
 Assuming network considerations have been accounted for, one can then set the `ocp_num_(masters|workers|extra_workers)` 
@@ -172,7 +178,7 @@ ocp_bm_extra_workers:
   worker-2:
     vendor: somevendor          # (see vendor note above)
     bm_mac: XX:XX:XX:XX:XX:XX   # optional, if for some reason the OSP compute needs an assigned IP on the OCP network
-    prov_mac: XX:XX:XX:XX:XX:XX # extra workers use Metal3, which uses provisioning network MAC
+    prov_mac: XX:XX:XX:XX:XX:XX # extra workers use Metal3 -- node's MAC for interface on OCP provisioning network
     bmc_protocol: someprotocol  # extra workers use Metal3, which need this extra detail (this is related to vendor, 
                                 # but is not necessarily deterministic -- thus we require you to explicitly provide it)
     bmc_address: X.X.X.X        # Node's BMC endpoint
@@ -186,6 +192,82 @@ ocp_bm_extra_workers:
 It is possible to mix virtual and baremetal nodes, but not within the same role (masters or workers).  You could,
 for instance, set `ocp_num_masters: 3` and then define `ocp_bm_workers` if you wanted a virtual control plane
 for OCP but baremetal for any hosted workload.
+
+#### Hybrid install via AI
+
+Hybrid installs involve deploying a virtualized OCP cluster along with baremetal computes ("extra workers")
+for use in a deployed OSP cloud.
+
+If you wish to deploy a hybrid environment, using AI is required:
+
+```
+ocp_ai: true
+```
+
+All "extra worker" baremetal OSP compute nodes must be connected to a layer 2 provisioning network that the OCP
+masters also can reach, as this is needed for provisioning purposes by Metal3.  A provisioning host interface must
+be provided that allows access to this provisioning network:
+
+```
+ocp_bm_prov_interface: <some interface>
+```
+
+Furthermore, it should be noted that all baremetal OSP compute BMC endpoints must be routable from the
+provisioning host.  The interface on the provisioning host that is able to reach the baremetal node BMCs
+must be specified:
+
+```
+ocp_bmc_interface: <some interface>
+```
+
+The provisioning host must also provide network access to layer 2 network that will serve as the OSP network.
+This allows the OSP CNV controllers to connect with the OSP baremetal computes for API, storage, tenant, etc 
+traffic:
+
+```
+osp_bm_interface: <some interface>
+```
+
+Finally, from a networking perspective, an interface on the provisioning host must be provided that allows
+connectivity with a routable network that serves as the OSP external network.  OSP CNV controllers running on
+the OCP master/workers will use this to connect to the baremetal OSP compute external interfaces (and vice
+versa) to allow for OSP floating IP functionality:
+
+```
+osp_ext_bm_interface: <some interface>
+```
+
+Assuming network considerations have been accounted for, set virtual OCP master/workers as needed:
+
+```
+ocp_num_masters: 3
+ocp_num_workers: 0..N
+```
+
+Make sure to set OSP virtual compute count to `0`:
+
+```
+ocp_num_extra_workers: 0
+```
+
+Then declare the baremetal OSP computes:
+
+```
+ocp_bm_extra_workers:
+  worker-<ocp_num_workers+1>:
+    vendor: somevendor          # Node's vendor (a general idea of supported vendors can be sussed-out here):
+                                # https://github.com/redhat-partner-solutions/crucible/tree/main/roles/boot_iso/tasks
+    bm_mac: XX:XX:XX:XX:XX:XX   # optional, if for some reason the OSP compute needs an assigned IP on the OCP network
+    prov_mac: XX:XX:XX:XX:XX:XX # extra workers use Metal3 -- node's MAC for interface on OCP provisioning network
+    bmc_protocol: someprotocol  # extra workers use Metal3, which need this extra detail (this is related to vendor,
+                                # but is not necessarily deterministic -- thus we require you to explicitly provide it)
+    bmc_address: X.X.X.X        # Node's BMC endpoint
+    bmc_username: username      # Node's BMC username
+    bmc_password: password      # Node's BMC password
+    root_device: /dev/sda       # optional, defaults to /dev/sda
+  worker-<ocp_num_workers+2>:
+    ...
+```
 
 ### Install all steps using the Makefile
 

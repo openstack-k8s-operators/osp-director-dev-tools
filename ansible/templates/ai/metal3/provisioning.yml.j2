@@ -7,6 +7,6 @@ metadata:
 spec:
   provisioningDHCPRange: 172.22.0.10,172.22.0.50
   provisioningIP: 172.22.0.3
-  provisioningInterface: {{ ocp_ai_prov_interface }}
+  provisioningInterface: {{ ocp_ai_prov_interface if ocp_bm_masters|default({})|length > 0 else "enp1s0" }}
   provisioningNetwork: Managed
   provisioningNetworkCIDR: 172.22.0.0/24
