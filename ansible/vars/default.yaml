@@ -177,7 +177,7 @@ sriov_version: "{{ ocp_version }}"
 perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
-cnv_hyperconverged_operator_version: 4.8.4
+cnv_hyperconverged_operator_version: "{{ {'4.10':'4.10.1', '4.9':'4.9.4', '4.8':'4.8.6'}.get(ocp_version|string) }}"
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile

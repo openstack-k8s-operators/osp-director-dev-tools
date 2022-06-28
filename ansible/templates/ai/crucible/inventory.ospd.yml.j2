@@ -113,9 +113,12 @@ all:
         # - 02-fix-ingress-config.yml     # Applying this fix breaks the ingress controller on SNO.
         # - 01-master-node-scheduler.yml  # The master node on SNO is automatically marked as schedulable.
       full:
+{% for ocp_node_role in ocp_node_roles %}
+        - 50-{{ ocp_node_role }}-RH-Root-CA.yml
+{% endfor %}
         - 50-worker-nm-fix-ipv6.yml
         - 50-worker-remove-ipi-leftovers.yml
-        # - 02-fix-ingress-config.yml
+        - 02-fix-ingress-config.yml
         - 01-master-node-scheduler.yml
 
     # The retrieved cluster kubeconfig will be placed on the bastion host at the following location
