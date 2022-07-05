@@ -89,11 +89,23 @@ ocp_storage_data_dir: /home/local_storage/data
 #
 
 # Which interface on the prov host will be attached to the OCP baremetal
-# bridge to establish connectivity with the baremetal nodes' network
+# bridge to establish connectivity with the baremetal nodes' OCP network
 ocp_bm_interface: ""
+
+# Which interface on the prov host will be attached to the OCP provisioning
+# bridge to establish connectivity with the baremetal nodes' provisioning network
+ocp_bm_prov_interface: ""
 
 # Which interface on the prov host has connectivity to BMCs on baremetal nodes
 ocp_bmc_interface: ""
+
+# Which interface on the prov host will be attached to the OSP network bridge
+# to establish connectivity with other baremetal machines on the OSP network
+osp_bm_interface: ""
+
+# Which interface on the prov will be attached to the OSP external network bridge
+# to establish connectivity with other baremetal machines on the OSP external network
+osp_ext_bm_interface: ""
 
 ocp_bm_masters: {}
 # ocp_bm_masters:
@@ -277,6 +289,12 @@ external_dns:
   - 10.38.5.26
   - 10.10.160.2
   - 10.5.30.160
+
+# Set this to the empty string if you don't want an IP placed on the "external"
+# bridge (used for OpenStack) created by this tool.  By default this should be
+# here for virtualized all-in-one deployments, as the default OSP templates included
+# with this tool use this IP on the "external" bridge as the external network gateway
+osp_ext_bridge_ip: 10.0.0.1/24
 
 osp_defaults:
   release: "{{ osp_release_auto.release }}"

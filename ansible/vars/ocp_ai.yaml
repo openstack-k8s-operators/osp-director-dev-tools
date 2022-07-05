@@ -10,7 +10,8 @@ ocp_ai_bm_bridge_worker_mac_prefix: 3c:fd:fe:78:ab:1
 ocp_ai_prov_bridge_master_mac_prefix: 3c:fd:fe:78:cd:0
 ocp_ai_prov_bridge_worker_mac_prefix: 3c:fd:fe:78:cd:1
 
-# Metal3 provisioning interface on OCP nodes
+# Metal3 provisioning interface on BM OCP nodes (used in Metal3 Provisioning CR
+# for BM OCP masters, otherwise ignored)
 ocp_ai_prov_interface: enp1s0
 
 # ocp_ai_sushy_port: defaults to "8082"

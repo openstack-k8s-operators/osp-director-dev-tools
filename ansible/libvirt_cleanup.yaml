@@ -6,21 +6,6 @@
   - name: Include variables
     include_vars: vars/default.yaml
 
-  - name: Remove ospnetwork libvirt network
-    shell: |
-      virsh net-destroy ospnetwork
-      virsh net-undefine ospnetwork
-      virsh net-destroy external
-      virsh net-undefine external
-      for i in $(nmcli c s | egrep 'external|ospnetwork'| awk '{print $2}'); do nmcli c delete $i; done
-    ignore_errors: true
-
-  # only required now for cleanup existing envs without redeploy, could be removed soon
-  - name: make sure libvirt network script is gone
-    file:
-      path: /etc/libvirt/hooks/network
-      state: absent
-
   - name: Remove libvirt data disks (if any)
     file:
       path: "{{ ocp_storage_data_dir }}"
