@@ -31,11 +31,13 @@
                     - - default: true
                         next_hop:
                           get_param: ControlPlaneDefaultRoute
-              # Disable OCP cluster interface
-              - type: interface
+              # set first nic for sriov
+              - type: sriov_pf
                 name: ens1f0
+                numvfs: 10
+                promisc: true
                 use_dhcp: false
-                defroute: no
+                defroute: false
               - type: ovs_bridge
                 name: br-tenant
                 mtu:
