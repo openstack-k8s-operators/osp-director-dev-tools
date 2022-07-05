@@ -857,7 +857,6 @@
 - name: ComputeSriov
   description: |
     Compute SR-IOV Role
-  CountDefault: 1
   networks:
     InternalApi:
       subnet: internal_api_subnet
@@ -924,7 +923,6 @@
   description: |
     Controller role that has all the controler services loaded and handles
     Database, Messaging and Network functions.
-  CountDefault: 1
   tags:
     - primary
     - controller

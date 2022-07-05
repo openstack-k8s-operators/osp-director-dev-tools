@@ -15,6 +15,8 @@ ocp_master_disk: 100
 osp_release_defaults:
   networks: ipv4_subnet
   vmset:
+    Controller:
+      count: 0    
     ControllerSriov:
       count: 3
       cores: 6
@@ -33,10 +35,13 @@ osp_release_defaults:
         storage_volume_mode: Filesystem
   # OSP compute OCP worker settings
   bmset:
+    Compute:
+        # number of OCP worker nodes should be OSP compute hosts
+        count: 0
     ComputeSriov:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
-      ctlplane_interface: enp1s0
+      ctlplane_interface: ens1f1
       networks:
         - ctlplane
         - internal_api
@@ -78,6 +83,8 @@ osp_release_defaults:
         interface: enp6s0
         mtu: 1500
   networks: ipv4
+    extrafeatures:
+          - nfv
   ovn_bridge_mac_mappings:
     phys_networks:
     - name: datacentre

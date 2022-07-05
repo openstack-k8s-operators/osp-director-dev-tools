@@ -2,16 +2,13 @@
 parameter_defaults:
 
     ComputeSriovParameters:
-    NovaPCIPassthrough:
-        devname: "ensp1f0"
-        trusted: "true"
-        physical_network: "sriov-1"
-    
-    NeutronPhysicalDevMappings: 
-        - "sriov-1:enp6s0f2" 
-        - "sriov-2:enp6s0f3" 
-        - "sriov-mlx-1:enp4s0f0" 
-        - "sriov-mlx-2:enp4s0f1"
+        NovaPCIPassthrough:
+            devname: "ensp1f0"
+            trusted: "true"
+            physical_network: "sriov-1"
+        
+        NeutronPhysicalDevMappings: 
+            - "sriov-1:ensp1f0" 
 
     NovaSchedulerDefaultFilters:
     - "RetryFilter"
@@ -25,4 +22,4 @@ parameter_defaults:
     - "NUMATopologyFilter"
     - "AggregateInstanceExtraSpecsFilter"
 
--e /usr/share/openstack-tripleo-heat-templates/environments/services/neutron-ovn-sriov.yam
+#openstackconfiggenerator.yaml.j2 handled by a condition at that file
