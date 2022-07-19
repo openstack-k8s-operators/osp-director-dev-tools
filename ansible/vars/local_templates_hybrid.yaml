@@ -68,16 +68,3 @@ ocp_bm_extra_workers:
     bmc_address: 10.46.2.226
     bmc_username: root
     bmc_password: calvin
-
-osp_release_defaults:
-  bmset:
-    Compute:
-      # number of OCP worker nodes should be OSP compute hosts
-      count: 2
-      ctlplane_interface: ens1f2
-      networks:
-        - ctlplane
-        - internal_api
-        - tenant
-        - storage
-  networks: ipv4_hybrid

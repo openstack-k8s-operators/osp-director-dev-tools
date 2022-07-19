@@ -3,7 +3,6 @@ openstackclient_networks:
   - ctlplane
   - external
   - internal_api
-  - internal_api_leaf1
 
 enable_fencing: true
 
@@ -82,7 +81,7 @@ osp_release_defaults:
         name: br-ex
         interface: enp6s0
         mtu: 1500
-  networks: ipv4
+  networks: ipv4_hybrid
   extrafeatures:
         - nfv
   ovn_bridge_mac_mappings:
