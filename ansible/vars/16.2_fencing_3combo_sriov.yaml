@@ -83,8 +83,8 @@ osp_release_defaults:
         interface: enp6s0
         mtu: 1500
   networks: ipv4
-    extrafeatures:
-          - nfv
+  extrafeatures:
+        - nfv
   ovn_bridge_mac_mappings:
     phys_networks:
     - name: datacentre
