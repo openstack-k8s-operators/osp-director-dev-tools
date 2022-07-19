@@ -40,7 +40,7 @@ osp_release_defaults:
     ComputeSriov:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
-      ctlplane_interface: ens1f1
+      ctlplane_interface: ens1f2
       networks:
         - ctlplane
         - internal_api
