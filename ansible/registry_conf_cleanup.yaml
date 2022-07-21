@@ -8,22 +8,3 @@
     file:
       path: /etc/containers/registries.conf.d/osp-director-dev-tools.conf
       state: absent
-
-  # TODO: Remove me soon, keep it for a while to clean up existing deployments
-  - name: remove custom insecure registies entries in /etc/containers/registries.conf
-    when: podman_insecure_registries is defined
-    block:
-    - name: generate _registries string
-      set_fact:
-        _registries: "'{{ \"', '\".join(podman_insecure_registries)}}'"
-
-    - name: "remove {{ _registries }} from registries.insecure"
-      become: true
-      become_user: root
-      community.general.ini_file:
-        path: /etc/containers/registries.conf
-        section: registries.insecure
-        option: registries
-        value: "[{{ _registries }}]"
-        state: absent
-        exclusive: yes
