@@ -1,5 +1,1 @@
-resource_registry:
-  # using modular libvirt on OSP17.0 RHEL8 fails in virtqemud with "error : remoteSecretGetValue:5397 : internal error: no internalFlags support"
-  # from discussion with <danpb> this is a  bug in libvirt with modular daemons that we fixed a while ago and is not being fixed in RHEL8 because modular libvirt is there only tech preview
-  # until we have RHEL9 lets switch back to monolithic libvirtd
-  OS::TripleO::Services::NovaLibvirt: deployment/deprecated/nova/nova-libvirt-container-puppet.yaml
+#resource_registry:
