@@ -86,7 +86,8 @@
       ip addr flush dev ospnetwork.{{ item.1.vlan }}
       ip addr add {{ item.1.ipv4.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
       ip link set ospnetwork.{{ item.1.vlan }} up
-      firewall-cmd --zone=libvirt --change-interface=ospnetwork.{{ item.1.vlan }}
+      firewall-cmd --zone=trusted --change-interface=ospnetwork.{{ item.1.vlan }}
+      firewall-cmd --zone=trusted --add-source={{ item.1.ipv4.cidr }}
       iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
     with_subelements:
     - "{{ osp_networks }}"
@@ -110,7 +111,8 @@
       ip addr flush dev ospnetwork.{{ item.1.vlan }}
       ip addr add {{ item.1.ipv6.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
       ip link set ospnetwork.{{ item.1.vlan }} up
-      firewall-cmd --zone=libvirt --change-interface=ospnetwork.{{ item.1.vlan }}
+      firewall-cmd --zone=trusted --change-interface=ospnetwork.{{ item.1.vlan }}
+      firewall-cmd --zone=trusted --add-source={{ item.1.ipv6.cidr }}
       ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
     args:
       executable: /bin/bash
