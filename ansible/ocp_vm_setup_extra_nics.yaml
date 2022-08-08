@@ -113,6 +113,18 @@
           value: '2'
           sysctl_file: /etc/sysctl.d/90-network.conf
 
+      - name: enable ipv4 forwarding
+        sysctl:
+          name: net.ipv4.ip_forward
+          value: '1'
+          sysctl_file: /etc/sysctl.d/90-network.conf
+
+      - name: enable ipv6 forwarding
+        sysctl:
+          name: net.ipv6.conf.all.forwarding
+          value: '1'
+          sysctl_file: /etc/sysctl.d/90-network.conf
+
       - name: Reload bridges
         shell: |
           /usr/bin/nmcli con reload {{ item }}; /usr/bin/nmcli con up {{ item }}
