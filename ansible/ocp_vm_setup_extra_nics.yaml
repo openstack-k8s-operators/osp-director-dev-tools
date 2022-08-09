@@ -70,16 +70,17 @@
           ifname: "external"
           autoconnect: yes
           stp: off
-          ip4: "{{ osp_ext_bridge_ip }}"
+          ip4: "{{ osp_ext_bridge_ip4 }}"
+          ip6: "{{ osp_ext_bridge_ip6 }}"
           state: present
-        when: osp_ext_bridge_ip|default != ""
+        when: osp_ext_bridge_ip4|default != ""
 
       - name: Create osp external bridge (if IP unset)
         shell: |
           /usr/bin/nmcli connection add ifname external type bridge con-name external stp no ipv4.method disabled ipv6.method disabled
         register: add_external_bridge
         failed_when: add_external_bridge.stderr != '' and 'There is another connection with the name' not in add_external_bridge.stderr
-        when: osp_ext_bridge_ip|default == ""
+        when: osp_ext_bridge_ip4|default == ""
 
       - name: Handle external interface, if necessary
         when: osp_ext_bm_interface is defined and osp_ext_bm_interface != ""
