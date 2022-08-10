@@ -302,7 +302,8 @@ external_dns:
 # bridge (used for OpenStack) created by this tool.  By default this should be
 # here for virtualized all-in-one deployments, as the default OSP templates included
 # with this tool use this IP on the "external" bridge as the external network gateway
-osp_ext_bridge_ip: 10.0.0.1/24
+osp_ext_bridge_ip4: 10.0.0.1/24
+osp_ext_bridge_ip6: 2001:db8:fd00:1000::1/64
 
 osp_defaults:
   release: "{{ osp_release_auto.release }}"
