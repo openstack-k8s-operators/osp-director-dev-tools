@@ -9,6 +9,7 @@ parameter_defaults:
         IsolCpusList: "0-80"
         NeutronPhysicalDevMappings: 
             - "sriov-1:ensp1f0" 
+        NeutronBridgeMappings: "sriov-1:br-sriov1"
 
     NovaSchedulerDefaultFilters:
     - "RetryFilter"
