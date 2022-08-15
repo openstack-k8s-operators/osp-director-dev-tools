@@ -1,0 +1,9 @@
+{% for node in oc_nodes %}
+Host {{ node.name }}
+ Hostname {{ node.ip }}
+ IdentityFile /home/cloud-admin/.ssh/id_rsa
+ User cloud-admin
+ StrictHostKeyChecking no
+ UserKnownHostsFile=/dev/null
+
+{% endfor %}
