@@ -1,0 +1,18 @@
+{% for node.name in oc_nodes %}
+{{ node.name }} ansible_host={{ node.name }} ansible_user=cloud-admin ansible_private_key_file=/home/cloud-admin/.ssh/id_rsa
+{% endfor %}
+
+[controller]
+{% for node in osp_controllers %}
+{{ node.name }}
+{% endfor %}
+
+[compute]
+{% for node in osp_computes %}
+{{ node.name }}
+{% endfor %}
+
+[overcloud_nodes]
+{% for node in oc_nodes %}
+{{ node.name }}
+{% endfor %}
