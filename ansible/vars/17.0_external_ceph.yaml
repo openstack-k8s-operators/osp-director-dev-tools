@@ -1,6 +1,6 @@
 ---
 osp_release_auto_version: 17.0-RHEL-9
-osp_release_auto_compose: passed_phase1
+osp_release_auto_compose: passed_phase2
 ephemeral_heat:
   heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
   heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
