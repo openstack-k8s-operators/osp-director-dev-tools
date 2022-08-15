@@ -1,0 +1,251 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  - name: Set sts yaml facts
+    set_fact:
+      sts_yaml_dir: "{{ working_yamls_dir }}/sts"
+      sts_working_dir: "{{ working_dir }}/sts"
+
+  - name: show yaml output dir
+    debug:
+      msg:
+      - "sts yamls will be written to {{ sts_yaml_dir }} locally"
+      - "sts config will be written to {{ sts_working_dir }} locally"
+
+  - name: Clean directories
+    file:
+      state: absent
+      path: "{{ item }}/"
+    with_items:
+    - "{{ sts_yaml_dir }}"
+    - "{{ sts_working_dir }}"
+
+  - name: Create sts directories
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: '0755'
+    with_items:
+    - "{{ sts_yaml_dir }}"
+    - "{{ sts_working_dir }}"
+
+  - name: render sts osclient to {{ sts_yaml_dir }} dir
+    vars:
+      os_password: "{{ os_password_ret.stdout }}"
+    template:
+      src: "sts/sts_openstackclient.yaml.j2"
+      dest: "{{ sts_yaml_dir }}/sts_openstackclient.yaml"
+      mode: '0644'
+
+  - name: get controllers name and IP list
+  - name: get compute name and IP list
+  - name: set oc_nodes list
+
+
+  - name: render sts working templates to {{ sts_working_dir }}
+    vars:
+      os_password: "{{ os_password_ret.stdout }}"
+    template:
+      src: "sts/{{ item }}.j2"
+      dest: "{{ sts_working_dir }}/{{ item }}"
+      mode: '0644'
+    with_items:
+    - ansible_ha.env
+    - ansible.cfg
+    - hosts
+    - ssh.config.ansible
+
+  - name: create sts osclient
+    shell: |
+      if oc get -n openstack osclient/sts; then
+        oc delete -n openstack osclient sts
+      fi
+      oc apply -f {{ sts_yaml_dir }}/sts_openstackclient.yaml
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: wait for sts pod in ready state
+    shell: |
+      oc wait pod -n openstack sts --for condition=Ready --timeout="{{ tempest_timeout }}s"
+    environment:
+      <<: *oc_env
+    retries: 12
+    delay: 10
+    register: pod_result
+    until: pod_result.rc == 0
+
+  - name: prepare config and run sts
+    when: pod_result.rc == 0
+    block:
+    - name: get clouds.yaml from openstackclient pod
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp -n openstack openstackclient:{{ sts_home_dir }}/.config/openstack/clouds.yaml {{ sts_working_dir }}/clouds.yaml
+      environment:
+        <<: *oc_env
+
+    - name: Create cloud-admin user on sts pod
+      shell: |
+        #!/bin/bash
+        set -e
+        oc rsh -n openstack sts cat /etc/passwd | grep cloud-admin || sudo useradd -m -p redhat -s /bin/bash cloud-admin
+      environment:
+        <<: *oc_env
+
+    - name: Add IPA CA cert
+      when: osp.tlse|default(false)|bool and not osp.tls_public_endpoints
+      shell: |
+        #!/bin/bash
+        set -e
+        /usr/bin/cp -f /opt/freeipa/data/etc/ipa/ca.crt {{ sts_working_dir }}/ca.crt
+        sed -i -e 's!\(\s*cacert:\).*!\1 {{ sts_home_dir }}/.config/openstack/ca.crt!' {{ sts_working_dir }}/clouds.yaml
+      environment:
+        <<: *oc_env
+
+    - name: create .ssh and /var/lib/tempest/.config/openstack directory and copy clouds.yaml
+      shell: |
+        #!/bin/bash
+        set -e
+        oc rsh -n openstack sts mkdir -p /var/lib/tempest/.config/openstack
+        oc rsh -n openstack sts mkdir -p /home/cloud-admin/.ssh/
+        oc cp -n openstack {{ sts_working_dir }}/clouds.yaml sts:/var/lib/tempest/.config/openstack/clouds.yaml
+        test -e {{ sts_working_dir }}/ca.crt && oc cp -n openstack {{ sts_working_dir }}/ca.crt sts:/var/lib/tempest/.config/openstack/ca.crt || true
+      environment:
+        <<: *oc_env
+
+    - name: copy rendered sts config
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp -n openstack {{ sts_working_dir }}/{{ item }} sts:{{ sts_home_dir }}/{{ item }}
+      environment:
+        <<: *oc_env
+      with_items:
+      - ansible_ha.env
+      - ansible.cfg
+      - hosts
+      - ssh.config.ansible
+
+    #- name: Test overcloud hosts connectivity with hostnames
+    #  shell: |
+    #    #!/bin/bash
+    #    set -e
+    #    oc rsh -n openstack sts ping controller-0
+    #  environment:
+    #    <<: *oc_env
+    #  register: hosts_result
+    #  ignore_errors: yes
+
+    #- name: Copy overcloud hosts to sts pod
+    #  when: hosts_result.rc != 0
+    #  block:
+    - name: Copy hosts and ssh key file from openstackclient pod to localhost
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp openstack/openstackclient:{{ item.remote_src }} {{ item.local_dst }}
+      environment:
+        <<: *oc_env
+      with_items:
+        - { remote_src: '/etc/hosts', local_dst: '/tmp/openstackclient_hosts' }
+        - { remote_src: '/home/cloud-admin/.ssh/id_rsa', local_dst: '/tmp/openstackclient_key' }
+
+    - name: Copy openstackclient hosts file from localhost to sts pod
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp {{ item.local_src }} openstack/sts:{{ item.remote_dst }}
+      environment:
+        <<: *oc_env
+      with_items:
+        - { local_src: '/tmp/openstackclient_hosts', remote_dst: '/tmp/openstackclient_hosts' }
+        - { local_src: '/tmp/openstackclient_key', remote_dst: '/home/cloud-admin/.ssh/id_rsa' }
+
+    - name: Append openstackclient hosts to sts hosts file
+      shell: |
+        #!/bin/bash
+        set -e
+        oc exec -n openstack sts -- bash -c "awk '/START_HOST_ENTRIES_FOR_STACK/{a=1}/END_HOST_ENTRIES_FOR_STACK/{print;a=0}a' /tmp/openstackclient_hosts >> /etc/hosts"
+      environment:
+        <<: *oc_env
+
+    - name: Edit ssh key file permission
+      shell: |
+        #!/bin/bash
+        set -e
+        oc exec -n openstack sts -- bash -c "sudo chmod 600 /home/cloud-admin/.ssh/id_rsa"
+        oc exec -n openstack sts -- bash -c "sudo chown cloud-admin:cloud-admin /home/cloud-admin/.ssh/id_rsa"
+      environment:
+        <<: *oc_env
+
+    - name: clone sts repository
+      shell: |
+        #!/bin/bash
+        oc exec -n openstack sts -- bash -c "rm -rf "{{ sts_home_dir }}/openstack-pidone-qe""
+        oc exec -n openstack sts -- bash -c "pushd "{{ sts_home_dir }}/" && git clone -c http.sslVerify=false {{ sts_repo_url }}"
+      ignore_errors: true
+
+    - name: Copy sts operator dir content
+      shell: |
+        #!/bin/bash
+        set -e
+        oc exec -n openstack sts -- bash -c "cp -av {{ sts_operator_test_dir }}/* {{ sts_home_dir }}"
+      environment:
+        <<: *oc_env
+
+    - name: Install rhos-release and ansible
+      shell: |
+        #!/bin/bash
+        set -e
+        oc rsh -n openstack sts sudo yum install -y http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+        oc rsh -n openstack sts sudo rhos-release -O 16.2
+        oc rsh -n openstack sts sudo yum install -y ansible
+      environment:
+        <<: *oc_env
+
+    - name: Run sts, the output gets logged at {{ working_log_dir }}/sts.log
+      shell: |
+        #!/bin/bash
+        set -e
+        oc exec -n openstack sts -- bash -c "pushd "{{ sts_home_dir }}/" ; sudo -H -u cloud-admin bash -c 'source ansible_ha.env && timeout {{ osp.deploy_timeout }} sh osp_operator_sanity_run.sh'" > {{ working_log_dir }}/sts.log 2>&1
+      environment:
+        <<: *oc_env
+      ignore_errors: true
+      register: sts_run
+
+    - name: Get sts summary
+      shell: |
+        #!/bin/bash
+        set -e
+        sed -n '/^Totals/,$p' {{ working_log_dir }}/sts.log
+      register: sts_summary
+
+    - name: Get failed sts tests
+      shell: |
+        #!/bin/bash
+        set -e
+        grep FAILED {{ working_log_dir }}/sts.log || true
+      register: sts_failed
+
+    - name: sts run summary
+      debug:
+        msg: "{{ sts_summary.stdout.split('\n') }}"
+
+    - name: sts failed tests
+      debug:
+        msg: "{{ sts_failed.stdout.split('\n') }}"
+
+    - name: Fail playbook if sts run failed or timed out
+      fail:
+        msg: sts run failed or timed out, check output {{ working_log_dir }}/sts.log
+      when: sts_run.rc == 1 or sts_failed.stdout | length != 0

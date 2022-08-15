@@ -27,7 +27,7 @@ ocp_release_type: ga
 # - Other OCP AI variables are stored in vars/ocp_ai.yaml to reduce clutter in this file
 # NOTE: This variable should be set to true in local-defaults.yaml as opposed to changing it here,
 #       otherwise our playbooks seem to be flaky with executing the AI logic
-#ocp_ai: false 
+#ocp_ai: false
 
 # private repo to read required secret files from
 # The playbooks expect secret files which can be placed in a private repo
@@ -215,6 +215,12 @@ csv_version: latest
 
 #ocp_network_type: OVNKubernetes
 ocp_network_type: OpenShiftSDN
+
+# ansible-sts test suite repo url
+sts_repo_url: https://code.engineering.redhat.com/gerrit/openstack-pidone-qe
+
+# home dir for sts pod
+sts_home_dir: /home/cloud-admin
 
 # image used to run tempest
 tempest_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tempest:{{ osp_defaults.container_tag }}"
