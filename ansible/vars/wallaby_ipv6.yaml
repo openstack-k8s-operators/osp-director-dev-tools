@@ -37,7 +37,7 @@ tempest_test_dict:
 tempest_enable_feature_dict:
   network:
     # The cidr block to allocate project ipv6 subnets from (string value)
-    project_network_v6_cidr: 2001:db8:fd00:6000::/64
+    project_network_v6_cidr: 2001:db8:fd01::/48
     # The mask bits for project ipv6 subnets (integer value)
     project_network_v6_mask_bits: 64
   network-feature-enabled:
