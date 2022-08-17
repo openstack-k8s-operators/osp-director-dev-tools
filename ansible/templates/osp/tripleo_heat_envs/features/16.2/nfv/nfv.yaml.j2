@@ -3,7 +3,7 @@ parameter_defaults:
 
     ComputeSriovParameters:
         NovaPCIPassthrough:
-            devname: "ens1f0"
+          - devname: "ens1f0"
             trusted: "true"
             physical_network: "sriov-1"
         IsolCpusList: "0-80"
