@@ -46,6 +46,6 @@ tempest_enable_feature_dict:
   compute-feature-enabled:
     vnc_console: true
     live_migration: true
-    block_migration_for_live_migration: true
+    block_migration_for_live_migration: false
     volume_backed_live_migration: true
     console_output: true

@@ -61,3 +61,12 @@ tempest_test_dict:
       - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+
+# disable block_migration_for_live_migration: false
+tempest_enable_feature_dict:
+  compute-feature-enabled:
+    vnc_console: true
+    live_migration: true
+    block_migration_for_live_migration: false
+    volume_backed_live_migration: true
+    console_output: true
