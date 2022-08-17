@@ -44,10 +44,9 @@ $TEMPESTCONF \
   --create \
   --network-id ${PUB_NETWORK_ID} \
 {% if tempest_disable_feature_dict is defined and tempest_disable_feature_dict|length %}
-  --remove \
 {% for component, features in tempest_disable_feature_dict.items() %}
 {% for feature, setting in features.items() %}
-  {{ component }}.{{ feature }} {{ setting }} \
+  --remove {{ component }}.{{ feature }} {{ setting }} \
 {% endfor %}
 {% endfor %}
 {% endif %}
