@@ -91,7 +91,7 @@
         failed_when: dev_scripts_br_rm.stderr != "" and "no network with matching name" not in dev_scripts_br_rm.stderr and "is not active" not in dev_scripts_br_rm.stderr
 
       - name: Delete existing bridges (if any)
-        community.general.nmcli:
+        nmcli:
           conn_name: "{{ item }}"
           type: bridge
           state: absent
@@ -134,7 +134,7 @@
           - "{{ osp_ext_bm_interface }}"
 
       - name: Create BM bridge
-        community.general.nmcli:
+        nmcli:
           conn_name: "{{ ocp_cluster_name }}bm"
           type: bridge
           ifname: "{{ ocp_cluster_name }}bm"
@@ -154,7 +154,7 @@
           failed_when: bm_intf_down.stderr != "" and "no active connection provided" not in bm_intf_down.stderr
 
         - name: Add BM interface to BM bridge
-          community.general.nmcli:
+          nmcli:
             conn_name: "bridge-slave-{{ ocp_bm_interface }}"
             type: bridge-slave
             ifname: "{{ ocp_bm_interface }}"
@@ -164,7 +164,7 @@
             state: present
 
       - name: Create provisioning bridge
-        community.general.nmcli:
+        nmcli:
           conn_name: "{{ ocp_cluster_name }}pr"
           type: bridge
           ifname: "{{ ocp_cluster_name }}pr"
