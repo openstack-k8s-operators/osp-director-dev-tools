@@ -84,12 +84,6 @@ tempest_enable_feature_dict:
   network:
     # The cidr block to allocate project ipv6 subnets from (string value)
     project_network_v6_cidr: 2001:db8:fd01::/48
-    # The mask bits for project ipv6 subnets (integer value)
-    project_network_v6_mask_bits: 64
-  network-feature-enabled:
-    ipv6: true
-    # with ipv6 only external network there are no floating ips
-    floating_ips: false
   compute-feature-enabled:
     vnc_console: true
     live_migration: true
