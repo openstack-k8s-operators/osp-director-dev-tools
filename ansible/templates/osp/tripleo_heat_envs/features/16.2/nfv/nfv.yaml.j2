@@ -3,12 +3,12 @@ parameter_defaults:
 
     ComputeSriovParameters:
         NovaPCIPassthrough:
-            devname: "ensp1f0"
+            devname: "ens1f0"
             trusted: "true"
             physical_network: "sriov-1"
         IsolCpusList: "0-80"
         NeutronPhysicalDevMappings: 
-            - "sriov-1:ensp1f0" 
+            - "sriov-1:ens1f0" 
     NeutronBridgeMappings: "sriov-1:br-sriov1"
 
     NovaSchedulerDefaultFilters:
