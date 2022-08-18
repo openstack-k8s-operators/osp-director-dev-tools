@@ -430,7 +430,7 @@ osp_rhel_subscription_repos:
 # NOTE: Only AI deployments currently support OCS, so even if "enable_ocs" is set to true for
 #       a dev-scripts deployment, it will not be honored
 enable_ocs: false
-ocs_version: "{{ 4.8 if ocp_version >= 4.8 else ocp_version }}"
+ocs_version: "{{ 4.10 if ocp_version >= 4.10 else ocp_version }}"
 
 # Virtualized SRIOV (for dev/test)
 enable_virt_sriov: false
