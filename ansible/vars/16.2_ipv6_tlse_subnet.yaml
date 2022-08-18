@@ -96,6 +96,8 @@ tempest_test_dict:
       - "^tempest.scenario.test_security_groups_basic_ops.TestSecurityGroupsBasicOps.test_cross_tenant_traffic"
       - "^tempest.scenario.test_security_groups_basic_ops.TestSecurityGroupsBasicOps.test_in_tenant_traffic"
       - "^tempest.scenario.test_server_basic_ops.TestServerBasicOps.test_server_basic_ops"
+      - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeTest.test_router_set_gateway_used_ip_returns_409"
+      - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeIpV6Test.test_router_set_gateway_used_ip_returns_409"
 
 tempest_enable_feature_dict:
   network:
