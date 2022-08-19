@@ -51,32 +51,13 @@ osp_release_defaults:
   - hci
   - ipv6
 
-# phase2 tempest tests
-tempest_test_dict:
-  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
-  includelist: []
-  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
-  excludelist:
-      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
-
 tempest_enable_feature_dict:
   network:
     # The cidr block to allocate project ipv6 subnets from (string value)
-    project_network_v6_cidr: 2001:db8:fd00:6000::/64
-    # The mask bits for project ipv6 subnets (integer value)
-    project_network_v6_mask_bits: 64
-  network-feature-enabled:
-    ipv6: true
-    # with ipv6 only external network there are no floating ips
-    floating_ips: false
+    project_network_v6_cidr: 2001:db8:fd01::/48
   compute-feature-enabled:
     vnc_console: true
     live_migration: true
-    block_migration_for_live_migration: true
+    block_migration_for_live_migration: false
     volume_backed_live_migration: true
     console_output: true
