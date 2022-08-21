@@ -222,6 +222,9 @@ sts_repo_url: https://code.engineering.redhat.com/gerrit/openstack-pidone-qe
 # home dir for sts pod
 sts_home_dir: /home/cloud-admin
 
+# path for ospk8 dir in sts repo
+sts_operator_test_dir: "{{ sts_home_dir }}/openstack-pidone-qe/CI/ansible_sts_osp_operator"
+
 # image used to run tempest
 tempest_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tempest:{{ osp_defaults.container_tag }}"
 
@@ -273,7 +276,7 @@ tempest_test_dict:
 #      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
 #      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
 
-local_working_dir: "~/{{ ocp_cluster_name }}-working"
+  local_working_dir: "~/{{ ocp_cluster_name }}-working"
 
 # nfs export directory
 nfs_data_dir: /home/nfs/data
