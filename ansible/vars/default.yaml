@@ -13,8 +13,8 @@ podman_insecure_registries:
   - default-route-openshift-image-registry.apps.{{ ocp_cluster_name }}.{{ base_domain_name }}
 
 # To set a specific release to install.
-ocp_version: 4.8
-ocp_minor_version: 39
+ocp_version: "4.10"
+ocp_minor_version: 27
 ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"
 ocp_release_data_url: "https://amd64.ocp.releases.ci.openshift.org/releasestream/4-stable/release/{{ ocp_version }}.{{ ocp_minor_version }}"
 ocp_release_type: ga
@@ -197,7 +197,7 @@ sriov_version: "{{ ocp_version }}"
 perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
-cnv_hyperconverged_operator_version: "{{ {'4.10':'4.10.1', '4.9':'4.9.4', '4.8':'4.8.6'}.get(ocp_version|string) }}"
+cnv_hyperconverged_operator_version: "{{ {'4.10':'4.10.4', '4.9':'4.9.4', '4.8':'4.8.6'}.get(ocp_version|string) }}"
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
@@ -439,7 +439,7 @@ osp_rhel_subscription_repos:
 # NOTE: Only AI deployments currently support OCS, so even if "enable_ocs" is set to true for
 #       a dev-scripts deployment, it will not be honored
 enable_ocs: false
-ocs_version: "{{ 4.8 if ocp_version >= 4.8 else ocp_version }}"
+ocs_version: "{{ 4.10 if ocp_version >= 4.10 else ocp_version }}"
 
 # Virtualized SRIOV (for dev/test)
 enable_virt_sriov: false
