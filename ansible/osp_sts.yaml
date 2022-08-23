@@ -290,8 +290,16 @@
       debug:
          var: sts_junit_xml
 
+    - name: Get failed sts tests
+      xml:
+       path: "{{ sts_working_dir }}/junit_test.xml"
+       xpath: /testsuite/testcase/failure
+       count: yes
+       pretty_print: yes
+      register: sts_failed
+
     - name: Fail playbook if sts run failed or timed out
       fail:
         msg: sts run failed or timed out, check output {{ working_log_dir }}/sts.log
-      when: sts_run.rc == 1
+      when: sts_run.rc == 1 or sts_failed.count | length != 0
 # sts-ansible run tests and report START
