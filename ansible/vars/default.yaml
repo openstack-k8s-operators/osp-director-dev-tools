@@ -403,6 +403,8 @@ osp_defaults:
   tls_public_endpoints: true
   # Use IP for TLS public endpoints (vs DNS name)
   tls_public_endpoints_ip: false
+  # Use sriov neutron ovn sriov configs
+  neutron_ovn_sriov: true
 
 # overwrite elements from osp_defaults for a specific release
 osp_release_defaults: {}

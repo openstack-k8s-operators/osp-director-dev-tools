@@ -7,6 +7,9 @@ metadata:
 spec:
   gitSecret: git-secret
   heatEnvs:
+{%- if osp.neutron_ovn_sriov|default(false)|bool %}
+    - services/neutron-ovn-sriov.yam  
+{%- endif %}
 {%- if osp.tls_public_endpoints|default(false)|bool %}
 {%- if osp.tls_public_endpoints_ip|default(false)|bool %}
     - ssl/tls-endpoints-public-ip.yaml
