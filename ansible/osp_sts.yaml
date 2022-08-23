@@ -61,6 +61,7 @@
       loop:
         - { remote_src: '/etc/hosts', local_dst: '{{ sts_working_dir }}/openstackclient_hosts' }
         - { remote_src: '{{ sts_home_dir }}/.ssh/id_rsa', local_dst: '{{ sts_working_dir }}/id_rsa' }
+        - { remote_src: '{{ sts_home_dir }}/.ssh/id_rsa.pub', local_dst: '{{ sts_working_dir }}/id_rsa.pub' }
         - { remote_src: '{{ sts_home_dir }}/.config/openstack/clouds.yaml', local_dst: '{{ sts_working_dir }}/clouds.yaml' }
 
     - name: get osp controllers names
@@ -162,7 +163,7 @@
         #!/bin/bash
         set -e
         oc rsh -n openstack sts sudo yum install -y http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
-        oc rsh -n openstack sts sudo rhos-release -O {{ osp.release }}
+        oc rsh -n openstack sts sudo rhos-release {{ osp.release }}
         oc rsh -n openstack sts sudo yum install -y ansible
       environment:
         <<: *oc_env
@@ -204,6 +205,7 @@
       - ssh.config.ansible
       - openstackclient_hosts
       - id_rsa
+      - id_rsa.pub
 
     - name: Append openstackclient hosts to sts hosts file
       shell: |
@@ -217,7 +219,8 @@
       shell: |
         #!/bin/bash
         set -e
-        oc exec -n openstack sts -- bash -c "sudo mv {{ sts_home_dir }}/id_rsa {{ sts_home_dir }}/.ssh/
+        oc exec -n openstack sts -- bash -c "sudo mv {{ sts_home_dir }}/id_rsa {{ sts_home_dir }}/.ssh/"
+        oc exec -n openstack sts -- bash -c "sudo mv {{ sts_home_dir }}/id_rsa.pub {{ sts_home_dir }}/.ssh/"
         oc exec -n openstack sts -- bash -c "sudo chmod 600 {{ sts_home_dir }}/.ssh/id_rsa"
         oc exec -n openstack sts -- bash -c "sudo chown cloud-admin:cloud-admin {{ sts_home_dir }}/.ssh/id_rsa"
       environment:
@@ -290,5 +293,5 @@
     - name: Fail playbook if sts run failed or timed out
       fail:
         msg: sts run failed or timed out, check output {{ working_log_dir }}/sts.log
-      when: sts_run.rc == 1 or sts_failed.stdout | length != 0
+      when: sts_run.rc == 1
 # sts-ansible run tests and report START
