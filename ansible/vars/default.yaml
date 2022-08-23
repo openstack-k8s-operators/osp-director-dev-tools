@@ -410,6 +410,11 @@ osp_release_defaults: {}
 # overwrite elements from osp_defaults or osp_release_defaults for local settings
 osp_local: {}
 
+# Relative paths to arbitrary extra Heat environment templates to include during OsConfigGenerator generation.
+# Relative to /usr/share/openstack-tripleo-heat-templates/environments/.
+# Example: ["services/neutron-ovn-sriov.yaml"]
+osp_extra_env_files: []
+
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
 osp_rhos_release_compose: "{{ osp_release_auto.compose }}"
