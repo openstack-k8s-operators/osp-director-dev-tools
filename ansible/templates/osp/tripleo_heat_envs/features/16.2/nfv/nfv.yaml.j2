@@ -1,6 +1,7 @@
 ---
 
 parameter_defaults:
+    NeutronFlatNetworks: datacentre,sriov-1
     NeutronNetworkVLANRanges: "sriov-1:472:472"
     ComputeSriovParameters:
         KernelArgs: "iommu=pt intel_iommu=on"
@@ -14,6 +15,7 @@ parameter_defaults:
     # br-ex is external network used for routing on controllers
     # br-sriov1 is internal NIC on compute nodes for SR-IOV workloads
     NeutronBridgeMappings: "datacentre:br-ex,sriov-1:ens1f0"
+
     NovaSchedulerDefaultFilters:
     - "RetryFilter"
     - "AvailabilityZoneFilter"
