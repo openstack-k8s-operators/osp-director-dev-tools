@@ -301,5 +301,5 @@
     - name: Fail playbook if sts run failed or timed out
       fail:
         msg: sts run failed or timed out, check output {{ working_log_dir }}/sts.log
-      when: sts_run.rc == 1 or sts_failed.count | length != 0
+      when: sts_run.rc == 1 or sts_failed.count != 0
 # sts-ansible run tests and report START
