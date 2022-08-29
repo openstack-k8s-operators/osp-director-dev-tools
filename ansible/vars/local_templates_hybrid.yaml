@@ -1,0 +1,70 @@
+
+---
+#change this to local-defaults.yaml to have affect 
+director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
+
+default_timeout: 360
+deploy_timeout: 360m
+
+
+ocp_version: 4.8
+ocp_minor_version: 14
+sriov_version: 4.8
+
+ocp_ai: true
+enable_virt_sriov: false
+enable_fencing: true
+
+# 3 virtualized master/worker combo OCP nodes
+# No dedicated virtual workers
+# No virtual OSP computes
+ocp_num_masters: 3
+ocp_num_workers: 0
+ocp_num_extra_workers: 0
+
+# Extra specs for the master/workers combo nodes
+ocp_master_memory: 80000
+ocp_master_vcpu: 24
+ocp_master_disk: 120
+
+# Which interface on the prov host will be attached to the OCP baremetal
+# bridge to establish connectivity with the baremetal nodes' network
+ocp_bm_interface: ens1f0
+
+# Which interface on the prov host will be attached to the OCP provisioning
+# bridge to establish connectivity with the baremetal nodes' provisioning network
+ocp_bm_prov_interface: ens1f2
+
+# Which interface on the prov host has connectivity to BMCs on baremetal nodes
+ocp_bmc_interface: eno1
+
+# Interface to allow OCP VMs (and therefore OSP CNV controllers) to connect
+# to OSP computes over OSP networks
+osp_bm_interface: ens1f1
+
+# Interface to allow OCP VMs (and therefore OSP CNV controllers) to connect
+# to OSP computes over OSP external network
+osp_ext_bm_interface: ens1f3
+
+# No dedicated OCP BM masters
+ocp_bm_masters: {}
+
+# No dedicated OCP BM workers
+ocp_bm_workers: {}
+
+# OSP compute workers (titan133 and 135)
+ocp_bm_extra_workers:
+  worker-0:
+    vendor: Dell
+    prov_mac: 6c:fe:54:0a:a3:02 # using ens1f2
+    bmc_protocol: idrac         
+    bmc_address: 10.46.2.224
+    bmc_username: root
+    bmc_password: calvin
+  worker-1:
+    vendor: Dell
+    prov_mac: 6c:fe:54:0a:bc:f2 # using ens1f2
+    bmc_protocol: idrac         
+    bmc_address: 10.46.2.226
+    bmc_username: root
+    bmc_password: calvin

@@ -172,7 +172,11 @@ resources:
               network_config:
               # BMH provisioning interface used for ctlplane
               - type: interface
+<<<<<<< HEAD
                 name: ens1f2
+=======
+                name: nic1
+>>>>>>> faa982b (initial dpdk hybrid commit)
                 mtu:
                   get_param: ControlPlaneMtu
                 use_dhcp: false
@@ -194,7 +198,11 @@ resources:
                           get_param: ControlPlaneDefaultRoute
               # Disable OCP cluster interface
               - type: interface
+<<<<<<< HEAD
                 name: ens1f0
+=======
+                name: nic2
+>>>>>>> faa982b (initial dpdk hybrid commit)
                 use_dhcp: false
                 defroute: no
               - type: ovs_bridge
@@ -204,7 +212,11 @@ resources:
                 use_dhcp: false
                 members:
                 - type: interface
+<<<<<<< HEAD
                   name: ens1f1
+=======
+                  name: nic4
+>>>>>>> faa982b (initial dpdk hybrid commit)
                   mtu:
                     get_attr: [MinViableMtu, value]
                   # force the MAC address of the bridge to this interface
@@ -257,7 +269,11 @@ resources:
                   name: dpdk0
                   members:
                     - type: interface
+<<<<<<< HEAD
                       name: ens1f3
+=======
+                      name: nic3
+>>>>>>> faa982b (initial dpdk hybrid commit)
                       mtu:
                         get_param: ExternalMtu
                       use_dhcp: false
