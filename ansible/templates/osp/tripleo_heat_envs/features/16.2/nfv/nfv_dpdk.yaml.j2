@@ -7,11 +7,11 @@ parameter_defaults:
     NeutronFlatNetworks: "access,dpdk-mgmt,dpdk-data0,dpdk-data1"
 
     ComputeOvsDpdkParameters:
-    KernelArgs: "default_hugepagesz=1GB hugepagesz=1G hugepages=64 iommu=pt intel_iommu=on tsx=off isolcpus=0-80"
-    NeutronBridgeMappings: "dpdk-mgmt:br-link0,dpdk-data0:br-dpdk0,dpdk-data1:br-dpdk1"
-    IsolCpusList: "0-80"
-    NovaReservedHostMemory: 4096
-    OvsDpdkSocketMemory: "4096,1024"
-    OvsDpdkMemoryChannels: "4"
-    OvsPmdCoreList: "2,3"
-    NovaComputeCpuSharedSet: [0, 20, 1, 21]
+        KernelArgs: "default_hugepagesz=1GB hugepagesz=1G hugepages=64 iommu=pt intel_iommu=on tsx=off isolcpus=0-80"
+        NeutronBridgeMappings: "dpdk-mgmt:br-link0,dpdk-data0:br-dpdk0,dpdk-data1:br-dpdk1"
+        IsolCpusList: "0-80"
+        NovaReservedHostMemory: 4096
+        OvsDpdkSocketMemory: "4096,1024"
+        OvsDpdkMemoryChannels: "4"
+        OvsPmdCoreList: "2,3"
+        NovaComputeCpuSharedSet: [0, 20, 1, 21]
