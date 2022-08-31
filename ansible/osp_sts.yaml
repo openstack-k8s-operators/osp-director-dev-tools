@@ -251,7 +251,7 @@
       shell: |
         #!/bin/bash
         set -e
-        oc exec -n openstack sts -- bash -c "pushd "{{ sts_home_dir }}/" ; sudo -H -u cloud-admin bash -c 'source ansible_ha.env && ansible -m controller -mshell -b -a'hostname -s' '"
+        oc exec -n openstack sts -- bash -c "pushd "{{ sts_home_dir }}/" ; sudo -H -u cloud-admin bash -c 'source ansible_ha.env && ansible controller -m shell -b -a 'hostname -s' '"
       environment:
         <<: *oc_env
 
