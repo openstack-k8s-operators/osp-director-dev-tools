@@ -231,6 +231,8 @@
         #!/bin/bash
         oc exec -n openstack sts -- bash -c "rm -rf "{{ sts_home_dir }}/openstack-pidone-qe""
         oc exec -n openstack sts -- bash -c "pushd "{{ sts_home_dir }}/" && git clone -c http.sslVerify=false {{ sts_repo_url }}"
+      environment:
+        <<: *oc_env
       ignore_errors: true
 # sts pod pre END
 
@@ -268,6 +270,8 @@
         #!/bin/bash
         set -e
         oc exec -n openstack sts -- bash -c "pushd "{{ sts_home_dir }}/" ; sudo -H -u cloud-admin bash -c 'sh junit_report.sh'"
+      environment:
+        <<: *oc_env
       register: sts_report
 
     - name: Copy sts junit xml to localhost
