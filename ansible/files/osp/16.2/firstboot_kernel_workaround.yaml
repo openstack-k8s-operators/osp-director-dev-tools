@@ -11,9 +11,8 @@ resources:
   kernel_workaround:
     type: OS::Heat::SoftwareConfig
     properties:
-      config: |
         #!/bin/bash
-        grubby --args="default_hugepagesz=1GB hugepagesz=1G hugepages=64 iommu=pt intel_iommu=on tsx=off"
+        grubby --update-kernel=ALL --args="default_hugepagesz=1GB hugepagesz=1G hugepages=64 iommu=pt intel_iommu=on tsx=off"
 
 outputs:
   OS::stack_id:
