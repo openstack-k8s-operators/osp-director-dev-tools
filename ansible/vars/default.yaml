@@ -308,7 +308,8 @@ osp_ext_bridge_ip6: 2001:db8:fd00:1000::1/64
 osp_defaults:
   release: "{{ osp_release_auto.release }}"
   # use http://download.devel.redhat.com to get the local mirror depending on where the server is
-  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/992/images/rhel-guest-image-8.4-992.x86_64.qcow2
+  # base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/992/images/rhel-guest-image-8.4-992.x86_64.qcow2
+  base_image_url: http://ceph1.lab.eng.tlv2.redhat.com:8080/images/rhel-guest-image-8.4-992-modified_with_dpdk_for_k8s_qe.x86_64.qcow2
   # OSP controller VM sizing
   vmset:
     Controller:
