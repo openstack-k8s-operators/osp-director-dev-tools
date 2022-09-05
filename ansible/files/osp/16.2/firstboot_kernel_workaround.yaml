@@ -11,6 +11,7 @@ resources:
   kernel_workaround:
     type: OS::Heat::SoftwareConfig
     properties:
+     config: |
         #!/bin/bash
         systemctl enable --now openvswitch.service
         grubby --update-kernel=ALL --args="default_hugepagesz=1GB hugepagesz=1G hugepages=64 iommu=pt intel_iommu=on tsx=off"
