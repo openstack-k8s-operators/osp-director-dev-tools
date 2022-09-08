@@ -1,0 +1,36 @@
+---
+osp_release_auto_version: 17.0-RHEL-9
+osp_release_auto_compose: passed_phase2
+ephemeral_heat:
+  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
+  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
+  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
+  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+
+enable_fencing: true
+
+osp_release_defaults:
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.0/20220428.0/images/rhel-guest-image-9.0-20220428.0.x86_64.qcow2
+  vmset:
+    Controller:
+      count: 3
+      cores: 6
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      root_disk:
+        disk_size: 40
+        storage_class: host-nfs-storageclass
+        storage_access_mode: ReadWriteMany
+        storage_volume_mode: Filesystem
+      additional_disks:
+        - name: datadisk
+          disk_size: 1
+          storage_class: host-nfs-storageclass
+          storage_access_mode: ReadWriteMany
+          storage_volume_mode: Filesystem
