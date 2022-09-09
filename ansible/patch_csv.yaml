@@ -105,7 +105,7 @@
       cmd: oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory -m ping all"
     register: osclient_network_check
     until: osclient_network_check.rc == 0
-    retries: 20
+    retries: 120
     delay: 30
     when: osclient_exists|bool
 
