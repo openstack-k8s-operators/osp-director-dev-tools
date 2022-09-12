@@ -167,8 +167,8 @@
         #!/bin/bash
         set -e
         oc rsh -n openstack sts sudo yum install -y http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
-        oc rsh -n openstack sts sudo rhos-release 16.2
-        oc rsh -n openstack sts sudo yum install -y ansible jq
+        oc rsh -n openstack sts sudo rhos-release {{ osp.release }}
+        oc rsh -n openstack sts sudo yum install -y {{ ansible_pkg }} jq
       environment:
         <<: *oc_env
 
