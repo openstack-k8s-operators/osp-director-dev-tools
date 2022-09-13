@@ -230,6 +230,14 @@
       environment:
         <<: *oc_env
 
+    - name: Update crypto policy for RHEL-9
+      shell: |
+        #!/bin/bash
+        oc exec -n openstack sts -- bash -c "sudo update-crypto-policies --set LEGACY"
+      environment:
+        <<: *oc_env
+      when: osp.release | int >= 17
+
     - name: clone sts repository
       shell: |
         #!/bin/bash
