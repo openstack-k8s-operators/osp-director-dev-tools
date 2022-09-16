@@ -10,7 +10,7 @@ pipeline {
                 build job: 'DFG-ospk8s-osp-director-dev-tools-ai-pr',
                     parameters: [
                         string(name: 'GITHUB_PULL_REQUEST_ID', value: String.valueOf(CHANGE_ID)),
-                        string(name: 'GIT_DEVTOOLS_BRANCH', value: 'master')
+                        string(name: 'GIT_DEVTOOLS_BRANCH', value: String.valueOf(CHANGE_TARGET))
                     ]
             }
         }
