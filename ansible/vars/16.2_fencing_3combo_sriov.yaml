@@ -83,7 +83,7 @@ osp_release_defaults:
         mtu: 1500
   networks: ipv4_hybrid
   extrafeatures:
-        - nfv
+        - nfv_sriov
   ovn_bridge_mac_mappings:
     phys_networks:
     - name: datacentre
