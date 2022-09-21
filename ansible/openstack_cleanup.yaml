@@ -24,6 +24,23 @@
       - "oc delete -n openstack cm tripleo-deploy-config heat-env-config tripleo-tarball-config --ignore-not-found=true"
       - "oc delete -n openstack events --all"
 
+  - name: check if ospnetwork NM vlan configs exists
+    become: true
+    become_user: root
+    shell: |
+      /usr/bin/nmcli --fields name con show | grep 'ospnetwork\.' | uniq
+    ignore_errors: true
+    register: ospnetworks
+
+  - name: Delete ospnetwork NM vlan configs (if any)
+    become: true
+    become_user: root
+    shell: |
+      /usr/bin/nmcli con delete "{{ item | trim }}"
+    with_items:
+      - "{{ ospnetworks.stdout_lines }}"
+    when: "'stdout_lines' in ospnetworks and ospnetworks.stdout_lines|length > 0"
+
   # For virtualized 3-combo-node deployments, switch Metal3 provisioning network back to the default provisioning interface
   - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
     when: ocp_worker_count|int < 1 and ocp_num_masters > 0
