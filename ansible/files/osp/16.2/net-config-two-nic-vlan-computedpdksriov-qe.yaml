@@ -245,6 +245,14 @@ resources:
                     list_concat_unique:
                       - get_param: TenantRoutes
                       - get_param: TenantInterfaceRoutes
+              - type: sriov_pf
+                name: ens1f3
+                numvfs: 10
+                use_dhcp: false
+                defroute: false
+                nm_controlled: true
+                hotplug: true
+                promisc: false
               - type: ovs_user_bridge
                 # This will default to br-ex, anything else requires specific
                 # brige mapping entries for it to be used.
@@ -256,12 +264,14 @@ resources:
                 - type: ovs_dpdk_port
                   name: dpdk0
                   members:
-                    - type: interface
-                      name: ens1f3
-                      mtu:
-                        get_param: ExternalMtu
-                      use_dhcp: false
-                      primary: true
+                  - type: sriov_vf
+                    device: ens1f3
+                    vfid: 0    
+                    mtu:
+                      get_param: ExternalMtu
+                    use_dhcp: false
+                    primary: true    
+                    
 outputs:
   OS::stack_id:
     description: The OsNetConfigImpl resource.
