@@ -192,11 +192,13 @@ resources:
                     - - default: true
                         next_hop:
                           get_param: ControlPlaneDefaultRoute
-              # Disable OCP cluster interface
-              - type: interface
+              # set first nic for sriov
+              - type: sriov_pf
                 name: ens1f0
+                numvfs: 10
+                promisc: true
                 use_dhcp: false
-                defroute: no
+                defroute: false
               - type: ovs_bridge
                 name: br-tenant
                 mtu:
@@ -245,14 +247,6 @@ resources:
                     list_concat_unique:
                       - get_param: TenantRoutes
                       - get_param: TenantInterfaceRoutes
-              - type: sriov_pf
-                name: ens1f3
-                numvfs: 10
-                use_dhcp: false
-                defroute: false
-                nm_controlled: true
-                hotplug: true
-                promisc: false
               - type: ovs_user_bridge
                 # This will default to br-ex, anything else requires specific
                 # brige mapping entries for it to be used.
@@ -264,13 +258,12 @@ resources:
                 - type: ovs_dpdk_port
                   name: dpdk0
                   members:
-                  - type: sriov_vf
-                    device: ens1f3
-                    vfid: 0    
-                    mtu:
-                      get_param: ExternalMtu
-                    use_dhcp: false
-                    primary: true    
+                    - type: interface
+                      name: ens1f3
+                      mtu:
+                        get_param: ExternalMtu
+                      use_dhcp: false
+                      primary: true
                     
 outputs:
   OS::stack_id:

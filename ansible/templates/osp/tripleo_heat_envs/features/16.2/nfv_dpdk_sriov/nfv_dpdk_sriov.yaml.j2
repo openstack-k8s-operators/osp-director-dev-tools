@@ -19,10 +19,11 @@ parameter_defaults:
     - "AggregateInstanceExtraSpecsFilter"
 
     NeutronFlatNetworks: datacentre,sriov-1
+    
+    NeutronBridgeMappings: "datacentre:br-ex,sriov-1:ens1f0"
 
     ComputeOvsDpdkSriovParameters:
         KernelArgs: "default_hugepagesz=1GB hugepagesz=1G hugepages=64 iommu=pt intel_iommu=on tsx=off isolcpus=0-80"
-        NeutronBridgeMappings: "datacentre:br-ex"
         IsolCpusList: "0-80"
         NovaReservedHostMemory: 4096
         OvsDpdkSocketMemory: "4096,1024"
@@ -31,9 +32,9 @@ parameter_defaults:
         NovaComputeCpuSharedSet: [0, 20, 1, 21]
         NovaComputeCpuDedicatedSet: ["8-19,28-39"]
         NovaPCIPassthrough:
-          - devname: "ens1f3"
+          - devname: "ens1f0"
             trusted: "true"
             physical_network: "sriov-1"
         NeutronPhysicalDevMappings: 
-            - "sriov-1:ens1f3"
+            - "sriov-1:ens1f0" 
         
