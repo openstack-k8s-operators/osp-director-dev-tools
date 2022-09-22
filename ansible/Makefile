@@ -265,6 +265,13 @@ kuttl_tests: hosts local-defaults.yaml
 	-e @local-defaults.yaml \
 	osp_kuttl.yaml
 
+osp_sts: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_sts.yaml
+
 olm: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v -i hosts \
