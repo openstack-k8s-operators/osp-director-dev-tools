@@ -925,9 +925,6 @@
   description: |
     Compute role with OvS-DPDK and SR-IOV services
   CountDefault: 1
-  tags:
-    - compute
-    - dpdk
   networks:
     - InternalApi
     - Tenant
@@ -946,13 +943,14 @@
     - OS::TripleO::Services::CACerts
     - OS::TripleO::Services::CephClient
     - OS::TripleO::Services::CephExternal
+    - OS::TripleO::Services::CertmongerUser
     - OS::TripleO::Services::Collectd
     - OS::TripleO::Services::ComputeCeilometerAgent
     - OS::TripleO::Services::ComputeNeutronCorePlugin
     - OS::TripleO::Services::ComputeNeutronL3Agent
     - OS::TripleO::Services::ComputeNeutronMetadataAgent
     - OS::TripleO::Services::ComputeNeutronOvsDpdk
-    - OS::TripleO::Services::Frr
+    - OS::TripleO::Services::Docker
     - OS::TripleO::Services::IpaClient
     - OS::TripleO::Services::Ipsec
     - OS::TripleO::Services::Iscsid
@@ -963,6 +961,7 @@
     - OS::TripleO::Services::MySQLClient
     - OS::TripleO::Services::NeutronBgpVpnBagpipe
     - OS::TripleO::Services::NeutronSriovAgent
+    - OS::TripleO::Services::NeutronSriovHostConfig
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
     - OS::TripleO::Services::NovaLibvirt
