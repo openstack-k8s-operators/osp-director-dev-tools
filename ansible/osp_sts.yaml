@@ -168,7 +168,7 @@
       shell: |
         #!/bin/bash
         set -e
-        oc exec -t -n openstack openstackclient -- /bin/bash -c "sh {{ sts_test_dir }}/junit_report.sh"
+        oc exec -t -n openstack openstackclient -- /bin/bash -c "pushd {{ sts_test_dir }} && sh junit_report.sh"
       environment:
         <<: *oc_env
       register: sts_report
@@ -177,7 +177,7 @@
       shell: |
         #!/bin/bash
         set -e
-        oc cp openstack/openstackclient:/home/cloud-admin/ansible_sts_results/junit_test.xml {{ sts_working_dir }}/junit_test.xml
+        oc cp openstack/openstackclient:{{ sts_test_dir }}/ansible_sts_results/junit_test.xml {{ sts_working_dir }}/junit_test.xml
       environment:
         <<: *oc_env
 
