@@ -7,14 +7,14 @@ openstackclient_networks:
 enable_fencing: true
 
 ocp_num_workers: 0
-ocp_master_memory: 80000
-ocp_master_vcpu: 24
+ocp_master_memory: 40000
+ocp_master_vcpu: 12
 ocp_master_disk: 100
 
 osp_release_defaults:
   networks: ipv4_subnet
   vmset:
-    Controller:
+    ControllerSriov:
       count: 3
       cores: 6
       memory: 20
