@@ -6,7 +6,7 @@ osp_release_defaults:
   #TODO: which ceph images tag to use for upstream wallaby?
   #ceph_tag: 5-12
   #ceph_image: daemon
-  base_image_url: https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220509.0.x86_64.qcow2
+  base_image_url: https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2
   networks: ipv6
   extrafeatures:
     - ipv6
