@@ -44,3 +44,5 @@ tempest_enable_feature_dict:
     block_migration_for_live_migration: true
     volume_backed_live_migration: true
     console_output: true
+  network-feature-enabled:
+    floating_ips: false
