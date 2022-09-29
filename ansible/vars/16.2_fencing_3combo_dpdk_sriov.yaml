@@ -14,6 +14,8 @@ ocp_master_disk: 100
 osp_release_defaults:
   networks: ipv4_subnet
   vmset:
+    Controller:
+      count: 0    
     ControllerSriov:
       count: 3
       cores: 6
@@ -30,6 +32,13 @@ osp_release_defaults:
         storage_class: host-nfs-storageclass
         storage_access_mode: ReadWriteMany
         storage_volume_mode: Filesystem
+      additional_disks:
+        - name: datadisk
+          disk_size: 1
+          storage_class: host-nfs-storageclass
+          storage_access_mode: ReadWriteMany
+          storage_volume_mode: Filesystem
+
   # OSP compute OCP worker settings
   bmset:
     Compute:
