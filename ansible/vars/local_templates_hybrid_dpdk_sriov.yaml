@@ -1,7 +1,7 @@
 
 ---
 #change this to local-defaults.yaml to have affect 
-osp_extra_env_files: ["services/neutron-ovs-dpdk.yaml","services/neutron-ovn-sriov.yaml"]
+osp_extra_env_files: ["services/neutron-ovs.yaml","services/neutron-ovs-dpdk.yaml","services/neutron-sriov.yaml"]
 
 director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 
