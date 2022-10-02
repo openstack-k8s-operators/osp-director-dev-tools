@@ -27,3 +27,16 @@ osp_release_defaults:
           storage_class: host-nfs-storageclass
           storage_access_mode: ReadWriteMany
           storage_volume_mode: Filesystem
+
+# phase2 tempest tests
+tempest_test_dict:
+  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+  includelist: []
+  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
+  excludelist:
+      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
