@@ -1,11 +1,6 @@
 ---
 parameter_defaults:
 
-    # The OVS logical->physical bridge mappings to use.
-    NeutronBridgeMappings: "datacentre:br-ex"
-    # Defines the flat networks to configure in neutron plugins.
-    NeutronFlatNetworks: "datacentre"
-
     NovaSchedulerDefaultFilters:
     - "RetryFilter"
     - "AvailabilityZoneFilter"
@@ -18,8 +13,9 @@ parameter_defaults:
     - "NUMATopologyFilter"
     - "AggregateInstanceExtraSpecsFilter"
 
+    # Defines the flat networks to configure in neutron plugins.
     NeutronFlatNetworks: datacentre,sriov-1
-    
+    # The OVS logical->physical bridge mappings to use.
     NeutronBridgeMappings: "datacentre:br-ex,sriov-1:ens1f0"
 
     ComputeOvsDpdkSriovParameters:
