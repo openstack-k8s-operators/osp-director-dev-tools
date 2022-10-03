@@ -53,20 +53,3 @@ ocp_bm_masters: {}
 
 # No dedicated OCP BM workers
 ocp_bm_workers: {}
-
-# OSP compute workers (titan133 and 135)
-ocp_bm_extra_workers:
-  worker-0:
-    vendor: Dell
-    prov_mac: 6c:fe:54:0a:a3:02 # using ens1f2
-    bmc_protocol: idrac         
-    bmc_address: 10.46.2.224
-    bmc_username: root
-    bmc_password: calvin
-  worker-1:
-    vendor: Dell
-    prov_mac: 6c:fe:54:0a:bc:f2 # using ens1f2
-    bmc_protocol: idrac         
-    bmc_address: 10.46.2.226
-    bmc_username: root
-    bmc_password: calvin
