@@ -16,7 +16,7 @@ ephemeral_heat:
 osp_release_defaults:
   release: wallaby
   container_tag: current-tripleo
-  base_image_url: https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220509.0.x86_64.qcow2
+  base_image_url: https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2
   #TODO: which ceph images tag to use for upstream train?
   #ceph_tag: 5-12
   #ceph_image: daemon
@@ -87,3 +87,5 @@ tempest_enable_feature_dict:
     block_migration_for_live_migration: true
     volume_backed_live_migration: true
     console_output: true
+  network-feature-enabled:
+    floating_ips: false
