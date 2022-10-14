@@ -556,6 +556,13 @@
     become: true
     become_user: root
     block:
+    # latest 4.0.1 fails with: ModuleNotFoundError: No module named 'setuptools_rust'
+    - name: Install bcrypt < 4.0.0
+      pip:
+        name: ['bcrypt']
+        version: "<4.0.0"
+        executable: /usr/bin/pip-3
+
     - name: Install sushy-tools via pip3
       pip:
         name: ['sushy-tools', 'libvirt-python']
