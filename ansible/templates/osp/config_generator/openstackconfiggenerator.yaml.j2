@@ -5,6 +5,7 @@ metadata:
   name: "{{ config_generator_name|default('default') }}"
   namespace: openstack
 spec:
+  enableFencing: {{ enable_fencing }}
   gitSecret: git-secret
   heatEnvs:
 {%- if osp.tls_public_endpoints|default(false)|bool %}
