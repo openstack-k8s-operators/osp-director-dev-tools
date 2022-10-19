@@ -1,0 +1,31 @@
+---
+
+parameter_defaults:
+    NeutronFlatNetworks: datacentre,sriov-1
+    NeutronNetworkVLANRanges: "sriov-1:472:472"
+    ComputeSriovParameters:
+        KernelArgs: "iommu=pt intel_iommu=on"
+        NovaPCIPassthrough:
+          - devname: "ens1f0"
+            trusted: "true"
+            physical_network: "sriov-1"
+        IsolCpusList: "0-80"
+        NeutronPhysicalDevMappings: 
+            - "sriov-1:ens1f0" 
+    # br-ex is external network used for routing on controllers
+    # br-sriov1 is internal NIC on compute nodes for SR-IOV workloads
+    NeutronBridgeMappings: "datacentre:br-ex,sriov-1:ens1f0"
+
+    NovaSchedulerDefaultFilters:
+    - "RetryFilter"
+    - "AvailabilityZoneFilter"
+    - "ComputeFilter"
+    - "ComputeCapabilitiesFilter"
+    - "ImagePropertiesFilter"
+    - "ServerGroupAntiAffinityFilter"
+    - "ServerGroupAffinityFilter"
+    - "PciPassthroughFilter"
+    - "NUMATopologyFilter"
+    - "AggregateInstanceExtraSpecsFilter"
+
+#openstackconfiggenerator.yaml.j2 handled by a condition at that file
