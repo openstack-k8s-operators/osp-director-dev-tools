@@ -15,7 +15,6 @@
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
-    retries: 12
     register: osp_client_pod_result
     until: osp_client_pod_result.rc == 0
 
@@ -153,6 +152,15 @@
         oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory -m ping Controller"
       environment:
         <<: *oc_env
+
+    - name: Remove mysqld and replace with mariadbd for 17+
+      shell: |
+        #!/bin/bash
+        set -e
+        oc exec -n openstack sts -- bash -c "sed -i 's/mysqld/mariadbd/g' {{ sts_test_dir }}/ansible_sts_sanity_tests.yaml"
+      environment:
+        <<: *oc_env
+      when: osp.release | int >= 17
 
     - name: Run sts, the output gets logged at {{ working_log_dir }}/sts.log
       shell: |
