@@ -24,7 +24,7 @@
   block:
     - name: Upload OSP Controller base image
       shell: |
-        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure
+        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure --access-mode ReadWriteOnce
   rescue:
     - name: Remove datavolume {{ _datavolume }} from failed upload
       command: oc delete datavolume {{ _datavolume }} -n {{ namespace }}
@@ -32,7 +32,7 @@
 
     - name: Re-Upload base image {{ _datavolume }}
       shell: |
-        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure
+        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure --access-mode ReadWriteOnce
 
 - name: Wait for the datavolume {{ _datavolume }} to be ready
   retries: 5

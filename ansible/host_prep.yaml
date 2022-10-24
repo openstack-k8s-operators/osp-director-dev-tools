@@ -36,7 +36,7 @@
     - name: fail if OCP version <= 4.6
       fail:
         msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP greater than 4.6 is currently supported for assisted installer deployments."
-      when: ocp_version <= 4.6
+      when: ocp_version is version('4.6', 'le', strict=True )
     when: ocp_ai|bool
 
   - name: OCS validation checks
