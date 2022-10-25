@@ -31,7 +31,7 @@
   # TODO: filter by configGeneratorName
   - name: Lookup configVersion
     shell: >
-      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -e '.items[0].spec | {hash,configGeneratorName}'
+      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -e '.items[-1].spec | {hash,configGeneratorName}'
     register: config_version_cmd
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
