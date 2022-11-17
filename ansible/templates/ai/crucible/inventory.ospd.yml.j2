@@ -311,25 +311,25 @@ all:
             {{ ocp_cluster_name }}-{{ name }}:
               vendor: {{ master.vendor }}
               ansible_host: {{ ocp_ai_bm_cidr_prefix }}.1{{ loop.index0 }}
-              mac: "{{ master.bm_mac }}"
+              mac: "{{ master.bm_mac | upper }}"
               bmc_address: {{ master.bmc_address }}
               bmc_user: {{ master.bmc_username }}
               bmc_password: {{ master.bmc_password }}
               installation_disk_path: {{ master.root_device | default ("/dev/sda") }}
               mac_interface_map:
               - logical_nic_name: {{ master.bm_interface }}
-                mac_address: "{{ master.bm_mac }}"
+                mac_address: "{{ master.bm_mac | upper }}"
 {% if master.disabled_interfaces is defined and master.disabled_interfaces | length > 0 %}
 {% for interface in master.disabled_interfaces %}
               - logical_nic_name: {{ interface.name }}
-                mac_address: "{{ interface.mac }}"
+                mac_address: "{{ interface.mac | upper }}"
 {% endfor %}
 {% endif %}
               network_config:
                 raw:
                   interfaces:
                     - name: {{ master.bm_interface }}
-                      mac: "{{ master.bm_mac }}"
+                      mac: "{{ master.bm_mac | upper }}"
                       state: up
                       ipv4:
                         enabled: true
@@ -340,7 +340,7 @@ all:
 {% if master.disabled_interfaces is defined and master.disabled_interfaces | length > 0 %}
 {% for interface in master.disabled_interfaces %}
                     - name: {{ interface.name }}
-                      mac: "{{ interface.mac }}"
+                      mac: "{{ interface.mac | upper }}"
                       state: up
                       ipv4:
                         enabled: false
@@ -363,7 +363,7 @@ all:
 {% for i in range(0, ocp_num_masters) %}
             {{ ocp_cluster_name }}-master-{{ i }}:
               ansible_host: {{ ocp_ai_bm_cidr_prefix }}.1{{ i }}
-              mac: "{{ ocp_ai_bm_bridge_master_mac_prefix }}{{ i }}"
+              mac: "{{ ocp_ai_bm_bridge_master_mac_prefix | upper }}{{ i }}"
 {% endfor %}
 {% endif %}
 
@@ -376,25 +376,25 @@ all:
             {{ ocp_cluster_name }}-{{ name }}:
               vendor: {{ worker.vendor }}
               ansible_host: {{ ocp_ai_bm_cidr_prefix }}.2{{ loop.index0 }}
-              mac: "{{ worker.bm_mac }}"
+              mac: "{{ worker.bm_mac | upper }}"
               bmc_address: {{ worker.bmc_address }}
               bmc_user: {{ worker.bmc_username }}
               bmc_password: {{ worker.bmc_password }}
               installation_disk_path: {{ worker.root_device | default ("/dev/sda") }}
               mac_interface_map:
               - logical_nic_name: {{ worker.bm_interface }}
-                mac_address: "{{ worker.bm_mac }}"
+                mac_address: "{{ worker.bm_mac | upper }}"
 {% if worker.disabled_interfaces is defined and worker.disabled_interfaces | length > 0 %}
 {% for interface in worker.disabled_interfaces %}
               - logical_nic_name: {{ interface.name }}
-                mac_address: "{{ interface.mac }}"
+                mac_address: "{{ interface.mac | upper }}"
 {% endfor %}
 {% endif %}
               network_config:
                 raw:
                   interfaces:
                     - name: {{ worker.bm_interface }}
-                      mac: "{{ worker.bm_mac }}"
+                      mac: "{{ worker.bm_mac | upper }}"
                       state: up
                       ipv4:
                         enabled: true
@@ -405,7 +405,7 @@ all:
 {% if worker.disabled_interfaces is defined and worker.disabled_interfaces | length > 0 %}
 {% for interface in worker.disabled_interfaces %}
                     - name: {{ interface.name }}
-                      mac: "{{ interface.mac }}"
+                      mac: "{{ interface.mac | upper }}"
                       state: up
                       ipv4:
                         enabled: false
@@ -428,6 +428,6 @@ all:
 {% for i in range(0, ocp_num_workers) %}
             {{ ocp_cluster_name }}-worker-{{ i }}:
               ansible_host: {{ ocp_ai_bm_cidr_prefix }}.2{{ i }}
-              mac: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}{{ i }}"
+              mac: "{{ ocp_ai_bm_bridge_worker_mac_prefix | upper }}{{ i }}"
 {% endfor %}
 {% endif %}
