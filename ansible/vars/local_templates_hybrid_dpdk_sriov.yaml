@@ -10,11 +10,6 @@ director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 default_timeout: 360
 deploy_timeout: 360m
 
-
-ocp_version: 4.8
-ocp_minor_version: 14
-sriov_version: 4.8
-
 ocp_ai: true
 enable_virt_sriov: false
 enable_fencing: true
