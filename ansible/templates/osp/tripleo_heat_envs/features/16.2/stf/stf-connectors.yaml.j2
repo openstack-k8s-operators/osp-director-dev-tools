@@ -1,0 +1,32 @@
+resource_registry:
+  OS::TripleO::Services::Collectd: /usr/share/openstack-tripleo-heat-templates/deployment/metrics/collectd-container-puppet.yaml
+
+parameter_defaults:
+    MetricsQdrConnectors:
+        - host: {{ osp.stf_host }}
+          port: 443
+          role: edge
+          verifyHostname: false
+          sslProfile: sslProfile
+
+    MetricsQdrSSLProfiles:
+        - name: sslProfile
+
+    CeilometerQdrEventsConfig:
+        driver: amqp
+        topic: cloud1-event
+
+    CeilometerQdrMetricsConfig:
+        driver: amqp
+        topic: cloud1-metering
+
+    CollectdAmqpInstances:
+        cloud1-notify:
+            notify: true
+            format: JSON
+            presettle: false
+        cloud1-telemetry:
+            format: JSON
+            presettle: false
+
+    CollectdSensubilityResultsChannel: sensubility/cloud1-telemetry

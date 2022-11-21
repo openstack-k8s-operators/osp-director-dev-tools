@@ -8,3 +8,9 @@ parameter_defaults:
 {% if osp.dns_search_domains is defined and osp.dns_search_domains|length %}
   DnsSearchDomains: {{ osp.dns_search_domains }}
 {% endif %}
+{% if osp.extrahostfileentries is defined and osp.extrahostfileentries|length %}
+  ExtraHostFileEntries:
+{% for extrahost in osp.extrahostfileentries %}
+    - '{{ extrahost }}'
+{% endfor %}
+{% endif %}
