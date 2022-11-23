@@ -1,0 +1,10 @@
+---
+osp_release_defaults:
+  extrafeatures:
+    - stf
+  extrahostfileentries:
+    - CHANGEME
+  stf_host: CHANGEME
+osp_extra_env_files:
+  - metrics/ceilometer-write-qdr.yaml
+  - metrics/qdr-edge-only.yaml

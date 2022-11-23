@@ -400,6 +400,10 @@ osp_defaults:
   #    - hci
   #    - ipv6
   extrafeatures: []
+  # Any extra IP-hostname combos needed for resolution on overcloud nodes
+  extrahostfileentries: []
+  # STF host to which to send metrics
+  stf_host: ""
   # Enable TLS everywhere
   tlse: false
   # Enable TLS public_endpoints
