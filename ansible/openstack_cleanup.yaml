@@ -5,18 +5,40 @@
   - oc_local
 
   tasks:
-  - name: openstack cleanup
-    command: "{{ item }}"
+  - name: BaremetalSet cleanup
+    shell: |
+      set -e
+      oc delete -n openstack openstackbaremetalset --all
+      sleep 10
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
+    ignore_errors: true
+
+  - name: Wait for BMHs to settle
+    shell: |
+      for i in $(oc get bmh -A | grep -v STATE | grep openshift-worker | awk {'print $3'}); do
+          if [ "$i" != "available" ] && [ "$i" != "ready" ]; then
+             exit 1
+          fi
+      done
+    environment:
+      <<: *oc_env
+    retries: "{{ default_timeout | int }}"
+    delay: 5
+    register: result
+    until: result.rc == 0
+
+  - name: Remaining openstack cleanup
+    command: "{{ item }}"
+    environment:
+      <<: *oc_env
     ignore_errors: true
     with_items:
       - "oc delete -n openstack openstackdeploy --all"
       - "oc delete -n openstack openstackconfiggenerator --all"
       - "oc delete -n openstack openstackconfigversion --all"
       - "oc delete -n openstack openstackephemeralheat --all"
-      - "oc delete -n openstack openstackbaremetalset --all"
       - "oc delete -n openstack openstackcontrolplane --all"
       - "oc delete -n openstack openstackvmset --all"
       - "oc delete -n openstack openstackclient --all"
