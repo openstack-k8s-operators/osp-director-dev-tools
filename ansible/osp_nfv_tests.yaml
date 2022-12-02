@@ -1,0 +1,139 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  - name: Verify openstackclient pod is running
+    shell: |
+        oc wait pod -n openstack openstackclient --for condition=Ready --timeout="{{ tempest_timeout }}s"
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    register: osp_client_pod_result
+    until: osp_client_pod_result.rc == 0
+
+  - name: prepare localhost
+    when: osp_client_pod_result.rc == 0
+    block:
+    - name: Set nfv_test yaml facts
+      set_fact:
+        nfv_test_yaml_dir: "{{ working_yamls_dir }}/nfv_test"
+        nfv_test_working_dir: "{{ working_dir }}/nfv_test"
+
+    - name: show yaml output dir
+      debug:
+        msg:
+        - "nfv_test yamls will be written to {{ nfv_test_yaml_dir }} locally"
+        - "nfv_test config will be written to {{ nfv_test_working_dir }} locally"
+
+    - name: Clean directories
+      file:
+        state: absent
+        path: "{{ item }}/"
+      loop:
+      - "{{ nfv_test_yaml_dir }}"
+      - "{{ nfv_test_working_dir }}"
+
+    - name: Create nfv_test directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+      - "{{ nfv_test_yaml_dir }}"
+      - "{{ nfv_test_working_dir }}"
+
+    - name: render nfv_test working templates to {{ nfv_test_working_dir }}
+      vars:
+        os_password: "{{ os_password_ret.stdout }}"
+      template:
+        src: "nfv_tests/{{ item }}.j2"
+        dest: "{{ nfv_test_working_dir }}/{{ item }}"
+        mode: '0644'
+      loop:
+      - nfv_tests.sh
+      - junit_report.sh
+
+  - name: prepare nfv_test config
+    block:
+    - name: copy rendered nfv_test config
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp -n openstack {{ nfv_test_working_dir }}/{{ item }} openstackclient:/home/cloud-admin/{{ item }}
+      environment:
+        <<: *oc_env
+      loop:
+      - nfv_tests.sh
+      - junit_report.sh
+
+    - name: set nfv_test nfv_test directory facts
+      set_fact:
+        nfv_test_dir: "/home/cloud-admin"
+
+  - name: Run ansible-nfv_test and generate report
+    block:
+    - name: Verify ansible connectivty to overcloud nodes
+      shell: |
+        #!/bin/bash
+        set -e
+        oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory -m ping Controller"
+      environment:
+        <<: *oc_env
+
+    - name: Run nfv_test, the output gets logged at {{ working_log_dir }}/nfv_test.log
+      shell: |
+        #!/bin/bash
+        oc exec -t -n openstack openstackclient -- /bin/bash -c "pushd {{ nfv_test_dir }} && timeout {{ osp.deploy_timeout }} sh nfv_tests.sh &> nfv_test.log"
+      environment:
+        <<: *oc_env
+      ignore_errors: true
+      register: nfv_test_run
+
+    - name: Generate nfv_test report
+      shell: |
+        #!/bin/bash
+        set -e
+        oc exec -t -n openstack openstackclient -- /bin/bash -c "pushd {{ nfv_test_dir }} && sh junit_report.sh"
+      environment:
+        <<: *oc_env
+      register: nfv_test_report
+
+    - name: Copy nfv_test junit xml to localhost
+      shell: |
+        #!/bin/bash
+        set -e
+        oc cp openstack/openstackclient:{{ nfv_test_dir }}/junit_test.xml {{ nfv_test_working_dir }}/junit_test.xml
+      environment:
+        <<: *oc_env
+
+    - name: Get nfv_test junit xml output
+      xml:
+       path: "{{ nfv_test_working_dir }}/junit_test.xml"
+       xpath: //*
+       content: attribute
+       pretty_print: yes
+      register: nfv_test_junit_xml
+
+    - name: print junit xml file
+      debug:
+         var: nfv_test_junit_xml
+
+    - name: Get failed nfv_test tenfv_test
+      xml:
+       path: "{{ nfv_test_working_dir }}/junit_test.xml"
+       xpath: /testsuite/testcase/failure
+       count: yes
+       pretty_print: yes
+      register: nfv_test_failed
+
+    - name: Fail playbook if nfv_test run failed or timed out
+      fail:
+        msg: nfv_test run failed or timed out, check output {{ working_log_dir }}/nfv_test.log
+      when: nfv_test_run.rc == 1 or nfv_test_failed.count != 0

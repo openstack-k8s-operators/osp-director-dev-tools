@@ -1,0 +1,32 @@
+#!/bin/bash
+set -x
+#create a list of testcases
+grep "^testcase" ./nfv_test.log > nfv_test_testcases
+
+echo "<testsuite tests=\"`cat nfv_test_testcases|wc -l`\">" > junit_test.xml
+
+cat nfv_test_testcases| while read line;do
+
+        testcase="nfv_sshping_vm"
+
+        if echo $line | grep -m 1 -q 'FAILURE' ;then
+
+                cat >>junit_test.xml<<EOF
+    <testcase classname="${testcase}" name="${line}">
+        <failure type="failure"> tests failed </failure>
+    </testcase>
+
+EOF
+        else
+
+                cat >>junit_test.xml<<EOF
+    <testcase classname="${testcase}" name="${line}">
+    </testcase>
+EOF
+        fi
+
+done
+
+echo "</testsuite>" >> junit_test.xml
+
+

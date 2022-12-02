@@ -1,0 +1,55 @@
+---
+{% set mtu_list = [ctlplane_mtu] %}
+{% for network in role_networks %}
+{{ mtu_list.append(lookup('vars', networks_lower[network] ~ '_mtu')) }}
+{%- endfor %}
+{% set min_viable_mtu = mtu_list | max %}
+network_config:
+- type: interface
+  name: ens1f2
+  mtu: {{ ctlplane_mtu }}
+  use_dhcp: false
+  dns_servers: {{ ctlplane_dns_nameservers }}
+  domain: {{ dns_search_domains }}
+  addresses:
+  - ip_netmask: {{ ctlplane_ip }}/{{ ctlplane_subnet_cidr }}
+  routes: {{ [ctlplane_host_routes, [{'default': True, 'next_hop': ctlplane_gateway_ip}]] | flatten | unique }}
+- type: sriov_pf
+  name: ens1f0
+  numvfs: 10
+  promisc: true
+  use_dhcp: false
+  defroute: false
+- type: ovs_bridge
+  name: br-tenant
+  mtu: {{ min_viable_mtu }}
+  use_dhcp: false
+  members:
+  - type: interface
+    name: ens1f1
+    mtu: {{ min_viable_mtu }}
+    primary: true
+{% for network in networks_all if network not in networks_skip_config|default([]) %}
+{% if network not in ["External"] and network in role_networks %}
+  - type: vlan
+    mtu: {{ lookup('vars', networks_lower[network] ~ '_mtu') }}
+    vlan_id: {{ lookup('vars', networks_lower[network] ~ '_vlan_id') }}
+    addresses:
+    - ip_netmask:
+        {{ lookup('vars', networks_lower[network] ~ '_ip') }}/{{ lookup('vars', networks_lower[network] ~ '_cidr') }}
+    routes: {{ lookup('vars', networks_lower[network] ~ '_host_routes') | flatten | unique }}
+{% endif %}
+{% endfor %}
+- type: ovs_user_bridge
+  name: bridge_name
+  mtu: {{ external_mtu }}
+  use_dhcp: false
+  members:
+  - type: ovs_dpdk_port
+    name: dpdk0
+    members:
+    - type: interface
+      name: ens1f3
+      mtu: {{ external_mtu }}
+      use_dhcp: false
+      primary: true
