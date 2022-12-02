@@ -1,12 +1,13 @@
 
-#change this to local-defaults.yaml to have affect 
+#change this to local-defaults.yaml to have affect
 ---
 osp_extra_env_files: ["services/neutron-ovs.yaml","services/neutron-ovs-dpdk.yaml","services/neutron-sriov.yaml"]
 
-director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
+csv_version: 1.3.0-12
+director_operator_image: quay.io/mschuppe/osp-director-operator
 
-default_timeout: 360
-deploy_timeout: 360m
+default_timeout: 999999
+deploy_timeout: 999999m
 
 ocp_ai: true
 enable_virt_sriov: false

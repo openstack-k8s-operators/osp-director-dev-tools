@@ -264,7 +264,6 @@ resources:
                         get_param: ExternalMtu
                       use_dhcp: false
                       primary: true
-                    
 outputs:
   OS::stack_id:
     description: The OsNetConfigImpl resource.
