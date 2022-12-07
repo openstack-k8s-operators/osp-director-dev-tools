@@ -28,10 +28,9 @@
       state: directory
       mode: '0755'
 
-  # TODO: filter by configGeneratorName
   - name: Lookup configVersion
     shell: >
-      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o json | jq -e '.items[-1].spec | {hash,configGeneratorName}'
+      oc get -n openstack --sort-by {.metadata.creationTimestamp} osconfigversions -o jsonpath-as-json='{.items[?(@.spec.configGeneratorName=="{{ config_generator_name|default('default') }}")]}' | jq -j -e '.[-1].spec.hash'
     register: config_version_cmd
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
@@ -39,7 +38,7 @@
 
   - name: Set config_version fact
     set_fact:
-      config_version: "{{ config_version_cmd.stdout | from_json }}"
+      config_version: "{{ config_version_cmd.stdout }}"
 
   - name: Render templates to yaml dir
     template:
