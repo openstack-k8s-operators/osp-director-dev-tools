@@ -1,1 +1,4 @@
-#parameter_defaults:
+{%- if workaround_BZ2087231|default(false) %}
+parameter_defaults:
+    ValidateGatewaysIcmp: false
+{%- endif %}

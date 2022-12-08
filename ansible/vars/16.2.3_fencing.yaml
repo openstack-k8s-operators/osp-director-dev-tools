@@ -3,6 +3,8 @@ osp_release_auto_compose: z3
 
 enable_fencing: true
 
+workaround_BZ2087231: true
+
 osp_release_defaults:
   vmset:
     Controller:
