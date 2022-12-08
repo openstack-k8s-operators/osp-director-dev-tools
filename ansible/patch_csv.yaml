@@ -90,6 +90,7 @@
     until: osclient_pod_status_check.stdout.find("true") != -1
     retries: 20
     delay: 30
+    ignore_errors: true
     when: osclient_exists|bool
 
   - name: Wait for openstackclient pod to be ready
