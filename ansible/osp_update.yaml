@@ -59,5 +59,10 @@
 - name: Generate update converge custom config
   import_playbook: osp_custom_config.yaml
 
+- name: Config generate update converge
+  import_playbook: config_generator.yaml
+  vars:
+    config_generator_update_image: true
+
 - name: Update converge deployment
   import_playbook: osp_deployment.yaml
