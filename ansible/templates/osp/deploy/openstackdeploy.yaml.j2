@@ -3,8 +3,8 @@ kind: OpenStackDeploy
 metadata:
   name: {{ deploy_name|default('default') }}
 spec:
-  configVersion: {{ config_version.hash }}
-  configGenerator: {{ config_version.configGeneratorName }}
+  configVersion: {{ config_version }}
+  configGenerator: {{ config_generator_name|default('default') }}
 {% if deploy_mode|default('') != '' %}
   mode: {{ deploy_mode }}
 {% endif %}
