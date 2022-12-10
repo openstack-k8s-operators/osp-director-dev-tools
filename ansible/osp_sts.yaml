@@ -5,6 +5,18 @@
   - oc_local
 
   tasks:
+
+  - name: Mark this is the first run
+    copy:
+      dest: "{{ working_dir }}/sts_marker"
+      content: ""
+      force: no
+    register: marker_status
+
+  - name: Skip if first run
+    meta: end_play
+    when: marker_status is changed
+
   - name: Set combined osp dict
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
