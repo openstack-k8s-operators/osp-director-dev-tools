@@ -98,11 +98,11 @@
       set_fact:
         sts_test_dir: /home/cloud-admin/openstack-pidone-qe/CI/ansible_sts_osp_operator
 
-    - name: Change instance boot script timeout to 10 minutes
+    - name: Change instance boot script timeout to 10 minutes and hardcode external net
       shell: |
         #!/bin/bash
         set -e
-        oc exec -n openstack openstackclient -- bash -c "sed -i 's/timeout_seconds=180/timeout_seconds=600/g' {{ sts_test_dir }}/templates/boot_oc_workload.sh.j2"
+        oc exec -n openstack openstackclient -- bash -c "sed -i -e 's/timeout_seconds=180/timeout_seconds=600/g' -e 's/EXTERNAL_NET_NAME=.*/EXTERNAL_NET_NAME=public/g' {{ sts_test_dir }}/templates/boot_oc_workload.sh.j2"
       environment:
         <<: *oc_env
 
