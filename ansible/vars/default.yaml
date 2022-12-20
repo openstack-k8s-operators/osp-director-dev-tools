@@ -25,9 +25,7 @@ ocp_release_type: ga
 # - ocp_release_type is ignored
 # - ocp_version must be 4.6+
 # - Other OCP AI variables are stored in vars/ocp_ai.yaml to reduce clutter in this file
-# NOTE: This variable should be set to true in local-defaults.yaml as opposed to changing it here,
-#       otherwise our playbooks seem to be flaky with executing the AI logic
-#ocp_ai: false
+ocp_ai: true
 
 # private repo to read required secret files from
 # The playbooks expect secret files which can be placed in a private repo
@@ -185,7 +183,7 @@ sdk_version: v1.20.0
 kuttl_version: 0.12.1
 
 # golang version
-go_version: 1.17.9
+go_version: 1.18.9
 
 # kustomize version to use (must be specific version)
 kustomize_version: v4.0.1
@@ -211,7 +209,7 @@ watch_namespace: openstack,openshift-machine-api,openshift-sriov-network-operato
 # osp-director-operator image and tag to use
 director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 # CSV version is used for both the CSV version and container image tag
-csv_version: latest
+csv_version: latest-16.2
 
 #ocp_network_type: OVNKubernetes
 ocp_network_type: OpenShiftSDN
@@ -471,7 +469,7 @@ freeipa_directory_manager_password: dcba1234
 freeipa_image_url: quay.io/freeipa/freeipa-server:centos-8-stream
 
 # must-gather image
-must_gather_image: quay.io/openstack-k8s-operators/must-gather:0.0.2
+must_gather_image: quay.io/openstack-k8s-operators/must-gather:latest
 # Optional directory to save must-gather information, defaults to "{{ working_log_dir }}"
 # must_gather_directory: "{{ working_log_dir }}"
 must_gather_compress_logs: false

@@ -1,8 +1,8 @@
 ---
+csv_version: latest-17.0
 osp_release_auto_version: 17.0-RHEL-9
-osp_release_auto_compose: passed_phase2
 osp_release_defaults:
-  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.0/20220428.0/images/rhel-guest-image-9.0-20220428.0.x86_64.qcow2
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.0/20221216.0/images/rhel-guest-image-9.0-20221216.0.x86_64.qcow2
   bmset:
     Compute:
       count: 0
@@ -17,8 +17,3 @@ osp_release_defaults:
         - storage_mgmt
   extrafeatures:
     - hci
-ephemeral_heat:
-  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
-  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
-  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
-  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo

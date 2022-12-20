@@ -1,0 +1,10 @@
+ocp_version: "4.8"
+ocp_minor_version: 53
+
+ocp_master_disk: 130
+ocp_worker_disk: 130
+
+#osp_release_auto_compose: z3
+#workaround_BZ2087231: true
+
+osp_release_defaults: {}
