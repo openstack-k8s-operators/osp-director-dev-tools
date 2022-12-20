@@ -469,7 +469,7 @@ freeipa_directory_manager_password: dcba1234
 freeipa_image_url: quay.io/freeipa/freeipa-server:centos-8-stream
 
 # must-gather image
-must_gather_image: quay.io/openstack-k8s-operators/must-gather:0.0.2
+must_gather_image: quay.io/openstack-k8s-operators/must-gather:latest
 # Optional directory to save must-gather information, defaults to "{{ working_log_dir }}"
 # must_gather_directory: "{{ working_log_dir }}"
 must_gather_compress_logs: false
