@@ -1,0 +1,30 @@
+---
+enable_fencing: true
+csv_version: latest-17.0
+osp_release_auto_version: 17.0-RHEL-9
+
+osp_release_defaults:
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.0/20221216.0/images/rhel-guest-image-9.0-20221216.0.x86_64.qcow2
+  vmset:
+    Controller:
+      count: 3
+      cores: 6
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      root_disk:
+        disk_size: 40
+        storage_class: host-nfs-storageclass
+        storage_access_mode: ReadWriteMany
+        storage_volume_mode: Filesystem
+      additional_disks:
+        - name: datadisk
+          disk_size: 1
+          storage_class: host-nfs-storageclass
+          storage_access_mode: ReadWriteMany
+          storage_volume_mode: Filesystem
