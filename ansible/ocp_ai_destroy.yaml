@@ -113,6 +113,7 @@
       - "{{ ocp_cluster_name }}pr"
       - "ospnetwork"
       - "external"
+    ignore_errors: yes
 
   - name: Make sure bridge ifcfg files are removed
     file:
