@@ -115,11 +115,12 @@
         <<: *oc_env
       register: sts_report
 
-    - name: Copy sts junit xml to localhost
+    - name: Copy sts report and logs to localhost
       shell: |
         #!/bin/bash
         set -e
         oc cp openstack/openstackclient:{{ sts_test_dir }}/ansible_sts_results/junit_test.xml {{ sts_working_dir }}/junit_test.xml
+        oc cp openstack/openstackclient:{{ sts_test_dir }}/ansible_sts_results {{ working_log_dir }}/ansible_sts_results
       environment:
         <<: *oc_env
 
