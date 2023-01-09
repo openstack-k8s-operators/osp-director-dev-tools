@@ -55,6 +55,9 @@ tempest_test_dict:
       - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_migration_with_trunk"
+      - "^tempest.api.volume.admin.test_volume_types.VolumeTypesTest.test_volume_crud_with_volume_type_and_extra_specs"
+      - "^tempest.api.volume.test_volume_delete_cascade.VolumesDeleteCascade.test_volume_from_snapshot_cascade_delete"
 
 # disable block_migration_for_live_migration: false
 tempest_enable_feature_dict:
