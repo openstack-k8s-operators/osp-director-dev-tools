@@ -29,6 +29,17 @@
     register: result
     until: result.rc == 0
 
+  - name: Openstack configmap cleanup
+    shell: |
+      for i in `oc get -n openstack cm -o name | grep '^configmap\/tripleo-tarball-config'`; do
+        oc delete -n openstack $i
+      done
+      for i in `oc get -n openstack cm -o name | grep '^configmap\/heat-env-config'`; do
+        oc delete -n openstack $i
+      done
+    environment:
+      <<: *oc_env
+
   - name: Remaining openstack cleanup
     command: "{{ item }}"
     environment:
@@ -43,7 +54,6 @@
       - "oc delete -n openstack openstackvmset --all"
       - "oc delete -n openstack openstackclient --all"
       - "oc delete -n openstack openstacknetconfig --all"
-      - "oc delete -n openstack cm tripleo-deploy-config heat-env-config tripleo-tarball-config --ignore-not-found=true"
       - "oc delete -n openstack events --all"
 
   - name: check if ospnetwork NM vlan configs exists

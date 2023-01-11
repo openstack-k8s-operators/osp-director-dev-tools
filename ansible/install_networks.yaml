@@ -74,6 +74,45 @@
   # Notes:
   # * can not use nmcli module https://github.com/ansible/ansible/issues/48055
   # * don't apply these persistent, in case of a host reboot those need to be reapplied
+
+  - name: Create IPv4 gateways on ctlplane network
+    become: true
+    become_user: root
+    vars:
+      cidr_suffix: "{{ item.1.ipv4.cidr | regex_search('.*/(.+)', '\\1') | first }}"
+    shell: |
+      set -e
+      ip addr replace {{ item.1.ipv4.gateway }}/{{ cidr_suffix }} dev {{ ocp_cluster_name }}pr
+      firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
+      firewall-cmd --zone=trusted --add-source={{ item.1.ipv4.cidr }}
+      iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
+    with_subelements:
+    - "{{ osp_networks }}"
+    - subnets
+    when:
+    - item.1.ipv4.gateway is defined
+    - item.0.is_control_plane|default(False)
+
+  - name: Create IPv6 gateways on ctlplane network
+    become: true
+    become_user: root
+    vars:
+      cidr_suffix: "{{ item.1.ipv6.cidr | regex_search('.*/(.+)', '\\1') | first }}"
+    shell: |
+      set -e
+      ip addr replace {{ item.1.ipv6.gateway }}/{{ cidr_suffix }} dev {{ ocp_cluster_name }}pr
+      firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
+      firewall-cmd --zone=trusted --add-source={{ item.1.ipv6.cidr }}
+      ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
+    args:
+      executable: /bin/bash
+    with_subelements:
+    - "{{ osp_networks }}"
+    - subnets
+    when:
+    - item.1.ipv6.gateway is defined
+    - item.0.is_control_plane|default(False)
+
   - name: Create IPv4 gateways on isolated vlan networks
     become: true
     become_user: root
@@ -95,6 +134,7 @@
     when:
     - item.1.vlan is defined
     - item.1.ipv4.gateway is defined
+    - not item.0.is_control_plane|default(False)
 
   - name: Create IPv6 gateways on isolated vlan networks
     become: true
@@ -122,6 +162,7 @@
     when:
     - item.1.vlan is defined
     - item.1.ipv6.gateway is defined
+    - not item.0.is_control_plane|default(False)
 
   - name: Create forwarding dnsmasq on ctlplane network
     become: true

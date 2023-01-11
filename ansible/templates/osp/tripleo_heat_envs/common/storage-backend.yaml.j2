@@ -62,6 +62,9 @@ parameter_defaults:
   GlanceRbdPoolName: "images"
   CephPoolDefaultPgNum: 32
   CephPoolDefaultSize: 2
+  {%- if config_custom_ceph_cluser_name|default(False) %}
+  CephClusterName: {{ config_custom_ceph_cluster_name }}
+  {%- endif %}
 {% elif "external_ceph" in osp.extrafeatures %}
     CinderEnableIscsiBackend: false
     CinderEnableRbdBackend: true

@@ -65,12 +65,21 @@
     loop_control:
       loop_var: feature
 
+  - name: Import params from previous deployments
+    shell:
+      oc get cm -n openstack tripleo-exports-{{ import.deploy }} -o json | jq -r '.data."{{ import.src }}"' > {{ ooo_yaml_dir }}/{{ import.dest }}
+    loop: "{{ custom_config_imports|default([]) }}"
+    loop_control:
+      loop_var: import
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"   
+
   - name: create heat-env-config ConfigMap
     shell: |
       oc create configmap -n openstack {{heat_env_cm}} --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    environment:
+      <<: *oc_env
 
   - name: copy {{tripleo_tarball_cm}} {{ osp.release }} custom tripleo tarball files
     copy:
