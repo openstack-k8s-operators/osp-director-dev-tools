@@ -69,8 +69,8 @@ EOF
 
 #to check the ping :
 #use sshpass to ping with pass:
-sriov_vm_ip_0=$(openstack server show test-sriov-0 -f value|grep 'sriov-net='|sed 's/sriov-net=//g')
-sriov_vm_ip_1=$(openstack server show test-sriov-1 -f value|grep 'sriov-net='|sed 's/sriov-net=//g')
+sriov_vm_ip_0=$(openstack server show test-sriov-0 |grep sriov-net|sed 's/.*sriov-net=//g'|awk '{printf $1}')
+sriov_vm_ip_1=$(openstack server show test-sriov-1 |grep sriov-net|sed 's/.*sriov-net=//g'|awk '{printf $1}')
 
 wait_for_sshping_vms $sriov_vm_ip_0 $sriov_vm_ip_1
 
@@ -139,7 +139,7 @@ openstack server create  \
     --hypervisor-hostname computeovsdpdksriov-0.osptest.test.metalkube.org \
     --flavor 1g_flav_dpdk \
     --config-drive true --user-data ./user_data \
-    --nic net-id=${public_net_id} dpdk1 --wait
+    --nic net-id=${public_net_id} dpdk0 --wait
 
 openstack server create  \
     --image rhel8.2_img \
@@ -147,10 +147,10 @@ openstack server create  \
     --hypervisor-hostname computeovsdpdksriov-0.osptest.test.metalkube.org \
     --flavor 1g_flav_dpdk \
     --config-drive true --user-data ./user_data \
-    --nic net-id=${public_net_id} dpdk2 --wait
+    --nic net-id=${public_net_id} dpdk1 --wait
 
-dpdk_vm_ip_0=$(openstack server show dpdk1 -f value|grep 'public='|sed 's/public=//g')
-dpdk_vm_ip_1=$(openstack server show dpdk2 -f value|grep 'public='|sed 's/public=//g')
+dpdk_vm_ip_0=$(openstack server show dpdk0 |grep 'public='|sed 's/.*public=//g'|awk '{printf $1}')
+dpdk_vm_ip_1=$(openstack server show dpdk1 |grep 'public='|sed 's/.*public=//g'|awk '{printf $1}')
 
 wait_for_sshping_vms $dpdk_vm_ip_0 $dpdk_vm_ip_1
 
