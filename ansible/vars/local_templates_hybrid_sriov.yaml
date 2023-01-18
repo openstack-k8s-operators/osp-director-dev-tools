@@ -3,8 +3,7 @@
 #change this to local-defaults.yaml to have affect
 director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 
-osp_extra_env_files: ["services/neutron-ovs.yaml","services/neutron-sriov.yaml"]
-
+osp_extra_env_files: ["services/neutron-ovn-sriov.yaml"]
 
 default_timeout: 360
 deploy_timeout: 360m
