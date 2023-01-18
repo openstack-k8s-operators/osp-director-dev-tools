@@ -4,7 +4,7 @@ parameter_defaults:
     NeutronFlatNetworks: datacentre,sriov-1
     NeutronNetworkVLANRanges: "sriov-1:472:472"
     ComputeSriovParameters:
-        KernelArgs: "iommu=pt intel_iommu=on"
+        KernelArgs: "default_hugepagesz=1GB hugepagesz=1G hugepages=64 iommu=pt intel_iommu=on tsx=off isolcpus=2-19,22-80"
         NovaPCIPassthrough:
           - devname: "ens1f0"
             trusted: "true"
