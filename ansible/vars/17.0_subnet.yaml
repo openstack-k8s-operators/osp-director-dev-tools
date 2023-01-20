@@ -1,6 +1,7 @@
 ---
 csv_version: latest-17.0
 osp_release_auto_version: 17.0-RHEL-9
+osp_release_auto_compose: passed_phase2
 
 openstackclient_networks:
   - ctlplane
