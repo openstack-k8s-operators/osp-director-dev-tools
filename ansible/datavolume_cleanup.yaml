@@ -18,9 +18,10 @@
     - "{{ base_path }}/ironic/html/images/*.qcow2"
     - "/opt/http_store/data/images/*.qcow2"
 
-  - name: Delete all datavolumes
-    shell: >
+  - name: Delete all datavolumes and base image PVC
+    shell: |
       oc delete dv --all -n {{ namespace }}
+      oc delete pvc controller-base-img --ignore-not-found -n {{ namespace }}
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
