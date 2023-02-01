@@ -1,0 +1,65 @@
+
+#change this to local-defaults.yaml to have affect
+---
+#testing ovs templates now
+#osp_extra_env_files: ["services/neutron-ovn-ha.yaml","services/neutron-ovn-dpdk.yaml","services/neutron-ovn-sriov.yaml"]
+osp_extra_env_files: ["services/neutron-ovs.yaml","services/neutron-ovs-dpdk.yaml","services/neutron-sriov.yaml"]
+
+osp_release_auto_version: 17.0-RHEL-9
+osp_release_auto_compose: passed_phase2
+ephemeral_heat:
+  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
+  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
+  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
+  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+#
+#osp_release_defaults:
+osp_local:
+  base_image_url: http://download.eng.tlv.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.0-20220420.0.x86_64.qcow2
+
+csv_version: 17.0.35-17.0
+director_operator_image: quay.io/mschuppe/osp-director-operator
+
+default_timeout: 999999
+deploy_timeout: 999999m
+
+ocp_ai: true
+enable_virt_sriov: false
+enable_fencing: true
+
+# 3 virtualized master/worker combo OCP nodes
+# No dedicated virtual workers
+# No virtual OSP computes
+ocp_num_masters: 3
+ocp_num_workers: 0
+ocp_num_extra_workers: 0
+
+# Extra specs for the master/workers combo nodes
+ocp_master_memory: 60000
+ocp_master_vcpu: 18
+ocp_master_disk: 120
+
+# Which interface on the prov host will be attached to the OCP baremetal
+# bridge to establish connectivity with the baremetal nodes' network
+ocp_bm_interface: ens1f0
+
+# Which interface on the prov host will be attached to the OCP provisioning
+# bridge to establish connectivity with the baremetal nodes' provisioning network
+ocp_bm_prov_interface: ens1f2
+
+# Which interface on the prov host has connectivity to BMCs on baremetal nodes
+ocp_bmc_interface: eno1
+
+# Interface to allow OCP VMs (and therefore OSP CNV controllers) to connect
+# to OSP computes over OSP networks
+osp_bm_interface: ens1f1
+
+# Interface to allow OCP VMs (and therefore OSP CNV controllers) to connect
+# to OSP computes over OSP external network
+osp_ext_bm_interface: ens1f3
+
+# No dedicated OCP BM masters
+ocp_bm_masters: {}
+
+# No dedicated OCP BM workers
+ocp_bm_workers: {}
