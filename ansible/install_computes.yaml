@@ -99,21 +99,13 @@
       dest: "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
       mode: '0644'
 
-  - name: does the provisionserver already exist
-    shell: >
-      oc get -n {{ namespace }} osprovserver openstack -o json --ignore-not-found
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: provisionserver_switch
-
   - name: Start provisionserver
     shell: |
       set -e
       oc apply -n {{ namespace }} -f "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
-    environment:
-      <<: *oc_env
-    when: provisionserver_switch.stdout | length == 0
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
 
   - name: Start all baremetalsets
     shell: |

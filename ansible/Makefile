@@ -134,12 +134,12 @@ git: hosts local-deps local-defaults.yaml
 	git.yaml
 
 openstack:
+	$(MAKE) patch_csv
 	$(MAKE) datavolume
 	$(MAKE) networks
 	$(MAKE) git
 	$(MAKE) ctlplane
 	$(MAKE) computes
-	$(MAKE) patch_csv
 	$(MAKE) osp_deploy
 	$(MAKE) must_gather
 
