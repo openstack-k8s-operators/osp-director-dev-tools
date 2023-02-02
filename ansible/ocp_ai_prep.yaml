@@ -556,23 +556,18 @@
     become: true
     become_user: root
     block:
-    # latest 4.0.1 fails with: ModuleNotFoundError: No module named 'setuptools_rust'
-    - name: Install bcrypt < 4.0.0
-      pip:
-        name: ['bcrypt']
-        version: "<4.0.0"
-        executable: /usr/bin/pip-3
-
-    - name: Install sushy-tools via pip3
-      pip:
-        name: ['sushy-tools', 'libvirt-python']
-        executable: /usr/bin/pip-3
-
     - name: Create sushy-tools conf directory
       file:
         path: /opt/sushy-tools
         state: directory
         mode: '0755'
+
+    - name: Install sushy-tools in virtualenv
+      pip:
+        name: ['sushy-tools!=0.21.1', 'libvirt-python']
+        virtualenv: /opt/sushy-tools/venv
+        virtualenv_python: python3.9
+        state: latest
 
     - name: Create sushy-tools conf
       template:

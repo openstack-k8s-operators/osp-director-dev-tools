@@ -77,6 +77,10 @@
     systemd:
       daemon_reload: yes
 
+  - name: Remove sushy-tools
+    file:
+      path: /opt/sushy-tools
+      state: absent
 
   ### HTTP STORE
 

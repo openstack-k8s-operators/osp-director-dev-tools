@@ -191,6 +191,10 @@
           # required to customize the guest-image to remove net.ifnames=0 kernel param
           - libguestfs-tools-c
 
+          # required to run recent sushy-tools
+          - python39
+          - python3-virtualenv
+
     - name: Enable helpful services
       service: name={{ item }} enabled=yes state=started
       with_items:
