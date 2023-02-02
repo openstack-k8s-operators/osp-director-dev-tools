@@ -9,6 +9,10 @@
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
+  # FIXME: need to delete/recreate or use patch for existing objects.
+  # In spite of what oc replace --help says, it's not safe to run oc get -o yaml, modify yaml, and then oc replace.
+  # This can cause "metadata.resourceVersion: Invalid value: 0x0: must be specified for an update" as it tries to
+  # apply the kubectl.kubernetes.io/last-applied-configuration annotation.
   - name: Update CSV
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
@@ -68,18 +72,20 @@
     environment:
       <<: *oc_env
     shell: |
-      oc get openstackclient -n openstack openstackclient -o json \
-        | jq 'del( .spec.imageURL )' \
-        | oc replace -f -
+      oc patch openstackclient -n openstack openstackclient --type=json -p="[
+        {'op': 'remove', 'path': '/spec/imageURL'}
+      ]"
     when: osclient_exists|bool
 
   - name: Update provisionserver CR
     environment:
       <<: *oc_env
     shell: |
-      oc get openstackprovisionserver -n openstack openstack -o json \
-          | jq 'del( .spec.agentImageUrl, .spec.apacheImageUrl, .spec.downloaderImageUrl)' \
-          | oc replace -f -
+      oc patch openstackprovisionserver -n openstack openstack --type=json -p="[
+            {'op': 'remove', 'path': '/spec/agentImageUrl'},
+            {'op': 'remove', 'path': '/spec/apacheImageUrl'},
+            {'op': 'remove', 'path': '/spec/downloaderImageUrl'}
+          ]"
     when: osprovsrv_exists|bool
 
   - name: Wait for openstackclient to reconcile

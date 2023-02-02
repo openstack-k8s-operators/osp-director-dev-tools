@@ -36,24 +36,35 @@
     with_items:
     - "openstackconfiggenerator.yaml"
 
+  - name: Check if config generator exists
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    ignore_errors: true
+    command: oc get osconfiggenerator -n openstack {{ config_generator_name|default('default') }} -o name
+    register: osconfiggen_check_exists
+
+  - set_fact:
+      osconfiggen_exists: "{{ osconfiggen_check_exists.rc == 0 }}"
+
   - name: Start config generator
     shell: |
       set -e
       oc apply -n openstack -f "{{ config_generator_yaml_dir }}/openstackconfiggenerator.yaml"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    environment:
+      <<: *oc_env
+    when: osconfiggen_exists|bool == false
 
   - name: Refresh config generator image
     shell: |
-      set -e
-      oc get -n openstack osconfiggenerator {{ config_generator_name|default('default') }} -o json \
-        | jq 'del( .spec.imageURL )' \
-        | oc replace -f -
+      oc patch osconfiggenerator -n openstack {{ config_generator_name|default('default') }} --type=json -p="[
+        {'op': 'remove', 'path': '/spec/imageURL'}
+      ]"
     environment:
       <<: *oc_env
     when:
       - config_generator_update_image|default(False)
+      - osconfiggen_exists|bool
 
   - name: wait for config generator to finish
     shell: |
