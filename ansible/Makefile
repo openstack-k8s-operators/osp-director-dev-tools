@@ -5,6 +5,7 @@ endif
 
 default: \
   ocp_install \
+  nmstate_install \
   cnv_install \
   sriov_install \
   olm \
@@ -96,6 +97,13 @@ freeipa_cleanup: hosts local-defaults.yaml
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	freeipa_cleanup.yaml
+
+nmstate_install: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	ocp_nmstate.yaml
 
 cnv_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

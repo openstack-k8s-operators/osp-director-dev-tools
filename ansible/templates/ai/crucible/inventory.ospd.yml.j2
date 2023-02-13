@@ -38,6 +38,9 @@ all:
     # network_type: OpenShiftSDN
     network_type: {{ ocp_network_type }}
 
+    # Force hyphen instead of underscore for VM name prefix
+    vm_node_prefix: "{{ '{{' }} cluster_name {{ '}}-' }}"
+
     assisted_installer_hardware_validation:
     - version: default
       master:
@@ -142,7 +145,10 @@ all:
         - 50-worker-nm-fix-ipv6.yml
         - 50-worker-remove-ipi-leftovers.yml
         - 02-fix-ingress-config.yml
+{# Needed for 4.12 until the fix for https://issues.redhat.com/browse/OCPBUGS-1482 appears in that version #}
+{% if ocp_version != '4.12' %}
         - 01-master-node-scheduler.yml
+{% endif %}
 
     # The retrieved cluster kubeconfig will be placed on the bastion host at the following location
     kubeconfig_dest_dir: {{ base_path }}/

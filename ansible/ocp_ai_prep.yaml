@@ -654,6 +654,49 @@
         regexp: 'openshift_full_version in supported_ocp_versions'
         replace: 'openshift_full_version is defined'
 
+    # FIXME: Needed for 4.12 until the fix for https://issues.redhat.com/browse/OCPBUGS-1482 appears in that version
+    - name: Remove schedulable_masters from initial cluster creation
+      when: ocp_version == "4.12"
+      ansible.builtin.lineinfile:
+        path: "{{ base_path }}/crucible/roles/create_cluster/tasks/main.yml"
+        state: absent
+        regexp: '^.*"schedulable_masters"'
+
+    # FIXME: Needed until upstream Crucible supports 4.11 and 4.12
+    - name: Inject Crucible support for OCP 4.11/4.12 provisioning images
+      when: ocp_version in ["4.11", "4.12"]
+      blockinfile:
+        path: "{{ base_path }}/crucible/roles/get_image_hash/defaults/main.yml"
+        insertafter: "os_images:"
+        block: |2
+            - openshift_version: '4.11'
+              cpu_architecture: x86_64
+              url: https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.11/4.11.9/rhcos-live.x86_64.iso
+              rootfs_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.11/4.11.9/rhcos-live-rootfs.x86_64.img
+              version: 411.86.202210072320-0
+            - openshift_version: '4.12'
+              cpu_architecture: x86_64
+              url: https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.12/4.12.0/rhcos-live.x86_64.iso
+              rootfs_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.12/4.12.0/rhcos-live-rootfs.x86_64.img
+              version: 412.86.202301061548-0
+
+    # FIXME: Needed until upstream Crucible supports 4.11 and 4.12
+    - name: Inject Crucible support for OCP 4.11/4.12 release images
+      when: ocp_version in ["4.11", "4.12"]
+      blockinfile:
+        path: "{{ base_path }}/crucible/roles/get_image_hash/defaults/main.yml"
+        insertafter: "release_images:"
+        marker: "#*#*#*" # workaround for https://github.com/ansible/ansible/issues/14363
+        block: |2
+            - openshift_version: '4.11'
+              cpu_architecture: x86_64
+              url: quay.io/openshift-release-dev/ocp-release:4.11.9-x86_64
+              version: 4.11.9
+            - openshift_version: '4.12'
+              cpu_architecture: x86_64
+              url: quay.io/openshift-release-dev/ocp-release:4.12.0-x86_64
+              version: 4.12.0
+
     - name: Override/inject desired OCP version (display_name/release_version)
       replace:
         path: "{{ base_path }}/crucible/roles/get_image_hash/defaults/main.yml"
