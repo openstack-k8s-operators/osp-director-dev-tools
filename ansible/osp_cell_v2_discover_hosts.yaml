@@ -1,0 +1,53 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+    - oc_local
+
+  tasks:
+    - name: Set combined osp dict
+      set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+    - name: Set directory for yaml files
+      set_fact:
+        discovery_yaml_dir: "{{ working_yamls_dir }}/osp_cell_v2_discovery"
+
+    - name: show yaml output dir
+      debug:
+        msg: "yamls will be written to {{ discovery_yaml_dir }} locally"
+
+    - name: Clean yaml dir
+      file:
+        state: absent
+        path: "{{ discovery_yaml_dir }}/"
+
+    - name: Create yaml dir
+      file:
+        path: "{{ discovery_yaml_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Render templates to yaml dir
+      template:
+        src: "osp/{{ item }}.j2"
+        dest: "{{ discovery_yaml_dir }}/{{ item }}"
+        mode: '0644'
+      with_items:
+      - "cell_v2_discovery.yaml"
+
+    - name: copy discovery playbook to openstackclient
+      shell: |
+        #!/bin/bash
+        oc cp -n openstack {{ discovery_yaml_dir }}/cell_v2_discovery.yaml openstackclient:/home/cloud-admin/cell_v2_discovery.yaml
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+
+    - name: run discovery playbook via openstackclient
+      shell: |
+        oc rsh -n openstack openstackclient <<"EOF_RSH"
+          ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory  /home/cloud-admin/cell_v2_discovery.yaml
+        EOF_RSH
+      environment:
+        <<: *oc_env

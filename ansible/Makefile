@@ -152,6 +152,7 @@ openstack_dcn:
 	$(MAKE) patch_csv
 	$(MAKE) osp_deploy_dcn_central
 	$(MAKE) osp_deploy_dcn_1
+	$(MAKE) osp_cell_v2_discover_hosts
 	$(MAKE) must_gather
 
 openstack_update:
@@ -397,3 +398,10 @@ cnosp_ctlplane_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	cnosp_ctlplane_cleanup.yaml
+
+osp_cell_v2_discover_hosts: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-v -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_cell_v2_discover_hosts.yaml
