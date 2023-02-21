@@ -24,6 +24,9 @@ spec:
     - services/haproxy-public-tls-certmonger.yaml
     - ssl/enable-internal-tls.yaml
 {%- endif %}
+{%- if "dcn" in osp.extrafeatures %}
+    - nova-az-config.yaml
+{%- endif %}
 {%- for envfile in osp_extra_env_files|default([]) %}
     - {{ envfile }}
 {%- endfor %}

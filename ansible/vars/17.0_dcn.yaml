@@ -50,5 +50,6 @@ osp_release_defaults:
         - tenant_leaf1
   extrafeatures:
     - hci
-    - ssh_firewall_allow_all
+    - ssh_firewall_allow_all # Required for ceph-adm
     - BZ2170021
+    - dcn

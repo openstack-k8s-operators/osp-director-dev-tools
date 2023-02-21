@@ -44,3 +44,4 @@ osp_release_defaults:
         - tenant_leaf1
   extrafeatures:
     - hci
+    - dcn
