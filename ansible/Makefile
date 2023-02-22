@@ -3,6 +3,11 @@ ifndef OSP_RELEASE
 OSP_RELEASE = 16.2
 endif
 
+# make openstack OSP_SCENARIO=dcn
+ifndef OSP_SCENARIO
+OSP_SCENARIO = default
+endif
+
 default: \
   ocp_install \
   nmstate_install \
@@ -134,6 +139,9 @@ git: hosts local-deps local-defaults.yaml
 	git.yaml
 
 openstack:
+	$(MAKE) openstack_scenario_${OSP_SCENARIO}
+
+openstack_scenario_default:
 	$(MAKE) patch_csv
 	$(MAKE) datavolume
 	$(MAKE) networks
@@ -143,13 +151,13 @@ openstack:
 	$(MAKE) osp_deploy
 	$(MAKE) must_gather
 
-openstack_dcn:
+openstack_scenario_dcn:
+	$(MAKE) patch_csv
 	$(MAKE) datavolume
 	$(MAKE) networks
 	$(MAKE) git
 	$(MAKE) ctlplane
 	$(MAKE) computes
-	$(MAKE) patch_csv
 	$(MAKE) osp_deploy_dcn_central
 	$(MAKE) osp_deploy_dcn_1
 	$(MAKE) osp_cell_v2_discover_hosts
