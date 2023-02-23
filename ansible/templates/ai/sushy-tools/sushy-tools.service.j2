@@ -7,7 +7,7 @@ Type=simple
 TimeoutStartSec=5m
 #User=<your-user>
 WorkingDirectory=/opt/sushy-tools
-ExecStart=/usr/local/bin/sushy-emulator --config /opt/sushy-tools/sushy-emulator.conf
+ExecStart=/opt/sushy-tools/venv/bin/sushy-emulator --config /opt/sushy-tools/sushy-emulator.conf
 Restart=always
 
 [Install]

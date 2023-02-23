@@ -556,23 +556,18 @@
     become: true
     become_user: root
     block:
-    # latest 4.0.1 fails with: ModuleNotFoundError: No module named 'setuptools_rust'
-    - name: Install bcrypt < 4.0.0
-      pip:
-        name: ['bcrypt']
-        version: "<4.0.0"
-        executable: /usr/bin/pip-3
-
-    - name: Install sushy-tools via pip3
-      pip:
-        name: ['sushy-tools', 'libvirt-python']
-        executable: /usr/bin/pip-3
-
     - name: Create sushy-tools conf directory
       file:
         path: /opt/sushy-tools
         state: directory
         mode: '0755'
+
+    - name: Install sushy-tools in virtualenv
+      pip:
+        name: ['sushy-tools!=0.21.1', 'libvirt-python']
+        virtualenv: /opt/sushy-tools/venv
+        virtualenv_python: python3.9
+        state: latest
 
     - name: Create sushy-tools conf
       template:
@@ -617,7 +612,7 @@
         repo: "{{ ocp_ai_ansible_repo | default('https://github.com/redhat-partner-solutions/crucible.git', true) }}"
         dest: "{{ base_path }}/crucible"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('380937382a9929bc3af76724e4a9186cf1d61f50', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('863559ed9fdf61b650633922f4c29694b604ff09', true) }}"
 
     - name: Get BMC-network-connected interface's IP for baremetal deployments
       when: ocp_cluster_has_bm|bool
@@ -728,21 +723,6 @@
           path: "{{ base_path }}/crucible/roles/get_image_hash/defaults/main.yml"
           regexp: 'version:\s"{{ ocp_version | replace(".", "") }}\.\d+.+'
           replace: 'version: "{{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}"'
-
-    - name: Force linear execution of boot_iso role when KVM nodes present
-      when: ocp_num_masters > 0 or ocp_num_workers > 0
-      block:
-      - name: Force linear execution
-        replace:
-          path: "{{ base_path }}/crucible/playbooks/boot_iso.yml"
-          regexp: 'strategy:\s.+'
-          replace: 'strategy: linear'
-
-      - name: Force linear execution, part 2
-        replace:
-          path: "{{ base_path }}/crucible/playbooks/boot_iso.yml"
-          regexp: 'serial:\s.+'
-          replace: 'serial: 1'
 
     - name: Remove NTP validation due to prevelance of random false-negatives
       replace:
