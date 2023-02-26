@@ -1,7 +1,9 @@
 
 #change this to local-defaults.yaml to have affect
 ---
-osp_extra_env_files: ["services/neutron-ovn-ha.yaml","services/neutron-ovn-dpdk.yaml","services/neutron-ovn-sriov.yaml"]
+# ovn does not work for dpdk vm connection currently
+# osp_extra_env_files: ["services/neutron-ovn-ha.yaml","services/neutron-ovn-dpdk.yaml","services/neutron-ovn-sriov.yaml"]
+osp_extra_env_files: ["services/neutron-ovs.yaml","services/neutron-ovs-dpdk.yaml","services/neutron-sriov.yaml"]
 
 default_timeout: 999999
 deploy_timeout: 999999m
