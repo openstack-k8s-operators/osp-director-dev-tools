@@ -31,10 +31,10 @@
 
   - name: Openstack configmap cleanup
     shell: |
-      for i in `oc get -n openstack cm -o name | grep '^configmap\/tripleo-tarball-config'`; do
+      for i in $(oc get -n openstack cm -o name | grep '^configmap\/tripleo-tarball-config'); do
         oc delete -n openstack $i
       done
-      for i in `oc get -n openstack cm -o name | grep '^configmap\/heat-env-config'`; do
+      for i in $(oc get -n openstack cm -o name | grep '^configmap\/heat-env-config'); do
         oc delete -n openstack $i
       done
     environment:
