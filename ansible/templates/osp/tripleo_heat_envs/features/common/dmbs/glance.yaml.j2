@@ -1,0 +1,14 @@
+parameter_defaults:
+  GlanceShowMultipleLocations: true
+  GlanceEnabledImportMethods: web-download,copy-image
+  GlanceBackend: rbd
+  GlanceStoreDescription: '{{ custom_config_ceph_cluster_name }} rbd glance store'
+  GlanceBackendID: {{ custom_config_ceph_cluster_name }}
+{% if custom_config_dmbs_remote_site|default(false)  %}
+  GlanceMultistoreConfig:
+    central:
+      GlanceBackend: rbd
+      GlanceStoreDescription: 'central rbd glance store'
+      CephClientUserName: 'openstack'
+      CephClusterName: central
+{% endif %}

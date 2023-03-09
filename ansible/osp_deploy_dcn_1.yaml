@@ -5,6 +5,7 @@
   vars:
     custom_config_name: dcn1
     custom_config_ceph_cluster_name: dcn1
+    custom_config_dmbs_remote_site: "{{ 'dmbs' in osp.extrafeatures }}"
     custom_config_imports:
       - deploy: central
         src: ctlplane-export.yaml
@@ -18,6 +19,7 @@
   vars:
     custom_config_name: dcn1
     config_generator_name: dcn1
+    custom_config_dmbs_remote_site: "{{ 'dmbs' in osp.extrafeatures }}"
     config_generator_roles:
       - DistributedComputeHCILeaf1
 

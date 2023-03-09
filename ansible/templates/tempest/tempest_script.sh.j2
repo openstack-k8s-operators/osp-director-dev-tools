@@ -21,6 +21,21 @@ if [ -z "$PUB_NETWORK_ID" ]; then
   PUB_NETWORK_ID=$(openstack --os-cloud overcloud network list -f value -c ID --name public)
 fi
 
+# DMBS scenario: Create images in all glance stores (which is not supported by openstack client)
+# Glance client on the other hand does not support clouds.yaml
+{% if "dmbs" in osp.extrafeatures %}
+  export OS_AUTH_URL=https://overcloud.osptest.test.metalkube.org:13000
+  export OS_PASSWORD=$(grep password ~/.config/openstack/clouds.yaml | awk '{print $NF}')
+  export OS_PROJECT_DOMAIN_NAME=Default
+  export OS_PROJECT_NAME=admin
+  export OS_USER_DOMAIN_NAME=Default
+  export OS_USERNAME=admin
+  glance image-create --disk-format raw --container-format bare --id 12345678-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.4.0-x86_64-disk.img --file /var/lib/tempest/.config/openstack/cirros-0.4.0-x86_64-disk.raw --store central
+  glance image-import 12345678-aaaa-bbbb-cccc-0123456789ab --stores dcn1 --import-method copy-image
+  glance image-create --disk-format raw --container-format bare --id 87654321-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.4.0-x86_64-disk.img_alt --file /var/lib/tempest/.config/openstack/cirros-0.4.0-x86_64-disk.raw --store central
+  glance image-import 87654321-aaaa-bbbb-cccc-0123456789ab --stores dcn1 --import-method copy-image
+{% endif %}
+
 # Create a tempest workspace, use the shared directory so that the files
 # in it are accessible from the host as well.
 mkdir -p /var/lib/tempest/tempest_workspace

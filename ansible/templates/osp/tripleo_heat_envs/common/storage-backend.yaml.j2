@@ -65,6 +65,12 @@ parameter_defaults:
 {% if custom_config_ceph_cluster_name|default(False) %}
   CephClusterName: {{ custom_config_ceph_cluster_name }}
 {% endif %}
+{% if "dmbs" in osp.extrafeatures %}
+  CinderStorageAvailabilityZone: az-{{ custom_config_ceph_cluster_name|default('volume') }}
+{% if custom_config_dmbs_remote_site|default(false)  %}
+  CinderVolumeCluster: az-{{ custom_config_ceph_cluster_name }}
+{% endif %}
+{% endif %}
 {% elif "external_ceph" in osp.extrafeatures %}
   CinderEnableIscsiBackend: false
   CinderEnableRbdBackend: true
