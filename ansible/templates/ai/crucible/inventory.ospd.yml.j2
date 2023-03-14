@@ -63,6 +63,19 @@ all:
         disk_size_gb: {{ ocp_master_disk|default(120) }}
         installation_disk_speed_threshold_ms: 10
 
+    os_images:
+    - openshift_version: '{{ ocp_version }}'
+      cpu_architecture: x86_64
+      url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso
+      rootfs_url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live-rootfs.x86_64.img
+      version: {{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}
+
+    release_images:
+    - openshift_version: '{{ ocp_version }}'
+      cpu_architecture: x86_64
+      url: quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64
+      version: {{ ocp_version }}.{{ ocp_minor_version }}
+
     ######################################
     # Prerequisite Service Configuration #
     ######################################
