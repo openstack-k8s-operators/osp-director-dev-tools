@@ -27,6 +27,14 @@ dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make
 
 > NOTE: make sure you install ansible >= 2.9.27 otherwise ansible collections will not work correctly
 
+### Generate SSH keys
+
+Generate an SSH key on the host where you're going to be deploying from. The public key is used to access the deployed OpenShift cluster.
+
+```
+ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+```
+
 ### Create local-defaults.yaml file with personal information
 
 First create the following files relative to the project root:
