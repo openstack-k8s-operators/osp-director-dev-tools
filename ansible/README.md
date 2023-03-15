@@ -22,7 +22,7 @@ git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
 If not already installed, install the required dependencies
 
 ```
-dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make
+dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make gcc
 ```
 
 > NOTE: make sure you install ansible >= 2.9.27 otherwise ansible collections will not work correctly
