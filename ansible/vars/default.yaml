@@ -6,6 +6,20 @@ base_path: /home/ocp
 # deploys python39 and ansible 4.6.0 which makes dev-tools to fail for the short term pin to b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 
+# Set site based on domain name, default to rdu
+site_location: "{{ 'tlv' if ansible_nodename | regex_search('tlv.*\\.redhat\\.com') else 'brq' if ansible_nodename | regex_search('brq.*\\.redhat\\.com') else 'default' }}"
+
+# Site specific settings, local mirrors etc...
+site_settings:
+  default:
+    registry_proxy_mirror: rhos-qe-mirror-rdu2.usersys.redhat.com:5002
+  brq:
+    registry_proxy_mirror: rhos-qe-mirror-brq.usersys.redhat.com:5002
+  tlv:
+    registry_proxy_mirror: rhos-qe-mirror-tlv.usersys.redhat.com:5002
+
+registry_proxy: "{{ site_settings[site_location]['registry_proxy_mirror'] }}"
+
 base_domain_name: test.metalkube.org
 
 # registries to add to /etc/containers/registries.conf registries.insecure section
