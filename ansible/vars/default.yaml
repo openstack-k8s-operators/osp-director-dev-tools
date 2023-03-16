@@ -13,10 +13,19 @@ site_location: "{{ 'tlv' if ansible_nodename | regex_search('tlv.*\\.redhat\\.co
 site_settings:
   default:
     registry_proxy_mirror: rhos-qe-mirror-rdu2.usersys.redhat.com:5002
+    dns_servers:
+      - 10.11.5.19
+      - 10.2.32.1
   brq:
     registry_proxy_mirror: rhos-qe-mirror-brq.usersys.redhat.com:5002
+    dns_servers:
+      - 10.45.248.15
+      - 10.38.5.26
   tlv:
     registry_proxy_mirror: rhos-qe-mirror-tlv.usersys.redhat.com:5002
+    dns_servers:
+      - 10.47.242.10
+      - 10.38.5.26
 
 registry_proxy: "{{ site_settings[site_location]['registry_proxy_mirror'] }}"
 
@@ -307,11 +316,7 @@ openstackclient_networks:
 nfs_server: '172.22.0.1'
 ntp_server: "{{ 'clock.redhat.com' if 'redhat.com' in ansible_fqdn else 'pool.ntp.org' }}"
 
-external_dns:
-  - 10.11.5.19
-  - 10.38.5.26
-  - 10.10.160.2
-  - 10.5.30.160
+external_dns: "{{ site_settings[site_location]['dns_servers'] }}"
 
 # Set this to the empty string if you don't want an IP placed on the "external"
 # bridge (used for OpenStack) created by this tool.  By default this should be
