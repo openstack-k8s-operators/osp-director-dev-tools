@@ -2,6 +2,12 @@
 - hosts: convergence_base
   gather_facts: false
   tasks:
+
+  - name: Gather minimal facts
+    setup:
+     gather_subset:
+      - '!all'
+
   - name: Include default variables
     include_vars: vars/default.yaml
 
