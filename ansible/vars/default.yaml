@@ -13,16 +13,19 @@ site_location: "{{ 'tlv' if ansible_nodename | regex_search('tlv.*\\.redhat\\.co
 site_settings:
   default:
     registry_proxy_mirror: rhos-qe-mirror-rdu2.usersys.redhat.com:5002
+    rhos_release_mirror: rhos-qe-mirror-rdu2.usersys.redhat.com
     dns_servers:
       - 10.11.5.19
       - 10.2.32.1
   brq:
     registry_proxy_mirror: rhos-qe-mirror-brq.usersys.redhat.com:5002
+    rhos_release_mirror: rhos-qe-mirror-brq.usersys.redhat.com
     dns_servers:
       - 10.45.248.15
       - 10.38.5.26
   tlv:
     registry_proxy_mirror: rhos-qe-mirror-tlv.usersys.redhat.com:5002
+    rhos_release_mirror: rhos-qe-mirror-tlv.usersys.redhat.com
     dns_servers:
       - 10.47.242.10
       - 10.38.5.26
@@ -441,6 +444,7 @@ osp_extra_env_files: []
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
+osp_rhos_release_mirror: "{{ site_settings[site_location]['rhos_release_mirror'] }}"
 osp_rhos_release_compose: "{{ osp_release_auto.compose }}"
 osp_rhel_subscription_release: "{{ osp_release_auto.rhel_version }}"
 osp_rhel_subscription_repos:
