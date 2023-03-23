@@ -108,7 +108,9 @@
   - name: run rhsm playbook via openstackclient
     shell: |
       oc rsh -n openstack openstackclient <<"EOF_RSH"
-        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/rhsm.yaml
+        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory {{ limit }} /home/cloud-admin/rhsm.yaml
       EOF_RSH
     environment:
       <<: *oc_env
+    vars:
+      limit: "{{ '--limit ' + ','.join(config_generator_roles) if config_generator_roles|default(false) else '' }}"

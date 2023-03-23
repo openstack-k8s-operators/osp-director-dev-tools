@@ -1,0 +1,36 @@
+---
+
+- name: Generate deploy custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    custom_config_name: dcn1
+    config_custom_ceph_cluster_name: dcn1
+    custom_config_imports:
+      - deploy: central
+        src: ctlplane-export.yaml
+        dest: ctlplane-export-central.yaml
+      - deploy: central
+        src: ceph-export.yaml
+        dest: ceph-export-central.yaml
+
+- name: Config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: dcn1
+    config_generator_name: dcn1
+    config_generator_roles:
+      - DistributedComputeHCILeaf1
+
+- name: Overcloud node repo setup
+  import_playbook: osp_register_overcloud_nodes.yaml
+  vars:
+    config_generator_roles:
+      - DistributedComputeHCILeaf1
+
+- name: Overcloud deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: dcn1
+    deploy_name: dcn1
+
+

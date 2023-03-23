@@ -15,6 +15,7 @@
 - name: Update Prepare config generate
   import_playbook: config_generator.yaml
   vars:
+    custom_config_name: update
     config_generator_name: update
     config_generator_action: update
 

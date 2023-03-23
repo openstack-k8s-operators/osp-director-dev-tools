@@ -1,0 +1,34 @@
+---
+
+- name: Generate deploy custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    custom_config_name: central
+    config_custom_ceph_cluster_name: central
+
+- name: Config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: central
+    config_generator_name: central
+    config_generator_roles:
+      - Controller
+      - ComputeHCI
+
+- name: Overcloud node repo setup
+  import_playbook: osp_register_overcloud_nodes.yaml
+  vars:
+    config_generator_roles:
+      - Controller
+      - ComputeHCI
+
+- name: Overcloud node fencing setup
+  import_playbook: osp_tripleo_fencing_overrides.yaml
+
+- name: Overcloud deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: central
+    deploy_name: central
+
+

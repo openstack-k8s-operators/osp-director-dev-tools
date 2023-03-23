@@ -1,0 +1,5 @@
+parameter_defaults:
+    ControllerExtraConfig:
+        nova::availability_zone::default_schedule_zone: az-{{ custom_config_name|default('deploy') }}
+    NovaComputeAvailabilityZone: az-{{ custom_config_name|default('deploy') }}
+    NovaCrossAZAttach: false
