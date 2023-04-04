@@ -195,6 +195,7 @@
           - python39
           - python39-devel
           - python3-virtualenv
+          - gcc
 
     - name: Enable helpful services
       service: name={{ item }} enabled=yes state=started
