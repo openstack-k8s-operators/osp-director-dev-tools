@@ -3,7 +3,7 @@ openstackclient_image: quay.io/tripleotraincentos8/centos-binary-tripleoclient:c
 osp_release_defaults:
   release: train
   container_tag: current-tripleo
-  base_image_url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2
+  base_image_url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20230404.0.x86_64.qcow2
   #TODO: which ceph images tag to use for upstream train?
   #ceph_tag: 5-12
   #ceph_image: daemon
