@@ -68,16 +68,17 @@
       when: osp_release_auto_content is defined
       with_items:
         - { 'key': 'debug' , 'value': "{{ osp_release_auto_content }}"}
-        - { 'key': 'namespace' , 'value': "{{ osp_release_auto_content | regex_search('namespace: (.+)', '\\1') | first }}"}
+        - { 'key': 'namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content | regex_search('namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
         - { 'key': 'prefix' , 'value': "{{ osp_release_auto_content | regex_search('prefix: (.+)', '\\1') | first }}"}
         - { 'key': 'name_prefix' , 'value': "{{ osp_release_auto_content | regex_search('name_prefix: (.+)', '\\1') | first }}"}
         - { 'key': 'tag' , 'value': "{{ osp_release_auto_content | regex_search('tag: (.+)', '\\1') | first }}"}
-        - { 'key': 'ceph_namespace' , 'value': "{{ osp_release_auto_content | regex_search('ceph[-_]namespace: (.+)', '\\1') | first }}"}
+        - { 'key': 'ceph_namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content | regex_search('ceph[-_]namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
         - { 'key': 'ceph_image' , 'value': "{{ osp_release_auto_content | regex_search('ceph[-_]image: (.+)', '\\1') | first }}"}
         - { 'key': 'ceph_tag' , 'value': "{{ osp_release_auto_content | regex_search('ceph[-_]tag: (.+)', '\\1') | first }}"}
         - { 'key': 'release' , 'value': "{{ osp_release_auto_content | regex_search('rhosp: (.+)', '\\1') | first }}"}
         - { 'key': 'compose' , 'value': "{{ osp_release_auto_content | regex_search('id: (.+)', '\\1') | first }}"}
         - { 'key': 'rhel_version' , 'value': "{{ osp_release_auto_content | regex_search('rhel_version: (.+)', '\\1') | first }}"}
+
 
 - name: add insecure registies to /etc/containers/registries.conf
   when: podman_insecure_registries is defined

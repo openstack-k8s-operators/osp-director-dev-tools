@@ -3,8 +3,14 @@ ifndef OSP_RELEASE
 OSP_RELEASE = 16.2
 endif
 
+# make openstack OSP_SCENARIO=dcn
+ifndef OSP_SCENARIO
+OSP_SCENARIO = default
+endif
+
 default: \
   ocp_install \
+  nmstate_install \
   cnv_install \
   sriov_install \
   olm \
@@ -97,6 +103,13 @@ freeipa_cleanup: hosts local-defaults.yaml
 	-e @local-defaults.yaml \
 	freeipa_cleanup.yaml
 
+nmstate_install: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	ocp_nmstate.yaml
+
 cnv_install: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
@@ -126,13 +139,28 @@ git: hosts local-deps local-defaults.yaml
 	git.yaml
 
 openstack:
+	$(MAKE) openstack_scenario_${OSP_SCENARIO}
+
+openstack_scenario_default:
+	$(MAKE) patch_csv
 	$(MAKE) datavolume
 	$(MAKE) networks
 	$(MAKE) git
 	$(MAKE) ctlplane
 	$(MAKE) computes
-	$(MAKE) patch_csv
 	$(MAKE) osp_deploy
+	$(MAKE) must_gather
+
+openstack_scenario_dcn:
+	$(MAKE) patch_csv
+	$(MAKE) datavolume
+	$(MAKE) networks
+	$(MAKE) git
+	$(MAKE) ctlplane
+	$(MAKE) computes
+	$(MAKE) osp_deploy_dcn_central
+	$(MAKE) osp_deploy_dcn_1
+	$(MAKE) osp_cell_v2_discover_hosts
 	$(MAKE) must_gather
 
 openstack_update:
@@ -160,6 +188,20 @@ osp_deploy: hosts local-defaults.yaml
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	osp_deploy.yaml
+
+osp_deploy_dcn_central: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_deploy_dcn_central.yaml
+
+osp_deploy_dcn_1: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_deploy_dcn_1.yaml
 
 register_overcloud_nodes: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -372,3 +414,10 @@ cnosp_ctlplane_cleanup: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts -e @local-defaults.yaml \
 	cnosp_ctlplane_cleanup.yaml
+
+osp_cell_v2_discover_hosts: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-v -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_cell_v2_discover_hosts.yaml

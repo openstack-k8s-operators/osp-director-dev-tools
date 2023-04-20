@@ -2,6 +2,12 @@
 - hosts: convergence_base
   gather_facts: false
   tasks:
+
+  - name: Gather minimal facts
+    setup:
+     gather_subset:
+      - '!all'
+
   - name: Include default variables
     include_vars: vars/default.yaml
 
@@ -556,23 +562,18 @@
     become: true
     become_user: root
     block:
-    # latest 4.0.1 fails with: ModuleNotFoundError: No module named 'setuptools_rust'
-    - name: Install bcrypt < 4.0.0
-      pip:
-        name: ['bcrypt']
-        version: "<4.0.0"
-        executable: /usr/bin/pip-3
-
-    - name: Install sushy-tools via pip3
-      pip:
-        name: ['sushy-tools', 'libvirt-python']
-        executable: /usr/bin/pip-3
-
     - name: Create sushy-tools conf directory
       file:
         path: /opt/sushy-tools
         state: directory
         mode: '0755'
+
+    - name: Install sushy-tools in virtualenv
+      pip:
+        name: ['sushy-tools!=0.21.1', 'libvirt-python']
+        virtualenv: /opt/sushy-tools/venv
+        virtualenv_python: python3.9
+        state: latest
 
     - name: Create sushy-tools conf
       template:
@@ -617,27 +618,13 @@
         repo: "{{ ocp_ai_ansible_repo | default('https://github.com/redhat-partner-solutions/crucible.git', true) }}"
         dest: "{{ base_path }}/crucible"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('380937382a9929bc3af76724e4a9186cf1d61f50', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('3fc557583beba37fa3d084fae7c21410530f5cc6', true) }}"
 
     - name: Get BMC-network-connected interface's IP for baremetal deployments
       when: ocp_cluster_has_bm|bool
       shell: |
         /usr/bin/nmcli -g ip4.address device show {{ ocp_bmc_interface }} | cut -d '/' -f 1
       register: ocp_bmc_interface_ip
-
-    - name: Configure inventory variables
-      template:
-        src: ai/crucible/inventory.ospd.yml.j2
-        dest: "{{ base_path }}/crucible/inventory.ospd.yml"
-        mode: '0664'
-      vars:
-        ssh_pub_key: "{{ ssh_root_pub_key.stdout }}"
-
-    - name: Configure inventory vault variables
-      template:
-        src: ai/crucible/inventory.vault.ospd.yml.j2
-        dest: "{{ base_path }}/crucible/inventory.vault.ospd.yml"
-        mode: '0664'
 
     - name: Add Crucible template to inject Red Hat CA
       template:
@@ -654,11 +641,13 @@
         regexp: 'openshift_full_version in supported_ocp_versions'
         replace: 'openshift_full_version is defined'
 
-    - name: Override/inject desired OCP version (display_name/release_version)
-      replace:
-        path: "{{ base_path }}/crucible/roles/get_image_hash/defaults/main.yml"
-        regexp: '{{ ocp_version | replace(".", "\.") }}\.\d+'
-        replace: '{{ ocp_version }}.{{ ocp_minor_version }}'
+    # FIXME: Needed for 4.12 until the fix for https://issues.redhat.com/browse/OCPBUGS-1482 appears in that version
+    - name: Remove schedulable_masters from initial cluster creation
+      when: ocp_version == "4.12"
+      ansible.builtin.lineinfile:
+        path: "{{ base_path }}/crucible/roles/create_cluster/tasks/main.yml"
+        state: absent
+        regexp: '^.*"schedulable_masters"'
 
     - name: Inject specific RHCOS image version
       block:
@@ -673,39 +662,32 @@
       - name: Get RHCOS image version for {{ ocp_version }}.{{ ocp_minor_version }}
         set_fact:
           rhcos_image_version: "{{ rhcos_image_version_raw_data.content | regex_search('second_release=([^&]+)', '\\1') | default ([''], true) | first }}"
-          rhcos_image_version_alt: "{{ rhcos_image_version_raw_data.content | regex_search('\\/\\?release=([^&]+)', '\\1') | default ([''], true) | first }}"
+          rhcos_image_version_alt: "{{ rhcos_image_version_raw_data.content | regex_search('&amp;release=([^&]+)', '\\1') | default ([''], true) | first }}"
 
       - name: Fail when an RHCOS version cannot be determined
         fail:
           msg: "Unable to determine RHCOS version for OCP version {{ ocp_version }}.{{ ocp_minor_version }}"
         when: rhcos_image_version == "" and rhcos_image_version_alt == ""
 
-      - name: Inject RHCOS image version
-        replace:
-          path: "{{ base_path }}/crucible/roles/get_image_hash/defaults/main.yml"
-          regexp: 'version:\s"{{ ocp_version | replace(".", "") }}\.\d+.+'
-          replace: 'version: "{{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}"'
-
-    - name: Force linear execution of boot_iso role when KVM nodes present
-      when: ocp_num_masters > 0 or ocp_num_workers > 0
-      block:
-      - name: Force linear execution
-        replace:
-          path: "{{ base_path }}/crucible/playbooks/boot_iso.yml"
-          regexp: 'strategy:\s.+'
-          replace: 'strategy: linear'
-
-      - name: Force linear execution, part 2
-        replace:
-          path: "{{ base_path }}/crucible/playbooks/boot_iso.yml"
-          regexp: 'serial:\s.+'
-          replace: 'serial: 1'
-
     - name: Remove NTP validation due to prevelance of random false-negatives
       replace:
         path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/network.yml"
         regexp: '\(setup_ntp_service\s\|\sdefault\(True\)\)\s!=\sTrue'
         replace: 'false'
+
+    - name: Configure inventory variables
+      template:
+        src: ai/crucible/inventory.ospd.yml.j2
+        dest: "{{ base_path }}/crucible/inventory.ospd.yml"
+        mode: '0664'
+      vars:
+        ssh_pub_key: "{{ ssh_root_pub_key.stdout }}"
+
+    - name: Configure inventory vault variables
+      template:
+        src: ai/crucible/inventory.vault.ospd.yml.j2
+        dest: "{{ base_path }}/crucible/inventory.vault.ospd.yml"
+        mode: '0664'
 
     - name: Create assisted installer service bash script
       template:

@@ -13,7 +13,7 @@
       set -e
 
       oc patch image.config.openshift.io/cluster --type merge \
-        --patch '{"spec":{"registrySources":{"allowedRegistries":["docker-registry.upshift.redhat.com","registry.redhat.io","quay.io","registry-proxy.engineering.redhat.com","gcr.io","image-registry.openshift-image-registry.svc:5000"],"insecureRegistries":["docker-registry.upshift.redhat.com","registry-proxy.engineering.redhat.com"]}}}'
+        --patch '{"spec":{"registrySources":{"allowedRegistries":["docker-registry.upshift.redhat.com","registry.redhat.io","quay.io","{{ registry_proxy }}","gcr.io","image-registry.openshift-image-registry.svc:5000"],"insecureRegistries":["docker-registry.upshift.redhat.com","{{ registry_proxy }}"]}}}'
     environment:
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"

@@ -1,5 +1,118 @@
 # openstack-k8s/ansible
 
+## Quickstart
+
+The quickstart procedure will allow you to deploy an OpenShift environment on a baremetal node for deployment of OpenStack using OpenStack Director Operator (OSPdO) as a testing environment.
+
+*Prerequisites*
+
+* You have prepared a host for deployment. For more information, see [Provision the host](#provision-the-host).
+
+*Procedure*
+
+1. If the host node is runnning RHEL, subscribe with an appropriate SKU:
+    ```
+    subscription-manager attach --pool=$(subscription-manager list --matches="Employee SKU" --pool-only --available | head -n1)
+    ```
+
+1. If the host node is running RHEL, enable the required dependent repositories:
+    ```
+    subscription-manager repos --enable advanced-virt-for-rhel-8-x86_64-rpms --enable ansible-2-for-rhel-8-x86_64-rpms --enable openstack-16-for-rhel-8-x86_64-rpms --enable rhel-8-for-x86_64-appstream-rpms --enable rhel-8-for-x86_64-baseos-rpms
+    ```
+
+1. Update the host node:
+    ```
+    dnf update -y
+    ```
+
+1. Reboot the host node to boot into the latest kernel:
+    ```
+    reboot
+    ```
+
+1. Log in to the node after it has rebooted.
+
+1. Install the dependencies:
+    ```
+    dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make gcc
+    ```
+
+1. Generate an SSH key which will be used during the deployment to allow access to the environment:
+    ```
+    ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+    ```
+
+1. Clone the osp-director-dev-tools repository:
+    ```
+    git clone https://github.com/openstack-k8s-operators/osp-director-dev-tools.git
+    ```
+
+1. Change in to the `osp-director-dev-tools/ansible/` directory:
+    ```
+    cd osp-director-dev-tools/ansible/
+    ```
+
+1. Obtain your pull-secret from console.redhat.com and place it in the `osp-director-dev-tools/ansible/files/` directory:
+    ```
+    cat > files/pull-secret <<EOF
+    <your_pull_secret>
+    EOF
+    ```
+
+1. Create your configuration file that defines the environment being provisioned:
+    ```
+    cat > local-defaults.yaml <<EOF
+    # version setup
+    ocp_version: "4.12"
+    ocp_minor_version: "0"
+    sriov_version: "4.12"
+
+    # topology configuration
+    ocp_ai: true
+    ocp_num_masters: 3
+    ocp_num_workers: 0
+    ocp_num_extra_workers: 2
+
+    # node resource configuration
+    ocp_master_memory: 60000
+    ocp_master_vcpu: 12
+    ocp_master_disk: 150
+    EOF
+    ```
+
+1. Deploy the environment:
+    ```
+    make
+    ```
+
+1. Watch the logs during the deployment:
+    ```
+    su - ocp
+    tail -f ai.log
+    ```
+
+1. Check the environment after it has been provisioned:
+    ```
+    su - ocp
+    export KUBECONFIG=/home/ocp/crucible/kubeconfig.ostest
+    oc get pods -n openstack
+    oc logs -f --selector=control-plane=controller-manager
+    ```
+
+1. If you no longer need the OpenStack environment you can remove it without tearing down the entire OpenShift deployment:
+    ```
+    su -
+    cd osp-director-dev-tools/ansible/
+    make openstack_clean
+    ```
+
+1. If you need to deploy another OpenStack environment you can deploy it against the existing OpenShift deployment:
+    ```
+    su -
+    cd osp-director-dev-tools/ansible/
+    make openstack
+    ```
+
 ## Provisioning steps
 
 ### Provision the host
@@ -22,10 +135,18 @@ git clone git@github.com:openstack-k8s-operators/osp-director-dev-tools.git
 If not already installed, install the required dependencies
 
 ```
-dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make
+dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make gcc
 ```
 
 > NOTE: make sure you install ansible >= 2.9.27 otherwise ansible collections will not work correctly
+
+### Generate SSH keys
+
+Generate an SSH key on the host where you're going to be deploying from. The public key is used to access the deployed OpenShift cluster.
+
+```
+ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+```
 
 ### Create local-defaults.yaml file with personal information
 

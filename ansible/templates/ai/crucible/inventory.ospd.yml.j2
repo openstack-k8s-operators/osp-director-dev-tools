@@ -38,6 +38,9 @@ all:
     # network_type: OpenShiftSDN
     network_type: {{ ocp_network_type }}
 
+    # Force hyphen instead of underscore for VM name prefix
+    vm_node_prefix: "{{ '{{' }} cluster_name {{ '}}-' }}"
+
     assisted_installer_hardware_validation:
     - version: default
       master:
@@ -59,6 +62,19 @@ all:
         ram_mib: {{ ocp_master_memory|default(16384) }}
         disk_size_gb: {{ ocp_master_disk|default(120) }}
         installation_disk_speed_threshold_ms: 10
+
+    os_images:
+    - openshift_version: '{{ ocp_version }}'
+      cpu_architecture: x86_64
+      url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso
+      rootfs_url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live-rootfs.x86_64.img
+      version: {{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}
+
+    release_images:
+    - openshift_version: '{{ ocp_version }}'
+      cpu_architecture: x86_64
+      url: quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64
+      version: {{ ocp_version }}.{{ ocp_minor_version }}
 
     ######################################
     # Prerequisite Service Configuration #
@@ -131,25 +147,28 @@ all:
     # Extra manifests to apply against the cluster during install
     manifest_templates_for_mode:
       none:
-        - 50-worker-nm-fix-ipv6.yml
-        - 50-worker-remove-ipi-leftovers.yml
-        # - 02-fix-ingress-config.yml     # Applying this fix breaks the ingress controller on SNO.
-        # - 01-master-node-scheduler.yml  # The master node on SNO is automatically marked as schedulable.
+        - template: 50-worker-nm-fix-ipv6.yml.j2
+        - template: 50-worker-remove-ipi-leftovers.yml.j2
+        # - template: 02-fix-ingress-config.yml.j2     # Applying this fix breaks the ingress controller on SNO.
+        # - template: 01-master-node-scheduler.yml.j2  # The master node on SNO is automatically marked as schedulable.
       full:
 {% for ocp_node_role in ocp_node_roles %}
-        - 50-{{ ocp_node_role }}-RH-Root-CA.yml
+        - template: 50-{{ ocp_node_role }}-RH-Root-CA.yml.j2
 {% endfor %}
-        - 50-worker-nm-fix-ipv6.yml
-        - 50-worker-remove-ipi-leftovers.yml
-        - 02-fix-ingress-config.yml
-        - 01-master-node-scheduler.yml
+        - template: 50-worker-nm-fix-ipv6.yml.j2
+        - template: 50-worker-remove-ipi-leftovers.yml.j2
+        - template: 02-fix-ingress-config.yml.j2
+{# Needed for 4.12 until the fix for https://issues.redhat.com/browse/OCPBUGS-1482 appears in that version #}
+{% if ocp_version != '4.12' %}
+        - template: 01-master-node-scheduler.yml.j2
+{% endif %}
 
     # The retrieved cluster kubeconfig will be placed on the bastion host at the following location
     kubeconfig_dest_dir: {{ base_path }}/
     kubeconfig_dest_filename: "{{ ocp_cluster_name }}-kubeconfig"
 
     # Prevent sushy-tools from being overwhelmed
-    use_boot_iso_strategy_free: false
+    #use_boot_iso_strategy_free: false
 
     ############################
     #    LOGIC: DO NOT TOUCH   #

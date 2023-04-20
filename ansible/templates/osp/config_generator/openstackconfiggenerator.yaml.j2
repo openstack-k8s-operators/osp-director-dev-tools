@@ -24,13 +24,17 @@ spec:
     - services/haproxy-public-tls-certmonger.yaml
     - ssl/enable-internal-tls.yaml
 {%- endif %}
+{%- if "dcn" in osp.extrafeatures %}
+    - nova-az-config.yaml
+{%- endif %}
 {%- for envfile in osp_extra_env_files|default([]) %}
     - {{ envfile }}
 {%- endfor %}
-{%- if config_generator_action|default('deploy') == 'update' %}
-  heatEnvConfigMap: heat-env-config-update
-  tarballConfigMap: tripleo-tarball-config-update
-{%- else %}
-  heatEnvConfigMap: heat-env-config-deploy
-  tarballConfigMap: tripleo-tarball-config-deploy
+  heatEnvConfigMap: heat-env-config-{{ custom_config_name|default('deploy') }}
+  tarballConfigMap: tripleo-tarball-config-{{ custom_config_name|default('deploy') }}
+{%- if config_generator_roles|default(False) %}
+  roles:
+  {%- for role in config_generator_roles %}
+    - {{ role }}
+  {%- endfor %}
 {%- endif %}

@@ -1,0 +1,11 @@
+#jinja2: trim_blocks:False
+---
+- hosts: Controller[0]
+  remote_user: stack
+  gather_facts: true
+  vars:
+    tripleo_cellv2_containercli: podman
+  tasks:
+    - import_role:
+        name: {% if osp.release|float() >= 17.0 %}tripleo_cellv2{% else %}tripleo-cellv2{% endif %}
+        tasks_from: discover_hosts.yml

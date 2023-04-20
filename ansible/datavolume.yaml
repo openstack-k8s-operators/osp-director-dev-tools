@@ -37,7 +37,7 @@
       - name: Download RHEL/CentOS guest image {{ osp.base_image_url }}
         get_url:
           url: "{{ osp.base_image_url }}"
-          dest: "{{ osp_base_image_url_path }}"
+          dest: "{{ osp_base_image_url_path }}.tmp"
           owner: ocp
           group: ocp
           mode: '0644'
@@ -77,9 +77,12 @@
             rm -f /etc/sysconfig/network-scripts/ifcfg-ens* /etc/sysconfig/network-scripts/ifcfg-eth*
 
       - name: Run virt-customize
-        command: virt-customize -a "{{ osp_base_image_url_path }}" --run "{{ osp_base_image_url_path }}_customize.sh" --truncate /etc/machine-id
+        command: virt-customize -a "{{ osp_base_image_url_path }}.tmp" --run "{{ osp_base_image_url_path }}_customize.sh" --truncate /etc/machine-id
         environment:
           LIBGUESTFS_BACKEND: direct
+
+      - name: Rename guest image to final path
+        command: mv "{{ osp_base_image_url_path }}.tmp" "{{ osp_base_image_url_path }}"
 
   - name: create datavolume for vmset roles
     include_tasks: datavolume_tasks.yaml

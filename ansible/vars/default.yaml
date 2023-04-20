@@ -6,6 +6,32 @@ base_path: /home/ocp
 # deploys python39 and ansible 4.6.0 which makes dev-tools to fail for the short term pin to b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 
+# Set site based on domain name, default to rdu
+site_location: "{{ 'tlv' if ansible_nodename | regex_search('tlv.*\\.redhat\\.com') else 'brq' if ansible_nodename | regex_search('brq.*\\.redhat\\.com') else 'default' }}"
+
+# Site specific settings, local mirrors etc...
+site_settings:
+  default:
+    registry_proxy_mirror: rhos-qe-mirror-rdu2.usersys.redhat.com:5002
+    rhos_release_mirror: rhos-qe-mirror-rdu2.usersys.redhat.com
+    dns_servers:
+      - 10.11.5.19
+      - 10.2.32.1
+  brq:
+    registry_proxy_mirror: rhos-qe-mirror-brq.usersys.redhat.com:5002
+    rhos_release_mirror: rhos-qe-mirror-brq.usersys.redhat.com
+    dns_servers:
+      - 10.45.248.15
+      - 10.38.5.26
+  tlv:
+    registry_proxy_mirror: rhos-qe-mirror-tlv.usersys.redhat.com:5002
+    rhos_release_mirror: rhos-qe-mirror-tlv.usersys.redhat.com
+    dns_servers:
+      - 10.47.242.10
+      - 10.38.5.26
+
+registry_proxy: "{{ site_settings[site_location]['registry_proxy_mirror'] }}"
+
 base_domain_name: test.metalkube.org
 
 # registries to add to /etc/containers/registries.conf registries.insecure section
@@ -195,7 +221,7 @@ sriov_version: "{{ ocp_version }}"
 perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
-cnv_hyperconverged_operator_version: "{{ {'4.10':'4.10.4', '4.9':'4.9.4', '4.8':'4.8.6'}.get(ocp_version|string) }}"
+cnv_hyperconverged_operator_version: "{{ {'4.12':'4.12.0', '4.11':'4.11.1', '4.10':'4.10.4', '4.9':'4.9.4', '4.8':'4.8.6'}.get(ocp_version|string) }}"
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
@@ -293,11 +319,7 @@ openstackclient_networks:
 nfs_server: '172.22.0.1'
 ntp_server: "{{ 'clock.redhat.com' if 'redhat.com' in ansible_fqdn else 'pool.ntp.org' }}"
 
-external_dns:
-  - 10.11.5.19
-  - 10.38.5.26
-  - 10.10.160.2
-  - 10.5.30.160
+external_dns: "{{ site_settings[site_location]['dns_servers'] }}"
 
 # Set this to the empty string if you don't want an IP placed on the "external"
 # bridge (used for OpenStack) created by this tool.  By default this should be
@@ -422,6 +444,7 @@ osp_extra_env_files: []
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
+osp_rhos_release_mirror: "{{ site_settings[site_location]['rhos_release_mirror'] }}"
 osp_rhos_release_compose: "{{ osp_release_auto.compose }}"
 osp_rhel_subscription_release: "{{ osp_release_auto.rhel_version }}"
 osp_rhel_subscription_repos:
