@@ -635,6 +635,12 @@
         loop_var: ocp_node_role
       loop: "{{ ocp_node_roles }}"
 
+    - name: Override Crucible template for ingress
+      template:
+        src: ai/crucible/02-fix-ingress-config.yml.j2
+        dest: "{{ base_path }}/crucible/roles/patch_cluster/templates/02-fix-ingress-config.yml.j2"
+        mode: '0664'
+
     - name: Override Crucible OCP version constraint
       replace:
         path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/cluster.yml"
