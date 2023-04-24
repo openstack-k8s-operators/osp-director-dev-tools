@@ -1,0 +1,31 @@
+---
+enable_fencing: true
+csv_version: v1.3.x-latest-17.1
+osp_release_auto_version: 17.1-RHEL-9
+osp_release_auto_compose: passed_phase1
+
+osp_release_defaults:
+  base_image_url: http://rhos-qe-mirror.lab.eng.tlv2.redhat.com/images/rhel-guest-image-9.2-20230223.23.x86_64.qcow2
+  vmset:
+    Controller:
+      count: 3
+      cores: 6
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      root_disk:
+        disk_size: 40
+        storage_class: host-nfs-storageclass
+        storage_access_mode: ReadWriteMany
+        storage_volume_mode: Filesystem
+      additional_disks:
+        - name: datadisk
+          disk_size: 1
+          storage_class: host-nfs-storageclass
+          storage_access_mode: ReadWriteMany
+          storage_volume_mode: Filesystem
