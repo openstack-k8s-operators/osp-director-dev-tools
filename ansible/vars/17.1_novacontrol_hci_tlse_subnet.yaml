@@ -1,4 +1,8 @@
 ---
+csv_version: latest-17.1
+osp_release_auto_version: 17.1-RHEL-9
+osp_release_auto_compose: passed_phase1
+
 openstackclient_networks:
   - ctlplane
   - external
@@ -7,6 +11,7 @@ openstackclient_networks:
 
 enable_freeipa: true
 osp_release_defaults:
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.2/20230414.43/images/rhel-guest-image-9.2-20230414.43.x86_64.qcow2
   tlse: true
   networks: ipv4_subnet
   vmset:
@@ -65,6 +70,15 @@ osp_release_defaults:
         - storage_mgmt_leaf2
   extrafeatures:
     - hci
+
+# (mschuppert) can be deleted when released
+openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
+
+ephemeral_heat:
+  heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
+  heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
+  mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
+  rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
 
 # phase2 tempest tests
 tempest_test_dict:
