@@ -1,0 +1,31 @@
+# Generated with the following on 2020-03-06T12:18:42.230544
+#
+#   openstack tripleo container image prepare default --output-env-file /home/stack/containers-prepare-parameter.yaml --local-push-destination
+#
+
+parameter_defaults:
+  DockerInsecureRegistryAddress:
+    - {{ registry_proxy }}
+    - registry.access.redhat.com
+    - docker-registry.upshift.redhat.com
+  ContainerImagePrepare:
+  - push_destination: false
+    set:
+      tag: {{ osp.container_tag }}
+      name_prefix: rhosp17-openstack-
+      namespace: {{ registry_proxy }}/rh-osbs
+      ceph_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_image: {{ osp.ceph_image }}
+      ceph_tag: {{ osp.ceph_tag }}
+      ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
+      ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_alertmanager_tag: v4.10
+      ceph_grafana_image: rhceph-3-dashboard-rhel7
+      ceph_grafana_namespace: registry.access.redhat.com/rhceph
+      ceph_grafana_tag: latest
+      ceph_node_exporter_image: openshift-ose-prometheus-node-exporter
+      ceph_node_exporter_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_node_exporter_tag: v4.10
+      ceph_prometheus_image: openshift-ose-prometheus
+      ceph_prometheus_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_prometheus_tag: v4.10
