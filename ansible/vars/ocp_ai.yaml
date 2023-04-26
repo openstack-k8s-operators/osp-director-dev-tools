@@ -3,7 +3,7 @@
 ocp_ai_discovery_iso_server: 192.168.111.1
 
 # ocp_ai_ansible_repo: defaults to "https://github.com/redhat-partner-solutions/crucible.git"
-# ocp_ai_ansible_branch: defaults to "3fc557583beba37fa3d084fae7c21410530f5cc6"
+# ocp_ai_ansible_branch: defaults to "85ad8f8a98a7c43ad0f46d3fc2e99f792b37b43f"
 
 ocp_ai_bm_bridge_master_mac_prefix: 3c:fd:fe:78:ab:0
 ocp_ai_bm_bridge_worker_mac_prefix: 3c:fd:fe:78:ab:1

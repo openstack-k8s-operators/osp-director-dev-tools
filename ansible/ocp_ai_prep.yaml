@@ -618,7 +618,7 @@
         repo: "{{ ocp_ai_ansible_repo | default('https://github.com/redhat-partner-solutions/crucible.git', true) }}"
         dest: "{{ base_path }}/crucible"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('3fc557583beba37fa3d084fae7c21410530f5cc6', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('85ad8f8a98a7c43ad0f46d3fc2e99f792b37b43f', true) }}"
 
     - name: Get BMC-network-connected interface's IP for baremetal deployments
       when: ocp_cluster_has_bm|bool
@@ -634,12 +634,6 @@
       loop_control:
         loop_var: ocp_node_role
       loop: "{{ ocp_node_roles }}"
-
-    - name: Override Crucible template for ingress
-      template:
-        src: ai/crucible/02-fix-ingress-config.yml.j2
-        dest: "{{ base_path }}/crucible/roles/patch_cluster/templates/02-fix-ingress-config.yml.j2"
-        mode: '0664'
 
     - name: Override Crucible OCP version constraint
       replace:
