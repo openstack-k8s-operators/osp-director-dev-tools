@@ -39,5 +39,5 @@
     become: true
     become_user: root
     ignore_errors: true
-    command: podman exec freeipa-server /data/olm_cleanup.sh
+    command: podman exec freeipa-server /root/bin/olm_cleanup.sh
 

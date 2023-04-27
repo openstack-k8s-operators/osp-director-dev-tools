@@ -21,6 +21,12 @@
           state: directory
           mode: '0755'
 
+      - name: Create freeipa script directory
+        file:
+          path: /opt/freeipa/bin
+          state: directory
+          mode: '0755'
+
       - name: Create install params file ipa-server-install-options
         template:
           src: freeipa/ipa-server-install-options.j2
@@ -48,6 +54,7 @@
             IPA_SERVER_IP: 10.89.0.2
           volume:
             - "/opt/freeipa/data/:/data:Z"
+            - "/opt/freeipa/bin/:/root/bin:Z"
           publish:
             - 192.168.111.1:443:443
 
@@ -79,7 +86,7 @@
       - name: Create IPA admin scripts
         template:
           src: freeipa/{{ item }}.j2
-          dest: /opt/freeipa/data/{{ item }}
+          dest: /opt/freeipa/bin/{{ item }}
           mode: '0755'
         loop:
           - openstack_cleanup.sh
