@@ -1,7 +1,7 @@
 ---
-csv_version: latest-17.0
-osp_release_auto_version: 17.0-RHEL-9
-osp_release_auto_compose: passed_phase2
+csv_version: latest-17.1
+osp_release_auto_version: 17.1-RHEL-9
+osp_release_auto_compose: passed_phase1
 
 openstackclient_networks:
   - ctlplane
@@ -10,7 +10,7 @@ openstackclient_networks:
   - internal_api_leaf1
 
 osp_release_defaults:
-  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.0/20230424.5/images/rhel-guest-image-9.0-20230424.5.x86_64.qcow2
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.2/20230414.43/images/rhel-guest-image-9.2-20230414.43.x86_64.qcow2
   networks: ipv4_subnet
   vmset:
     Controller:
@@ -68,3 +68,12 @@ tempest_enable_feature_dict:
     block_migration_for_live_migration: false
     volume_backed_live_migration: true
     console_output: true
+
+# (mschuppert) can be deleted when released
+openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
+
+ephemeral_heat:
+  heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
+  heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
+  mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
+  rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
