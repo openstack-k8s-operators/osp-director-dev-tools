@@ -1,18 +1,23 @@
 ---
-osp_release_auto_version: 17.0-RHEL-9
-osp_release_auto_compose: passed_phase2
+enable_fencing: true
+csv_version: latest-17.1
+osp_release_auto_version: 17.1-RHEL-9
+osp_release_auto_compose: passed_phase1
+
+# (mschuppert) can be deleted when released
+openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
 
 ephemeral_heat:
-  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
-  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
-  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
-  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+  heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
+  heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
+  mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
+  rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
+
+
 openstackclient_networks:
   - ctlplane
   - external
   - internal_api
-
-enable_fencing: true
 
 ocp_num_workers: 0
 ocp_master_memory: 40000
@@ -20,6 +25,7 @@ ocp_master_vcpu: 12
 ocp_master_disk: 100
 
 osp_release_defaults:
+  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.2/20230414.43/images/rhel-guest-image-9.2-20230414.43.x86_64.qcow2
   networks: ipv4_subnet
   vmset:
     Controller:
