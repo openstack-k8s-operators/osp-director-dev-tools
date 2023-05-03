@@ -41,7 +41,7 @@ network_config:
 {% endif %}
 {% endfor %}
 - type: ovs_bridge
-  name: bridge_name
+  name: br-ex
   mtu: {{ external_mtu }}
   use_dhcp: false
   members:
