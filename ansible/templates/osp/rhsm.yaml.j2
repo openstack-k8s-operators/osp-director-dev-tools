@@ -3,6 +3,13 @@
   become: true
 
   tasks:
+  - name: Install RH-IT-Root-CA.crt certificate
+    ansible.builtin.shell: |
+      cd /etc/pki/ca-trust/source/anchors
+      curl -O https://password.corp.redhat.com/RH-IT-Root-CA.crt
+      update-ca-trust extract
+    args:
+      creates: "/etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt"
 {% if osp_registry_method == "rhsm" %}
   - name: Red Hat Subscription Management configuration
     import_role:
