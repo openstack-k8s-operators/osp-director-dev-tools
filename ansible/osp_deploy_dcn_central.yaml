@@ -4,7 +4,7 @@
   import_playbook: osp_custom_config.yaml
   vars:
     custom_config_name: central
-    config_custom_ceph_cluster_name: central
+    custom_config_ceph_cluster_name: central
 
 - name: Config generate
   import_playbook: config_generator.yaml
