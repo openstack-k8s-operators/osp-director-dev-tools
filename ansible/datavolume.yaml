@@ -43,6 +43,19 @@
           mode: '0644'
           timeout: 30
 
+      - name: add CA cert to image
+        when: osp.base_image_add_ca|bool
+        block:
+        - name: copy CA cert to working_dir
+          copy:
+            src:  "RH-Root-CA.pem"
+            dest: "/tmp/"
+            mode: 0644
+        - name: add RH-Root-CA.pem to image
+          command: virt-copy-in -a "{{ osp_base_image_url_path }}.tmp" "/tmp/RH-Root-CA.pem" /etc/pki/ca-trust/source/anchors/
+          environment:
+            LIBGUESTFS_BACKEND: direct
+
       - name: Create virt-customize script to remove net.ifnames=0 kernel param from {{ osp_base_image_url_path }}
         copy:
           dest: "{{ osp_base_image_url_path }}_customize.sh"
@@ -75,6 +88,8 @@
             grub2-mkconfig -o /etc/grub2-efi.cfg
             
             rm -f /etc/sysconfig/network-scripts/ifcfg-ens* /etc/sysconfig/network-scripts/ifcfg-eth*
+
+            update-ca-trust extract
 
       - name: Run virt-customize
         command: virt-customize -a "{{ osp_base_image_url_path }}.tmp" --run "{{ osp_base_image_url_path }}_customize.sh" --truncate /etc/machine-id

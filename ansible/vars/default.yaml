@@ -332,6 +332,7 @@ osp_defaults:
   release: "{{ osp_release_auto.release }}"
   # use http://download.devel.redhat.com to get the local mirror depending on where the server is
   base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/8.4/992/images/rhel-guest-image-8.4-992.x86_64.qcow2
+  base_image_add_ca: true
   # OSP controller VM sizing
   vmset:
     Controller:
