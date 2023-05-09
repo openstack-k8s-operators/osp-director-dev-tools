@@ -54,14 +54,14 @@
   - include_tasks: extrafeature_heat_env.yaml
     vars:
       feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/common/{{ feature }}"
-    loop: "{{ osp.extrafeatures }}"
+    loop: "{{ osp.extrafeatures + custom_config_extrafeatures|default([]) }}"
     loop_control:
       loop_var: feature
 
   - include_tasks: extrafeature_heat_env.yaml
     vars:
       feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/{{ osp.release }}/{{ feature }}"
-    loop: "{{ osp.extrafeatures }}"
+    loop: "{{ osp.extrafeatures + custom_config_extrafeatures|default([]) }}"
     loop_control:
       loop_var: feature
 

@@ -4,7 +4,7 @@
   import_playbook: osp_custom_config.yaml
   vars:
     custom_config_name: dcn1
-    config_custom_ceph_cluster_name: dcn1
+    custom_config_ceph_cluster_name: dcn1
     custom_config_imports:
       - deploy: central
         src: ctlplane-export.yaml
