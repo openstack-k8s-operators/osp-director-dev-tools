@@ -1,17 +1,24 @@
 
----
 #change this to local-defaults.yaml to have affect
-director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
+---
+# Use ovn templates:
+osp_extra_env_files: ["services/neutron-ovn-ha.yaml","services/neutron-ovn-dpdk.yaml","services/neutron-ovn-sriov.yaml"]
+# osp_extra_env_files: ["services/neutron-ovs.yaml","services/neutron-ovs-dpdk.yaml","services/neutron-sriov.yaml"]
 
-osp_extra_env_files: ["services/neutron-ovn-sriov.yaml","services/neutron-ovn-ha.yaml"]
+osp_release_auto_version: 17.0-RHEL-9
+osp_release_auto_compose: passed_phase2
+ephemeral_heat:
+  heat_api_image: quay.io/tripleowallaby/openstack-heat-api:current-tripleo
+  heat_engine_image: quay.io/tripleowallaby/openstack-heat-engine:current-tripleo
+  mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
+  rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
+#
+#osp_release_defaults:
+osp_local:
+  base_image_url: http://download.eng.tlv.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.0-20220420.0.x86_64.qcow2
 
-default_timeout: 360
-deploy_timeout: 360m
-
-
-ocp_version: 4.8
-ocp_minor_version: 14
-sriov_version: 4.8
+default_timeout: 999999
+deploy_timeout: 999999m
 
 ocp_ai: true
 enable_virt_sriov: false
