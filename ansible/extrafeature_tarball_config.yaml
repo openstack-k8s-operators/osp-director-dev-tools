@@ -6,15 +6,7 @@
 
 - name: copy feature files if directory exists
   when: p.stat.exists
-  block:
-  - name: Find files in feature dir
-    delegate_to: localhost
-    find:
-      paths: "{{ feature_dir }}"
-    register: f
-  - name: copy feature {{ feature }} files to custom tripleo tarball dir
-    copy:
-      src: "{{ item.path }}"
-      dest: "{{ ooo_tarball_dir }}/{{ item.path | basename }}"
-      mode: '0644'
-    with_items: "{{ f.files }}"
+  copy:
+    src: "{{ feature_dir }}/"
+    dest: "{{ ooo_tarball_dir }}"
+    mode: '0644'
