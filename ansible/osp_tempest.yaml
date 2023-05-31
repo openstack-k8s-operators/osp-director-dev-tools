@@ -109,6 +109,15 @@
       environment:
         <<: *oc_env
 
+    - name: download cirros and convert the image to raw format
+      shell: |
+        #!/bin/bash
+        curl --location --insecure --output /tmp/cirros-0.4.0-x86_64-disk.img https://github.com/cirros-dev/cirros/releases/download/0.4.0/cirros-0.4.0-x86_64-disk.img
+        qemu-img convert -f qcow2 -O raw /tmp/cirros-0.4.0-x86_64-disk.img /tmp/cirros-0.4.0-x86_64-disk.raw
+        oc cp -n openstack /tmp/cirros-0.4.0-x86_64-disk.raw tempest:/var/lib/tempest/.config/openstack/cirros-0.4.0-x86_64-disk.raw
+      environment:
+        <<: *oc_env
+
     - name: copy rendered tempest config
       shell: |
         #!/bin/bash

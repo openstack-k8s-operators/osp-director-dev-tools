@@ -234,6 +234,26 @@ osp_cell_v2_discover_hosts: hosts local-defaults.yaml
 	-e @local-defaults.yaml \
 	osp_cell_v2_discover_hosts.yaml
 
+openstack_scenario_dmbs:
+	$(MAKE) patch_csv
+	$(MAKE) datavolume
+	$(MAKE) networks
+	$(MAKE) git
+	$(MAKE) ctlplane
+	$(MAKE) computes
+	$(MAKE) osp_deploy_dcn_central
+	$(MAKE) osp_deploy_dcn_1
+	$(MAKE) osp_redeploy_dcn_central
+	$(MAKE) osp_cell_v2_discover_hosts
+	$(MAKE) must_gather
+
+osp_redeploy_dcn_central: hosts local-defaults.yaml
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_redeploy_dcn_central.yaml
+
 .PHONY: openstack_update
 openstack_update: ## perform an overcloud minor update bu patching the csv for the new version and perform the update.
 	$(MAKE) patch_csv

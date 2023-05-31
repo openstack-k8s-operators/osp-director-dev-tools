@@ -1,0 +1,35 @@
+---
+
+- name: Generate redeploy custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    custom_config_name: central
+    custom_config_action: redeploy
+    custom_config_ceph_cluster_name: central
+    custom_config_extrafeatures: ["dmbs_store_dcn1"]
+    custom_config_imports:
+      - deploy: dcn1
+        src: ceph-export.yaml
+        dest: ceph-export-dcn1.yaml
+
+- name: Config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: central
+    config_generator_name: redeploy-central
+    config_generator_roles:
+      - Controller
+      - ComputeHCI
+
+- name: Overcloud node repo setup
+  import_playbook: osp_register_overcloud_nodes.yaml
+  vars:
+    config_generator_roles:
+      - Controller
+      - ComputeHCI
+
+- name: Overcloud redeployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: redeploy-central
+    deploy_name: redeploy-central

@@ -27,6 +27,9 @@ spec:
 {%- if "dcn" in osp.extrafeatures %}
     - nova-az-config.yaml
 {%- endif %}
+{%- if custom_config_dmbs_remote_site|default(false) %}
+    - dcn-storage.yaml
+{%- endif %}
 {%- for envfile in osp_extra_env_files|default([]) %}
     - {{ envfile }}
 {%- endfor %}
