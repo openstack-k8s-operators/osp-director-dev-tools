@@ -1,0 +1,69 @@
+---
+
+- name: Generate Upgrade custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    custom_config_name: upgrade
+    custom_config_action: upgrade
+
+- name: Overcloud node repo setup
+  import_playbook: osp_register_overcloud_nodes.yaml
+
+- name: Disable fencing
+  import_playbook: osp_disable_fencing.yaml
+
+- name: Upgrade Prepare config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: upgrade
+    config_generator_name: upgrade
+    config_generator_action: upgrade
+
+- name: Upgrade Controllers deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: upgrade
+    deploy_name: upgrade-ctlrs
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: pacemaker
+
+- name: Upgrade Computes deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: upgrade
+    deploy_name: upgrade-compute
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: nova_compute
+
+- name: Upgrade Ceph deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: upgrade
+    deploy_name: upgrade-ceph
+    deploy_mode: externalupgrade
+    deploy_advanced_settings:
+      tags:
+        - ceph
+
+- name: Online data migration deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: upgrade
+    deploy_name: upgrade-online-migration
+    deploy_mode: externalupgrade
+    deploy_advanced_settings:
+      tags:
+        - online_upgrade
+
+- name: Generate upgrade converge custom config
+  import_playbook: osp_custom_config.yaml
+
+- name: Config generate upgrade converge
+  import_playbook: config_generator.yaml
+  vars:
+    config_generator_upgrade_image: true
+
+- name: Upgrade converge deployment
+  import_playbook: osp_deployment.yaml

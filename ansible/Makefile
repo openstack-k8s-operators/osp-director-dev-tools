@@ -267,6 +267,19 @@ osp_update:
 	-e @local-defaults.yaml \
 	osp_update.yaml
 
+.PHONY: openstack_upgrade
+openstack_update: ## perform an overcloud minor update bu patching the csv for the new version and perform the update.
+	$(MAKE) patch_csv
+	$(MAKE) osp_upgrade
+	$(MAKE) must_gather
+
+osp_upgrade:
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_upgrade.yaml
+
 patch_csv: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
