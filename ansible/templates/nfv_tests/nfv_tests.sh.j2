@@ -1,0 +1,186 @@
+#!/bin/bash
+set -x
+#helper funcions
+
+## wait 3m for sshping between vm $1 and $2
+function wait_for_sshping_vms () {
+    timeout_seconds=180
+    elapsed_seconds=0
+
+    while true; do
+        echo "  [$(date)] Trying to sshping between to ${1} and ${2}"
+        sshpass -p 12345678 ssh root@${1} ping -c 3 ${2}
+
+
+        if [[ ${?} -eq 0 ]]; then
+            echo "testcase OK, VM ${2} is reachable via ${1}"
+            break
+        fi
+        sleep 3
+        elapsed_seconds=$(expr $elapsed_seconds + 3)
+        if [ $elapsed_seconds -ge $timeout_seconds ]; then
+            echo "testcase FAILURE: VM ${2} is NOT reachable via ${1}"
+            break
+        fi
+    done
+}
+
+
+#nfv testing script
+
+ansible ComputeOvsDpdkSriov -i ./ctlplane-ansible-inventory -mshell -b -a"cat /proc/cmdline|grep -q 'intel_iommu=on'"
+ansible ComputeOvsDpdkSriov -i ./ctlplane-ansible-inventory -mshell -b -a"cat /proc/cmdline|grep -q 'isolcpus='"
+ansible ComputeOvsDpdkSriov -i ./ctlplane-ansible-inventory -mshell -b -a"cat /proc/cmdline|grep -q 'hugepagesz=1G'"
+
+SECGROUP_NAME="allow-icmp-1"
+openstack security group create ${SECGROUP_NAME}
+openstack security group rule create --proto icmp ${SECGROUP_NAME}
+openstack security group rule create --proto tcp --dst-port 22 ${SECGROUP_NAME}
+
+
+#check vm creation using sriov
+openstack network list
+openstack network create --provider-physical-network sriov-1 --provider-network-type flat sriov-net
+openstack --os-cloud overcloud subnet create sriov-net --subnet-range 10.46.87.64/26 --allocation-pool start=10.46.87.65,end=10.46.87.123 --gateway 10.46.87.126 --no-dhcp --network sriov-net
+openstack router create router_sriov
+openstack router add subnet router_sriov sriov-net
+net_id=$(openstack network show sriov-net -c id -f value)
+openstack port create --network $net_id --vnic-type direct sriov-port
+openstack port create --network $net_id --vnic-type direct sriov-port2
+port_id=$(openstack port show sriov-port -c id -f value)
+port_id2=$(openstack port show sriov-port2 -c id -f value)
+# openstack console log show  test-sriov
+# sriov rhel config
+curl --silent --retry 3 -L -4 -o rhel8_2.qcow http://download.devel.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-8.2-290.x86_64.qcow2
+openstack image create         --file ./rhel8_2.qcow         --disk-format qcow2         --container-format bare         rhel8.2_img
+openstack flavor create --vcpus 1         --ram 1024         --disk 20         --swap 1024    1g_flav
+
+
+cat >user_data<<EOF
+#cloud-config
+user: root
+password: 12345678
+chpasswd:
+    expire: false
+ssh_pwauth: True
+disable_root: 0
+EOF
+
+# VMs creation on different hosts:
+ openstack --os-compute-api-version=2.74 server create --flavor 1g_flav --image rhel8.2_img  --nic port-id=$port_id  --config-drive true --user-data ./user_data --hypervisor-hostname computeovsdpdksriov-0.osptest.test.metalkube.org --security-group ${SECGROUP_NAME} test-sriov-0 --wait
+
+ openstack --os-compute-api-version=2.74 server create --flavor 1g_flav --image rhel8.2_img  --nic port-id=$port_id2  --config-drive true --user-data ./user_data --hypervisor-hostname computeovsdpdksriov-1.osptest.test.metalkube.org --security-group ${SECGROUP_NAME} test-sriov-1 --wait
+
+#to check the ping :
+#use sshpass to ping with pass:
+sriov_vm_ip_0=$(openstack server show test-sriov-0 |grep sriov-net|sed 's/.*sriov-net=//g'|awk '{printf $1}')
+sriov_vm_ip_1=$(openstack server show test-sriov-1 |grep sriov-net|sed 's/.*sriov-net=//g'|awk '{printf $1}')
+
+wait_for_sshping_vms $sriov_vm_ip_0 $sriov_vm_ip_1
+
+# # (repeat the process for a second vm on a different compute and ping between them)
+# Vms are accessible via ssh provided pass and pingable on the sriov-net ip
+# The are also Pingable and sshable between each other.
+# #To check vms for sriov VF usage :
+# ssh computeovsdpdksriov-0.ctlplane
+# sudo -i
+# virsh list
+# #in vm sriov check:
+# ethtool -i eth0
+# podman exec -it nova_libvirt bash
+# vm_name0=$(virsh list --name)
+# #manual check, if macs are the same , meaning the vm is using the same mac
+# #as the passthrough (vfio) nic, pci:
+# virsh dumpxml $vm_name0|grep -C 3 vfio|grep 'mac address'
+# sshpass -p 12345678 ssh root@${sriov_vm_ip_0} ip link show eth0|grep link
+
+
+##############################################
+#DPDK checks:
+############################################
+#manual check w/a for nova filters
+#vi /var/lib/config-data/puppet-generated/nova/etc/nova/nova.conf
+# Edit [filter_scheduler] group
+#enabled_filters=AvailabilityZoneFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,NUMATopologyFilter
+# +NUMATopologyFilter
+# Restart container
+#systemctl restart tripleo_nova_scheduler.service
+
+#check nova for enabled filters
+ansible ControllerSriov -i ./ctlplane-ansible-inventory -mshell -b -a"cat /var/lib/config-data/puppet-generated/nova/etc/nova/nova.conf|grep enabled_filters|grep NUMATopologyFilter"
+
+openstack network create --external --share --provider-physical-network datacentre --provider-network-type flat public
+	openstack --os-cloud overcloud subnet create public --subnet-range 10.46.86.252/26 --allocation-pool start=10.46.86.210,end=10.46.86.240 --gateway 10.46.86.252 --no-dhcp --network public
+openstack router create router
+openstack router set router --external-gateway public
+
+#openstack keypair create --public-key ~/.ssh/id_rsa.pub mykey
+#openstack security group rule create --proto icmp default
+#openstack security group rule create --proto tcp --dst-port 22 default
+#removed from server 1 and 2 :
+#    --security-group default \
+#    --key-name  mykey \
+
+
+openstack flavor create --vcpus 1  --ram 1024 --disk 20 --swap 1024 --property hw:mem_page_size=large --property hw:cpu_policy=dedicated  --property hw:emulator_threads_policy=share 1g_flav_dpdk
+
+# openstack image create         --file ./rhel8_2.qcow         --disk-format qcow2         --container-format bare         rhel8.2_img
+# boot with config_drive!
+#cat >user_data<<EOF
+##cloud-config
+#user: root
+#password: 12345678
+#chpasswd:
+#    expire: false
+#ssh_pwauth: True
+#disable_root: 0
+#EOF
+
+public_net_id=$(openstack network show -f json public|jq -r -c '.id')
+openstack server create  \
+    --image rhel8.2_img \
+    --os-compute-api-version=2.74 \
+    --hypervisor-hostname computeovsdpdksriov-0.osptest.test.metalkube.org \
+    --flavor 1g_flav_dpdk \
+    --config-drive true --user-data ./user_data \
+    --security-group ${SECGROUP_NAME} \
+    --nic net-id=${public_net_id} dpdk0 --wait
+
+openstack server create  \
+    --image rhel8.2_img \
+    --os-compute-api-version=2.74 \
+    --hypervisor-hostname computeovsdpdksriov-0.osptest.test.metalkube.org \
+    --flavor 1g_flav_dpdk \
+    --config-drive true --user-data ./user_data \
+    --security-group ${SECGROUP_NAME} \
+    --nic net-id=${public_net_id} dpdk1 --wait
+
+dpdk_vm_ip_0=$(openstack server show dpdk0 |grep 'public='|sed 's/.*public=//g'|awk '{printf $1}')
+dpdk_vm_ip_1=$(openstack server show dpdk1 |grep 'public='|sed 's/.*public=//g'|awk '{printf $1}')
+
+wait_for_sshping_vms $dpdk_vm_ip_0 $dpdk_vm_ip_1
+
+#check cross sriov - dpdk pings :
+wait_for_sshping_vms $sriov_vm_ip_0 $dpdk_vm_ip_1
+
+wait_for_sshping_vms $dpdk_vm_ip_0 $sriov_vm_ip_1
+
+
+#no need for floating ip , and it's broken at the moment
+#vm_fip1=$(openstack floating ip create ${EXTERNAL_NET_NAME} -f json | jq -r -c '.floating_ip_address' )
+#openstack server add floating ip dpdk1 $vm_fip1
+
+
+#manual dpdk port check:
+#ssh computeovsdpdksriov-0.ctlplane
+#dpdk_inerface=$(ovs-vsctl show |grep -C 2 dpdkvhostuserclient|grep Interface|awk '{print $2}')
+#ovs-vsctl show
+#check that on the vhu42e3e564-74 port packets number increases as the ping runs
+#on a seperate screen :
+#ping -f ${dpdk_vm_ip_0}
+#on first screen check that the packets increase very fast rom the flooding
+#while true; do ovs-ofctl dump-ports br-int;sleep 0.01s;done
+#                options: {vhost-server-path="/var/lib/vhost_sockets/vhu42e3e564-74"}
+#ovs-ofctl dump-ports br-int
+#check that on the vhu42e3e564-74 port packets number increases as the ping runs
+#i.e. ping from one vm to the next
