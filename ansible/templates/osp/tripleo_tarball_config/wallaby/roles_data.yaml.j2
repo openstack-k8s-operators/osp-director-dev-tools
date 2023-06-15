@@ -65,6 +65,7 @@
     - OS::TripleO::Services::CephMds
     - OS::TripleO::Services::CephMgr
     - OS::TripleO::Services::CephMon
+    - OS::TripleO::Services::CephNfs
     - OS::TripleO::Services::CephRbdMirror
     - OS::TripleO::Services::CephRgw
     - OS::TripleO::Services::CinderApi
@@ -100,6 +101,7 @@
     - OS::TripleO::Services::ExternalSwiftProxy
     - OS::TripleO::Services::Frr
     - OS::TripleO::Services::GlanceApi
+    - OS::TripleO::Services::GlanceApiInternal
     - OS::TripleO::Services::GnocchiApi
     - OS::TripleO::Services::GnocchiMetricd
     - OS::TripleO::Services::GnocchiStatsd
@@ -124,6 +126,7 @@
     - OS::TripleO::Services::ManilaBackendCephFs
     - OS::TripleO::Services::ManilaBackendIsilon
     - OS::TripleO::Services::ManilaBackendNetapp
+    - OS::TripleO::Services::ManilaBackendPowerMax
     - OS::TripleO::Services::ManilaBackendUnity
     - OS::TripleO::Services::ManilaBackendVNX
     - OS::TripleO::Services::ManilaBackendVMAX
@@ -204,6 +207,7 @@
       subnet: storage_subnet
   HostnameFormatDefault: '%stackname%-novacompute-%index%'
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "virtual-host"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
@@ -227,6 +231,7 @@
     - OS::TripleO::Services::CephExternal
     - OS::TripleO::Services::Collectd
     - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::CeilometerAgentIpmi
     - OS::TripleO::Services::ComputeNeutronCorePlugin
     - OS::TripleO::Services::ComputeNeutronL3Agent
     - OS::TripleO::Services::ComputeNeutronMetadataAgent
@@ -283,6 +288,7 @@
       subnet: storage_leaf1_subnet
   HostnameFormatDefault: '%stackname%-novacompute-leaf1-%index%'
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "virtual-host"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
@@ -306,6 +312,7 @@
     - OS::TripleO::Services::CephExternal
     - OS::TripleO::Services::Collectd
     - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::CeilometerAgentIpmi
     - OS::TripleO::Services::ComputeNeutronCorePlugin
     - OS::TripleO::Services::ComputeNeutronL3Agent
     - OS::TripleO::Services::ComputeNeutronMetadataAgent
@@ -362,6 +369,7 @@
       subnet: storage_leaf2_subnet
   HostnameFormatDefault: '%stackname%-novacompute-leaf2-%index%'
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "virtual-host"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
@@ -385,6 +393,7 @@
     - OS::TripleO::Services::CephExternal
     - OS::TripleO::Services::Collectd
     - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::CeilometerAgentIpmi
     - OS::TripleO::Services::ComputeNeutronCorePlugin
     - OS::TripleO::Services::ComputeNeutronL3Agent
     - OS::TripleO::Services::ComputeNeutronMetadataAgent
@@ -440,6 +449,7 @@
     StorageMgmt:
       subnet: storage_mgmt_subnet
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "throughput-performance"
     NovaComputeStartupDelay: 180
   # CephOSD present so serial has to be 1
@@ -454,6 +464,7 @@
     - OS::TripleO::Services::CephOSD
     - OS::TripleO::Services::Collectd
     - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::CeilometerAgentIpmi
     - OS::TripleO::Services::ComputeNeutronCorePlugin
     - OS::TripleO::Services::ComputeNeutronL3Agent
     - OS::TripleO::Services::ComputeNeutronMetadataAgent
