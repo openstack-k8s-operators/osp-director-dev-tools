@@ -268,7 +268,7 @@ osp_update:
 	osp_update.yaml
 
 .PHONY: openstack_upgrade
-openstack_update: ## perform an overcloud minor update bu patching the csv for the new version and perform the update.
+openstack_update:
 	$(MAKE) patch_csv
 	$(MAKE) osp_upgrade
 	$(MAKE) must_gather
