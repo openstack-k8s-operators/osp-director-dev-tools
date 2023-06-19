@@ -20,3 +20,10 @@ external_ceph_data:
   ceph_cluster_fsid: ''
   ceph_external_mon_host: ''
   ceph_client_key: ''
+
+ephemeral_heat:
+  heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
+  heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
+  mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
+  rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
+
