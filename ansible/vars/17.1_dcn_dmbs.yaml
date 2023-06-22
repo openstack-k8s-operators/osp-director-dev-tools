@@ -7,7 +7,10 @@ ocp_num_workers: 3
 ocp_num_extra_workers: 5
 ocp_ai_bmc_protocol: redfish-virtualmedia+http
 
+enable_freeipa: true
+
 osp_release_defaults:
+  tlse: true
   base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.2/20230414.43/images/rhel-guest-image-9.2-20230414.43.x86_64.qcow2
   networks: ipv4_dcn
   vmset:
