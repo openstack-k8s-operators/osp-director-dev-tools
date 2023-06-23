@@ -65,6 +65,7 @@
     - OS::TripleO::Services::CephMds
     - OS::TripleO::Services::CephMgr
     - OS::TripleO::Services::CephMon
+    - OS::TripleO::Services::CephNfs
     - OS::TripleO::Services::CephRbdMirror
     - OS::TripleO::Services::CephRgw
     - OS::TripleO::Services::CinderApi
@@ -124,6 +125,7 @@
     - OS::TripleO::Services::ManilaBackendCephFs
     - OS::TripleO::Services::ManilaBackendIsilon
     - OS::TripleO::Services::ManilaBackendNetapp
+    - OS::TripleO::Services::ManilaBackendPowerMax
     - OS::TripleO::Services::ManilaBackendUnity
     - OS::TripleO::Services::ManilaBackendVNX
     - OS::TripleO::Services::ManilaBackendVMAX
@@ -204,6 +206,7 @@
       subnet: storage_subnet
   HostnameFormatDefault: '%stackname%-novacompute-%index%'
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "virtual-host"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
@@ -283,6 +286,7 @@
       subnet: storage_leaf1_subnet
   HostnameFormatDefault: '%stackname%-novacompute-leaf1-%index%'
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "virtual-host"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
@@ -362,6 +366,7 @@
       subnet: storage_leaf2_subnet
   HostnameFormatDefault: '%stackname%-novacompute-leaf1-%index%'
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "virtual-host"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
@@ -440,6 +445,7 @@
     StorageMgmt:
       subnet: storage_mgmt_subnet
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "throughput-performance"
     NovaComputeStartupDelay: 180
   # CephOSD present so serial has to be 1
@@ -509,6 +515,7 @@
     StorageMgmt:
       subnet: storage_mgmt_leaf1_subnet
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "throughput-performance"
     NovaComputeStartupDelay: 180
   # CephOSD present so serial has to be 1
@@ -578,6 +585,7 @@
     StorageMgmt:
       subnet: storage_mgmt_leaf2_subnet
   RoleParametersDefault:
+    FsAioMaxNumber: 1048576
     TunedProfileName: "throughput-performance"
     NovaComputeStartupDelay: 180
   # CephOSD present so serial has to be 1
@@ -630,7 +638,7 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
 ###############################################################################
-# Role: DistributedComputeHCILeaf1                                                      #
+# Role: DistributedComputeHCILeaf1                                            #
 ###############################################################################
 - name: DistributedComputeHCILeaf1
   description: |
