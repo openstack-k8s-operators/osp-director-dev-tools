@@ -42,7 +42,7 @@ osp_release_defaults:
         - tenant
         - storage
         - storage_mgmt
-    DistributedComputeHCILeaf1:
+    DistComputeHCILeaf1:
       count: 3
       ctlplane_interface: enp1s0
       networks:
