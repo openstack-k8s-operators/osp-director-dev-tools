@@ -37,21 +37,21 @@
         containers.podman.podman_network:
           name: freeipa-network
           disable_dns: true
-          subnet: 10.89.0.0/30
+          subnet: 10.99.0.0/30
 
       - name: Create freeipa-server container
         containers.podman.podman_container:
           state: created
           name: freeipa-server
           network: freeipa-network
-          ip: 10.89.0.2
+          ip: 10.99.0.2
           conmon_pidfile: /run/podman-freeipa-server-conman.pid
           hostname: freeipa.test.metalkube.org
           image: "{{ freeipa_image_url }}"
           #FIXME: need this to workaround a bug in podman ansible module
           stop_signal: 37
           env:
-            IPA_SERVER_IP: 10.89.0.2
+            IPA_SERVER_IP: 10.99.0.2
           volume:
             - "/opt/freeipa/data/:/data:Z"
             - "/opt/freeipa/bin/:/root/bin:Z"
@@ -122,7 +122,7 @@
       - name: Update dev_script dnsmasq to forward to freeipa
         lineinfile:
           path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
-          line: 'server=/{{ base_domain_name }}/10.89.0.2 # Forward to FreeIPA'
+          line: 'server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA'
           regexp: '# Forward to FreeIPA'
         when: not (ocp_ai|bool)
         register: ds_dnsmasq
@@ -139,7 +139,7 @@
       - name: Update AI dnsmasq to forward to freeipa
         lineinfile:
           path: /etc/dnsmasq.d/dnsmasq_ai.conf
-          line: 'server=/{{ base_domain_name }}/10.89.0.2 # Forward to FreeIPA'
+          line: 'server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA'
           regexp: '# Forward to FreeIPA'
           insertbefore: '^server='
         when: ocp_ai|bool
