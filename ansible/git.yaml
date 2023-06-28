@@ -3,46 +3,96 @@
   gather_facts: false
   become: true
 
+  vars:
+    ssh_ports:
+      - "22"
+
   tasks:
-    - name: create git group
+    - name: Include variables
+      include_vars: vars/default.yaml
+
+    - name: Change sshd to listen on git.port
+      when: git.port != "22"
+      block:
+      - name: Merge the two lists
+        set_fact:
+          ssh_ports: "{{ ssh_ports + [ git.port ] }}"
+
+      - name: Remove unwanted ports
+        ansible.builtin.lineinfile:
+          regexp: ^Port (?!{{ ssh_ports | map('regex_escape') | join('|') }}).*$
+          state: absent
+          path: "/etc/ssh/sshd_config"
+
+      - name: Add needed ports to config
+        ansible.builtin.lineinfile:
+          line: 'Port {{ item }}'
+          insertafter: "^#Port"
+          state: present
+          path: "/etc/ssh/sshd_config"
+        loop: "{{ ssh_ports }}"
+
+      - name: Allow sshd to listen on tcp port {{ git.port }}
+        community.general.seport:
+          ports: "{{ git.port }}"
+          proto: tcp
+          setype: ssh_port_t
+          state: present
+
+      - name: Add TCP firewall rule
+        firewalld:
+          port: "{{ item }}/tcp"
+          state: enabled
+          zone: libvirt
+          permanent: yes
+          immediate: yes
+        with_items:
+          - "{{ git.port }}"
+
+      - name: Restart sshd
+        service:
+          name: sshd
+          state: restarted
+
+    - name: create git {{ git.group }} group
       group:
-        name: git
+        name: "{{ git.group }}"
         state: present
 
-    - name: Create user to run installer dev scripts
+    - name: Create git {{ git.user }} user
       user:
-        name: git
+        name: "{{ git.user }}"
         comment: git user
         shell: /bin/bash
-        group: git
+        group: "{{ git.group }}"
 
-    - name: make sure /home/git is world readable
+    - name: make sure /home/{{ git.user }} is world readable
       file:
-        path: /home/git
+        path: "/home/{{ git.user }}"
         state: directory
         mode: '0755'
-        owner: git
-        group: git
+        owner: "{{ git.user }}"
+        group: "{{ git.group }}"
 
     - name: create git .ssh dir
       file:
-        path: /home/git/.ssh
+        path: "/home/{{ git.user }}/.ssh"
         state: directory
         mode: '0700'
-        owner: git
-        group: git
+        owner: "{{ git.user }}"
+        group: "{{ git.group }}"
 
     - name: create playbooks git repo dir
       file:
-        path: /home/git/playbooks.git
+        path: "/home/{{ git.user }}/playbooks.git"
         state: directory
         mode: '0755'
-        owner: git
-        group: git
+        owner: "{{ git.user }}"
+        group: "{{ git.group }}"
 
 - hosts: convergence_base
   become: true
-  become_user: git
+  become_user: "{{ git.user }}"
 
   tasks:
   - name: generate ssh keys for git
@@ -51,7 +101,7 @@
         cp .ssh/id_rsa.pub .ssh/authorized_keys
         chmod 600 .ssh/authorized_keys
     args:
-      chdir: /home/git
+      chdir: "/home/{{ git.user }}"
       creates: .ssh/authorized_keys
     environment:
       PATH: /usr/local/bin:{{ ansible_env.PATH }}
@@ -61,8 +111,8 @@
     shell: |
        git init --bare .
     args:
-      chdir: /home/git/playbooks.git
-      creates: /home/git/playbooks.git/.git
+      chdir: "/home/{{ git.user }}/playbooks.git"
+      creates: "/home/{{ git.user }}/playbooks.git/.git"
     environment:
       PATH: /usr/local/bin:{{ ansible_env.PATH }}
 
@@ -72,15 +122,13 @@
   - oc_local
 
   tasks:
-
     - name: register git .ssh key
       become: true
-      become_user: git
-      command: "cat /home/git/.ssh/id_rsa"
+      become_user: "{{ git.user }}"
+      command: "cat /home/{{ git.user }}/.ssh/id_rsa"
       register: git_ssh_key
 
     - name: copy git .ssh key to working_dir
-      #command: "echo {{ git_ssh_key.stdout }} > {{ working_dir }}/git_id_rsa"
       copy:
         content: "{{ git_ssh_key.stdout }}{{ '\n' }}"
         dest: "{{ working_dir }}/git_id_rsa"
@@ -100,9 +148,13 @@
       KUBECONFIG: "{{ kubeconfig }}"
     register: git_secret_exist_switch
 
+  - name: creat git_url
+    set_fact:
+      git_url: "ssh://{{ git.user }}@{{ ansible_default_ipv4.address }}:{{ git.port if git.port != '22' else '' }}/home/git/playbooks.git"
+
   - name: create secret for git ssh key
     shell: |
-      oc create secret generic git-secret -n openstack --from-file=git_ssh_identity={{ working_dir }}/git_id_rsa --from-literal=git_url=git@{{ ansible_default_ipv4.address }}:/home/git/playbooks.git
+      oc create secret generic git-secret -n openstack --from-file=git_ssh_identity={{ working_dir }}/git_id_rsa --from-literal=git_url={{ git_url }}
     environment:
       <<: *oc_env
     when: git_secret_exist_switch.stdout | length == 0

@@ -302,6 +302,12 @@ nfs_export_dir: /home/nfs
 
 default_timeout: 240
 
+# git
+git:
+  user: ospdogit
+  group: ospdogit
+  port: "4343"
+
 # OSP release and compose file to fetch if specified. This is used to populate osp_release_auto dict
 osp_release_auto_version: 16.2-RHEL-8
 osp_release_auto_compose: latest_cdn
