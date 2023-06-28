@@ -300,6 +300,15 @@ local_working_dir: "~/{{ ocp_cluster_name }}-working"
 nfs_data_dir: /home/nfs/data
 nfs_export_dir: /home/nfs
 
+nfs_pvs:
+  - size: 4
+    number: 16
+  - size: 128
+    number: 4
+  - size: 128
+    number: 8
+    shared: true
+
 default_timeout: 240
 
 # OSP release and compose file to fetch if specified. This is used to populate osp_release_auto dict
