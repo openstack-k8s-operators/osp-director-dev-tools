@@ -102,7 +102,7 @@
     become: true
     become_user: root
     file:
-      path: /home/git/playbooks.git
+      path: "/home/{{ git.user }}/playbooks.git"
       state: absent
 
   - name: Remove bindings of PV's in Failed or Released state
