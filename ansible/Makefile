@@ -268,7 +268,7 @@ osp_update:
 	osp_update.yaml
 
 .PHONY: openstack_upgrade
-openstack_update:
+openstack_upgrade:
 	$(MAKE) patch_csv
 	$(MAKE) osp_upgrade
 	$(MAKE) must_gather
