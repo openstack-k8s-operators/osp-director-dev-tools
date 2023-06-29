@@ -21,13 +21,13 @@
     config_generator_name: dcn1
     custom_config_dmbs_remote_site: "{{ 'dmbs' in osp.extrafeatures }}"
     config_generator_roles:
-      - DistributedComputeHCILeaf1
+      - DistComputeHCILeaf1
 
 - name: Overcloud node repo setup
   import_playbook: osp_register_overcloud_nodes.yaml
   vars:
     config_generator_roles:
-      - DistributedComputeHCILeaf1
+      - DistComputeHCILeaf1
 
 - name: Overcloud deployment
   import_playbook: osp_deployment.yaml
