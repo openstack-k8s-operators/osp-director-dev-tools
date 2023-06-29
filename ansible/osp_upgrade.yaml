@@ -42,7 +42,7 @@
   vars:
     config_generator_name: upgrade
     deploy_name: upgrade-ceph
-    deploy_mode: externalupgrade
+    deploy_mode: externalUpgrade
     deploy_advanced_settings:
       tags:
         - ceph
@@ -52,7 +52,7 @@
   vars:
     config_generator_name: upgrade
     deploy_name: upgrade-online-migration
-    deploy_mode: externalupgrade
+    deploy_mode: externalUpgrade
     deploy_advanced_settings:
       tags:
         - online_upgrade
