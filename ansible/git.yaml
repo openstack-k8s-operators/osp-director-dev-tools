@@ -150,7 +150,7 @@
 
   - name: creat git_url
     set_fact:
-      git_url: "ssh://{{ git.user }}@{{ ansible_default_ipv4.address }}:{{ git.port if git.port != '22' else '' }}/home/git/playbooks.git"
+      git_url: "ssh://{{ git.user }}@{{ ansible_default_ipv4.address }}:{{ git.port if git.port != '22' else '' }}/home/{{ git.user }}/playbooks.git"
 
   - name: create secret for git ssh key
     shell: |
