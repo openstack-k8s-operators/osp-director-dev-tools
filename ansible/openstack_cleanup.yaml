@@ -55,6 +55,7 @@
       - "oc delete -n openstack openstackclient --all"
       - "oc delete -n openstack openstacknetconfig --all"
       - "oc delete -n openstack events --all"
+      - "oc delete -n openstack secret git-secret --ignore-not-found=true"
 
   - name: check if ospnetwork NM vlan configs exists
     become: true
@@ -101,7 +102,7 @@
     become: true
     become_user: root
     file:
-      path: /home/git/playbooks.git
+      path: "/home/{{ git.user }}/playbooks.git"
       state: absent
 
   - name: Remove bindings of PV's in Failed or Released state
