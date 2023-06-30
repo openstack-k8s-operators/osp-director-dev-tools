@@ -4,7 +4,7 @@ osp_release_auto_version: 17.1-RHEL-9
 osp_release_auto_compose: passed_phase1
 
 osp_release_defaults:
-  base_image_url: http://download.devel.redhat.com/brewroot/packages/rhel-guest-image/9.2/20230414.43/images/rhel-guest-image-9.2-20230414.43.x86_64.qcow2
+  base_image_url: https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
 
 # (mschuppert) can be deleted when released
 openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
