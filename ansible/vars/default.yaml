@@ -313,8 +313,8 @@ default_timeout: 240
 
 # git
 git:
-  user: ospdogit
-  group: ospdogit
+  user: git
+  group: git
   port: "4343"
 
 # OSP release and compose file to fetch if specified. This is used to populate osp_release_auto dict
