@@ -56,6 +56,16 @@
                 and ocp_num_storage_workers > ocp_master_count|int
                )
 
+  - name: add RH CA to ca store
+    block:
+    - name: copy CA cert to anchors dir
+      copy:
+        src:  "RH-Root-CA.pem"
+        dest: "/etc/pki/ca-trust/source/anchors/"
+        mode: 0644
+    - name: update CAs
+      command: update-ca-trust extract
+
   - name: Disable existing repos
     block:
     - name: get existing repo files
