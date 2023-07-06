@@ -1,0 +1,15 @@
+parameter_defaults:
+    ExtraConfig:
+        nova::workarounds::disable_compute_service_check_for_ffu: true
+    UpgradeInitCommand: |
+{% if osp_registry_method == "rhsm" %}
+        sudo subscription-manager repos --disable *
+        if $( grep -q  9.2  /etc/os-release )
+        then
+        sudo subscription-manager repos --enable=rhel-9.2-for-x86_64-baseos-eus-rpms --enable=rhel-9.2-for-x86_64-appstream-eus-rpms --enable=rhel-9.2-for-x86_64-highavailability-eus-rpms --enable=openstack-17.1-for-rhel-9-x86_64-rpms --enable=fast-datapath-for-rhel-9-x86_64-rpms
+        else
+        sudo subscription-manager repos --enable=rhel-8-for-x86_64-baseos-eus-rpms --enable=rhel-8-for-x86_64-appstream-eus-rpms --enable=rhel-8-for-x86_64-highavailability-eus-rpms --enable=openstack-17.1-for-rhel-8-x86_64-rpms --enable=fast-datapath-for-rhel-8-x86_64-rpms
+        fi
+{% else %}
+        sudo rhos-release {{ osp.release }} -H {{ osp_rhos_release_mirror }} -p {{ osp_release_auto_rhel8.compose }} -x
+{% endif %}

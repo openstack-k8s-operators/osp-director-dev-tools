@@ -250,7 +250,12 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_action|default('deploy') == "upgrade" %}
+    # TODO: IIUC not when upgrading 17.1 from RHEL8 to RHEL9
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond

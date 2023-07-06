@@ -21,6 +21,7 @@ spec:
 {%- endif %}
 {%- if config_generator_action|default('deploy') == 'upgrade' %}
     - lifecycle/upgrade-prepare.yaml
+    - nova-hw-machine-type-upgrade.yaml
 {%- endif %}
 {%- if osp.tlse|default(false)|bool %}
     - ssl/tls-everywhere-endpoints-dns.yaml

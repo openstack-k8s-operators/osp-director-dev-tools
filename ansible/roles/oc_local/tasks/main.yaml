@@ -41,44 +41,70 @@
     - "{{ working_vars_dir }}"
     - "{{ k8s_operators_dir }}"
 
-- name: pull "{{ osp_release_auto_url }}" if defined and include as var file
+- name: pull "{{ osp_release_auto_url }}/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}" if defined and set osp_release_auto fact
   when: osp_release_auto_url is defined
   block:
-    - name: Register osp_release_auto_url
-      set_fact:
-        osp_release_auto_file: "{{ working_vars_dir }}/container_image_prepare.yaml"
+    # Warning, force: true doesn't do anything in uri module....
+    # So do not set dest. If the file exists the mtime will be sent as the etag HTTP header
+    # and the web server will return 304 not modified...
+    # when it's not the same url we are fetching!!!!
 
-    - name: Download {{ osp_release_auto_url }}
-      get_url:
-        url: "{{ osp_release_auto_url }}"
-        dest: "{{ osp_release_auto_file }}"
-        mode: '0644'
+    - name: Download {{ osp_release_auto_url }}/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/container_image_prepare.yaml
+      uri:
+        url: "{{ osp_release_auto_url }}/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/container_image_prepare.yaml"
+        return_content: true
         timeout: 30
-        force: true
+      register: osp_release_auto_content_rc
 
-    # dict container-image-prepare is not conform with ansible var naming convention.
-    # therefore can not just be included as var file
-    - name: Read "{{ osp_release_auto_file }}" content
-      set_fact:
-        osp_release_auto_content: "{{ lookup('file', '{{ osp_release_auto_file }}') | default({}) }}"
-
-    - name: Create osp_release_auto dict from input of "{{ osp_release_auto_file }}"
+    - name: Create osp_release_auto dict"
       set_fact:
         osp_release_auto: "{{ osp_release_auto | default({}) | combine ({ item.key : item.value }) }}"
-      when: osp_release_auto_content is defined
       with_items:
-        - { 'key': 'debug' , 'value': "{{ osp_release_auto_content }}"}
-        - { 'key': 'namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content | regex_search('namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
-        - { 'key': 'prefix' , 'value': "{{ osp_release_auto_content | regex_search('prefix: (.+)', '\\1') | first }}"}
-        - { 'key': 'name_prefix' , 'value': "{{ osp_release_auto_content | regex_search('name_prefix: (.+)', '\\1') | first }}"}
-        - { 'key': 'tag' , 'value': "{{ osp_release_auto_content | regex_search('tag: (.+)', '\\1') | first }}"}
-        - { 'key': 'ceph_namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content | regex_search('ceph[-_]namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
-        - { 'key': 'ceph_image' , 'value': "{{ osp_release_auto_content | regex_search('ceph[-_]image: (.+)', '\\1') | first }}"}
-        - { 'key': 'ceph_tag' , 'value': "{{ osp_release_auto_content | regex_search('ceph[-_]tag: (.+)', '\\1') | first }}"}
-        - { 'key': 'release' , 'value': "{{ osp_release_auto_content | regex_search('rhosp: (.+)', '\\1') | first }}"}
-        - { 'key': 'compose' , 'value': "{{ osp_release_auto_content | regex_search('id: (.+)', '\\1') | first }}"}
-        - { 'key': 'rhel_version' , 'value': "{{ osp_release_auto_content | regex_search('rhel_version: (.+)', '\\1') | first }}"}
+        - { 'key': 'debug' , 'value': "{{ osp_release_auto_content_rc.content }}"}
+        - { 'key': 'namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
+        - { 'key': 'prefix' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('prefix: (.+)', '\\1') | first }}"}
+        - { 'key': 'name_prefix' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('name_prefix: (.+)', '\\1') | first }}"}
+        - { 'key': 'tag' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('tag: (.+)', '\\1') | first }}"}
+        - { 'key': 'ceph_namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('ceph[-_]namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
+        - { 'key': 'ceph_image' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]image: (.+)', '\\1') | first }}"}
+        - { 'key': 'ceph_tag' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]tag: (.+)', '\\1') | first }}"}
+        - { 'key': 'release' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('rhosp: (.+)', '\\1') | first }}"}
+        - { 'key': 'compose' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('id: (.+)', '\\1') | first }}"}
+        - { 'key': 'rhel_version' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('rhel_version: (.+)', '\\1') | first }}"}
 
+- name: Create osp_release_auto_rhel8 dict
+  when: osp_release_auto_version_rhel8|default('')
+  block:
+
+    - name: Download {{ osp_release_auto_url }}/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/RHEL8_COMPOSE_ID if exists
+      uri:
+        url: "{{ osp_release_auto_url }}/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/RHEL8_COMPOSE_ID"
+        return_content: true
+        timeout: 30
+      register: osp_release_auto_rhel8_compose_id_rc
+
+    - name: Download {{ osp_release_auto_url }}/{{ osp_release_auto_version_rhel8 }}/{{ osp_release_auto_rhel8_compose_id_rc.content|trim }}/container_image_prepare.yaml
+      uri:
+        url: "{{ osp_release_auto_url }}/{{ osp_release_auto_version_rhel8 }}/{{ osp_release_auto_rhel8_compose_id_rc.content|trim }}/container_image_prepare.yaml"
+        return_content: true
+        timeout: 30
+      register: osp_release_auto_content_rc
+
+    - name: Create osp_release_auto_rhel8 dict"
+      set_fact:
+        osp_release_auto_rhel8: "{{ osp_release_auto_rhel8 | default({}) | combine ({ item.key : item.value }) }}"
+      with_items:
+        - { 'key': 'debug' , 'value': "{{ osp_release_auto_content_rc.content }}"}
+        - { 'key': 'namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
+        - { 'key': 'prefix' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('prefix: (.+)', '\\1') | first }}"}
+        - { 'key': 'name_prefix' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('name_prefix: (.+)', '\\1') | first }}"}
+        - { 'key': 'tag' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('tag: (.+)', '\\1') | first }}"}
+        - { 'key': 'ceph_namespace' , 'value': "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('ceph[-_]namespace: (.+)', '\\1') | first).split('/', 1) | last }}"}
+        - { 'key': 'ceph_image' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]image: (.+)', '\\1') | first }}"}
+        - { 'key': 'ceph_tag' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]tag: (.+)', '\\1') | first }}"}
+        - { 'key': 'release' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('rhosp: (.+)', '\\1') | first }}"}
+        - { 'key': 'compose' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('id: (.+)', '\\1') | first }}"}
+        - { 'key': 'rhel_version' , 'value': "{{ osp_release_auto_content_rc.content | regex_search('rhel_version: (.+)', '\\1') | first }}"}
 
 - name: add insecure registies to /etc/containers/registries.conf
   when: podman_insecure_registries is defined
