@@ -110,6 +110,7 @@
       src: "/tmp/openshift-client-linux.tar.gz"
       dest: "/tmp"
       mode: '0755'
+      creates: /tmp/oc
 
   - name: Copy oc binary to /usr/local/bin
     become: true
