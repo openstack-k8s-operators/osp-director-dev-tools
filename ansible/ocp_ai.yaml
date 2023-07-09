@@ -105,6 +105,11 @@
       mode: '0755'
       timeout: 30
 
+  - name: Remove temp oc file
+    ansible.builtin.file:
+      path: /tmp/oc
+      state: absent
+
   - name: "Untar the openshift-client-linux.tar.gz"
     unarchive:
       src: "/tmp/openshift-client-linux.tar.gz"
