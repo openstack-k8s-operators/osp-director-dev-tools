@@ -24,8 +24,10 @@ stack_owner_role = swiftoperator
 region = regionOne
 
 [volume]
-backend1_name = tripleo_iscsi
 region = regionOne
+{% if "hci" in osp.extrafeatures %}
+storage_protocol = ceph
+{% endif %}
 
 [volume-feature-enabled]
 bootable = true
