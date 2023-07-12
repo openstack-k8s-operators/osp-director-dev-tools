@@ -30,9 +30,9 @@ fi
   export OS_PROJECT_NAME=admin
   export OS_USER_DOMAIN_NAME=Default
   export OS_USERNAME=admin
-  glance image-create --disk-format raw --container-format bare --id 12345678-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.4.0-x86_64-disk.img --file /var/lib/tempest/.config/openstack/cirros-0.4.0-x86_64-disk.raw --store central
+  glance image-create --disk-format raw --container-format bare --id 12345678-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.5.2-x86_64-disk.img --file /var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw --store central
   glance image-import 12345678-aaaa-bbbb-cccc-0123456789ab --stores dcn1 --import-method copy-image
-  glance image-create --disk-format raw --container-format bare --id 87654321-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.4.0-x86_64-disk.img_alt --file /var/lib/tempest/.config/openstack/cirros-0.4.0-x86_64-disk.raw --store central
+  glance image-create --disk-format raw --container-format bare --id 87654321-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.5.2-x86_64-disk.img_alt --file /var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw --store central
   glance image-import 87654321-aaaa-bbbb-cccc-0123456789ab --stores dcn1 --import-method copy-image
 {% endif %}
 
