@@ -76,3 +76,5 @@ tempest_enable_feature_dict:
 # Create nova/volume resources in the AZ of the DCN's site
   compute:
     compute_volume_common_az: az-dcn1
+  image:
+    image_path: https://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img

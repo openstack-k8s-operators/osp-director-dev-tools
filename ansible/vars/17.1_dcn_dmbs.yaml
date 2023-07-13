@@ -89,7 +89,7 @@ tempest_enable_feature_dict:
   compute:
     compute_volume_common_az: az-dcn1
   image:
-    image_path: https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
+    image_path: https://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img
 
 # (mschuppert) can be deleted when released
 openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
