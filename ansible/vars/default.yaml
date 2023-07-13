@@ -40,7 +40,7 @@ podman_insecure_registries:
 
 # To set a specific release to install.
 ocp_version: "4.10"
-ocp_minor_version: 37
+ocp_minor_version: 63
 ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"
 ocp_release_data_url: "https://amd64.ocp.releases.ci.openshift.org/releasestream/4-stable/release/{{ ocp_version }}.{{ ocp_minor_version }}"
 ocp_release_type: ga
@@ -221,7 +221,7 @@ sriov_version: "{{ ocp_version }}"
 perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
-cnv_hyperconverged_operator_version: "{{ {'4.12':'4.12.0', '4.11':'4.11.1', '4.10':'4.10.4', '4.9':'4.9.4', '4.8':'4.8.6'}.get(ocp_version|string) }}"
+cnv_hyperconverged_operator_version: "{{ {'4.13':'4.13.2', '4.12':'4.12.4', '4.11':'4.11.4', '4.10':'4.10.9', '4.9':'4.9.7', '4.8':'4.8.7'}.get(ocp_version|string) }}"
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
