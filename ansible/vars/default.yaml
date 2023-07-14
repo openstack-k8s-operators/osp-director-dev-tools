@@ -466,6 +466,7 @@ osp_extra_env_files: []
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
+osp_rhos_release: "{{ osp_release_auto.release }}"
 osp_rhos_release_mirror: "{{ site_settings[site_location]['rhos_release_mirror'] }}"
 osp_rhos_release_compose: "{{ osp_release_auto.compose }}"
 osp_rhos_release_compose_rhel8: "{{ osp_release_auto.rhel8_compose }}"
