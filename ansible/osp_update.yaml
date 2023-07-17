@@ -67,3 +67,6 @@
 
 - name: Update converge deployment
   import_playbook: osp_deployment.yaml
+
+- name: Reboot overcloud nodes
+  import_playbook: osp_reboot_overcloud_nodes.yaml

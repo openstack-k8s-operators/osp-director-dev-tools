@@ -1,0 +1,30 @@
+---
+- hosts: "{{ '{{' }} controller_role {{ '}}' }}"
+  become: true
+  serial: 1
+  tasks:
+
+  - name: Stop pacemaker
+    command: pcs cluster stop --force
+
+  - name: Reboot node
+    reboot:
+      post_reboot_delay: 300
+
+{% if "hci" in osp.extrafeatures %}
+- hosts: "{{ '{{' }} controller_role {{ '}}' }}[0]"
+  become: true
+  tasks:
+  - name: Disable Ceph rebalancing
+    shell: |
+      podman exec -it ceph-mon-controller-0 ceph osd set noout
+      podman exec -it ceph-mon-controller-0 ceph osd set norebalance
+{% endif %}
+
+- hosts: "!{{ '{{' }} controller_role {{ '}}' }}"
+  become: true
+  serial: 1
+  tasks:
+  - name: Reboot node
+    reboot:
+      post_reboot_delay: 300
