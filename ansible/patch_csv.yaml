@@ -41,6 +41,11 @@
       <<: *oc_env
     command: oc delete -n openstack openstackephemeralheat --all
 
+  - name: Delete any configgenerator instances
+    environment:
+      <<: *oc_env
+    command: oc delete -n openstack openstackconfiggenerator --all
+
   - name: Check if openstackclient exists
     environment:
       <<: *oc_env
