@@ -17,6 +17,10 @@ parameter_defaults:
     curl -4 https://code.engineering.redhat.com/gerrit/changes/leapp-repository-openstack~444652/revisions/current/patch?download |  base64 -d | sudo patch -p2 -d /usr/share/leapp-repository/repositories/
 
   LeappInitCommand: |
+    # Fix broken grub on updated RHEL 8.4 guest image
+    echo 'GRUB_DEFAULT=saved' >> /etc/default/grub
+    grub2-mkconfig -o /etc/grub2.cfg
+    grub2-mkconfig -o /etc/grub2-efi.cfg
     # TODO: FIXME: This probably should go into THT
     leapp answer --add --section check_vdo.confirm=True
     
