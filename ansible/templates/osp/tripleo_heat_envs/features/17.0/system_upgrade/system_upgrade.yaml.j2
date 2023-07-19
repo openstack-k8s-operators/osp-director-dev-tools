@@ -2,7 +2,7 @@ parameter_defaults:
   # From https://gitlab.cee.redhat.com/lbezdick/workarounds/-/blob/master/upgrade/16.2-17.1_upgrade_workarounds.yaml#L134
   NICsPrefixesToUdev: ['en']
   # Execute leapp with its parameters
-  UpgradeLeappDevelSkip: "LEAPP_OPENSTACK_CONSOLE_FIX=1 LEAPP_UNSUPPORTED=1 LEAPP_NO_RHSM=1 LEAPP_DEVEL_DATABASE_SYNC_OFF=1 LEAPP_DEVEL_USE_PERSISTENT_PACKAGE_CACHE=1 LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE=1 LEAPP_NO_NETWORK_RENAMING=1 LEAPP_TARGET_RELEASE=9.2"
+  UpgradeLeappDevelSkip: "LEAPP_OPENSTACK_CONSOLE_FIX=1 LEAPP_UNSUPPORTED=1 LEAPP_NO_RHSM=1 LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE=1 LEAPP_NO_NETWORK_RENAMING=1 LEAPP_TARGET_RELEASE=9.2"
   UpgradeLeappEnabled: true
   # Actors to remove
   # TODO: FIXME: this should probably go into default upgrade env
