@@ -32,6 +32,8 @@
       mode: '0755'
 
   - name: Render templates to yaml dir
+    vars:
+      controller_role: "{{ osp.vmset|dict2items|selectattr('value.count', '>', '0') | list | items2dict | first }}"
     template:
       src: "osp/{{ item }}.j2"
       dest: "{{ reboot_yaml_dir }}/{{ item }}"
@@ -50,7 +52,7 @@
   - name: run reboot playbook via openstackclient
     shell: |
       oc rsh -n openstack openstackclient <<"EOF_RSH"
-        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory -e controller_role={{ controller_role|default('Controller') }} /home/cloud-admin/reboot_nodes.yaml
+        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/reboot_nodes.yaml
       EOF_RSH
     environment:
       <<: *oc_env

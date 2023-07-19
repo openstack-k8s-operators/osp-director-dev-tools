@@ -1,5 +1,8 @@
 ---
-- hosts: "{{ '{{' }} controller_role {{ '}}' }}"
+
+# TODO: handle dmbs
+
+- hosts: "{{ controller_role }}"
   become: true
   serial: 1
   tasks:
@@ -7,24 +10,43 @@
   - name: Stop pacemaker
     command: pcs cluster stop --force
 
+  # TODO: something more reliable than waiting 5 minutes after each controller reboot
   - name: Reboot node
     reboot:
       post_reboot_delay: 300
 
 {% if "hci" in osp.extrafeatures %}
-- hosts: "{{ '{{' }} controller_role {{ '}}' }}[0]"
+- hosts: "{{ controller_role }}[0]"
   become: true
   tasks:
   - name: Disable Ceph rebalancing
     shell: |
+{% if osp.release|float() >=  17.0 %}
+      cephadm shell -- ceph osd set noout
+      cephadm shell -- ceph osd set norebalance
+{% else %}
       podman exec -it ceph-mon-controller-0 ceph osd set noout
       podman exec -it ceph-mon-controller-0 ceph osd set norebalance
 {% endif %}
 
-- hosts: "!{{ '{{' }} controller_role {{ '}}' }}"
+- hosts: "!{{ controller_role }}"
   become: true
   serial: 1
   tasks:
   - name: Reboot node
     reboot:
       post_reboot_delay: 300
+
+{% if "hci" in osp.extrafeatures %}
+- hosts: "{{ controller_role }}[0]"
+  become: true
+  tasks:
+  - name: Disable Ceph rebalancing
+    shell: |
+{% if osp.release|float() >=  17.0 %}
+      cephadm shell -- ceph osd unset noout
+      cephadm shell -- ceph osd unset norebalance
+{% else %}
+      podman exec -it ceph-mon-controller-0 ceph osd unset noout
+      podman exec -it ceph-mon-controller-0 ceph osd unset norebalance
+{% endif %}
