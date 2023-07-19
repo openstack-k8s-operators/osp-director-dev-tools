@@ -21,12 +21,9 @@ parameter_defaults:
     echo 'GRUB_DEFAULT=saved' >> /etc/default/grub
     grub2-mkconfig -o /etc/grub2.cfg
     grub2-mkconfig -o /etc/grub2-efi.cfg
+    
     # TODO: FIXME: This probably should go into THT
     leapp answer --add --section check_vdo.confirm=True
-    
-    # Download needed files for leapp
-    curl -4ksSL https://gitlab.cee.redhat.com/leapp/oamg-rhel7-vagrant/-/raw/master/roles/init/files/prepare_test_env.sh -o /tmp/prepare_test_env.sh
-    source /tmp/prepare_test_env.sh; get_data_files upstream
     
     # Install patch command
     dnf install -y patch crudini

@@ -95,6 +95,18 @@
 #         - system_upgrade
 
 # TODO: computes RHEL8->RHEL9 upgrade or multi-rhel
+
+- name: System upgrade all computes
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-computes
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: Compute
+      tags:
+        - system_upgrade
+
 # BLOCKER? multi-rhel needs to "move" computes to different tripleo role
 
 # TODO: final steps
