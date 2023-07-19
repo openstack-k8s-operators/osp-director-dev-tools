@@ -1,0 +1,69 @@
+---
+csv_version: latest-17.1
+osp_release_auto_version: 17.1-RHEL-9
+osp_release_auto_compose: passed_phase1
+
+enable_fencing: true
+
+openstackclient_networks:
+  - ctlplane
+  - external
+  - internal_api
+  - internal_api_leaf1
+
+enable_freeipa: true
+
+osp_release_defaults:
+  base_image_url: https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
+  tlse: true
+  networks: ipv6_subnet
+  vmset:
+    Controller:
+      count: 3
+      cores: 6
+      memory: 20
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      root_disk:
+        disk_size: 40
+        storage_class: host-nfs-storageclass
+        storage_access_mode: ReadWriteMany
+        storage_volume_mode: Filesystem
+  bmset:
+    Compute:
+      count: 0
+    ComputeHCILeaf1:
+      count: 1
+      ctlplane_interface: enp1s0
+      networks:
+        - ctlplane
+        - internal_api_leaf1
+        - storage_leaf1
+        - storage_mgmt_leaf1
+        - tenant_leaf1
+    ComputeHCILeaf2:
+      count: 1
+      ctlplane_interface: enp1s0
+      networks:
+        - ctlplane
+        - internal_api_leaf2
+        - storage_leaf2
+        - storage_mgmt_leaf2
+        - tenant_leaf2
+  extrafeatures:
+  - hci
+  - ipv6
+
+# (mschuppert) can be deleted when released
+openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
+
+ephemeral_heat:
+  heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
+  heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
+  mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
+  rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
