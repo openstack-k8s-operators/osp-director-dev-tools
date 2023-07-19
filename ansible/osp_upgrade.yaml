@@ -20,8 +20,8 @@
 - name: Disable fencing
   import_playbook: osp_disable_fencing.yaml
 
-# TODO: What do we need to do for external ceph?
-# Looks like we need to stay with ceph-ansible to run some tasks then switch to cephadm?
+# 17.1 OSP containers on RHEL8
+
 - name: Generate Upgrade custom config
   import_playbook: osp_custom_config.yaml
   vars:
@@ -44,7 +44,7 @@
     deploy_name: upgrade
     deploy_mode: upgrade
 
-# Controllers RHEL8->RHEL9 upgrade
+# RHEL8->RHEL9 upgrade
 
 - name: Generate system upgrade custom config
   import_playbook: osp_custom_config.yaml
@@ -68,33 +68,33 @@
     deploy_name: system-upgrade-controller-0
     deploy_mode: upgrade
     deploy_advanced_settings:
-      limit: controller-0,database-0,messaging-0,networker-0,ceph-0
+      limit: Controller[0]
       tags:
         - system_upgrade
 
-# - name: System upgrade controller-1
-#   import_playbook: osp_deployment.yaml
-#   vars:
-#     config_generator_name: system_upgrade
-#     deploy_name: system-upgrade-controller-1
-#     deploy_mode: upgrade
-#     deploy_advanced_settings:
-#       limit: controller-1,database-1,messaging-1,networker-1,ceph-1
-#       tags:
-#         - system_upgrade
+- name: System upgrade controller-1
+  when: osp.vmset["Controller"].count > 1
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-1
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: Controller[1]
+      tags:
+        - system_upgrade
 
-# - name: System upgrade controller-2
-#   import_playbook: osp_deployment.yaml
-#   vars:
-#     config_generator_name: system_upgrade
-#     deploy_name: system-upgrade-controller-2
-#     deploy_mode: upgrade
-#     deploy_advanced_settings:
-#       limit: controller-2,database-2,messaging-2,networker-2,ceph-2
-#       tags:
-#         - system_upgrade
-
-# TODO: computes RHEL8->RHEL9 upgrade or multi-rhel
+- name: System upgrade controller-2
+  when: osp.vmset["Controller"].count > 1
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-2
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: Controller[2]
+      tags:
+        - system_upgrade
 
 - name: System upgrade all computes
   import_playbook: osp_deployment.yaml
@@ -107,6 +107,10 @@
       tags:
         - system_upgrade
 
-# BLOCKER? multi-rhel needs to "move" computes to different tripleo role
+# TODOs:
+# - debug why LVM backed cinder-volume did not come up after Leapp
+# - multi-rhel - currently BLOCKED multi-rhel needs to "move" computes to different tripleo role
+# - handle deployments where roles are not Controller/Compute
+# - run a canary workload, upgrade individual computes and live-migrate workload around, ping the canary VM throughout the FFU
+# - ceph/HCI?
 
-# TODO: final steps
