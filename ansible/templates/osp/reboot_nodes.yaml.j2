@@ -28,6 +28,7 @@
       podman exec -it ceph-mon-controller-0 ceph osd set noout
       podman exec -it ceph-mon-controller-0 ceph osd set norebalance
 {% endif %}
+{% endif %}
 
 - hosts: "!{{ controller_role }}"
   become: true
@@ -49,4 +50,5 @@
 {% else %}
       podman exec -it ceph-mon-controller-0 ceph osd unset noout
       podman exec -it ceph-mon-controller-0 ceph osd unset norebalance
+{% endif %}
 {% endif %}

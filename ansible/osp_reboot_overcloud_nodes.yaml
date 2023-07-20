@@ -33,7 +33,7 @@
 
   - name: Render templates to yaml dir
     vars:
-      controller_role: "{{ osp.vmset|dict2items|selectattr('value.count', '>', '0') | list | items2dict | first }}"
+      controller_role: "{{ osp.vmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | first }}"
     template:
       src: "osp/{{ item }}.j2"
       dest: "{{ reboot_yaml_dir }}/{{ item }}"
