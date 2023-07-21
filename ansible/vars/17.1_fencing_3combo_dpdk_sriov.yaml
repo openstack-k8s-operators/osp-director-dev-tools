@@ -2,7 +2,7 @@
 enable_fencing: true
 csv_version: latest-17.1
 osp_release_auto_version: 17.1-RHEL-9
-osp_release_auto_compose: passed_phase1
+
 
 # (mschuppert) can be deleted when released
 openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"

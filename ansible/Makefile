@@ -418,6 +418,14 @@ osp_sts: hosts local-defaults.yaml ## deploy sts
 	-e @local-defaults.yaml \
 	osp_sts.yaml
 
+.PHONY: osp_stf_tests
+osp_stf_tests: hosts local-defaults.yaml ## run stf tests
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	osp_stf_tests.yaml
+
 osp_nfv_tests: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-v \
