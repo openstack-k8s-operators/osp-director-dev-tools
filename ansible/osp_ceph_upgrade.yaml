@@ -39,6 +39,7 @@
     custom_config_action: ceph-upgrade
     ceph_tag_override: "{{ ceph_5_tag }}"
     ceph_image_override: "{{ ceph_5_image|default(osp.ceph_image) }}"
+    custom_config_extrafeatures: [ "upgrade" ]
 
 - name: Ceph Upgrade Prepare config generate
   import_playbook: config_generator.yaml
@@ -68,11 +69,11 @@
   import_playbook: osp_deployment.yaml
   vars:
     config_generator_name: ceph-upgrade
-    deploy_name: ceph-upgrade
+    deploy_name: ceph-upgrade-packages
     deploy_mode: upgrade
     deploy_advanced_settings:
       limit: ceph_osd,ceph_mon,Undercloud
-      playbooks:
+      playbook:
         - upgrade_steps_playbook.yaml
       skipTags:
         - ceph_health
@@ -85,7 +86,7 @@
   import_playbook: osp_deployment.yaml
   vars:
     config_generator_name: ceph-upgrade
-    deploy_name: ceph-upgrade
+    deploy_name: ceph-upgrade-to-cephadm
     deploy_mode: externalUpgrade
     deploy_advanced_settings:
       skipTags:

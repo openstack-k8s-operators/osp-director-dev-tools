@@ -13,3 +13,7 @@ parameter_defaults:
 {% else %}
         sudo rhos-release {{ osp.release }} -H {{ osp_rhos_release_mirror }} -p {{ osp_release_auto_rhel8.compose }} -x
 {% endif %}
+{% if custom_config_action|default('deploy') == 'ceph-upgrade' %}
+        sudo dnf -y install cephadm
+    CephAnsibleRepo: "rhelosp-ceph-5-tools"
+{% endif %}

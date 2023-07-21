@@ -40,6 +40,7 @@
     custom_config_action: upgrade
     custom_config_extrafeatures: [ "upgrade" ]
 
+# TODO: can share a configgenerator with ceph-upgrade
 - name: Upgrade Prepare config generate
   import_playbook: config_generator.yaml
   vars:
