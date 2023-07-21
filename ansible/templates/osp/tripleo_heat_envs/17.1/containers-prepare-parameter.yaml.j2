@@ -15,8 +15,8 @@ parameter_defaults:
       name_prefix: rhosp17-openstack-
       namespace: {{ registry_proxy }}/rh-osbs
       ceph_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_image: {{ osp.ceph_image }}
-      ceph_tag: {{ osp.ceph_tag }}
+      ceph_image: {{ ceph_image_override|default(osp.ceph_image) }}
+      ceph_tag: {{ ceph_tag_override|default(osp.ceph_tag) }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
       ceph_alertmanager_tag: v4.10
@@ -39,8 +39,8 @@ parameter_defaults:
       name_prefix: rhosp17-openstack-
       namespace: {{ registry_proxy }}/rh-osbs
       ceph_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_image: {{ osp_release_auto_rhel8.ceph_image }}
-      ceph_tag: {{ osp_release_auto_rhel8.ceph_tag }}
+      ceph_image: {{ ceph_image_override|default(osp.ceph_image) }}
+      ceph_tag: {{ ceph_tag_override|default(osp.ceph_tag) }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
       ceph_alertmanager_tag: v4.10

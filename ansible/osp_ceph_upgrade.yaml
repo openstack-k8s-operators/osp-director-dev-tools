@@ -37,9 +37,8 @@
     config_generator_name: ceph-upgrade
     custom_config_name: ceph-upgrade
     custom_config_action: ceph-upgrade
-    ceph_tag: "{{ ceph_5_tag }}"
-    ceph_image: "{{ ceph_5_image|default(osp.ceph_image) }}"
-    ceph_namespace: "{{ ceph_5_namespace|default(osp.ceph_namespace) }}"
+    ceph_tag_override: "{{ ceph_5_tag }}"
+    ceph_image_override: "{{ ceph_5_image|default(osp.ceph_image) }}"
 
 - name: Ceph Upgrade Prepare config generate
   import_playbook: config_generator.yaml

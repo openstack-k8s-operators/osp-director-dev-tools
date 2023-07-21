@@ -22,7 +22,7 @@
   import_playbook: osp_disable_fencing.yaml
 
 - name: Ceph upgrade/adopt
-  when: "hci" in osp.extrafeatures
+  when: '"hci" in osp.extrafeatures'
   import_playbook: osp_ceph_upgrade.yaml
 
 # Upgrade Prepare
