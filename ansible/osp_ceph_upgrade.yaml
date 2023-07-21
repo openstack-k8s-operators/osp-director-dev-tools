@@ -9,6 +9,26 @@
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
+  # Create caphadm user, sshkeys
+  # TODO: allow OSPdO deploy with a custom playbook abspath etc... for tripleo-ansible playbooks
+  #       right now it assumes playbook path is relative to config download dir
+  #       In the meantime use a custom playbook that works with the OSPdO inventory
+  - name: copy ceph-admin-user-playbook to openstackclient
+    shell: |
+      #!/bin/bash
+      oc cp -n openstack {{ playbook_dir }}/files/osp/ceph-admin-user-playbook.yml openstackclient:/home/cloud-admin/ceph-admin-user-playbook.yml
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+
+  - name: run ceph-admin-user-playbook playbook via openstackclient
+    shell: |
+      oc rsh -n openstack openstackclient <<"EOF_RSH"
+        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory -e tripleo_admin_user=ceph-admin -e distribute_private_key=true /home/cloud-admin/ceph-admin-user-playbook.yml
+      EOF_RSH
+    environment:
+      <<: *oc_env
+
 # Upgrade Prepare for ceph upgrade
 
 - name: Generate Ceph Upgrade custom config
@@ -44,27 +64,6 @@
       tags:
         - ceph
         - facts
-
-# Create caphadm user, sshkeys
-# TODO: allow OSPdO deploy with a custom playbook abspath etc... for tripleo-ansible playbooks
-#       right now it assumes playbook path is relative to config download dir
-#       In the meantime use a custom playbook that works with the OSPdO inventory
-- hosts: localhost
-  tasks:
-  - name: copy ceph-admin-user-playbook to openstackclient
-    shell: |
-      #!/bin/bash
-      oc cp -n openstack {{ playbook_dir }}/files/osp/ceph-admin-user-playbook.yml openstackclient:/home/cloud-admin/ceph-admin-user-playbook.yml
-    environment:
-      <<: *oc_env
-
-  - name: run ceph-admin-user-playbook playbook via openstackclient
-    shell: |
-      oc rsh -n openstack openstackclient <<"EOF_RSH"
-        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory -e tripleo_admin_user=ceph-admin -e distribute_private_key=true /home/cloud-admin/ceph-admin-user-playbook.yml
-      EOF_RSH
-    environment:
-      <<: *oc_env
 
 - name: Ceph Upgrade packages
   import_playbook: osp_deployment.yaml
