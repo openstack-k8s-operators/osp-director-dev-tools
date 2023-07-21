@@ -276,8 +276,8 @@ openstack_upgrade:
 osp_upgrade:
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
-	-e osp_release_auto_version_rhel8=17.1-RHEL-8 \
 	-e @vars/${OSP_RELEASE}.yaml \
+	-e @vars/ffu.yaml \
 	-e @local-defaults.yaml \
 	osp_upgrade.yaml
 

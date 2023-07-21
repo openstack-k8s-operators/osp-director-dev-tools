@@ -8,6 +8,7 @@
   - name: Set combined osp dict
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
   - name: Upgrade openstackcontrolplane release
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
@@ -20,7 +21,11 @@
 - name: Disable fencing
   import_playbook: osp_disable_fencing.yaml
 
-# 17.1 OSP containers on RHEL8
+- name: Ceph upgrade/adopt
+  when: "hci" in osp.extrafeatures
+  import_playbook: osp_ceph_upgrade.yaml
+
+# Upgrade Prepare
 
 - name: Generate Upgrade custom config
   import_playbook: osp_custom_config.yaml
@@ -37,6 +42,8 @@
     config_generator_name: upgrade
     config_generator_action: upgrade
 
+# 17.1 OSP containers on RHEL8
+
 - name: Upgrade overcloud deployment
   import_playbook: osp_deployment.yaml
   vars:
@@ -45,6 +52,8 @@
     deploy_mode: upgrade
 
 # RHEL8->RHEL9 upgrade
+
+# TODO: if testing 17.1 el8 tripleoclient image switch to the el9 image here
 
 - name: Generate system upgrade custom config
   import_playbook: osp_custom_config.yaml
@@ -108,9 +117,10 @@
         - system_upgrade
 
 # TODOs:
-# - debug why LVM backed cinder-volume did not come up after Leapp
+# - debug why LVM backed cinder-volume did not come up after Leapp for single node controller
 # - multi-rhel - currently BLOCKED multi-rhel needs to "move" computes to different tripleo role
-# - handle deployments where roles are not Controller/Compute
 # - run a canary workload, upgrade individual computes and live-migrate workload around, ping the canary VM throughout the FFU
-# - ceph/HCI?
+# - switch to ceph environment files instead of explicitly setting everying in storage_backend.yaml
+# - DCN dmbs
+# - external ceph?
 

@@ -1,6 +1,6 @@
 {% if "hci" in osp.extrafeatures %}
 resource_registry:
-{% if osp.release|int >= 17 %}
+{% if osp.release|int >= 17 and custom_config_action|default('deploy') != 'ceph-upgrade' %}
   OS::TripleO::Services::CephMgr: deployment/cephadm/ceph-mgr.yaml
   OS::TripleO::Services::CephMon: deployment/cephadm/ceph-mon.yaml
   OS::TripleO::Services::CephOSD: deployment/cephadm/ceph-osd.yaml
@@ -15,7 +15,7 @@ resource_registry:
 
 {% if "external_ceph" in osp.extrafeatures %}
 resource_registry:
-{% if osp.release|int >= 17 %}
+{% if osp.release|int >= 17 and custom_config_action|default('deploy') != 'ceph-upgrade' %}
   OS::TripleO::Services::CephExternal: deployment/cephadm/ceph-client.yaml
 {% else %}
   OS::TripleO::Services::CephExternal: deployment/ceph-ansible/ceph-client.yaml
@@ -24,7 +24,7 @@ resource_registry:
 
 parameter_defaults:
 {% if "hci" in osp.extrafeatures %}
-{% if osp.release|int >= 17 %}
+{% if osp.release|int >= 17 and custom_config_action|default('deploy') != 'ceph-upgrade' %}
   CephDynamicSpec: true
   CephSpecFqdn: true
   CephConfigOverrides:
@@ -47,6 +47,7 @@ parameter_defaults:
     osd_objectstore: bluestore
   CephAnsibleExtraConfig:
     is_hci: true
+    {{ ceph_extraconfig_network|default('')|to_nice_yaml|indent(4) }}
   CephConfigOverrides:
     rgw_swift_enforce_content_length: true
     rgw_swift_versioning_enabled: true

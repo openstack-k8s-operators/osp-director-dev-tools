@@ -38,7 +38,7 @@ osp_release_defaults:
     Compute:
       count: 0
     ComputeHCILeaf1:
-      count: 1
+      count: 2
       ctlplane_interface: enp1s0
       networks:
         - ctlplane
@@ -46,21 +46,21 @@ osp_release_defaults:
         - storage_leaf1
         - storage_mgmt_leaf1
         - tenant_leaf1
-    ComputeHCILeaf2:
-      count: 1
-      ctlplane_interface: enp1s0
-      networks:
-        - ctlplane
-        - internal_api_leaf2
-        - storage_leaf2
-        - storage_mgmt_leaf2
-        - tenant_leaf2
+    # ComputeHCILeaf2:
+    #   count: 1
+    #   ctlplane_interface: enp1s0
+    #   networks:
+    #     - ctlplane
+    #     - internal_api_leaf2
+    #     - storage_leaf2
+    #     - storage_mgmt_leaf2
+    #     - tenant_leaf2
   extrafeatures:
   - hci
   - ipv6
 
 # (mschuppert) can be deleted when released
-openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
+openstackclient_image: "registry-proxy.engineering.redhat.com/rh-osbs/rhosp17-openstack-tripleoclient:rhos-17.1-rhel-9-containers-candidate-98464-20230721092839"
 
 ephemeral_heat:
   heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
