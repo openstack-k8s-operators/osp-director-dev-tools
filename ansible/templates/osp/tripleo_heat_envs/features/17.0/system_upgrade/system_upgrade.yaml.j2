@@ -1,20 +1,19 @@
 parameter_defaults:
   # From https://gitlab.cee.redhat.com/lbezdick/workarounds/-/blob/master/upgrade/16.2-17.1_upgrade_workarounds.yaml#L134
-  NICsPrefixesToUdev: ['en']
   # Execute leapp with its parameters
-  UpgradeLeappDevelSkip: "LEAPP_OPENSTACK_CONSOLE_FIX=1 LEAPP_UNSUPPORTED=1 LEAPP_NO_RHSM=1 LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE=1 LEAPP_NO_NETWORK_RENAMING=1 LEAPP_TARGET_RELEASE=9.2"
+  UpgradeLeappDevelSkip: "LEAPP_UNSUPPORTED=1 LEAPP_NO_RHSM=1  LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE=1 LEAPP_NO_NETWORK_RENAMING=1 LEAPP_TARGET_RELEASE=9.2"
+  # console fix
+  UpgradeLeappDebug: false
+  # nic rename WA
+  NICsPrefixesToUdev: ['en']
   UpgradeLeappEnabled: true
   # Actors to remove
   # TODO: FIXME: this should probably go into default upgrade env
   LeappActorsToRemove: ['checkifcfg','persistentnetnamesdisable','checkinstalledkernels']
   # Ability to install leapp-repository package
   LeappRepoInitCommand: |
+
     rhos-release {{ osp_rhos_release }} -H {{ osp_rhos_release_mirror }} -r 8.4 -p {{ osp_release_auto_rhel8.compose }} -x
-    
-    curl -k -4 https://download.eng.bos.redhat.com/brewroot/work/tasks/9817/53619817/leapp-repository-openstack-0.0.8-1.el8osttrunk.noarch.rpm -O
-    dnf -y install patch
-    dnf -y localinstall leapp-repository-openstack-0.0.8-1.el8osttrunk.noarch.rpm
-    curl -4 https://code.engineering.redhat.com/gerrit/changes/leapp-repository-openstack~444652/revisions/current/patch?download |  base64 -d | sudo patch -p2 -d /usr/share/leapp-repository/repositories/
 
   LeappInitCommand: |
     # Fix broken grub on updated RHEL 8.4 guest image
