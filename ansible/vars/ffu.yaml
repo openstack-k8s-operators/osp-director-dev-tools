@@ -1,2 +1,3 @@
 osp_release_auto_version_rhel8: 17.1-RHEL-8
 ceph_5_tag: 5-404
+openstackclient_image_rhel8: "registry-proxy.engineering.redhat.com/rh-osbs/rhosp17-openstack-tripleoclient:rhos-17.1-rhel-8-containers-candidate-23651-20230721092001"

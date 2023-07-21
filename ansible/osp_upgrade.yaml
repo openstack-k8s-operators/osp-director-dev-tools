@@ -18,6 +18,11 @@
         {'op': 'replace', 'path': '/spec/openStackRelease', 'value': '{{ osp.release }}'}
       ]"
 
+- name: Update openstackclient to 17.1 el8
+  import_playbook: patch_csv.yaml
+  vars:
+    openstackclient_image_override: "{{ openstackclient_image_rhel8 }}"
+
 - name: Disable fencing
   import_playbook: osp_disable_fencing.yaml
 
@@ -52,8 +57,8 @@
     deploy_mode: upgrade
 
 # RHEL8->RHEL9 upgrade
-
-# TODO: if testing 17.1 el8 tripleoclient image switch to the el9 image here
+- name: Update openstackclient to 17.1 el9
+  import_playbook: patch_csv.yaml
 
 - name: Generate system upgrade custom config
   import_playbook: osp_custom_config.yaml

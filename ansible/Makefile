@@ -269,7 +269,6 @@ osp_update:
 
 .PHONY: openstack_upgrade
 openstack_upgrade:
-	$(MAKE) patch_csv
 	$(MAKE) osp_upgrade
 	$(MAKE) must_gather
 

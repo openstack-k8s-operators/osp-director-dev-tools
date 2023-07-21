@@ -25,7 +25,7 @@
     shell: |
       set -e
       oc get csv -n openstack -o json \
-      | jq --arg envvar 'OPENSTACKCLIENT_IMAGE_URL_DEFAULT' --arg envval '{{ openstackclient_image }}' '{{ jq_set_csv_envvar }}' \
+      | jq --arg envvar 'OPENSTACKCLIENT_IMAGE_URL_DEFAULT' --arg envval '{{ openstackclient_image_override|default(openstackclient_image) }}' '{{ jq_set_csv_envvar }}' \
       {% if osp.release != 16.2 %} | jq --arg envvar 'OPENSTACK_RELEASE_DEFAULT' --arg envval '"{{ osp.release }}"' '{{ jq_set_csv_envvar }}' {% endif %} \
       \ {% if ephemeral_heat is defined and ephemeral_heat|length %}
       {% if ephemeral_heat.heat_api_image is defined %} | jq --arg envvar 'HEAT_API_IMAGE_URL_DEFAULT' --arg envval '{{ ephemeral_heat.heat_api_image }}' '{{ jq_set_csv_envvar }}' {% endif %} \
@@ -96,7 +96,7 @@
   - name: Wait for openstackclient to reconcile
     environment:
       <<: *oc_env
-    command: oc get pod -n openstack openstackclient --template='{{'{{'}} eq (index .status.containerStatuses 0).image "{{ openstackclient_image }}" {{'}}'}}'
+    command: oc get pod -n openstack openstackclient --template='{{'{{'}} eq (index .status.containerStatuses 0).image "{{ openstackclient_image_override|default(openstackclient_image) }}" {{'}}'}}'
     register: osclient_pod_status_check
     until: osclient_pod_status_check.stdout.find("true") != -1
     retries: 20
