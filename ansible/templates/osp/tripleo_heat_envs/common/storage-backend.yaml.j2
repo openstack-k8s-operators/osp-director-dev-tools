@@ -47,7 +47,7 @@ parameter_defaults:
     osd_objectstore: bluestore
   CephAnsibleExtraConfig:
     is_hci: true
-    {{ ceph_extraconfig_network|default('')|to_nice_yaml|indent(4) }}
+    {% if ceph_extraconfig_network %}{{ ceph_extraconfig_network|to_nice_yaml|indent(4) }}{% endif %}
   CephConfigOverrides:
     rgw_swift_enforce_content_length: true
     rgw_swift_versioning_enabled: true
