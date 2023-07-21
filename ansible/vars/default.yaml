@@ -483,6 +483,9 @@ osp_rhel_subscription_repos:
   - rhceph-4-tools-for-rhel-8-x86_64-rpms
   - codeready-builder-for-rhel-8-x86_64-rpms
 
+# Update all packages on the nodes before initial deployment
+osp_predeploy_update_packages: true
+
 # OCS
 # NOTE: Only AI deployments currently support OCS, so even if "enable_ocs" is set to true for
 #       a dev-scripts deployment, it will not be honored

@@ -52,4 +52,10 @@
       dnf clean metadata
 {% endif %}
 {% endif %}
+{% if osp_predeploy_update_packages %}
+  - name: update all packages
+    dnf:
+      name: "*"
+      state: latest
+{% endif %}
 
