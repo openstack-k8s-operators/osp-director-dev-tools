@@ -23,7 +23,7 @@
   - name: run rhos-release
     shell: |
       rhos-release {{ osp.release }} -H {{ osp_rhos_release_mirror }} -p {{ osp_rhos_release_compose }} -r {{ osp_rhel_subscription_release }}
- {% else %}
+{% else %}
   - name: Add TripleO current repo
     yum_repository:
       name: tripleocurrent
