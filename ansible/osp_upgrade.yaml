@@ -30,6 +30,10 @@
   when: '"hci" in osp.extrafeatures'
   import_playbook: osp_ceph_upgrade.yaml
 
+# RHEL8->RHEL9 upgrade
+- name: Update openstackclient to 17.1 el9
+  import_playbook: patch_csv.yaml
+
 # Upgrade Prepare
 
 - name: Generate Upgrade custom config
@@ -40,7 +44,6 @@
     custom_config_action: upgrade
     custom_config_extrafeatures: [ "upgrade" ]
 
-# TODO: can share a configgenerator with ceph-upgrade
 - name: Upgrade Prepare config generate
   import_playbook: config_generator.yaml
   vars:
@@ -56,10 +59,6 @@
     config_generator_name: upgrade
     deploy_name: upgrade
     deploy_mode: upgrade
-
-# RHEL8->RHEL9 upgrade
-- name: Update openstackclient to 17.1 el9
-  import_playbook: patch_csv.yaml
 
 - name: Generate system upgrade custom config
   import_playbook: osp_custom_config.yaml
