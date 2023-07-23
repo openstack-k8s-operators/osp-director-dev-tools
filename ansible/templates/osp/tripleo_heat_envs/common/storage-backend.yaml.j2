@@ -24,7 +24,11 @@ resource_registry:
 
 parameter_defaults:
 {% if "hci" in osp.extrafeatures %}
-{% if osp.release|int >= 17 and custom_config_action|default('deploy') != 'ceph-upgrade' %}
+
+{% if osp.release|int >= 17 %}
+{% if custom_config_action|default('deploy') != 'deploy' %}
+  DeployedCeph: true
+{% endif %}
   CephDynamicSpec: true
   CephSpecFqdn: true
   CephConfigOverrides:
@@ -35,8 +39,13 @@ parameter_defaults:
       osd_numa_auto_affinity: true
     mgr:
       mgr/cephadm/autotune_memory_target_ratio: 0.2
-{% else %}
+{% endif %}
+{% if osp.release|int < 17 or custom_config_action|default('deploy') == 'ceph-upgrade'  %}
+{% if osp.release|int < 17 %}
   CephAnsibleRepo: "rhelosp-ceph-4-tools"
+{% else %}
+  CephAnsibleRepo: "rhelosp-ceph-5-tools"
+{% endif %}
   CephAnsiblePlaybookVerbosity: 3
   CephAnsibleDisksConfig:
     devices:

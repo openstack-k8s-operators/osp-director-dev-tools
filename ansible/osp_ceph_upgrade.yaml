@@ -53,6 +53,8 @@
 - name: Ceph Upgrade deployment
   import_playbook: osp_deployment.yaml
   vars:
+    # TODO: add a var for the BZ this needs to ignore
+    ignore_deploy_error: true
     config_generator_name: ceph-upgrade
     deploy_name: ceph-upgrade
     deploy_mode: externalUpgrade
@@ -68,6 +70,7 @@
 - name: Ceph Upgrade packages
   import_playbook: osp_deployment.yaml
   vars:
+    ignore_deploy_error: true
     config_generator_name: ceph-upgrade
     deploy_name: ceph-upgrade-packages
     deploy_mode: upgrade
@@ -85,6 +88,7 @@
 - name: Ceph Upgrade cephadm adoption
   import_playbook: osp_deployment.yaml
   vars:
+    ignore_deploy_error: true
     config_generator_name: ceph-upgrade
     deploy_name: ceph-upgrade-to-cephadm
     deploy_mode: externalUpgrade

@@ -15,5 +15,4 @@ parameter_defaults:
 {% endif %}
 {% if custom_config_action|default('deploy') == 'ceph-upgrade' %}
         sudo dnf -y install cephadm
-    CephAnsibleRepo: "rhelosp-ceph-5-tools"
 {% endif %}

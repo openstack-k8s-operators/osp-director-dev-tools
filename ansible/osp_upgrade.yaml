@@ -9,6 +9,10 @@
     set_fact:
       osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
+  - name: Set controller_role
+    set_fact:
+      controller_role: "{{ osp.vmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | first }}"
+
   - name: Upgrade openstackcontrolplane release
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
@@ -82,31 +86,31 @@
     deploy_name: system-upgrade-controller-0
     deploy_mode: upgrade
     deploy_advanced_settings:
-      limit: Controller[0]
+      limit: "{{controller_role}}[0]"
       tags:
         - system_upgrade
 
 - name: System upgrade controller-1
-  when: osp.vmset["Controller"].count > 1
+  when: osp.vmset[{{controller_role}}].count > 1
   import_playbook: osp_deployment.yaml
   vars:
     config_generator_name: system-upgrade
     deploy_name: system-upgrade-controller-1
     deploy_mode: upgrade
     deploy_advanced_settings:
-      limit: Controller[1]
+      limit: "{{controller_role}}[1]"
       tags:
         - system_upgrade
 
 - name: System upgrade controller-2
-  when: osp.vmset["Controller"].count > 1
+  when: osp.vmset[{{controller_role}}].count > 1
   import_playbook: osp_deployment.yaml
   vars:
     config_generator_name: system-upgrade
     deploy_name: system-upgrade-controller-2
     deploy_mode: upgrade
     deploy_advanced_settings:
-      limit: Controller[2]
+      limit: "{{controller_role}}[2]"
       tags:
         - system_upgrade
 
@@ -117,7 +121,7 @@
     deploy_name: system-upgrade-computes
     deploy_mode: upgrade
     deploy_advanced_settings:
-      limit: Compute
+      limit: "!{{controller_role}}"
       tags:
         - system_upgrade
 
@@ -128,4 +132,5 @@
 # - switch to ceph environment files instead of explicitly setting everying in storage_backend.yaml
 # - DCN dmbs
 # - external ceph?
-
+# - fix ceph osds on different subnets - storagemgmt routes are missing from netconfig templates, this is required for the heartbeat etc...
+# - fix wallaby python-tripleoclient export ceph to handle nested inventory in ceph-ansible
