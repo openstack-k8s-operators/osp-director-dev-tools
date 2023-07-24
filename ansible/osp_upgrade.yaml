@@ -91,7 +91,7 @@
         - system_upgrade
 
 - name: System upgrade controller-1
-  when: osp.vmset[{{controller_role}}].count > 1
+  when: osp.vmset[controller_role].count > 1
   import_playbook: osp_deployment.yaml
   vars:
     config_generator_name: system-upgrade
@@ -103,7 +103,7 @@
         - system_upgrade
 
 - name: System upgrade controller-2
-  when: osp.vmset[{{controller_role}}].count > 1
+  when: osp.vmset[controller_role].count > 1
   import_playbook: osp_deployment.yaml
   vars:
     config_generator_name: system-upgrade
