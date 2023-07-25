@@ -26,9 +26,7 @@ parameter_defaults:
 {% if "hci" in osp.extrafeatures %}
 
 {% if osp.release|int >= 17 %}
-{% if custom_config_action|default('deploy') != 'deploy' %}
-  DeployedCeph: true
-{% endif %}
+  DeployedCeph: false
   CephDynamicSpec: true
   CephSpecFqdn: true
   CephConfigOverrides:
@@ -56,7 +54,7 @@ parameter_defaults:
     osd_objectstore: bluestore
   CephAnsibleExtraConfig:
     is_hci: true
-    {% if ceph_extraconfig_network %}{{ ceph_extraconfig_network|to_nice_yaml|indent(4) }}{% endif %}
+    {% if ceph_extraconfig_network is defined %}{{ ceph_extraconfig_network|to_nice_yaml|indent(4) }}{% endif %}
   CephConfigOverrides:
     rgw_swift_enforce_content_length: true
     rgw_swift_versioning_enabled: true
