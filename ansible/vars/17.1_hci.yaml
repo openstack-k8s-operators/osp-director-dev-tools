@@ -20,6 +20,10 @@ osp_release_defaults:
   extrafeatures:
     - hci
 
+osp_extra_env_files:
+  - metrics/ceilometer-write-qdr.yaml
+  - metrics/qdr-edge-only.yaml
+
 # (mschuppert) can be deleted when released
 openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
 

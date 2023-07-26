@@ -1,0 +1,58 @@
+resource_registry:
+  OS::TripleO::Services::Collectd: /usr/share/openstack-tripleo-heat-templates/deployment/metrics/collectd-container-puppet.yaml
+
+parameter_defaults:
+    CeilometerQdrEventsConfig:
+      driver: amqp
+      topic: ospdo-event
+    CeilometerQdrMetricsConfig:
+      driver: amqp
+      topic: ospdo-metering
+    CeilometerQdrPublishMetrics: true
+    CollectdAmqpInstances:
+      osp17-notify:
+        format: JSON
+        notify: true
+        presettle: false
+      ospdo-telemetry:
+        format: JSON
+        presettle: false
+    CollectdEnableSensubility: true
+    CollectdSensubilityLogLevel: DEBUG
+    CollectdSensubilityResultsChannel: sensubility/ospdo-telemetry
+    CollectdSensubilityTransport: amqp1
+    ContainerHealthCheckDisabled: false
+    MetricsQdrAddresses:
+    -  distribution: multicast
+      prefix: collectd
+    -  distribution: multicast
+      prefix: anycast/ceilometer
+    MetricsQdrConnectors:
+    -  host: default-interconnect-5671-service-telemetry.apps.leonidcluster.lab.upshift.rdu2.redhat.com
+      port: 443
+      role: edge
+      sslProfile: sslProfile
+      verifyHostname: false
+    MetricsQdrSSLProfiles:
+      - name: sslProfile
+        caCertFileContent: |
+         -----BEGIN CERTIFICATE-----
+         MIIDUjCCAjqgAwIBAgIQO1fHnYFAvRuE0HYWmPz1/zANBgkqhkiG9w0BAQsFADBD
+         MUEwPwYDVQQDEzhkZWZhdWx0LWludGVyY29ubmVjdC5zZXJ2aWNlLXRlbGVtZXRy
+         eS5zdmMuY2x1c3Rlci5sb2NhbDAeFw0yMzA2MDEwOTAyMzZaFw0zMTA1MzAwOTAy
+         MzZaMEMxQTA/BgNVBAMTOGRlZmF1bHQtaW50ZXJjb25uZWN0LnNlcnZpY2UtdGVs
+         ZW1ldHJ5LnN2Yy5jbHVzdGVyLmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
+         MIIBCgKCAQEA326y7zJyBdfvZUHFrAuH6+9ZdnQKhPyPdkiTeTUNYMz3IxoElKzz
+         UQY5tn/lhd7m2N+oc7KIkK4h0Jl/he4prf6fxgEHvk3dj2enGnn9iCVjmoHQNduz
+         xYEv+gL94xmD5spcsWVGm2FJKTs7O5TdAQ3BbJ/2qqxdoEbjSZIqIkT3NR3ECU6T
+         F5PHCsrm31o7GKFKyfk+MRKoBbJ+ipDu3TwsT2DSt5YFQfI96o1JUU1vPrxqHH6c
+         Sp56rf29CzOZPfGTDf/lsHnmhH3uhAUaBtztHJ7qLbwnTCw3gd57znAg0gE1ksq7
+         6m2wcdrmqNFplMVwXJCsdAEmVPpTSLFvgwIDAQABo0IwQDAOBgNVHQ8BAf8EBAMC
+         AqQwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQU+J2vqWxckNMSNKE8G9EpubLq
+         zXYwDQYJKoZIhvcNAQELBQADggEBAIUHM36oAxBXI5baOKmJkdmQ94ueRflX3h/F
+         qXK6hMYastJ53Ch8nSpoR7DFcM8fIpLhKkRjf5yFxJ9WA/RFnl11ajQeD8fa+efb
+         yyyIefsGrttJYIV43h2kafckFln0VfknZ1RSrtxNd2SNHdCHqNsztROZSRoTJk8Z
+         pdWhqM2gKBTAOLL+Qy2condgtIf/o1vre6RE4XlK7zc3RIvF6yUrwFTa72FbnxWo
+         Trv3gUv5RS+ZKdF3di8Rh2y60MXDyS0YaVxFg7qnMRjMn3JFNFXOeGPV01UM6yRB
+         qjrLFWaNFAliwSrAi+B3JMmk3cWImIu5l4zgvujZW0I/8ig78F8=
+         -----END CERTIFICATE-----
