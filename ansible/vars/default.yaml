@@ -373,16 +373,7 @@ osp_defaults:
           storage_access_mode: ReadWriteMany
           storage_volume_mode: Filesystem
   # OSP compute OCP worker settings
-  bmset:
-    Compute:
-      # number of OCP worker nodes should be OSP compute hosts
-      count: 2
-      ctlplane_interface: enp1s0
-      networks:
-        - ctlplane
-        - internal_api
-        - tenant
-        - storage
+  bmset: {}
   # number of OSD disks per compute node
   ceph_osd_disks:
     - sdb
