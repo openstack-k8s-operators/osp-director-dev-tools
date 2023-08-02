@@ -35,9 +35,3 @@
       - "oc delete -n {{ namespace }} catalogsource osp-director-operator-index"
       - "oc delete -n {{ namespace }} {{ operatorgroup_name.stdout }}"
 
-  - name: Cleanup FreeIPA objects
-    become: true
-    become_user: root
-    ignore_errors: true
-    command: podman exec freeipa-server /root/bin/olm_cleanup.sh
-
