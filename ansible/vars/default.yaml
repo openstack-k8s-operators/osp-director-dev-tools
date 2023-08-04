@@ -45,6 +45,12 @@ ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.
 ocp_release_data_url: "https://amd64.ocp.releases.ci.openshift.org/releasestream/4-stable/release/{{ ocp_version }}.{{ ocp_minor_version }}"
 ocp_release_type: ga
 
+# OCP cluster wide proxy settings `oc get proxy/cluster`
+enable_ocp_cluster_wide_proxy: false
+ocp_http_proxy: "http://squid.corp.redhat.com:3128"
+ocp_https_proxy: "http://squid.corp.redhat.com:3128"
+ocp_no_proxy: ".apps.ostest.{{ base_domain_name }},.usersys.redhat.com,192.168.111.0/24"
+
 # If set to true:
 # - Assisted installer is used to install OCP instead of dev-scripts
 # - Thus, dev-scripts related variables are ignored, and ...

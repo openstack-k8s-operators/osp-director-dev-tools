@@ -38,6 +38,20 @@ all:
     # network_type: OpenShiftSDN
     network_type: {{ ocp_network_type }}
 
+    # Proxy settings. These settings apply to: Assisted Installer, Day1 clusters and Day2 clusters.
+    # This assumes the host where the AI runs and the OpenShift cluster share the same proxy settings.
+{% if enable_ocp_cluster_wide_proxy is defined and enable_ocp_cluster_wide_proxy is sameas true %}
+{% if ocp_http_proxy is defined and ocp_http_proxy|length %}
+    http_proxy: {{ ocp_http_proxy }}
+{% endif %}
+{% if ocp_https_proxy is defined and ocp_https_proxy|length %}
+    https_proxy: {{ ocp_https_proxy }}
+{% endif %}
+{% if ocp_no_proxy is defined and ocp_no_proxy|length %}
+    no_proxy: {{ ocp_no_proxy }}
+{% endif %}
+{% endif %}
+
     # Force hyphen instead of underscore for VM name prefix
     vm_node_prefix: "{{ '{{' }} cluster_name {{ '}}-' }}"
 
