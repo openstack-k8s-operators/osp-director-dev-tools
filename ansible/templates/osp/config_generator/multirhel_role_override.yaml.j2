@@ -1,0 +1,10 @@
+{{role}}:
+  roleName: {{role}}Rhel8
+{% if start < end %}
+  hostIndexMap:
+{% for i in range(start, end) %}
+    {{i}}: true
+{% endfor %}
+{% else %}
+  hostIndexMap: {}
+{% endif %}

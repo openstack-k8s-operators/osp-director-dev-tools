@@ -1,0 +1,8 @@
+parameter_defaults:
+    {{controller_role|default('Controller')}}ExtraConfig:
+        nova::config::nova_config:
+            filter_scheduler/hypervisor_version_weight_multiplier:
+                value: '-10000000'
+
+parameter_merge_strategies:
+    {{controller_role|default('Controller')}}ExtraConfig: merge

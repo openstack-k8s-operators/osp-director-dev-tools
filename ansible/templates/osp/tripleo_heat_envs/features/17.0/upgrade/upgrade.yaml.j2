@@ -1,6 +1,4 @@
 parameter_defaults:
-    ExtraConfig:
-        nova::workarounds::disable_compute_service_check_for_ffu: true
     UpgradeInitCommand: |
 {% if osp_registry_method == "rhsm" %}
         sudo subscription-manager repos --disable *

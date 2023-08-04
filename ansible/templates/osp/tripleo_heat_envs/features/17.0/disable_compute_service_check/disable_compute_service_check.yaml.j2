@@ -1,0 +1,6 @@
+parameter_defaults:
+    ExtraConfig:
+        nova::workarounds::disable_compute_service_check_for_ffu: true
+
+parameter_merge_strategies:
+    ExtraConfig: merge
