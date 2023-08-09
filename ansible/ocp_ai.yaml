@@ -105,10 +105,16 @@
       mode: '0755'
       timeout: 30
 
-  - name: Remove temp oc file
+  - name: Remove temp files
+    become: true
+    become_user: root
     ansible.builtin.file:
-      path: /tmp/oc
+      path: "/tmp/{{ item }}"
       state: absent
+    with_items:
+    - oc
+    - kubectl
+    - README.md
 
   - name: "Untar the openshift-client-linux.tar.gz"
     unarchive:
