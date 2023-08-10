@@ -20,9 +20,9 @@ parameter_defaults:
     CollectdSensubilityTransport: amqp1
     ContainerHealthCheckDisabled: false
     MetricsQdrAddresses:
-    -  distribution: multicast
+    - distribution: multicast
       prefix: collectd
-    -  distribution: multicast
+    - distribution: multicast
       prefix: anycast/ceilometer
     MetricsQdrConnectors:
     - host: {{ osp.stf_host }}
