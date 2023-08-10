@@ -2,8 +2,8 @@
 
 kinit admin <<< {{ freeipa_admin_password }}
 
-# Delete all hosts except the IPA server and the openstackclient pod (enrolled by admin user)
-for h in $(ipa host-find --pkey-only --not-in-hostgroups=ipaservers --not-enroll-by-users=admin | sed -ne 's/\s*Host name:\s*//p'); do
+# Delete all hosts except the IPA server
+for h in $(ipa host-find --pkey-only --not-in-hostgroups=ipaservers | sed -ne 's/\s*Host name:\s*//p'); do
   ipa host-del $h --updatedns
 done
 
