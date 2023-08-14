@@ -90,7 +90,6 @@
           mode: '0755'
         loop:
           - openstack_cleanup.sh
-          - olm_cleanup.sh
 
       - name: Update FreeIPA DNS ACL
         blockinfile:
