@@ -84,7 +84,7 @@ parameters:
       Unless the default is changed, the parameter is automatically resolved
       from the subnet host_routes attribute.
     type: json
-  StorageMgmtRoutes_storage_leaf2:
+  StorageMgmtRoutes_storage_mgmt_leaf2:
     default: []
     description: >
       Routes for the storage_mgmt network traffic.
@@ -262,7 +262,7 @@ resources:
                       get_param: StorageMgmtIpSubnet
                   routes:
                     list_concat_unique:
-                      - get_param: StorageMgmtRoutes_storage_leaf2
+                      - get_param: StorageMgmtRoutes_storage_mgmt_leaf2
                 - type: vlan
                   mtu:
                     get_param: InternalApiMtu
