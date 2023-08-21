@@ -19,13 +19,13 @@ parameter_defaults:
       ceph_tag: {{ osp.ceph_tag }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_alertmanager_tag: v4.10
+      ceph_alertmanager_tag: v4.6
       ceph_grafana_image: rhceph-3-dashboard-rhel7
       ceph_grafana_namespace: registry.access.redhat.com/rhceph
-      ceph_grafana_tag: latest
+      ceph_grafana_tag: 3
       ceph_node_exporter_image: openshift-ose-prometheus-node-exporter
       ceph_node_exporter_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_node_exporter_tag: v4.10
+      ceph_node_exporter_tag: v4.6
       ceph_prometheus_image: openshift-ose-prometheus
       ceph_prometheus_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_prometheus_tag: v4.10
+      ceph_prometheus_tag: v4.6

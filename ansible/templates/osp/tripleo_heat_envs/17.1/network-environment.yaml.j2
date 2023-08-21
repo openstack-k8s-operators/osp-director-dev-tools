@@ -1,1 +1,10 @@
-../17.0/network-environment.yaml.j2
+parameter_defaults:
+  NeutronGlobalPhysnetMtu: 1500
+  # update network config
+  ControllerNetworkConfigUpdate: True
+  CtlNovaStdaloneNetworkConfigUpdate: True
+  NovacontrolNetworkConfigUpdate: True
+  ComputeNetworkConfigUpdate: True
+  ComputeLeaf1NetworkConfigUpdate: True
+  ComputeLeaf2NetworkConfigUpdate: True
+  DistributedComputeLeaf1NetworkConfigUpdate: True
