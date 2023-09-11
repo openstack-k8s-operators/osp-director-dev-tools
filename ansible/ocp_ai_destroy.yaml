@@ -178,7 +178,7 @@
 
   - name: Delete AI podman images
     shell: |
-      for i in $(podman images | grep -E '(assisted-service|ocp-metal-ui)' | awk '{print $3}'); do podman rmi $i; done
+      for i in $(podman images | grep -E '(assisted-service|assisted-image-service|assisted-installer-ui)' | awk '{print $3}'); do podman rmi $i; done
 
   - name: Cleanup crucible
     become: true

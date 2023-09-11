@@ -77,12 +77,18 @@ all:
         disk_size_gb: {{ ocp_master_disk|default(120) }}
         installation_disk_speed_threshold_ms: 10
 
+    ai_version: {{ ocp_ai_version }}
+
+{% if ocp_ai_version in ocp_ai_image_hashes %}
+    image_hashes: {{ ocp_ai_image_hashes[ocp_ai_version] }}
+{% endif %}
+
     os_images:
     - openshift_version: '{{ ocp_version }}'
       cpu_architecture: x86_64
       url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso
       rootfs_url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live-rootfs.x86_64.img
-      version: {{ rhcos_image_version if rhcos_image_version != "" else rhcos_image_version_alt }}
+      version: {{ rhcos_image_version }}
 
     release_images:
     - openshift_version: '{{ ocp_version }}'
@@ -172,8 +178,8 @@ all:
         - template: 50-worker-nm-fix-ipv6.yml.j2
         - template: 50-worker-remove-ipi-leftovers.yml.j2
         - template: 02-fix-ingress-config.yml.j2
-{# Needed for 4.12 until the fix for https://issues.redhat.com/browse/OCPBUGS-1482 appears in that version #}
-{% if ocp_version != '4.12' %}
+{# Needed for 4.11 and earlier, but must not be included for 4.12+ #}
+{% if ocp_version|string is version('4.12', '<') %}
         - template: 01-master-node-scheduler.yml.j2
 {% endif %}
 
