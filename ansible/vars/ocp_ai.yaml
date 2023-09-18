@@ -21,3 +21,24 @@ ocp_ai_libvirt_storage_dir: /var/lib/libvirt/images
 # Pin aicli and its associated client library to a known working pair for AI API v2
 ocp_ai_cli_version: "99.0.202205080021.202103111306"
 ocp_ai_cli_lib_version: "2.3.0.post43"
+
+# WARNING: Changing these will likely break installation, so proceed with caution
+# Pin AI version based on ocp_version
+ocp_ai_version: "{{ 'v2.20.0' if ocp_version|string is version('4.12', '>=') else 'v2.12.1' }}"
+# These improve the speed of the spin-up of the image service container and thus reduce the
+# overall deployment time
+ocp_ai_image_hashes:
+  v2.12.1:
+    controller: sha256:63b2a9f68853ceedf7e2e2b4501d1457d496be0813722a5a4def3b8b5174b1b6
+    gui: sha256:47e59e6b9e54aae4438cc11c1e98895214e3ba4bc870426e369306232fde958d
+    image_service: sha256:55a3decc0da4188c34bd43acca053b247c789b613e7f54832b78a75483eb2144
+    installer: sha256:87e535b54ac472c872835088ed46cbbf2eaf3ca91abfca082f5c428bc8414db0
+    installer_agent: sha256:6d782042debb951b202c80869f2dd30fffb9272010a46d77ea39ce8f6a862162
+    service: sha256:5204f25b617500a949eaef78731b906351b6c60855b59033880c0f2935e01348
+  v2.20.0:
+    controller: sha256:b2ac9f71c4033225be347deb73a6f29162f3ac88b6ca12b2d5da71394c835bfc
+    gui: sha256:2185ab37e94fbdeb5a8aedd1315cb847af6f2035407e0fc951bf75fb05b68029
+    image_service: sha256:082fef632e8b448e15753dd067b69b926bc8bb8f252e1dbdd3b5567a1cebd494
+    installer: sha256:12396d2ea1929d1b3ccc5117c6fd164bd87abdb9b113d0570f6e4c14c9a16f20
+    installer_agent: sha256:2fb4d3556b252f692d105e3609363611e6844758c84b198445fc023c8b0bfbf9
+    service: sha256:0dc7bf3172d6b3e6ec39bc766816766525c3bb40f8fba394d21483b73ba436b6
