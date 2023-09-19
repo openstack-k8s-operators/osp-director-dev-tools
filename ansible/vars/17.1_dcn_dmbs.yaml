@@ -1,7 +1,7 @@
 ---
 csv_version: latest-17.1
 osp_release_auto_version: 17.1-RHEL-9
-osp_release_auto_compose: passed_phase1
+
 
 ocp_num_workers: 3
 ocp_num_extra_workers: 5
