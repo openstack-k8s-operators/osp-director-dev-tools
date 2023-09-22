@@ -32,3 +32,6 @@ storage_protocol = ceph
 
 [volume-feature-enabled]
 bootable = true
+{% if "cinder_nfs" in osp.extrafeatures %}
+snapshot = false
+{% endif %}

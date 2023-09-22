@@ -124,7 +124,7 @@
     environment:
       <<: *oc_env
 
-  - name: Create glance NFS share
+  - name: Create overcloud NFS shares
     become: true
     become_user: root
     file:
@@ -136,18 +136,23 @@
     with_items:
       - glance
       - glance-staging
+      - nova
+      - cinder
+      - cinder_image_conversion
 
-  - name: Configure glance export
+  - name: Configure overcloud export
     become: true
     become_user: root
     lineinfile:
-      path: /etc/exports.d/glance.exports
+      path: /etc/exports.d/overcloud.exports
       line: "/home/nfs/{{ item }} *(rw,sync,no_root_squash)"
       create: yes
       mode: '0644'
     with_items:
       - glance
       - glance-staging
+      - nova
+      - cinder_image_conversion
 
   - name: Export NFS share to the server
     become: true

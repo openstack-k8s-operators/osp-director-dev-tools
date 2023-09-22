@@ -460,6 +460,7 @@ nfs_cleanup: hosts
 	 rm -f /etc/exports.d/host-nfs-storageclass.exports; \
 	 rm -f /etc/exports.d/glance.exports; \
 	 rm -f /etc/exports.d/cinder*.exports; \
+	 rm -f /etc/exports.d/overcloud.exports; \
 	 exportfs -ra; \
 	 umount -d /home/nfs/pv-*; \
 	 rm -rf /home/nfs; \

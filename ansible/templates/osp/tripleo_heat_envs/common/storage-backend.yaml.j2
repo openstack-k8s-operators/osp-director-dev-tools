@@ -95,14 +95,22 @@ parameter_defaults:
   CephClientKey: '{{ external_ceph_data.ceph_client_key }}'
 {% else %}
   GlanceEnabledImportMethods: web-download
-  GlanceNetappNfsEnabled: False
-  GlanceNfsOptions: _netdev,bg,intr,context=system_u:object_r:svirt_sandbox_file_t:s0
+  GlanceNetappNfsEnabled: false
   GlanceNfsShare: '{{ nfs_server }}:/home/nfs/glance'
   GlanceNodeStagingUri: file:///var/lib/glance/staging
-  GlanceStagingNfsOptions: _netdev,bg,intr,context=system_u:object_r:svirt_sandbox_file_t:s0
   GlanceStagingNfsShare: ''
   NetappShareLocation: ''
   GlanceBackend: file
-  GlanceNfsEnabled: True
+  GlanceNfsEnabled: true
+{% if "nova_nfs" in osp.extrafeatures %}
+  NovaNfsEnabled: true
+  NovaNfsShare: '{{ nfs_server }}:/home/nfs/nova'
+{% endif %}
+{% if "cinder_nfs" in osp.extrafeatures %}
+  CinderEnableIscsiBackend: false
+  CinderEnableNfsBackend: true
+  CinderNfsServers: '{{ nfs_server }}:/home/nfs/cinder'
+  CinderImageConversionNfsShare: '{{ nfs_server }}:/home/nfs/cinder_image_conversion'
+{% endif %}
 {% endif %}
 
