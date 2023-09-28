@@ -570,7 +570,7 @@
 
     - name: Install sushy-tools in virtualenv
       pip:
-        name: ['sushy-tools!=0.21.1', 'libvirt-python']
+        name: ['sushy-tools<0.21.1', 'libvirt-python']
         virtualenv: /opt/sushy-tools/venv
         virtualenv_python: python3.9
         state: latest
