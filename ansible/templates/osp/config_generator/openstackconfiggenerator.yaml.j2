@@ -19,6 +19,9 @@ spec:
 {%- if config_generator_action|default('deploy') == 'update' %}
     - lifecycle/update-prepare.yaml
 {%- endif %}
+{%- if config_generator_action|default('deploy') == 'upgrade' %}
+    - lifecycle/upgrade-prepare.yaml
+{%- endif %}
 {%- if config_generator_action|default('deploy') in ['upgrade', 'ceph-upgrade', 'system-upgrade'] %}
     - nova-hw-machine-type-upgrade.yaml
 {%- endif %}
