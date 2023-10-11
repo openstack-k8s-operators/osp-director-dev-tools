@@ -48,7 +48,7 @@
     config_generator_name: upgrade
     custom_config_name: upgrade
     custom_config_action: upgrade
-    custom_config_extrafeatures: [ "upgrade" ]
+    custom_config_extrafeatures: [ "upgrade", "disable_compute_service_check"]
     custom_config_libvirt_legacy: true
 
 - name: Upgrade Prepare config generate
@@ -72,7 +72,7 @@
     config_generator_name: system-upgrade
     custom_config_name: system-upgrade
     custom_config_action: system-upgrade
-    custom_config_extrafeatures: [ "system_upgrade" ]
+    custom_config_extrafeatures: [ "system_upgrade", "disable_compute_service_check" ]
 
 - name: Controller system upgrade config generate
   import_playbook: config_generator.yaml
