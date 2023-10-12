@@ -16,7 +16,7 @@
 
   # Role overrides for computes
   # Generates e.g:
-  # config_generator_role_overrides:
+  # config_generator_role_overrides_all_computes:
   #   ComputeHCILeaf1:
   #     roleName: ComputeHCILeaf1Rhel8
   #     hostIndexMap:
@@ -25,24 +25,24 @@
 
   - name: Set tripleo role override for all computes in all roles
     set_fact:
-      config_generator_role_overrides_all_computes: "{{config_generator_role_overrides|default({})|combine(
+      config_generator_role_overrides_all_computes: "{{
         lookup('ansible.builtin.template', './templates/osp/config_generator/multirhel_role_override.yaml.j2', template_vars={
           'role': item,
           'start': start|default(0),
           'end': end|default(osp.bmset[item].count)
         })|from_yaml
-        )}}"
+        }}"
     loop: "{{compute_roles }}"
 
   - name: Set tripleo role override for all but first compute in each role
     set_fact:
-      config_generator_role_overrides_first_compute: "{{config_generator_role_overrides|default({})|combine(
+      config_generator_role_overrides_first_compute: "{{
         lookup('ansible.builtin.template', './templates/osp/config_generator/multirhel_role_override.yaml.j2', template_vars={
           'role': item,
           'start': start|default(0),
           'end': end|default(osp.bmset[item].count)
         })|from_yaml
-        )}}"
+        }}"
     loop: "{{ compute_roles }}"
     vars:
       start: 1
