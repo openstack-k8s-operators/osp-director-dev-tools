@@ -152,6 +152,7 @@
       - glance
       - glance-staging
       - nova
+      - cinder
       - cinder_image_conversion
 
   - name: Export NFS share to the server
