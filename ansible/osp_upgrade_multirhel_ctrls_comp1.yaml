@@ -176,17 +176,12 @@
       tags:
         - system_upgrade
 
-- name: Generate Container Update custom config
-  import_playbook: osp_custom_config.yaml
-  vars:
-    config_generator_name: container-update
-    custom_config_name: container-update
-
 - name: Update containers on first compute in each role
   import_playbook: osp_deployment.yaml
   vars:
-    config_generator_name: container-update
+    config_generator_name: system-upgrade
     deploy_name: container-update-compute-0
+    deploy_mode: upgrade
     deploy_advanced_settings:
       # e.g limit: "Compute[0],ComputeHCI[0]"
       limit: "{{ compute_roles | map('regex_replace', '$', '[0]') | list | join(',') }}"
