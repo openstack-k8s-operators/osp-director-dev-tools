@@ -102,15 +102,23 @@ parameter_defaults:
   NetappShareLocation: ''
   GlanceBackend: file
   GlanceNfsEnabled: true
+  GlanceNfsOptions: nosharecache,_netdev,bg,intr,context=system_u:object_r:container_file_t:s0
 {% if "nova_nfs" in osp.extrafeatures %}
   NovaNfsEnabled: true
   NovaNfsShare: '{{ nfs_server }}:/home/nfs/nova'
+  NovaNfsOptions: nosharecache,context=system_u:object_r:nfs_t:s0
 {% endif %}
 {% if "cinder_nfs" in osp.extrafeatures %}
   CinderEnableIscsiBackend: false
   CinderEnableNfsBackend: true
   CinderNfsServers: '{{ nfs_server }}:/home/nfs/cinder'
   CinderImageConversionNfsShare: '{{ nfs_server }}:/home/nfs/cinder_image_conversion'
+  CinderNfsMountOptions: nosharecache,context=system_u:object_r:container_file_t:s0
+  ExtraConfig:
+    nova::compute::libvirt::nfs_mount_options: 'nosharecache,context=system_u:object_r:nfs_t:s0'
 {% endif %}
 {% endif %}
+
+parameter_merge_strategies:
+    ExtraConfig: merge
 
