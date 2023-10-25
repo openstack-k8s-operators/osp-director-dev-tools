@@ -29,7 +29,7 @@ parameter_defaults:
       ceph_prometheus_image: openshift-ose-prometheus
       ceph_prometheus_namespace: {{ registry_proxy }}/rh-osbs
       ceph_prometheus_tag: v4.10
-{% if custom_config_action|default('deploy') == "upgrade" and osp_release_auto_version_rhel8|default('') %}
+{% if custom_config_action|default('deploy') in ("upgrade", "system-upgrade") and custom_config_rhel8_roles|default(False) %}
   ContainerImagePrepareRhel8: &container_image_prepare_rhel8
   - push_destination: false
     set:
