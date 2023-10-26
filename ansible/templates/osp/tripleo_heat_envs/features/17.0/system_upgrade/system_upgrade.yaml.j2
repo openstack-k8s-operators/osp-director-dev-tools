@@ -17,6 +17,8 @@ parameter_defaults:
 
   LeappInitCommand: |
     # Fix broken grub on updated RHEL 8.4 guest image
+    # https://bugzilla.redhat.com/show_bug.cgi?id=2227218
+    # https://access.redhat.com/articles/7027618
     echo 'GRUB_DEFAULT=saved' >> /etc/default/grub
     grub2-mkconfig -o /etc/grub2.cfg
     grub2-mkconfig -o /etc/grub2-efi.cfg
