@@ -141,5 +141,3 @@
 # - run a canary workload, upgrade individual computes and live-migrate workload around, ping the canary VM throughout the FFU
 # - switch to ceph environment files instead of explicitly setting everying in storage_backend.yaml
 # - DCN dmbs
-# - external ceph?
-# - fix ceph osds on different subnets - storagemgmt routes are missing from netconfig templates, this is required for the heartbeat etc...

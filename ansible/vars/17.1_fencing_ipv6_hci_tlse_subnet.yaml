@@ -38,7 +38,7 @@ osp_release_defaults:
     Compute:
       count: 0
     ComputeHCILeaf1:
-      count: 2
+      count: 1
       ctlplane_interface: enp1s0
       networks:
         - ctlplane
@@ -46,16 +46,15 @@ osp_release_defaults:
         - storage_leaf1
         - storage_mgmt_leaf1
         - tenant_leaf1
-    # TODO: this doesn't work, Storage network looks fine, can connect to the other osds. StorageMgmt isn't routeable, but do we need that on osds?
-    # ComputeHCILeaf2:
-    #   count: 1
-    #   ctlplane_interface: enp1s0
-    #   networks:
-    #     - ctlplane
-    #     - internal_api_leaf2
-    #     - storage_leaf2
-    #     - storage_mgmt_leaf2
-    #     - tenant_leaf2
+    ComputeHCILeaf2:
+      count: 1
+      ctlplane_interface: enp1s0
+      networks:
+        - ctlplane
+        - internal_api_leaf2
+        - storage_leaf2
+        - storage_mgmt_leaf2
+        - tenant_leaf2
   extrafeatures:
   - hci
   - ipv6
