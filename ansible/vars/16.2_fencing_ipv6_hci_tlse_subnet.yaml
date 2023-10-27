@@ -1,5 +1,6 @@
 ---
 enable_fencing: true
+ocp_num_extra_workers: 4
 
 openstackclient_networks:
   - ctlplane
@@ -33,7 +34,7 @@ osp_release_defaults:
     Compute:
       count: 0
     ComputeHCILeaf1:
-      count: 1
+      count: 2
       ctlplane_interface: enp1s0
       networks:
         - ctlplane
@@ -42,7 +43,7 @@ osp_release_defaults:
         - storage_mgmt_leaf1
         - tenant_leaf1
     ComputeHCILeaf2:
-      count: 1
+      count: 2
       ctlplane_interface: enp1s0
       networks:
         - ctlplane
