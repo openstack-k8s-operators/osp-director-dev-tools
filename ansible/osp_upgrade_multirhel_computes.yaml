@@ -11,7 +11,7 @@
 
   - name: Set role facts
     set_fact:
-      compute_roles: "{{ osp.bmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | list }}"
+      compute_roles: "{{ osp.bmset|dict2items|selectattr('value.count', '>', 1) | list | items2dict | list }}"
 
 # Computes to RHEL9
 
@@ -22,6 +22,7 @@
     custom_config_name: system-upgrade
     config_generator_name: system-upgrade-computes
     config_generator_action: system-upgrade-computes
+  when: compute_roles|length > 0
 
 - name: System upgrade remaining Computes
   import_playbook: osp_deployment.yaml
@@ -34,6 +35,7 @@
       limit: "{{ (compute_roles | map('regex_replace', '^(.*)$', '!\\1[0]') | list + compute_roles) | join(',') }}"
       tags:
         - system_upgrade
+  when: compute_roles|length > 0
 
 - name: Upgrade remaining Compute containers
   import_playbook: osp_deployment.yaml
@@ -44,5 +46,6 @@
     deploy_advanced_settings:
       # e.g limit: "!Compute[0],!ComputeHCI[0],Compute,ComputeHCI"
       limit: "{{ (compute_roles | map('regex_replace', '^(.*)$', '!\\1[0]') | list + compute_roles) | join(',') }}"
+  when: compute_roles|length > 0
 
 
