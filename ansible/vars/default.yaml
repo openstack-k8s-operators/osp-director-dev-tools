@@ -205,7 +205,7 @@ ocp_cluster_name: ostest
 ocp_domain_name: "{{ base_domain_name }}"
 
 # Released version of the opm package (can be set to 'latest')
-opm_version: latest
+opm_version: v1.30.0
 
 # operator-sdk version to use (must be specific version)
 #sdk_version: v0.19.2 - cnosp is right now based on that version
