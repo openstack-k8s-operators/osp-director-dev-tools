@@ -1,0 +1,53 @@
+parameter_defaults:
+  # From https://gitlab.cee.redhat.com/lbezdick/workarounds/-/blob/master/upgrade/16.2-17.1_upgrade_workarounds.yaml#L134
+  # Execute leapp with its parameters
+  UpgradeLeappDevelSkip: "LEAPP_UNSUPPORTED=1 LEAPP_NO_RHSM=1  LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE=1 LEAPP_NO_NETWORK_RENAMING=1 LEAPP_TARGET_RELEASE=9.2"
+  # console fix
+  UpgradeLeappDebug: false
+  # nic rename WA
+  NICsPrefixesToUdev: ['en']
+  UpgradeLeappEnabled: true
+  # Actors to remove
+  # TODO: FIXME: this should probably go into default upgrade env
+  LeappActorsToRemove: ['checkifcfg','persistentnetnamesdisable','checkinstalledkernels']
+  # Ability to install leapp-repository package
+  LeappRepoInitCommand: |
+
+    rhos-release {{ osp_rhos_release }} -H {{ osp_rhos_release_mirror }} -r 8.4 -p {{ osp_release_auto_rhel8.compose }} -x
+
+  LeappInitCommand: |
+    # Fix broken grub on updated RHEL 8.4 guest image
+    # https://bugzilla.redhat.com/show_bug.cgi?id=2227218
+    # https://access.redhat.com/articles/7027618
+    echo 'GRUB_DEFAULT=saved' >> /etc/default/grub
+    grub2-mkconfig -o /etc/grub2.cfg
+    grub2-mkconfig -o /etc/grub2-efi.cfg
+    
+    # TODO: FIXME: This probably should go into THT
+    leapp answer --add --section check_vdo.confirm=True
+    
+    # Install patch command
+    dnf install -y patch crudini
+    
+    # Prepare the leapp repositories for the upgrade
+    # Create a backup of the repos
+    cp -a /etc/yum.repos.d /etc/yum.repos.backup
+
+    rhos-release {{ osp_rhos_release }} -H {{ osp_rhos_release_mirror }} -r 9.2 -p {{ osp_release_auto.compose }} -x
+
+    # Collect all the repos on the same file for modifications
+    cat /etc/yum.repos.d/*.repo > leapp_upgrade_repositories.repo
+    # Remove all disable repositories, rhos-release* and leapp to avoid duplication repos with leapp
+    crudini --get --format=lines leapp_upgrade_repositories.repo | grep ' enabled = 0' | awk '{print $2}' | xargs -i crudini --del leapp_upgrade_repositories.repo {}
+    crudini --del leapp_upgrade_repositories.repo rhos-release
+    crudini --del leapp_upgrade_repositories.repo rhos-release-brew
+    crudini --del leapp_upgrade_repositories.repo rhos-release-extras
+    sudo sed -i -e 's/\(.*\)enabled=1/\1enabled=1\n\1sslverify=0/g' leapp_upgrade_repositories.repo
+    # Put the upgrade repo leapp file in its proper place
+    cp leapp_upgrade_repositories.repo /etc/leapp/files/
+    
+    # TODO: FIXME: ACTOR vs THT
+    dnf -y remove irb
+    
+    # Remove all repos
+    rhos-release -x

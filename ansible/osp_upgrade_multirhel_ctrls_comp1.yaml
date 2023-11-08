@@ -1,0 +1,189 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  - name: Set role facts
+    set_fact:
+      controller_role: "{{ osp.vmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | first }}"
+      compute_roles: "{{ osp.bmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | list }}"
+
+  # Role overrides for computes
+  # Generates e.g:
+  # config_generator_role_overrides_all_computes:
+  #   ComputeHCILeaf1:
+  #     roleName: ComputeHCILeaf1Rhel8
+  #     hostIndexMap:
+  #       0: true
+  #       1: true
+
+  - name: Set tripleo role override for all computes in all roles
+    set_fact:
+      config_generator_role_overrides_all_computes: "{{
+        lookup('ansible.builtin.template', './templates/osp/config_generator/multirhel_role_override.yaml.j2', template_vars={
+          'role': item,
+          'start': start|default(0),
+          'end': end|default(osp.bmset[item].count)
+        })|from_yaml
+        }}"
+    loop: "{{compute_roles }}"
+
+  - name: Set tripleo role override for all but first compute in each role
+    set_fact:
+      config_generator_role_overrides_first_compute: "{{
+        lookup('ansible.builtin.template', './templates/osp/config_generator/multirhel_role_override.yaml.j2', template_vars={
+          'role': item,
+          'start': start|default(0),
+          'end': end|default(osp.bmset[item].count)
+        })|from_yaml
+        }}"
+    loop: "{{ compute_roles }}"
+    vars:
+      start: 1
+
+  - name: Upgrade openstackcontrolplane release
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    shell: |
+      oc patch openstackcontrolplane -n openstack overcloud --type=json -p="[
+        {'op': 'replace', 'path': '/spec/openStackRelease', 'value': '{{ osp.release }}'}
+      ]"
+
+- name: Update openstackclient to 17.1 el8
+  import_playbook: patch_csv.yaml
+  vars:
+    openstackclient_image_override: "{{ openstackclient_image_rhel8 }}"
+
+- name: Disable fencing
+  import_playbook: osp_disable_fencing.yaml
+  when: enable_fencing|bool
+
+- name: Ceph upgrade/adopt
+  when: '"hci" in osp.extrafeatures'
+  import_playbook: osp_ceph_upgrade.yaml
+
+# RHEL8->RHEL9 "undercloud" upgrade
+- name: Update openstackclient to 17.1 el9
+  import_playbook: patch_csv.yaml
+
+# 17.1 OSP containers on RHEL8, switch Compute role to ComputeRhel8
+
+- name: Generate Upgrade custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    config_generator_name: upgrade
+    custom_config_name: upgrade
+    custom_config_action: upgrade
+    custom_config_extrafeatures: [ "upgrade", "disable_compute_service_check", "negative_hypervisor_version_weight" ]
+    custom_config_rhel8_roles: "{{ compute_roles | map('regex_replace', '$', 'Rhel8') | list + [controller_role] }}"
+
+- name: Upgrade Prepare config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: upgrade
+    config_generator_name: upgrade
+    config_generator_action: upgrade
+    config_generator_role_overrides: "{{config_generator_role_overrides_all_computes}}"
+
+- name: Upgrade overcloud deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: upgrade
+    deploy_name: upgrade
+    deploy_mode: upgrade
+
+# Controllers and first compute in each role to RHEL9
+- name: Generate system upgrade custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    config_generator_name: system-upgrade
+    custom_config_name: system-upgrade
+    custom_config_action: system-upgrade
+    custom_config_extrafeatures: [ "system_upgrade", "disable_compute_service_check", "negative_hypervisor_version_weight" ]
+    custom_config_rhel8_roles: "{{ compute_roles | map('regex_replace', '$', 'Rhel8') | list }}"
+
+- name: System upgrade config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: system-upgrade
+    config_generator_name: system-upgrade
+    config_generator_action: system-upgrade
+    config_generator_role_overrides: "{{config_generator_role_overrides_first_compute}}"
+
+- name: System upgrade controller-0
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-0
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "{{controller_role}}[0]"
+      tags:
+        - system_upgrade
+
+- name: System upgrade controller-1
+  when: osp.vmset[controller_role].count > 1
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-1
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "{{controller_role}}[1]"
+      tags:
+        - system_upgrade
+
+- name: System upgrade controller-2
+  when: osp.vmset[controller_role].count > 1
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-2
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "{{controller_role}}[2]"
+      tags:
+        - system_upgrade
+
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+  tasks:
+  - name: Re-enable fencing
+    command:
+      cmd: oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory --become -m shell -a 'pcs property set stonith-enabled=true' {{controller_role}}[0]"
+    when: enable_fencing|bool
+    environment:
+      <<: *oc_env
+
+- name: System upgrade first compute in each role
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-compute-0
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      # e.g limit: "Compute[0],ComputeHCI[0]"
+      limit: "{{ compute_roles | map('regex_replace', '$', '[0]') | list | join(',') }}"
+      tags:
+        - system_upgrade
+
+- name: Update containers on first compute in each role
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: container-update-compute-0
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      # e.g limit: "Compute[0],ComputeHCI[0]"
+      limit: "{{ compute_roles | map('regex_replace', '$', '[0]') | list | join(',') }}"
+
+

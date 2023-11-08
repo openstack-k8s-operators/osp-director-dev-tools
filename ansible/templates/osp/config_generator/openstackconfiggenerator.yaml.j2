@@ -19,6 +19,12 @@ spec:
 {%- if config_generator_action|default('deploy') == 'update' %}
     - lifecycle/update-prepare.yaml
 {%- endif %}
+{%- if config_generator_action|default('deploy') == 'upgrade' %}
+    - lifecycle/upgrade-prepare.yaml
+{%- endif %}
+{%- if config_generator_action|default('deploy') in ['upgrade', 'ceph-upgrade', 'system-upgrade'] %}
+    - nova-hw-machine-type-upgrade.yaml
+{%- endif %}
 {%- if osp.tlse|default(false)|bool %}
     - ssl/tls-everywhere-endpoints-dns.yaml
     - services/haproxy-public-tls-certmonger.yaml
@@ -40,4 +46,8 @@ spec:
   {%- for role in config_generator_roles %}
     - {{ role }}
   {%- endfor %}
+{%- endif %}
+{%- if config_generator_role_overrides|default(False) %}
+  tripleoRoleOverride:
+    {{ config_generator_role_overrides|to_nice_yaml|indent(4) }}
 {%- endif %}

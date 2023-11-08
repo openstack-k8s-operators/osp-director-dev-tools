@@ -71,3 +71,6 @@ parameter_defaults:
           local:
             host: "%{hiera('fqdn_canonical')}"
             port: 11211
+
+parameter_merge_strategies:
+    ExtraConfig: merge

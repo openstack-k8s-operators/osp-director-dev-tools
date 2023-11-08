@@ -1,0 +1,143 @@
+---
+- hosts: localhost
+  vars_files: vars/default.yaml
+  roles:
+  - oc_local
+
+  tasks:
+  - name: Set combined osp dict
+    set_fact:
+      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+  - name: Set role facts
+    set_fact:
+      controller_role: "{{ osp.vmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | first }}"
+      compute_roles: "{{ osp.bmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | list }}"
+
+  - name: Upgrade openstackcontrolplane release
+    environment: &oc_env
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    shell: |
+      oc patch openstackcontrolplane -n openstack overcloud --type=json -p="[
+        {'op': 'replace', 'path': '/spec/openStackRelease', 'value': '{{ osp.release }}'}
+      ]"
+
+- name: Update openstackclient to 17.1 el8
+  import_playbook: patch_csv.yaml
+  vars:
+    openstackclient_image_override: "{{ openstackclient_image_rhel8 }}"
+
+- name: Disable fencing
+  import_playbook: osp_disable_fencing.yaml
+  when: enable_fencing|bool
+
+- name: Ceph upgrade/adopt
+  when: '"hci" in osp.extrafeatures'
+  import_playbook: osp_ceph_upgrade.yaml
+
+# RHEL8->RHEL9 "undercloud" upgrade
+- name: Update openstackclient to 17.1 el9
+  import_playbook: patch_csv.yaml
+
+# 17.1 OSP containers on RHEL8
+
+- name: Generate Upgrade custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    config_generator_name: upgrade
+    custom_config_name: upgrade
+    custom_config_action: upgrade
+    custom_config_extrafeatures: [ "upgrade", "disable_compute_service_check"]
+    custom_config_libvirt_legacy: true
+
+- name: Upgrade Prepare config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: upgrade
+    config_generator_name: upgrade
+    config_generator_action: upgrade
+
+- name: Upgrade overcloud deployment
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: upgrade
+    deploy_name: upgrade
+    deploy_mode: upgrade
+
+# System upgrade to RHEL9
+- name: Generate system upgrade custom config
+  import_playbook: osp_custom_config.yaml
+  vars:
+    config_generator_name: system-upgrade
+    custom_config_name: system-upgrade
+    custom_config_action: system-upgrade
+    custom_config_extrafeatures: [ "system_upgrade", "disable_compute_service_check" ]
+
+- name: Controller system upgrade config generate
+  import_playbook: config_generator.yaml
+  vars:
+    custom_config_name: system-upgrade
+    config_generator_name: system-upgrade
+    custom_config_action: system-upgrade
+
+- name: System upgrade controller-0
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-0
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "{{controller_role}}[0]"
+      tags:
+        - system_upgrade
+
+- name: System upgrade controller-1
+  when: osp.vmset[controller_role].count > 1
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-1
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "{{controller_role}}[1]"
+      tags:
+        - system_upgrade
+
+- name: System upgrade controller-2
+  when: osp.vmset[controller_role].count > 1
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-controller-2
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "{{controller_role}}[2]"
+      tags:
+        - system_upgrade
+
+- name: System upgrade all computes
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: system-upgrade-computes
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "!{{controller_role}}"
+      tags:
+        - system_upgrade
+
+- name: Upgrade compute containers
+  import_playbook: osp_deployment.yaml
+  vars:
+    config_generator_name: system-upgrade
+    deploy_name: container-upgrade-computes
+    deploy_mode: upgrade
+    deploy_advanced_settings:
+      limit: "nova_libvirt"
+
+# TODOs:
+# - debug why LVM backed cinder-volume did not come up after Leapp for single node controller
+# - run a canary workload, upgrade individual computes and live-migrate workload around, ping the canary VM throughout the FFU
+# - switch to ceph environment files instead of explicitly setting everying in storage_backend.yaml
+# - DCN dmbs

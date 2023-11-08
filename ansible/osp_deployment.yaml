@@ -127,4 +127,6 @@
   - name: Deployment failed or timed out
     fail:
       msg: Deployment failed or timed out, check output {{ working_log_dir }}/osp-deploy-{{ deploy_name|default('default') }}.log
-    when: deployment.rc == 1
+    when:
+      - deployment.rc == 1
+      - not ignore_deploy_error|default(false)

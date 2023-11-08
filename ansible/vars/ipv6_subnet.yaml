@@ -265,3 +265,7 @@ osp_reservations:
       internal_api_leaf1: fd00:fd00:fd00:2001::40
       storage_leaf1: fd00:fd00:fd00:3001::40
       tenant_leaf1: 172.20.1.40
+
+ceph_extraconfig_network:
+  public_network: "{{ osp_networks.storage.subnets|map(attribute='ipv6.cidr') | join(',') }}"
+  cluster_network: "{{ osp_networks.storagemgmt.subnets|map(attribute='ipv6.cidr') | join(',') }}"

@@ -1,6 +1,6 @@
 {% if "hci" in osp.extrafeatures %}
 resource_registry:
-{% if osp.release|int >= 17 %}
+{% if osp.release|int >= 17 and custom_config_action|default('deploy') != 'ceph-upgrade' %}
   OS::TripleO::Services::CephMgr: deployment/cephadm/ceph-mgr.yaml
   OS::TripleO::Services::CephMon: deployment/cephadm/ceph-mon.yaml
   OS::TripleO::Services::CephOSD: deployment/cephadm/ceph-osd.yaml
@@ -15,7 +15,7 @@ resource_registry:
 
 {% if "external_ceph" in osp.extrafeatures %}
 resource_registry:
-{% if osp.release|int >= 17 %}
+{% if osp.release|int >= 17 and custom_config_action|default('deploy') != 'ceph-upgrade' %}
   OS::TripleO::Services::CephExternal: deployment/cephadm/ceph-client.yaml
 {% else %}
   OS::TripleO::Services::CephExternal: deployment/ceph-ansible/ceph-client.yaml
@@ -24,7 +24,9 @@ resource_registry:
 
 parameter_defaults:
 {% if "hci" in osp.extrafeatures %}
+
 {% if osp.release|int >= 17 %}
+  DeployedCeph: false
   CephDynamicSpec: true
   CephSpecFqdn: true
   CephConfigOverrides:
@@ -35,8 +37,13 @@ parameter_defaults:
       osd_numa_auto_affinity: true
     mgr:
       mgr/cephadm/autotune_memory_target_ratio: 0.2
-{% else %}
+{% endif %}
+{% if osp.release|int < 17 or custom_config_action|default('deploy') == 'ceph-upgrade'  %}
+{% if osp.release|int < 17 %}
   CephAnsibleRepo: "rhelosp-ceph-4-tools"
+{% else %}
+  CephAnsibleRepo: "rhelosp-ceph-5-tools"
+{% endif %}
   CephAnsiblePlaybookVerbosity: 3
   CephAnsibleDisksConfig:
     devices:
@@ -47,6 +54,7 @@ parameter_defaults:
     osd_objectstore: bluestore
   CephAnsibleExtraConfig:
     is_hci: true
+    {% if ceph_extraconfig_network is defined %}{{ ceph_extraconfig_network|to_nice_yaml|indent(4) }}{% endif %}
   CephConfigOverrides:
     rgw_swift_enforce_content_length: true
     rgw_swift_versioning_enabled: true
@@ -87,14 +95,30 @@ parameter_defaults:
   CephClientKey: '{{ external_ceph_data.ceph_client_key }}'
 {% else %}
   GlanceEnabledImportMethods: web-download
-  GlanceNetappNfsEnabled: False
-  GlanceNfsOptions: _netdev,bg,intr,context=system_u:object_r:svirt_sandbox_file_t:s0
+  GlanceNetappNfsEnabled: false
   GlanceNfsShare: '{{ nfs_server }}:/home/nfs/glance'
   GlanceNodeStagingUri: file:///var/lib/glance/staging
-  GlanceStagingNfsOptions: _netdev,bg,intr,context=system_u:object_r:svirt_sandbox_file_t:s0
   GlanceStagingNfsShare: ''
   NetappShareLocation: ''
   GlanceBackend: file
-  GlanceNfsEnabled: True
+  GlanceNfsEnabled: true
+  GlanceNfsOptions: nosharecache,_netdev,bg,intr,context=system_u:object_r:container_file_t:s0
+{% if "nova_nfs" in osp.extrafeatures %}
+  NovaNfsEnabled: true
+  NovaNfsShare: '{{ nfs_server }}:/home/nfs/nova'
+  NovaNfsOptions: nosharecache,context=system_u:object_r:nfs_t:s0
 {% endif %}
+{% if "cinder_nfs" in osp.extrafeatures %}
+  CinderEnableIscsiBackend: false
+  CinderEnableNfsBackend: true
+  CinderNfsServers: '{{ nfs_server }}:/home/nfs/cinder'
+  CinderImageConversionNfsShare: '{{ nfs_server }}:/home/nfs/cinder_image_conversion'
+  CinderNfsMountOptions: nosharecache,context=system_u:object_r:container_file_t:s0
+  ExtraConfig:
+    nova::compute::libvirt::nfs_mount_options: 'nosharecache,context=system_u:object_r:nfs_t:s0'
+{% endif %}
+{% endif %}
+
+parameter_merge_strategies:
+    ExtraConfig: merge
 

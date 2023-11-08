@@ -326,7 +326,7 @@ git:
 # OSP release and compose file to fetch if specified. This is used to populate osp_release_auto dict
 osp_release_auto_version: 16.2-RHEL-8
 osp_release_auto_compose: passed_phase2
-osp_release_auto_url: https://download.devel.redhat.com/rcm-guest/puddles/OpenStack/{{ osp_release_auto_version }}/{{ osp_release_auto_compose }}/container_image_prepare.yaml
+osp_release_auto_url: https://download.devel.redhat.com/rcm-guest/puddles/OpenStack
 
 # openstackclient container image
 openstackclient_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tripleoclient:{{ osp_defaults.container_tag }}"
@@ -466,8 +466,10 @@ osp_extra_env_files: []
 
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
+osp_rhos_release: "{{ osp_release_auto.release }}"
 osp_rhos_release_mirror: "{{ site_settings[site_location]['rhos_release_mirror'] }}"
 osp_rhos_release_compose: "{{ osp_release_auto.compose }}"
+osp_rhos_release_compose_rhel8: "{{ osp_release_auto.rhel8_compose }}"
 osp_rhel_subscription_release: "{{ osp_release_auto.rhel_version }}"
 osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-baseos-eus-rpms
@@ -480,6 +482,9 @@ osp_rhel_subscription_repos:
   - rhel-8-for-x86_64-nfv-rpms
   - rhceph-4-tools-for-rhel-8-x86_64-rpms
   - codeready-builder-for-rhel-8-x86_64-rpms
+
+# Update all packages on the nodes before initial deployment
+osp_predeploy_update_packages: true
 
 # OCS
 # NOTE: Only AI deployments currently support OCS, so even if "enable_ocs" is set to true for

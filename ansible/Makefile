@@ -267,6 +267,43 @@ osp_update:
 	-e @local-defaults.yaml \
 	osp_update.yaml
 
+.PHONY: openstack_upgrade
+openstack_upgrade:
+	$(MAKE) osp_upgrade
+	$(MAKE) must_gather
+
+osp_upgrade:
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @vars/ffu.yaml \
+	-e @local-defaults.yaml \
+	osp_upgrade.yaml
+
+.PHONY: openstack_upgrade_multirhel
+openstack_upgrade_multirhel:
+	$(MAKE) osp_upgrade_multirhel_ctrls_comp1
+	$(MAKE) osp_upgrade_multirhel_computes
+	$(MAKE) must_gather
+
+.PHONY: osp_upgrade_multirhel_ctrls_comp1
+osp_upgrade_multirhel_ctrls_comp1:
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @vars/ffu.yaml \
+	-e @local-defaults.yaml \
+	osp_upgrade_multirhel_ctrls_comp1.yaml
+
+.PHONY: osp_upgrade_multirhel_computes
+osp_upgrade_multirhel_computes:
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @vars/ffu.yaml \
+	-e @local-defaults.yaml \
+	osp_upgrade_multirhel_computes.yaml
+
 patch_csv: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
 	-i hosts \
@@ -447,6 +484,7 @@ nfs_cleanup: hosts
 	 rm -f /etc/exports.d/host-nfs-storageclass.exports; \
 	 rm -f /etc/exports.d/glance.exports; \
 	 rm -f /etc/exports.d/cinder*.exports; \
+	 rm -f /etc/exports.d/overcloud.exports; \
 	 exportfs -ra; \
 	 umount -d /home/nfs/pv-*; \
 	 rm -rf /home/nfs; \

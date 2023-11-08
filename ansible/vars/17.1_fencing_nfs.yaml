@@ -30,6 +30,8 @@ osp_release_defaults:
           storage_access_mode: ReadWriteMany
           storage_volume_mode: Filesystem
   extrafeatures:
+    - nova_nfs
+    - cinder_nfs
     - BZ2237743
 
 # (mschuppert) can be deleted when released

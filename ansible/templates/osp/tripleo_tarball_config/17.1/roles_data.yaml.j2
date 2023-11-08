@@ -188,10 +188,11 @@
     - OS::TripleO::Services::Tuned
     - OS::TripleO::Services::Unbound
     - OS::TripleO::Services::Vpp
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# Role: Compute                                                               #
+# Role: Compute{{rolesuffix}}                                                 #
 ###############################################################################
-- name: Compute
+- name: Compute{{rolesuffix}}
   description: |
     Basic Compute Node role
   # Create external Neutron bridge (unset if using ML2/OVS without DVR)
@@ -250,7 +251,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -269,10 +274,12 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# Role: ComputeLeaf1                                                          #
+# Role: ComputeLeaf1{{ rolesuffix}}                                           #
 ###############################################################################
-- name: ComputeLeaf1
+- name: ComputeLeaf1{{ rolesuffix }}
   description: |
     Basic ComputeLeaf1 Node role
   # Create external Neutron bridge (unset if using ML2/OVS without DVR)
@@ -331,7 +338,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -350,10 +361,12 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# Role: ComputeLeaf2                                                          #
+# Role: ComputeLeaf2{{ rolesuffix }}                                          #
 ###############################################################################
-- name: ComputeLeaf2
+- name: ComputeLeaf2{{ rolesuffix }}
   description: |
     Basic ComputeLeaf2 Node role
   # Create external Neutron bridge (unset if using ML2/OVS without DVR)
@@ -412,7 +425,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -431,10 +448,12 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# Role: ComputeHCI                                                            #
+# Role: ComputeHCI{{ rolesuffix }}                                            #
 ###############################################################################
-- name: ComputeHCI
+- name: ComputeHCI{{ rolesuffix }}
   description: |
     Compute Node role hosting Ceph OSD too
   tags:
@@ -483,7 +502,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -502,10 +525,12 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# Role: ComputeHCILeaf1                                                       #
+# Role: ComputeHCILeaf1{{ rolesuffix }}                                       #
 ###############################################################################
-- name: ComputeHCILeaf1
+- name: ComputeHCILeaf1{{ rolesuffix }}
   description: |
     ComputeHCILeaf1 Node role hosting Ceph OSD too
   tags:
@@ -554,7 +579,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -573,10 +602,12 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# Role: ComputeHCILeaf2                                                       #
+# Role: ComputeHCILeaf2{{ rolesuffix }}                                       #
 ###############################################################################
-- name: ComputeHCILeaf2
+- name: ComputeHCILeaf2{{ rolesuffix }}
   description: |
     ComputeHCILeaf2 Node role hosting Ceph OSD too
   tags:
@@ -625,7 +656,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -644,10 +679,12 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# Role: DistributedComputeHCILeaf1                                            #
+# Role: DistributedComputeHCILeaf1{{ rolesuffix }}                            #
 ###############################################################################
-- name: DistComputeHCILeaf1
+- name: DistComputeHCILeaf1{{ rolesuffix }}
   description: |
     Distributed Compute Node role with Ceph, Cinder volume, and Glance.
   tags:
@@ -705,7 +742,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -724,6 +765,7 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
 ###############################################################################
 # Role: ControllerSriov                                                       #
 ###############################################################################
@@ -905,13 +947,11 @@
     - OS::TripleO::Services::Tuned
     - OS::TripleO::Services::Unbound
     - OS::TripleO::Services::Vpp
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# File generated by TripleO
+# Role: ComputeOvsDpdkSriov{{ rolesuffix }}                                   #
 ###############################################################################
-###############################################################################
-# Role: ComputeOvsDpdkSriov                                                   #
-###############################################################################
-- name: ComputeOvsDpdkSriov
+- name: ComputeOvsDpdkSriov{{ rolesuffix }}
   description: |
     Compute role with OvS-DPDK and SR-IOV services
   tags:
@@ -954,7 +994,11 @@
     - OS::TripleO::Services::NeutronSriovAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -973,13 +1017,12 @@
     - OS::TripleO::Services::TripleoPackages
     - OS::TripleO::Services::Podman
     - OS::TripleO::Services::Ptp
+{% endfor %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
 ###############################################################################
-# File generated by TripleO
+# Role: ComputeSriov{{ rolesuffix }}                                          #
 ###############################################################################
-###############################################################################
-# Role: ComputeSriov                                                          #
-###############################################################################
-- name: ComputeSriov
+- name: ComputeSriov{{ rolesuffix }}
   description: |
     Compute SR-IOV Role
   CountDefault: 1
@@ -1023,7 +1066,11 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
+{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+    - OS::TripleO::Services::NovaLibvirtLegacy
+{% else %}
     - OS::TripleO::Services::NovaLibvirt
+{% endif %}
     - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -1041,6 +1088,7 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
+{% endfor %}
 ###############################################################################
 # Role: ControllerNovaStandalone                                              #
 # Note: max hostname length limitation to 64 char. If longer fails with:      #

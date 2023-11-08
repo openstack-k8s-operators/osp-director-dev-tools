@@ -23,7 +23,7 @@
   - name: run rhos-release
     shell: |
       rhos-release {{ osp.release }} -H {{ osp_rhos_release_mirror }} -p {{ osp_rhos_release_compose }} -r {{ osp_rhel_subscription_release }}
- {% else %}
+{% else %}
   - name: Add TripleO current repo
     yum_repository:
       name: tripleocurrent
@@ -51,5 +51,13 @@
       dnf module enable perl-libwww-perl:6.34 -y
       dnf clean metadata
 {% endif %}
+{% endif %}
+{% if osp_predeploy_update_packages %}
+  - name: update all packages
+    dnf:
+      name: "*"
+      state: latest
+  - name: Reboot for new kernel
+    reboot:
 {% endif %}
 
