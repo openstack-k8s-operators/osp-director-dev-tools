@@ -32,7 +32,6 @@ osp_release_defaults:
   extrafeatures:
     - nova_nfs
     - cinder_nfs
-    - BZ2237743
 
 # (mschuppert) can be deleted when released
 openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
