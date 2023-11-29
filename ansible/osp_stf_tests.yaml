@@ -162,7 +162,7 @@
     - name: Download jumphost key file
       shell: |
        #!/bin/bash
-       oc exec -n openstack openstackclient -- bash -c "curl --insecure  https://gitlab.cee.redhat.com/lnatapov/playbooks/-/raw/master/jumphost.key --output /home/cloud-admin/playbooks/jumphost.key;chmod 600 /home/cloud-admin/playbooks/jumphost.key"
+       oc exec -n openstack openstackclient -- bash -c "curl --insecure  {{ DEVTOOLS_STF_JUMPHOST_KEY_URL }} --output /home/cloud-admin/playbooks/jumphost.key;chmod 600 /home/cloud-admin/playbooks/jumphost.key"
     - name: Create public network
       shell: >
         #!/bin/bash
