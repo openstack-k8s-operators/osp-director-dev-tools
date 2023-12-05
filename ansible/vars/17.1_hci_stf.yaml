@@ -17,8 +17,8 @@ osp_release_defaults:
         - storage
         - storage_mgmt
   extrahostfileentries:
-    - "10.0.94.196 default-interconnect-5671-service-telemetry.apps.leonidcluster.lab.upshift.rdu2.redhat.com"
-  stf_host: default-interconnect-5671-service-telemetry.apps.leonidcluster.lab.upshift.rdu2.redhat.com
+    - "{{ devtools_stf_extrahostfileentries }}"
+  stf_host: "{{ devtools_stf_host }}"
   extrafeatures:
     - hci
     - stf

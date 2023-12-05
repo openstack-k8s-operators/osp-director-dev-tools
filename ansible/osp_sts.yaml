@@ -97,10 +97,12 @@
         <<: *oc_env
 
     - name: Run sts, the output gets logged at {{ working_log_dir }}/sts.log
+      vars:
+          sts_script : 'osp_operator_sanity_run.sh'
       shell: |
         #!/bin/bash
         set -e
-        oc exec -t -n openstack openstackclient -- /bin/bash -c "source /home/cloud-admin/ansible_ha.env && pushd {{ sts_test_dir }} && timeout {{ sts_timeout|default('180m') }} sh osp_operator_sanity_run.sh" > {{ working_log_dir }}/sts.log 2>&1
+        oc exec -t -n openstack openstackclient -- /bin/bash -c "source /home/cloud-admin/ansible_ha.env && pushd {{ sts_test_dir }} && timeout {{ sts_timeout|default('180m') }} sh {{ sts_script }}" > {{ working_log_dir }}/sts.log 2>&1
       environment:
         <<: *oc_env
       ignore_errors: true

@@ -28,7 +28,7 @@ parameter_defaults:
     - distribution: multicast
       prefix: anycast/ceilometer
     MetricsQdrConnectors:
-    - host: default-interconnect-5671-service-telemetry.apps.rhos-jenkins-cluster.rhos-d.infra.prod.upshift.rdu2.redhat.com
+    - host: "{{ devtools_stf_host }}"
       port: 443
       role: edge
       sslProfile: sslProfile
