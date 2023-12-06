@@ -98,7 +98,7 @@
 
     - name: Run sts, the output gets logged at {{ working_log_dir }}/sts.log
       vars:
-          sts_script : 'osp_operator_sanity_run.sh'
+        sts_script: 'osp_operator_sanity_run.sh'
       shell: |
         #!/bin/bash
         set -e
