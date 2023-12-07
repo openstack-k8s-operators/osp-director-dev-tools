@@ -1,0 +1,32 @@
+parameter_defaults:
+    CeilometerQdrEventsConfig:
+      driver: amqp
+      topic: ospdo-event
+    CeilometerQdrMetricsConfig:
+      driver: amqp
+      topic: ospdo-metering
+    CeilometerQdrPublishMetrics: true
+    CollectdAmqpInstances:
+      osp17-notify:
+        format: JSON
+        notify: true
+        presettle: false
+      ospdo-telemetry:
+        format: JSON
+        presettle: false
+    CollectdEnableSensubility: true
+    CollectdSensubilityLogLevel: DEBUG
+    CollectdSensubilityResultsChannel: sensubility/ospdo-telemetry
+    CollectdSensubilityTransport: amqp1
+    ContainerHealthCheckDisabled: false
+    MetricsQdrAddresses:
+    - distribution: multicast
+      prefix: collectd
+    - distribution: multicast
+      prefix: anycast/ceilometer
+    MetricsQdrConnectors:
+    - host: "{{ devtools_stf_host }}"
+      port: 443
+      role: edge
+      sslProfile: sslProfile
+      verifyHostname: false
