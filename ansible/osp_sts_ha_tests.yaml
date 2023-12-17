@@ -1,0 +1,144 @@
+- name: Set combined osp dict
+  set_fact:
+    osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+
+- name: Verify openstackclient pod is running
+  shell: |
+      oc wait pod -n openstack openstackclient --for condition=Ready --timeout="{{ tempest_timeout }}s"
+  environment: &oc_env
+    PATH: "{{ oc_env_path }}"
+    KUBECONFIG: "{{ kubeconfig }}"
+  register: osp_client_pod_result
+  until: osp_client_pod_result.rc == 0
+
+- name: prepare localhost
+  when: osp_client_pod_result.rc == 0
+  block:
+  - name: Set sts yaml facts
+    set_fact:
+      sts_yaml_dir: "{{ working_yamls_dir }}/sts"
+      sts_working_dir: "{{ working_dir }}/sts"
+
+  - name: show yaml output dir
+    debug:
+      msg:
+      - "sts yamls will be written to {{ sts_yaml_dir }} locally"
+      - "sts config will be written to {{ sts_working_dir }} locally"
+
+  - name: Clean directories
+    file:
+      state: absent
+      path: "{{ item }}/"
+    loop:
+    - "{{ sts_yaml_dir }}"
+    - "{{ sts_working_dir }}"
+
+  - name: Create sts directories
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: '0755'
+    loop:
+    - "{{ sts_yaml_dir }}"
+    - "{{ sts_working_dir }}"
+
+  - name: render sts working templates to {{ sts_working_dir }}
+    vars:
+      os_password: "{{ os_password_ret.stdout }}"
+    template:
+      src: "sts/{{ item }}.j2"
+      dest: "{{ sts_working_dir }}/{{ item }}"
+      mode: '0644'
+    loop:
+    - ansible_ha.env
+    - ansible.cfg
+
+- name: prepare sts config
+  block:
+  - name: copy rendered sts config
+    shell: |
+      #!/bin/bash
+      set -e
+      oc cp -n openstack {{ sts_working_dir }}/{{ item }} openstackclient:/home/cloud-admin/{{ item }}
+    environment:
+      <<: *oc_env
+    loop:
+    - ansible_ha.env
+    - ansible.cfg
+
+  - name: clone sts repository
+    shell: |
+      #!/bin/bash
+      oc exec -n openstack openstackclient -- bash -c "rm -rf /home/cloud-admin/openstack-pidone-qe"
+      oc exec -n openstack openstackclient -- bash -c "pushd /home/cloud-admin/ && git clone -c http.sslVerify=false {{ sts_repo_url }}"
+    environment:
+      <<: *oc_env
+    ignore_errors: true
+
+  - name: set sts test directory facts
+    set_fact:
+      sts_test_dir: /home/cloud-admin/openstack-pidone-qe/CI/ansible_sts_osp_operator
+
+- name: Run ansible-sts and generate report
+  block:
+  - name: Verify ansible connectivty to overcloud nodes
+    shell: |
+      #!/bin/bash
+      set -e
+      oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory -m ping Controller"
+    environment:
+      <<: *oc_env
+
+  - name: Run sts, the output gets logged at {{ working_log_dir }}/sts.log
+
+    shell: |
+      #!/bin/bash
+      set -e
+      oc exec -t -n openstack openstackclient -- /bin/bash -c "source /home/cloud-admin/ansible_ha.env && pushd {{ sts_test_dir }} && timeout {{ sts_timeout|default('180m') }} sh {{ sts_script }}" > {{ working_log_dir }}/sts.log 2>&1
+    environment:
+      <<: *oc_env
+    ignore_errors: true
+    register: sts_run
+
+  - name: Generate sts report
+    shell: |
+      #!/bin/bash
+      set -e
+      oc exec -t -n openstack openstackclient -- /bin/bash -c "pushd {{ sts_test_dir }} && sh junit_report.sh"
+    environment:
+      <<: *oc_env
+    register: sts_report
+
+  - name: Copy sts report and logs to localhost
+    shell: |
+      #!/bin/bash
+      set -e
+      oc cp openstack/openstackclient:{{ sts_test_dir }}/ansible_sts_results/junit_test.xml {{ sts_working_dir }}/junit_test.xml
+      oc cp openstack/openstackclient:{{ sts_test_dir }}/ansible_sts_results {{ working_log_dir }}/ansible_sts_results
+    environment:
+      <<: *oc_env
+
+  - name: Get sts junit xml output
+    xml:
+      path: "{{ sts_working_dir }}/junit_test.xml"
+      xpath: //*
+      content: attribute
+      pretty_print: yes
+    register: sts_junit_xml
+
+  - name: print junit xml file
+    debug:
+        var: sts_junit_xml
+
+  - name: Get failed sts tests
+    xml:
+      path: "{{ sts_working_dir }}/junit_test.xml"
+      xpath: /testsuite/testcase/failure
+      count: yes
+      pretty_print: yes
+    register: sts_failed
+
+  - name: Fail playbook if sts run failed or timed out
+    fail:
+      msg: sts run failed or timed out, check output {{ working_log_dir }}/sts.log
+    when: sts_run.rc == 1 or sts_failed.count != 0

@@ -1,0 +1,10 @@
+---
+osp_release_defaults:
+  extrafeatures:
+    - stf
+  extrahostfileentries:
+    - "10.0.94.196 default-interconnect-5671-service-telemetry.apps.leonidcluster.lab.upshift.rdu2.redhat.com"
+  stf_host: default-interconnect-5671-service-telemetry.apps.leonidcluster.lab.upshift.rdu2.redhat.com
+osp_extra_env_files:
+  - metrics/ceilometer-write-qdr.yaml
+  - metrics/qdr-edge-only.yaml
