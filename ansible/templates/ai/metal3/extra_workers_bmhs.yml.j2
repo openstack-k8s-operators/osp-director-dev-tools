@@ -16,6 +16,10 @@ kind: BareMetalHost
 metadata:
   name: openshift-worker-{{ i }}
   namespace: openshift-machine-api
+  annotations:
+    inspect.metal3.io: disabled
+  labels:
+    app: openstack
 spec:
   online: false
   bootMACAddress: {{ ocp_ai_prov_bridge_worker_mac_prefix }}{{ i }}
@@ -47,6 +51,10 @@ kind: BareMetalHost
 metadata:
   name: openshift-worker-{{ worker_index }}
   namespace: openshift-machine-api
+  annotations:
+    inspect.metal3.io: disabled
+  labels:
+    app: openstack
 spec:
   online: false
   bootMACAddress: {{ worker["prov_mac"] }}
