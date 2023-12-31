@@ -1,0 +1,24 @@
+---
+osp_release_defaults:
+  bmset:
+    Compute:
+      count: 0
+    ComputeHCI:
+      count: 2
+      ctlplane_interface: enp7s0
+      networks:
+        - ctlplane
+        - internal_api
+        - tenant
+        - storage
+        - storage_mgmt
+  extrahostfileentries:
+    - "{{ devtools_stf_extrahostfileentries }}"
+  stf_host: "{{ devtools_stf_host }}"
+  extrafeatures:
+    - hci
+    - stf
+
+osp_extra_env_files:
+  - metrics/ceilometer-write-qdr.yaml
+  - metrics/qdr-edge-only.yaml
