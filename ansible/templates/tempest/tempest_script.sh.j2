@@ -30,10 +30,15 @@ fi
   export OS_PROJECT_NAME=admin
   export OS_USER_DOMAIN_NAME=Default
   export OS_USERNAME=admin
-  glance image-create --disk-format raw --container-format bare --id 12345678-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.5.2-x86_64-disk.img --file /var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw --store central
-  glance image-import 12345678-aaaa-bbbb-cccc-0123456789ab --stores dcn1 --import-method copy-image
-  glance image-create --disk-format raw --container-format bare --id 87654321-aaaa-bbbb-cccc-0123456789ab --visibility public --name cirros-0.5.2-x86_64-disk.img_alt --file /var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw --store central
-  glance image-import 87654321-aaaa-bbbb-cccc-0123456789ab --stores dcn1 --import-method copy-image
+
+  img1_prefix=`uuidgen | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1`
+  img1=${img1_prefix}-aaaa-bbbb-cccc-0123456789ab
+  img2_prefix=`uuidgen | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1`
+  img2=${img2_prefix}-aaaa-bbbb-cccc-0123456789ab
+  glance image-create --disk-format raw --container-format bare --id ${img1} --visibility public --name cirros-0.5.2-x86_64-disk.img --file /var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw --store central
+  glance image-import ${img1} --stores dcn1 --import-method copy-image
+  glance image-create --disk-format raw --container-format bare --id ${img2} --visibility public --name cirros-0.5.2-x86_64-disk.img_alt --file /var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw --store central
+  glance image-import ${img2} --stores dcn1 --import-method copy-image
 {% endif %}
 
 # Create a tempest workspace, use the shared directory so that the files
@@ -86,3 +91,8 @@ tempest cleanup --init-saved-state
 {% endif %}
 
 tempest cleanup
+
+#image cleanup for succesive runs
+for i in $img1 $img2;do
+  openstack image list|grep $i && openstack image delete $i
+done
