@@ -83,6 +83,15 @@
       KUBECONFIG: "{{ kubeconfig }}"
     when: ocp_ai|bool and ocp_extra_worker_count|int > 0
 
+  - name: Wait for BMHs to become available
+    shell: |
+      set -e
+      oc wait bmh -n openshift-machine-api --for jsonpath='{.status.provisioning.state}'=available -l app=openstack --timeout={{ (default_timeout * 2)|int }}s
+    environment:
+      PATH: "{{ oc_env_path }}"
+      KUBECONFIG: "{{ kubeconfig }}"
+    when: ocp_ai|bool and ocp_extra_worker_count|int > 0
+
   # render openstackbaremetalset.yaml per bmset
   - name: Render templates to yaml dir
     template:
