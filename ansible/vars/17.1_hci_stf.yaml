@@ -22,7 +22,7 @@ osp_release_defaults:
   extrafeatures:
     - hci
     - stf
-
+#docs resources: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/17.1/html-single/service_telemetry_framework_1.5/index#deploying-the-overcloud_assembly-completing-the-stf-configuration
 osp_extra_env_files:
   - metrics/ceilometer-write-qdr.yaml
   - metrics/qdr-edge-only.yaml
