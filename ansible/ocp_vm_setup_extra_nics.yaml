@@ -35,8 +35,8 @@
 
       - name: Find requested MTU for ospnetwork bridge and interface
         set_fact:
-          ospnetwork_bridge_mtu: "{{ osp.attach_configs['br-osp'] | community.general.json_query('interfaces[?type==`bridge`].mtu') | first }}"
-          ospnetwork_intf_mtu: "{{ osp.attach_configs['br-osp'] | community.general.json_query('interfaces[?type==`ethernet`].mtu') | first }}"
+          ospnetwork_bridge_mtu: "{{ (osp.attach_configs['br-osp']['interfaces'] | selectattr('type', 'equalto', 'bridge') | map(attribute='mtu') | first) }}"
+          ospnetwork_intf_mtu: "{{ (osp.attach_configs['br-osp']['interfaces'] | selectattr('type', 'equalto', 'ethernet') | map(attribute='mtu') | first) }}"
 
       - name: Create ospnetwork bridge
         shell: |
