@@ -75,6 +75,14 @@
   # * can not use nmcli module https://github.com/ansible/ansible/issues/48055
   # * don't apply these persistent, in case of a host reboot those need to be reapplied
 
+  # REMOVEME?: Seems to be needed in RHEL 9, otherwise PXE boot requests coming in on
+  # ostestpr bridge from source 0.0.0.0 are dropped
+  - name: Allow BOOTP 0.0.0.0 source on trusted network
+    become: true
+    become_user: root
+    shell: |
+      firewall-cmd --zone=trusted --add-source=0.0.0.0/32
+
   - name: Create IPv4 gateways on ctlplane network
     become: true
     become_user: root
