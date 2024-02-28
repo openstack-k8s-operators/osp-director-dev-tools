@@ -2,8 +2,6 @@
 csv_version: latest-17.1
 osp_release_auto_version: 17.1-RHEL-9
 
-
-
 openstackclient_networks:
   - ctlplane
   - external
@@ -49,6 +47,11 @@ osp_release_defaults:
         - internal_api_leaf2
         - tenant_leaf2
         - storage_leaf2
+  extrafeatures:
+    - octavia
+
+osp_extra_env_files:
+  - services/octavia.yaml
 
 # (mschuppert) can be deleted when released
 openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
