@@ -22,6 +22,7 @@ osp_release_defaults:
   extrafeatures:
     - hci
     - stf
+    - BZ2235206
 
 osp_extra_env_files:
   - metrics/ceilometer-write-qdr.yaml
