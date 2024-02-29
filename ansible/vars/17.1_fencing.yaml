@@ -29,9 +29,11 @@ osp_release_defaults:
           storage_class: host-nfs-storageclass
           storage_access_mode: ReadWriteMany
           storage_volume_mode: Filesystem
+  extrafeatures:
+    - octavia
 
-# (mschuppert) can be deleted when released
-openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
+osp_extra_env_files:
+  - services/octavia.yaml
 
 ephemeral_heat:
   heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
