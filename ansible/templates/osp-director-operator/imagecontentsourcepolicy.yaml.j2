@@ -1,0 +1,9 @@
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: osp-director-operator-disconnected-policy
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - registry.example.lab:5000/{{ director_operator_image.split('/')[1] }}
+    source: {{ director_operator_image.split('/')[0] }}/{{ director_operator_image.split('/')[1] }}
