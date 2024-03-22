@@ -6,6 +6,7 @@ roles:
 
 collections:
   - name: ansible.posix
+  - name: ansible.netcommon
   - name: containers.podman
   - name: community.general
     version: '<5.0.0'
