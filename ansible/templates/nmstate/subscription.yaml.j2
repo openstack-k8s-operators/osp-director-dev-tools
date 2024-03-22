@@ -9,5 +9,5 @@ spec:
   channel: stable
   installPlanApproval: Automatic
   name: kubernetes-nmstate-operator
-  source: redhat-operators
+  source: "{{ 'redhat-operators' if not ocp_disconnected_install else 'redhat-operator-index' }}"
   sourceNamespace: openshift-marketplace
