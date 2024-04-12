@@ -67,6 +67,7 @@ ocp_install: ## Deploy OpenShift env and run post targets which adds NICs for OS
 	$(MAKE) ocp_installer_prep
 	$(MAKE) ocp_installer
 	$(MAKE) post_install
+	$(MAKE) nmstate_install
 
 host_prep: hosts local-deps local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
