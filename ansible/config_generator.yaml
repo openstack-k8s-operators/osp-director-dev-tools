@@ -69,6 +69,6 @@
   - name: wait for config generator to finish
     shell: |
       set -e
-      oc wait -n openstack osconfiggenerator {{ config_generator_name|default('default') }} --for condition=Finished --timeout="{{ (default_timeout * 5)|int }}s"
+      oc wait -n openstack osconfiggenerator {{ config_generator_name|default('default') }} --for condition=Finished --timeout="{{ (default_timeout * 10)|int }}s"
     environment:
       <<: *oc_env
