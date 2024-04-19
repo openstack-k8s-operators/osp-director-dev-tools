@@ -89,7 +89,7 @@ ocp_extra_workers_online_status: false
 ocp_master_memory: 16384
 ocp_master_vcpu: 8
 ocp_master_disk: 30
-ocp_worker_memory: 30000
+ocp_worker_memory: 35000
 ocp_worker_vcpu: 8
 ocp_worker_disk: 50
 
