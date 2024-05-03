@@ -19,6 +19,8 @@
       KUBECONFIG: "{{ kubeconfig }}"
     # Can fail if the csv is modified while we alter it
     retries: 5
+    register: result
+    until: result.rc == 0
     delay: 30
     vars:
       jq_set_csv_envvar: '(.items[].spec.install.spec.deployments[].spec.template.spec.containers[] | select(.env != null) | .env[] | select(.name==$envvar)).value |= $envval'
