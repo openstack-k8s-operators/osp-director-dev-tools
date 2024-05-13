@@ -314,7 +314,7 @@ nfs_pvs:
   - size: 128
     number: 8
   - size: 128
-    number: 8
+    number: 10
     shared: true
 
 default_timeout: 240
