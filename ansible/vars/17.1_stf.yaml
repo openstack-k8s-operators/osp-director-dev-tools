@@ -2,6 +2,7 @@
 osp_release_defaults:
   extrafeatures:
     - stf
+    - BZ2235206
   extrahostfileentries:
     - "10.0.94.196 default-interconnect-5671-service-telemetry.apps.leonidcluster.lab.upshift.rdu2.redhat.com"
   stf_host: default-interconnect-5671-service-telemetry.apps.leonidcluster.lab.upshift.rdu2.redhat.com

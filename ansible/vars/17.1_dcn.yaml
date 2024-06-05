@@ -51,7 +51,6 @@ osp_release_defaults:
   extrafeatures:
     - hci
     - ssh_firewall_allow_all # Required for ceph-adm
-    - BZ2170021
     - dcn
 
 # (mschuppert) can be deleted when released
