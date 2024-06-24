@@ -423,7 +423,7 @@ osp_defaults:
     br-ex:
       interfaces:
       - type: bridge
-        name: br-ex
+        name: br-ex-osp
         interface: enp6s0
         mtu: 1500
   networks: ipv4
