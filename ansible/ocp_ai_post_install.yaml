@@ -11,6 +11,12 @@
     - name: Include AI variables
       include_vars: vars/ocp_ai.yaml
 
+    - name: Wait until the OpenShift cluster is stable
+      shell: |
+        oc adm wait-for-stable-cluster --minimum-stable-period=1m --timeout={{ (default_timeout * 3)|int }}s
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
 
     ### UN-SCHEDULABLE MASTERS
 
@@ -40,9 +46,8 @@
       - name: Make masters unschedulable
         shell: |
           oc apply -f {{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml
-        environment: &oc_env
-          PATH: "{{ oc_env_path }}"
-          KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
+        environment:
+          <<: *oc_env
 
 
     ### PROVISIONING NETWORK
