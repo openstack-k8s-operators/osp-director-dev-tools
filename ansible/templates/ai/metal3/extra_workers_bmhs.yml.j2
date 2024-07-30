@@ -29,7 +29,7 @@ spec:
   hardwareProfile: unknown
   bootMode: legacy
   rootDeviceHints:
-    deviceName: /dev/sda
+    hctl: "0:0:0:0"
 
 {% endfor %}
 {% for name, worker in (ocp_bm_extra_workers | default({})).items() %}
