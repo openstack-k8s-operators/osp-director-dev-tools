@@ -14,7 +14,7 @@
   - name: Clone stf tests
     shell: |
       #!/bin/bash
-      oc exec -n openstack openstackclient -- bash -c "test -d /home/cloud-admin/functional-tests || (pushd /home/cloud-admin/ && git clone -c http.sslVerify=false https://github.com/infrawatch/functional-tests.git)"
+      oc exec -n openstack openstackclient -- bash -c "test -d /home/cloud-admin/feature-verification-tests || (pushd /home/cloud-admin/ && git clone -b old_stf_job https://github.com/infrawatch/feature-verification-tests.git)"
     environment: &oc_env
       PATH: "{{ oc_env_path }}"
       KUBECONFIG: "{{ kubeconfig }}"
@@ -46,6 +46,6 @@
       ir_tripleo_overcloud_templates: 'custom-stf-ceph,stf-connectors-osp17.0,gnocchi-connectors-rbd,ceph-single-host-mode'
     shell: |
       #!/bin/bash
-      oc exec -n openstack openstackclient -- bash -c "pushd /home/cloud-admin/ && ANSIBLE_CALLBACK_WHITELIST=custom_logger ansible-playbook -i /home/cloud-admin/functional-tests/default.inv /home/cloud-admin/functional-tests/stf_functional_tests.yml" --tags {{ ir_tripleo_overcloud_templates }},OSP17.1
+      oc exec -n openstack openstackclient -- bash -c "pushd /home/cloud-admin/ && ANSIBLE_CALLBACK_WHITELIST=custom_logger ansible-playbook -i /home/cloud-admin/feature-verification-tests/default.inv /home/cloud-admin/feature-verification-tests/stf_functional_tests.yml" --tags {{ ir_tripleo_overcloud_templates }},OSP17.1
     environment:
       <<: *oc_env
