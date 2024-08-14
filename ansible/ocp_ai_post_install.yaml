@@ -13,7 +13,7 @@
 
     - name: Wait until the OpenShift cluster is stable
       shell: |
-        oc adm wait-for-stable-cluster --minimum-stable-period=1m --timeout={{ (default_timeout * 3)|int }}s
+        oc adm wait-for-stable-cluster --minimum-stable-period=0.5m --timeout={{ (default_timeout * 10)|int }}s
       environment: &oc_env
         PATH: "{{ oc_env_path }}"
         KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
