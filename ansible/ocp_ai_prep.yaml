@@ -105,6 +105,8 @@
           - "{{ ocp_cluster_name }}bm"
           - "{{ ocp_cluster_name }}pr"
           - "ospnetwork"
+          - "external"
+        ignore_errors: yes
 
       - name: Make sure bridge ifcfg files are removed
         file:
@@ -513,7 +515,7 @@
   - name: OCS and local storage injection, if requested and only if backed by VMs
     when: (enable_ocs | bool) and
           (
-            (ocp_num_masters >= ocp_num_storage_workers and ocp_bm_masters | default({}) | length < 1) 
+            (ocp_num_masters >= ocp_num_storage_workers and ocp_bm_masters | default({}) | length < 1)
             or (ocp_num_workers >= ocp_num_storage_workers and ocp_bm_workers | default({}) | length < 1)
           )
     block:
@@ -526,7 +528,7 @@
       loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
 
   ### CRs
-  
+
   - name: Create Metal3 extra baremetal hosts CRs
     block:
     - name: Include oc_local role
