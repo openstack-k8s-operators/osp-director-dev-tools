@@ -12,7 +12,8 @@ region = regionOne
 
 [image]
 region = regionOne
-image_path = https://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img
+image_path = https://{{ osp_rhos_release_mirror }}/images/cirros-0.5.2-x86_64-disk.img
+disk_formats = qcow2,ari,aki,vhd,vmdk,raw,ami,vdi,iso,vhdx
 
 [network]
 region = regionOne
