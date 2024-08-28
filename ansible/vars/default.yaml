@@ -229,7 +229,7 @@ perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
 # Current version from https://docs.openshift.com/container-platform/4.14/virt/install/installing-virt.html#installing-virt-operator-cli_installing-virt
-cnv_hyperconverged_operator_version: "{{ {'4.14':'4.14.4', '4.13':'4.13.8', '4.12':'4.12.10', '4.11':'4.11.8', '4.10':'4.10.10', '4.9':'4.9.7', '4.8':'4.8.7'}.get(ocp_version|string) }}"
+cnv_hyperconverged_operator_version: "{{ {'4.16':'4.16.1', '4.15':'4.15.0', '4.14':'4.14.4', '4.13':'4.13.8', '4.12':'4.12.10', '4.11':'4.11.8', '4.10':'4.10.10', '4.9':'4.9.7', '4.8':'4.8.7'}.get(ocp_version|string) }}"
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile

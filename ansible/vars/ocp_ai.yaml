@@ -2,10 +2,8 @@
 # this address needs to be reachable from IPMI/iDRAC if BM worker is used 
 ocp_ai_discovery_iso_server: 192.168.111.1
 
-# ocp_ai_ansible_repo: defaults to "https://github.com/redhat-partner-solutions/crucible.git"
-# ocp_ai_ansible_branch: defaults to "85ad8f8a98a7c43ad0f46d3fc2e99f792b37b43f"
-ocp_ai_ansible_repo: "https://github.com/openstack-k8s-operators/crucible.git"
-ocp_ai_ansible_branch: "ospdo_dev_tools"
+# ocp_ai_ansible_repo: defaults to "https://github.com/openstack-k8s-operators/crucible.git"
+# ocp_ai_ansible_branch: defaults to "82801743b9510192d3f737b47fffeb53af80e0bb"
 
 ocp_ai_bm_bridge_master_mac_prefix: 3c:fd:fe:78:ab:0
 ocp_ai_bm_bridge_worker_mac_prefix: 3c:fd:fe:78:ab:1
@@ -26,7 +24,7 @@ ocp_ai_cli_lib_version: "2.3.0.post43"
 
 # WARNING: Changing these will likely break installation, so proceed with caution
 # Pin AI version based on ocp_version
-ocp_ai_version: "{{ 'v2.20.0' if ocp_version|string is version('4.12', '>=') else 'v2.12.1' }}"
+ocp_ai_version: "{{ 'v2.33.1' if ocp_version|string is version('4.15', '>=') else 'v2.20.0' if ocp_version|string is version('4.12', '>=') else 'v2.12.1' }}"
 # These improve the speed of the spin-up of the image service container and thus reduce the
 # overall deployment time
 ocp_ai_image_hashes:
@@ -44,3 +42,14 @@ ocp_ai_image_hashes:
     installer: sha256:12396d2ea1929d1b3ccc5117c6fd164bd87abdb9b113d0570f6e4c14c9a16f20
     installer_agent: sha256:2fb4d3556b252f692d105e3609363611e6844758c84b198445fc023c8b0bfbf9
     service: sha256:0dc7bf3172d6b3e6ec39bc766816766525c3bb40f8fba394d21483b73ba436b6
+  v2.33.1:
+    controller: sha256:020a58d5f00acf335dccf5369c3a1d4c49d3b7418f4df8053a4e57f189d323ae
+    gui: sha256:fcc0d892bf2dcaf847e6615c73adfc4f17fb64651a981ac886cb238eea183df1
+    image_service: sha256:2ee3f3619fe4056de18ce894f803c5644fa02febd62f02e6acf6606d4f819804
+    installer: sha256:aba8e94044bfa46f182ea55c99e56ff1429e3742798c0bdb543ad7cf40639d3a
+    installer_agent: sha256:7242477abd7791f0aa3cc587b0bb3b4be94bff5807ef8bb1a7a45a88b639a10f
+    service: sha256:eda8876d41ff5eb300e18145bb9d6a6a5d44815fcf2ea4968837aecf7588c2e1
+
+# FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+# ocp_ai_ansible_collection_repo: defaults to "https://github.com/openstack-k8s-operators/ansible-collection-redhatci-ocp.git"
+# ocp_ai_ansible_collection_branch: defaults to "ocp_4_16"

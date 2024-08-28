@@ -617,10 +617,32 @@
 
     - name: Clone the assisted installer playbooks repo
       git:
-        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/redhat-partner-solutions/crucible.git', true) }}"
+        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/crucible.git', true) }}"
         dest: "{{ base_path }}/crucible"
         force: true
-        version: "{{ ocp_ai_ansible_branch | default('85ad8f8a98a7c43ad0f46d3fc2e99f792b37b43f', true) }}"
+        version: "{{ ocp_ai_ansible_branch | default('82801743b9510192d3f737b47fffeb53af80e0bb', true) }}"
+
+    # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+    - name: Clone the assisted installer Ansible collection repo
+      git:
+        repo: "{{ ocp_ai_ansible_collection_repo | default('https://github.com/openstack-k8s-operators/ansible-collection-redhatci-ocp.git', true) }}"
+        dest: "{{ base_path }}/ansible-collection-redhatci-ocp"
+        force: true
+        version: "{{ ocp_ai_ansible_collection_branch | default('ocp_4_16', true) }}"
+
+    # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+    - name: Build the assisted installer Ansible collection
+      shell: |
+        ansible-galaxy collection build --force
+      args:
+        chdir: "{{ base_path }}/ansible-collection-redhatci-ocp"
+
+    # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+    - name: Install the assisted installer Ansible collection
+      shell: |
+        ansible-galaxy collection install {{ base_path }}/ansible-collection-redhatci-ocp/redhatci-ocp-0.15.0.tar.gz
+      args:
+        chdir: "{{ base_path }}/crucible"
 
     - name: Get BMC-network-connected interface's IP for baremetal deployments
       when: ocp_cluster_has_bm|bool
@@ -628,28 +650,20 @@
         /usr/bin/nmcli -g ip4.address device show {{ ocp_bmc_interface }} | cut -d '/' -f 1
       register: ocp_bmc_interface_ip
 
+    - name: Create Crucible templates dir
+      file:
+        path: "{{ base_path }}/crucible/playbooks/templates"
+        state: directory
+        mode: 0755
+
     - name: Add Crucible template to inject Red Hat CA
       template:
         src: ai/crucible/50-RH-Root-CA.yml.j2
-        dest: "{{ base_path }}/crucible/roles/patch_cluster/templates/50-{{ ocp_node_role }}-RH-Root-CA.yml.j2"
+        dest: "{{ base_path }}/crucible/playbooks/templates/50-{{ ocp_node_role }}-RH-Root-CA.yml.j2"
         mode: '0664'
       loop_control:
         loop_var: ocp_node_role
       loop: "{{ ocp_node_roles }}"
-
-    - name: Override Crucible OCP version constraint
-      replace:
-        path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/cluster.yml"
-        regexp: 'openshift_full_version in supported_ocp_versions'
-        replace: 'openshift_full_version is defined'
-
-    # FIXME: Needed for 4.12 until the fix for https://issues.redhat.com/browse/OCPBUGS-1482 appears in that version
-    - name: Remove schedulable_masters from initial cluster creation
-      when: ocp_version == "4.12"
-      ansible.builtin.lineinfile:
-        path: "{{ base_path }}/crucible/roles/create_cluster/tasks/main.yml"
-        state: absent
-        regexp: '^.*"schedulable_masters"'
 
     - name: Inject specific RHCOS image version
       block:
@@ -669,12 +683,6 @@
         fail:
           msg: "Unable to determine RHCOS version for OCP version {{ ocp_version }}.{{ ocp_minor_version }}"
         when: rhcos_image_version == ""
-
-    - name: Remove NTP validation due to prevelance of random false-negatives
-      replace:
-        path: "{{ base_path }}/crucible/roles/validate_inventory/tasks/network.yml"
-        regexp: '\(setup_ntp_service\s\|\sdefault\(True\)\)\s!=\sTrue'
-        replace: 'false'
 
     - name: Configure inventory variables
       template:
@@ -702,11 +710,12 @@
         dest: "{{ base_path }}/crucible/deploy_cluster.sh"
         mode: '0755'
 
-    - name: Install Crucible Ansible dependencies
-      shell: |
-        ansible-galaxy collection install -r requirements.yml
-      args:
-        chdir: "{{ base_path }}/crucible"
+    # FIXME: Add this back once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+    # - name: Install Crucible Ansible dependencies
+    #   shell: |
+    #     ansible-galaxy collection install -r requirements.yml
+    #   args:
+    #     chdir: "{{ base_path }}/crucible"
 
     - name: Show assisted service info
       debug:
