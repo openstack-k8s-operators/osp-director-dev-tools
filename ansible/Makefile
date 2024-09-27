@@ -500,7 +500,8 @@ nfs_cleanup: hosts
 	 temp=$$(mktemp); \
 	 grep -v "^/home/nfs/data/pv-" /etc/fstab > \$$temp; \
 	 cat \$$temp > /etc/fstab; \
-	 rm \$$temp"
+	 rm \$$temp; \
+	 systemctl daemon-reload"
 
 .PHONY: must_gather
 must_gather: hosts local-defaults.yaml ## collect data from the env running must-gather
