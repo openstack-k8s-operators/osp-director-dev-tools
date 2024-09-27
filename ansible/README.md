@@ -34,7 +34,7 @@ The quickstart procedure will allow you to deploy an OpenShift environment on a 
 
 1. Install the dependencies:
     ```
-    dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make gcc
+    dnf install -y ansible-core git libvirt-client python3-netaddr python3-lxml make gcc
     ```
 
 1. Generate an SSH key which will be used during the deployment to allow access to the environment:
