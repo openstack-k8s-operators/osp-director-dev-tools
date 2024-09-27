@@ -81,7 +81,8 @@
     become: true
     become_user: root
     shell: |
-      firewall-cmd --zone=trusted --add-source=0.0.0.0/32
+      firewall-cmd --zone=trusted --add-source=0.0.0.0/32 --permanent
+      firewall-cmd --reload
 
   - name: Create IPv4 gateways on ctlplane network
     become: true
