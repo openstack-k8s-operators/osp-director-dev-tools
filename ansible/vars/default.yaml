@@ -245,8 +245,8 @@ director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 # CSV version is used for both the CSV version and container image tag
 csv_version: latest-16.2
 
-#ocp_network_type: OVNKubernetes
-ocp_network_type: OpenShiftSDN
+#ocp_network_type: OpenShiftSDN #for OCP pre 4.16
+ocp_network_type: OVNKubernetes
 
 # ansible-sts test suite repo url
 sts_repo_url: https://code.engineering.redhat.com/gerrit/openstack-pidone-qe

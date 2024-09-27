@@ -63,9 +63,9 @@ The quickstart procedure will allow you to deploy an OpenShift environment on a 
     ```
     cat > local-defaults.yaml <<EOF
     # version setup
-    ocp_version: "4.12"
-    ocp_minor_version: "0"
-    sriov_version: "4.12"
+    ocp_version: "4.16"
+    ocp_minor_version: "13"
+    sriov_version: "4.16"
 
     # topology configuration
     ocp_ai: true
