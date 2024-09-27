@@ -582,7 +582,7 @@
       pip:
         name: ['sushy-tools<0.21.1', 'libvirt-python']
         virtualenv: /opt/sushy-tools/venv
-        virtualenv_python: python3.9
+        virtualenv_command: /usr/bin/python3.9 -m venv
         state: latest
 
     - name: Create sushy-tools conf

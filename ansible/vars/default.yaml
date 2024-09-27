@@ -597,6 +597,7 @@ rhel_packages:
   # Required for assisted installer
   - dnsmasq
   - libvirt-devel
+  - python3-jmespath
   - python3-netaddr
   - python3-pip
   - python3.11-pip
