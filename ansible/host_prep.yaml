@@ -56,6 +56,12 @@
                 and ocp_num_storage_workers > ocp_master_count|int
                )
 
+  # Temporary (perhaps) until we can figure out how to find a CNV-4.12 repo for RHEL 9
+  - name: CNV validation check
+    fail:
+      msg: Only OCP 4.13+ is supported for RHEL 9 environments, due to CNV repo availability
+    when: ocp_version is version('4.12', 'le', strict=True ) and ansible_distribution_version|int == 9
+
   - name: add RH CA to ca store
     block:
     - name: copy CA cert to anchors dir
@@ -161,51 +167,15 @@
         server_hostname: "{{ rhel_subscription_server_hostname|default(omit) }}"
       when: manual_rhel_subscription is undefined
 
-    - name: enable rhel-8-for-x86_64-appstream-rpms and advanced-virt-for-rhel-8-x86_64-rpms
-      command: subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms --enable=advanced-virt-for-rhel-8-x86_64-rpms --enable=openstack-16-for-rhel-8-x86_64-rpms
-
+    - name: enable required repos
+      command: subscription-manager repos --enable={{ ' --enable='.join(rhel_repos[ansible_distribution_version|int]) }}
 
   - name: install packages and enable services
     block:
     - name: Install packages
       package:
         state: installed
-        name:
-          # Directly configured/used in this playbook
-          - chrony
-          - sysstat
-          - cronie
-          - tuned
-          - firewalld
-
-          # Required for dev-scripts
-          - libvirt-daemon-kvm
-          - libvirt-client
-          - libvirt
-          - podman
-          - buildah
-          - git
-          - make
-
-          # Required to run osp-director-operator/scripts/build_and_push_images.sh
-          - skopeo
-
-          # Required for assisted installer
-          - dnsmasq
-          - libvirt-devel
-          - python3-netaddr
-          - python3-pip
-          - qemu-kvm
-          - virt-install
-
-          # required to customize the guest-image to remove net.ifnames=0 kernel param
-          - libguestfs-tools-c
-
-          # required to run recent sushy-tools
-          - python39
-          - python39-devel
-          - python3-virtualenv
-          - gcc
+        name: "{{ rhel_packages[ansible_distribution_version|int] | list }}"
 
     - name: Enable helpful services
       service: name={{ item }} enabled=yes state=started

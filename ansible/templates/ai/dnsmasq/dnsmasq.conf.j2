@@ -16,8 +16,8 @@ domain={{ ocp_ai_full_cluster_name }}
 no-dhcp-interface={{ ocp_ai_ext_intf.stdout }}
 # Enable DHCP for baremetal bridge
 interface={{ ocp_cluster_name }}bm
-# include cni-podman0 interface that connects to assisted-installer container for DNS requests to succeed
-interface=cni-podman0
+# include {{ podman_intf.stdout }} interface that connects to assisted-installer container for DNS requests to succeed
+interface={{ podman_intf.stdout }}
 bind-interfaces
 
 #### DHCP (dnsmasq --help dhcp)

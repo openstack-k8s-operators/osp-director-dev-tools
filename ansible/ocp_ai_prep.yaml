@@ -123,6 +123,8 @@
           conn_name: "bridge-slave-{{ item }}"
           type: bridge-slave
           state: absent
+        register: delete_bridge_slaves
+        failed_when: delete_bridge_slaves.stderr != "" and "unknown connection" not in delete_bridge_slaves.stderr
         when: item != ""
         with_items:
           - "{{ ocp_bm_prov_interface }}"
@@ -142,7 +144,7 @@
           - "{{ osp_ext_bm_interface }}"
 
       - name: Create BM bridge
-        nmcli:
+        community.general.nmcli:
           conn_name: "{{ ocp_cluster_name }}bm"
           type: bridge
           ifname: "{{ ocp_cluster_name }}bm"
@@ -150,6 +152,7 @@
           stp: off
           # TODO: Support any netmask?
           ip4: "192.168.111.1/24"
+          zone: libvirt
           state: present
 
       - name: Add BM interface to BM bridge
@@ -172,7 +175,7 @@
             state: present
 
       - name: Create provisioning bridge
-        nmcli:
+        community.general.nmcli:
           conn_name: "{{ ocp_cluster_name }}pr"
           type: bridge
           ifname: "{{ ocp_cluster_name }}pr"
@@ -180,6 +183,7 @@
           stp: off
           # TODO: Support any netmask?
           ip4: "172.22.0.1/24"
+          zone: libvirt
           state: present
 
       - name: Add prov interface to prov bridge
@@ -319,6 +323,10 @@
     become: true
     become_user: root
     block:
+    - name: Acquire podman interface name
+      shell: ip a | grep "podman0:" | cut -d ' ' -f 2 | sed 's/.$//'
+      register: podman_intf
+
     - name: Create dnsmasq conf
       template:
         src: "ai/dnsmasq/dnsmasq.conf.j2"
@@ -574,7 +582,7 @@
       pip:
         name: ['sushy-tools<0.21.1', 'libvirt-python']
         virtualenv: /opt/sushy-tools/venv
-        virtualenv_python: python3.9
+        virtualenv_command: /usr/bin/python3.9 -m venv
         state: latest
 
     - name: Create sushy-tools conf

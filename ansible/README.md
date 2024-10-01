@@ -34,7 +34,7 @@ The quickstart procedure will allow you to deploy an OpenShift environment on a 
 
 1. Install the dependencies:
     ```
-    dnf install -y ansible git libvirt-client python3-netaddr python3-lxml make gcc
+    dnf install -y ansible-core git libvirt-client python3-netaddr python3-lxml make gcc
     ```
 
 1. Generate an SSH key which will be used during the deployment to allow access to the environment:
@@ -63,9 +63,9 @@ The quickstart procedure will allow you to deploy an OpenShift environment on a 
     ```
     cat > local-defaults.yaml <<EOF
     # version setup
-    ocp_version: "4.12"
-    ocp_minor_version: "0"
-    sriov_version: "4.12"
+    ocp_version: "4.16"
+    ocp_minor_version: "13"
+    sriov_version: "4.16"
 
     # topology configuration
     ocp_ai: true

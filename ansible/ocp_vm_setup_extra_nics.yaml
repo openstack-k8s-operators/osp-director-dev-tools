@@ -64,7 +64,7 @@
           when: check_ospnetwork_bridge_exists.stderr != "" and 'no such connection profile' in check_ospnetwork_bridge_exists.stderr
 
       - name: Create osp external bridge (if IP set)
-        nmcli:
+        community.general.nmcli:
           conn_name: "external"
           type: bridge
           ifname: "external"
@@ -72,6 +72,7 @@
           stp: off
           ip4: "{{ osp_ext_bridge_ip4 }}"
           ip6: "{{ osp_ext_bridge_ip6 }}"
+          zone: libvirt
           state: present
         when: osp_ext_bridge_ip4|default != ""
 

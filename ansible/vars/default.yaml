@@ -245,8 +245,8 @@ director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 # CSV version is used for both the CSV version and container image tag
 csv_version: latest-16.2
 
-#ocp_network_type: OVNKubernetes
-ocp_network_type: OpenShiftSDN
+#ocp_network_type: OpenShiftSDN #for OCP pre 4.16
+ocp_network_type: OVNKubernetes
 
 # ansible-sts test suite repo url
 sts_repo_url: https://code.engineering.redhat.com/gerrit/openstack-pidone-qe
@@ -526,3 +526,88 @@ must_gather_image: quay.io/openstack-k8s-operators/must-gather:latest
 must_gather_compress_logs: false
 
 cnosp_csv_version: 0.0.1
+
+rhel_repos:
+  8:
+  - rhel-8-for-x86_64-appstream-rpms
+  - advanced-virt-for-rhel-8-x86_64-rpms
+  - openstack-16-for-rhel-8-x86_64-rpms
+  9:
+  - rhel-9-for-x86_64-appstream-rpms
+  - codeready-builder-for-rhel-9-x86_64-rpms
+
+rhel_packages:
+  8:
+  # Directly configured/used in this playbook
+  - chrony
+  - sysstat
+  - cronie
+  - tuned
+  - firewalld
+
+  # Required for dev-scripts
+  - libvirt-daemon-kvm
+  - libvirt-client
+  - libvirt
+  - podman
+  - buildah
+  - git
+  - make
+
+  # Required to run osp-director-operator/scripts/build_and_push_images.sh
+  - skopeo
+
+  # Required for assisted installer
+  - dnsmasq
+  - libvirt-devel
+  - python3-netaddr
+  - python3-pip
+  - qemu-kvm
+  - virt-install
+
+  # required to customize the guest-image to remove net.ifnames=0 kernel param
+  - libguestfs-tools-c
+
+  # required to run recent sushy-tools
+  - python39
+  - python39-devel
+  - python3-virtualenv
+  - gcc
+
+  9:
+  # Directly configured/used in this playbook
+  - chrony
+  - sysstat
+  - cronie
+  - tuned
+  - firewalld
+
+  # Required for dev-scripts
+  - libvirt-daemon-kvm
+  - libvirt-client
+  - libvirt
+  - podman
+  - buildah
+  - git
+  - make
+
+  # Required to run osp-director-operator/scripts/build_and_push_images.sh
+  - skopeo
+
+  # Required for assisted installer
+  - dnsmasq
+  - libvirt-devel
+  - python3-jmespath
+  - python3-netaddr
+  - python3-pip
+  - python3.11-pip
+  - qemu-kvm
+  - virt-install
+
+  # required to customize the guest-image to remove net.ifnames=0 kernel param
+  - libguestfs-tools-c
+
+  # required to run recent sushy-tools
+  - python3
+  - python3-devel
+  - gcc
