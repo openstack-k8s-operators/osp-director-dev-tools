@@ -4,10 +4,12 @@
 #
 
 parameter_defaults:
+{% if containers_prepare_docker_insecure|default(False) %}
   DockerInsecureRegistryAddress:
     - {{ registry_proxy }}
     - registry.access.redhat.com
     - docker-registry.upshift.redhat.com
+{% endif %}
   ContainerImagePrepare:
   - push_destination: false
     set:
