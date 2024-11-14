@@ -177,6 +177,15 @@
         state: installed
         name: "{{ rhel_packages[ansible_distribution_version|int] | list }}"
 
+# w/a for OSPK8-826 virt-customize: undefined symbol: guestfs_findfs_partlabe
+  - name: install packages and enable services
+    block:
+    - name: Install packages
+      package:
+        state: present
+        name: guestfs-tools-1.46.1-6.el9.x86_64
+        allow_downgrade: yes
+
     - name: Enable helpful services
       service: name={{ item }} enabled=yes state=started
       with_items:

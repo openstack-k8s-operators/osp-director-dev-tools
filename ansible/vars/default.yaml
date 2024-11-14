@@ -606,7 +606,7 @@ rhel_packages:
 
   # required to customize the guest-image to remove net.ifnames=0 kernel param
   - libguestfs-tools-c
-  - guestfs-tools-1.46.1-6.el9.x86_64
+
   # required to run recent sushy-tools
   - python3
   - python3-devel
