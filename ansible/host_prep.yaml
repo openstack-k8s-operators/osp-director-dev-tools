@@ -177,7 +177,7 @@
         state: installed
         name: "{{ rhel_packages[ansible_distribution_version|int] | list }}"
 
-# w/a for OSPK8-826 virt-customize: undefined symbol: guestfs_findfs_partlabe
+# FIXME: w/a for OSPK8-826 virt-customize: undefined symbol: guestfs_findfs_partlabe
     - name: Install packages
       package:
         state: present
