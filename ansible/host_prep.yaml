@@ -183,6 +183,7 @@
         state: present
         name: guestfs-tools-1.46.1-6.el9.x86_64
         allow_downgrade: yes
+      when: workaround_ospk8_826|default(true)
 
     - name: Enable helpful services
       service: name={{ item }} enabled=yes state=started
