@@ -124,7 +124,7 @@
           type: bridge-slave
           state: absent
         register: delete_bridge_slaves
-        failed_when: delete_bridge_slaves.stderr != "" and "unknown connection" not in delete_bridge_slaves.stderr
+        failed_when: delete_bridge_slaves.stderr is defined and "unknown connection" not in delete_bridge_slaves.stderr
         when: item != ""
         with_items:
           - "{{ ocp_bm_prov_interface }}"
