@@ -178,13 +178,14 @@ ocp_bm_extra_workers: {}
 # ocp_bm_extra_workers:
 #   worker-2:
 #     vendor: Dell
-#     bm_mac: 40:a6:b7:2b:20:03   # optional, if for some reason the OSP compute needs an assigned IP on the OCP network
-#     prov_mac: 4b:40:40:40:40:01 # extra workers use Metal3, which uses provisioning network MAC
-#     bmc_protocol: idrac         # extra workers use Metal3, which need this extra detail
+#     bm_mac: 40:a6:b7:2b:20:03       # optional, if for some reason the OSP compute needs an assigned IP on the OCP network
+#     prov_mac: 4b:40:40:40:40:01     # extra workers use Metal3, which uses provisioning network MAC
+#     bmc_protocol: idrac             # extra workers use Metal3, which need this extra detail
 #     bmc_address: 10.10.1.17
 #     bmc_username: username
 #     bmc_password: password
-#     root_device: /dev/sda       # optional, defaults to /dev/sda
+#     bmc_disable_cert_verify: false  # optional, defaults to false
+#     root_device: /dev/sda           # optional, defaults to /dev/sda
 #   worker-3:
 #     ...
 
