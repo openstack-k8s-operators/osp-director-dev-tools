@@ -251,6 +251,7 @@ ocp_network_type: OVNKubernetes
 
 # ansible-sts test suite repo url
 sts_repo_url: https://code.engineering.redhat.com/gerrit/openstack-pidone-qe
+sts_repo_url: https://gitlab.cee.redhat.com/openstack-pidone-qe1/openstack-pidone-qe.git
 
 # image used to run tempest
 tempest_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tempest:{{ osp_defaults.container_tag }}"
