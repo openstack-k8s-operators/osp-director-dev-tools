@@ -1,8 +1,16 @@
 ---
 - hosts: overcloud
   become: true
+  gather_facts: false
 
   tasks:
+  - name: Wait for all overcloud nodes to be available
+    wait_for_connection:
+      connect_timeout: 10
+      sleep: 5
+      delay: 5
+      timeout: {{ ((default_timeout | int) * 6) if (ocp_bm_extra_workers | default ({}) | length) > 0 else ((default_timeout | int) * 3) }}
+
 {% if osp_registry_method == "rhsm" %}
   - name: Red Hat Subscription Management configuration
     import_role:
@@ -57,7 +65,17 @@
     dnf:
       name: "*"
       state: latest
+
   - name: Reboot for new kernel
-    reboot:
+    shell: reboot
+    async: 1
+    poll: 0
+
+  - name: Wait for the reboot and reconnect
+    wait_for_connection:
+      connect_timeout: 10
+      sleep: 5
+      delay: 5
+      timeout: {{ ((default_timeout | int) * 6) if (ocp_bm_extra_workers | default ({}) | length) > 0 else ((default_timeout | int) * 3) }}
 {% endif %}
 
