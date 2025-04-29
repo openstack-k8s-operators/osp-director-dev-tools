@@ -97,6 +97,7 @@
       firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
       firewall-cmd --zone=trusted --add-source={{ item.1.ipv4.cidr }}
       iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
+      iptables -t nat -A POSTROUTING -o {{ ocp_cluster_name }}pr -d {{ item.1.ipv4.cidr }} -j SNAT --to-source {{ item.1.ipv4.gateway }}
     with_subelements:
     - "{{ osp_networks }}"
     - subnets
@@ -115,6 +116,7 @@
       firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
       firewall-cmd --zone=trusted --add-source={{ item.1.ipv6.cidr }}
       ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
+      ip6tables -t nat -A POSTROUTING -o {{ ocp_cluster_name }}pr -d {{ item.1.ipv6.cidr }} -j SNAT --to-source {{ item.1.ipv6.gateway }}
     args:
       executable: /bin/bash
     with_subelements:
