@@ -1,2 +1,9 @@
 parameter_defaults:
   NeutronGlobalPhysnetMtu: 1500
+  ExtraConfig:
+    tripleo::firewall::firewall_rules:
+      '203 ssh for ctlplane':
+        dport: 22
+        proto: tcp
+        source: 172.22.0.0/16 # all ctlplane subnets
+        action: accept

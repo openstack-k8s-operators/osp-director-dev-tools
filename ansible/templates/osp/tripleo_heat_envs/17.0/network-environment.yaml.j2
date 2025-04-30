@@ -8,3 +8,8 @@ parameter_defaults:
   ComputeLeaf1NetworkConfigUpdate: True
   ComputeLeaf2NetworkConfigUpdate: True
   DistributedComputeLeaf1NetworkConfigUpdate: True
+  ExtraFirewallRules:
+    '203 ssh for ctlplane':
+      dport: 22
+      proto: tcp
+      source: 172.22.0.0/16 # all ctlplane subnets
