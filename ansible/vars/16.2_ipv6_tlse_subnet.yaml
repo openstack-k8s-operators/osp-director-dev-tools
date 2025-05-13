@@ -99,6 +99,8 @@ tempest_test_dict:
       - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeTest.test_router_set_gateway_used_ip_returns_409"
       - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeIpV6Test.test_router_set_gateway_used_ip_returns_409"
       - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_migration_with_trunk"
+      # excluding tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance as it started to fail on latest 16.2 image, using 17,1 would work, but introduce some error on a nother tests. for now lets disable test_bootable_volume_snapshot_stop_start_instance
+      - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance"
 
 tempest_enable_feature_dict:
   network:

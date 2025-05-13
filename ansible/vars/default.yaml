@@ -290,6 +290,8 @@ tempest_test_dict:
       - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+      # excluding tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance as it started to fail on latest 16.2 image, using 17,1 would work, but introduce some error on a nother tests. for now lets disable test_bootable_volume_snapshot_stop_start_instance
+      - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance"
 
 # phase2 tempest tests
 #tempest_test_dict:
