@@ -7,10 +7,25 @@ no-hosts
 # Recursive DNS
 {% for dns_server in external_dns %}
 server={{ dns_server }}
+{% endfor %}
 {% if osp.tlse|default(false)|bool %}
 server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA
 {% endif %}
+
+{% if osp.tlse|default(false)|bool %}
+{% for id, net in osp_networks.items() %}
+{% if net.name_lower != "external" %}
+{% for subnet in net.subnets %}
+{% if subnet.ipv4 is defined %}
+rev-server={{ subnet.ipv4.cidr }},10.99.0.2 # Forward to FreeIPA
+{% endif %}
+{% if subnet.ipv6 is defined %}
+rev-server={{ subnet.ipv6.cidr }},10.99.0.2 # Forward to FreeIPA
+{% endif %}
 {% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
 
 # enable forwarding DNS server on ctlpane GW IP
 listen-address=172.22.0.1
