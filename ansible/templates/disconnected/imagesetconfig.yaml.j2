@@ -1,0 +1,21 @@
+apiVersion: mirror.openshift.io/v1alpha2
+kind: ImageSetConfiguration
+storageConfig:
+  local:
+    path: ./
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v{{ ocp_version }}
+    packages:
+      - name: kubernetes-nmstate-operator
+        channels:
+          - name: stable
+      - name: kubevirt-hyperconverged
+        channels:
+          - name: stable
+            minVersion: "{{ cnv_hyperconverged_operator_version }}"
+      - name: sriov-network-operator
+        channels:
+          - name: stable
+          - name: "{{ sriov_version }}"
+        defaultChannel: stable

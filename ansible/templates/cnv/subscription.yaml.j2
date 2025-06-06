@@ -4,7 +4,7 @@ metadata:
   name: hco-operatorhub
   namespace: openshift-cnv
 spec:
-  source: redhat-operators
+  source: "{{ 'redhat-operators' if not ocp_disconnected_install else 'redhat-operator-index' }}"
   sourceNamespace: openshift-marketplace
   name: kubevirt-hyperconverged
   startingCSV: "kubevirt-hyperconverged-operator.v{{ cnv_hyperconverged_operator_version }}"
