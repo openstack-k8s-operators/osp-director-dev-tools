@@ -62,9 +62,13 @@
 {% endif %}
 {% if osp_predeploy_update_packages %}
   - name: update all packages
-    dnf:
+    ansible.builtin.dnf:
       name: "*"
       state: latest
+    register: update_result
+    until: update_result is succeeded
+    retries: 5
+    delay: 30
 
   - name: Reboot for new kernel
     shell: reboot
