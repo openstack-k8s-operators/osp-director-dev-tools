@@ -1,0 +1,42 @@
+skip_list:
+  - command-instead-of-module
+  - deprecated-module
+  - key-order[task]
+  - literal-compare
+  - no-free-form
+  - schema[playbook]
+  - schema[tasks]
+  - name[missing]
+  - name[play]
+  - var-naming[no-reserved]
+  - var-naming[no-role-prefix]
+  - var-naming[pattern]
+  - yaml[brackets]
+  - yaml[colons]
+  - yaml[commas]
+  - yaml[comments]
+  - yaml[empty-lines]
+  - yaml[indentation]
+  - yaml[key-duplicates]
+  - yaml[line-length]
+  - yaml[new-line-at-end-of-file]
+  - yaml[octal-values]
+  - yaml[trailing-spaces]
+  - yaml[truthy]
+  - name[template]
+  - name[casing]
+  - package-latest
+  - no-handler
+  - fqcn[action-core]
+  - fqcn[action]
+  - experimental
+  - risky-shell-pipe
+  - ignore-errors
+  - no-changed-when
+  - jinja
+  - command-instead-of-shell
+  - run-once
+
+warn_list:
+  - jinja[spacing] # If you prefer warning on spacing, remove 'jinja' from skip_list above
+  - args[module]

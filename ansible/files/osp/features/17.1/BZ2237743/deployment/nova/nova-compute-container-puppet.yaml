@@ -894,8 +894,8 @@ conditions:
   nova_libvirt_max_queues_set:
     not:
       and:
-      -  equals: [{get_param: NovaLibvirtMaxQueues}, 0]
-      -  or:
+      - equals: [{get_param: NovaLibvirtMaxQueues}, 0]
+      - or:
            - equals: [{get_param: [RoleParameters, NovaLibvirtMaxQueues]}, ""]
            - equals: [{get_param: [RoleParameters, NovaLibvirtMaxQueues]}, 0]
   glance_enable_rbd_download_set:
