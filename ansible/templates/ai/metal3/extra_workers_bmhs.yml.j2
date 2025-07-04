@@ -21,6 +21,7 @@ metadata:
   labels:
     app: openstack
 spec:
+  automatedCleaningMode: {{ ocp_ai_automated_cleaning_mode }}
   online: false
   bootMACAddress: {{ ocp_ai_prov_bridge_worker_mac_prefix }}{{ i }}
   bmc:
@@ -56,6 +57,7 @@ metadata:
   labels:
     app: openstack
 spec:
+  automatedCleaningMode: {{ ocp_ai_automated_cleaning_mode }}
   online: false
   bootMACAddress: {{ worker["prov_mac"] }}
   bmc:

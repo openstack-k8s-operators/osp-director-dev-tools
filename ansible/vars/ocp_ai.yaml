@@ -15,6 +15,9 @@ ocp_ai_prov_bridge_worker_mac_prefix: 3c:fd:fe:78:cd:1
 ocp_ai_prov_interface: enp1s0
 
 # ocp_ai_sushy_port: defaults to "8082"
+# ocp_ai_automated_cleaning_mode can be set to "metadata" to enable cleaning of BMHs
+# during provisioning and deprovisioning
+ocp_ai_automated_cleaning_mode: disabled
 
 ocp_ai_libvirt_storage_dir: /var/lib/libvirt/images
 
