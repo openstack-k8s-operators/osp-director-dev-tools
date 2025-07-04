@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "host-nfs-storageclass-{{ name }}"
+  name: "host-nfs-storageclass-{{ pvname }}"
 spec:
   capacity:
     storage: "{{ size }}Gi"
   accessModes:
   - {% if shared %}ReadWriteMany{% else %}ReadWriteOnce{% endif %}
   nfs: 
-    path: {{ nfs_export_dir}}/{{ name }}
+    path: {{ nfs_export_dir}}/{{ pvname }}
     server: 192.168.111.1
   persistentVolumeReclaimPolicy: Recycle
   storageClassName: host-nfs-storageclass

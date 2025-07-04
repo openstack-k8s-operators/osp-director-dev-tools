@@ -1,11 +1,11 @@
 ---
-- hosts: localhost
+- name: STS Tests
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
   tasks:
-
-  - name:
-    include_tasks: osp_sts_ha_tests.yaml
-    vars:
-      sts_script : 'osp_operator_sanity_run.sh'
+    - name: Include STS HA tests
+      ansible.builtin.include_tasks: osp_sts_ha_tests.yaml
+      vars:
+        sts_script: "osp_operator_sanity_run.sh"

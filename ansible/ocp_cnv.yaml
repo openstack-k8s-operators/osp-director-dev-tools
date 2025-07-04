@@ -1,99 +1,102 @@
 ---
-- hosts: localhost
+- name: OpenShift CNV
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set directory for cnv yaml files
-    set_fact:
-      yaml_dir: "{{ working_yamls_dir }}/cnv"
+    - name: Set directory for cnv yaml files
+      ansible.builtin.set_fact:
+        yaml_dir: "{{ working_yamls_dir }}/cnv"
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ yaml_dir }} locally"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg: "yamls will be written to {{ yaml_dir }} locally"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ yaml_dir }}"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ yaml_dir }}"
 
-  - name: Create local yamldir
-    file:
-      path: "{{ yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create local yamldir
+      ansible.builtin.file:
+        path: "{{ yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Render all OpenShift Virtualization Operator templates
-    template:
-      src:  "cnv/{{ item }}.j2"
-      dest: "{{ yaml_dir }}/{{ item }}"
-      mode: "0644"
-    with_items:
-    - namespace.yaml
-    - operatorgroup.yaml
-    - subscription.yaml
-    - deploy_operator.yaml
+    - name: Render all OpenShift Virtualization Operator templates
+      ansible.builtin.template:
+        src: "cnv/{{ item }}.j2"
+        dest: "{{ yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - namespace.yaml
+        - operatorgroup.yaml
+        - subscription.yaml
+        - deploy_operator.yaml
 
-  - name: Create namespace, operatorgroup and subscription
-    shell: |
-      set -e
-      oc apply -f "{{ yaml_dir }}/{{ item }}"
-    with_items:
-    - namespace.yaml
-    - operatorgroup.yaml
-    - subscription.yaml
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Create namespace, operatorgroup and subscription
+      ansible.builtin.shell: |
+        set -e
+        oc apply -f "{{ yaml_dir }}/{{ item }}"
+      with_items:
+        - namespace.yaml
+        - operatorgroup.yaml
+        - subscription.yaml
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: wait for OpenShift Virtualization subscription installed
-    shell: |
-      oc wait pod -n openshift-cnv --for condition=Ready \
-          -l name=hyperconverged-cluster-operator \
-          --timeout={{ default_timeout }}s
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    retries: 100
-    delay: 5
-    register: result
-    until: result.rc == 0
+    - name: Wait for OpenShift Virtualization subscription installed
+      ansible.builtin.shell: |
+        oc wait pod -n openshift-cnv --for condition=Ready \
+            -l name=hyperconverged-cluster-operator \
+            --timeout={{ default_timeout }}s
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      retries: 100
+      delay: 5
+      register: result
+      until: result.rc == 0
 
-  - name: Install OpenShift Virtualization Operator
-    shell: |
-      set -e
-      sleep 10
-      oc apply -f "{{ yaml_dir }}/deploy_operator.yaml"
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    retries: 5
-    delay: 30
-    register: result
-    until: result.rc == 0
+    - name: Install OpenShift Virtualization Operator
+      ansible.builtin.shell: |
+        set -e
+        sleep 10
+        oc apply -f "{{ yaml_dir }}/deploy_operator.yaml"
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      retries: 5
+      delay: 30
+      register: result
+      until: result.rc == 0
 
-  - name: wait for OpenShift Virtualization Operator to be installed
-    shell: |
-      oc wait node -l kubevirt.io/schedulable=true --for condition=Ready \
-          --timeout={{ default_timeout }}s
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    retries: 100
-    delay: 5
-    register: result
-    until: result.rc == 0
+    - name: Wait for OpenShift Virtualization Operator to be installed
+      ansible.builtin.shell: |
+        oc wait node -l kubevirt.io/schedulable=true --for condition=Ready \
+            --timeout={{ default_timeout }}s
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      retries: 100
+      delay: 5
+      register: result
+      until: result.rc == 0
 
-  - name: install kubevirt client
-    shell: |
-      set -e
-      oc cp -n openshift-cnv $(oc get -n openshift-cnv pods -l name=hyperconverged-cluster-cli-download -o custom-columns=:metadata.name):amd64/linux/virtctl.tar.gz /tmp/virtctl.tar.gz
-      tar -C "{{ working_bin_dir }}" -xzvf /tmp/virtctl.tar.gz
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    retries: 5
-    delay: 30
-    register: result
-    until: result.rc == 0
+    - name: Install kubevirt client
+      ansible.builtin.shell: |
+        set -e
+        oc cp -n openshift-cnv \
+          $(oc get -n openshift-cnv pods -l name=hyperconverged-cluster-cli-download -o custom-columns=:metadata.name):amd64/linux/virtctl.tar.gz \
+          /tmp/virtctl.tar.gz
+        tar -C "{{ working_bin_dir }}" -xzvf /tmp/virtctl.tar.gz
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      retries: 5
+      delay: 30
+      register: result
+      until: result.rc == 0

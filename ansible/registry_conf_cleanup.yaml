@@ -1,10 +1,11 @@
 ---
-- hosts: convergence_base
+- name: Remove custom insecure registries file
+  hosts: convergence_base
   vars_files: vars/default.yaml
   become: true
 
   tasks:
-  - name: remove custom insecure registries file
-    file:
-      path: /etc/containers/registries.conf.d/osp-director-dev-tools.conf
-      state: absent
+    - name: Remove custom insecure registries file
+      ansible.builtin.file:
+        path: /etc/containers/registries.conf.d/osp-director-dev-tools.conf
+        state: absent

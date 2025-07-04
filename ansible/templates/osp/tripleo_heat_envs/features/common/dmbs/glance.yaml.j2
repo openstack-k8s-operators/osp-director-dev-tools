@@ -4,7 +4,7 @@ parameter_defaults:
   GlanceBackend: rbd
   GlanceStoreDescription: '{{ custom_config_ceph_cluster_name }} rbd glance store'
   GlanceBackendID: {{ custom_config_ceph_cluster_name }}
-{% if custom_config_dmbs_remote_site|default(false)  %}
+{% if custom_config_dmbs_remote_site | default(false)  %}
   GlanceMultistoreConfig:
     central:
       GlanceBackend: rbd

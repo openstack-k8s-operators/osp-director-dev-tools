@@ -9,5 +9,5 @@ collections:
   - name: ansible.netcommon
   - name: containers.podman
   - name: community.general
-    version: '<5.0.0'
+    version: "<5.0.0"
   - name: community.libvirt

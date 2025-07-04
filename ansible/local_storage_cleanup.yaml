@@ -1,55 +1,56 @@
 ---
-- hosts: localhost
+- name: Local Storage Cleanup
+  hosts: localhost
   vars_files: vars/default.yaml
   become: true
   become_user: root
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: cleanup local storage volumes
-    command: "{{ item }}"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    ignore_errors: true
-    with_items:
-      - "oc delete -n openshift-local-storage localvolume local-disks"
+    - name: Cleanup local storage volumes
+      ansible.builtin.command: "{{ item }}"
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      ignore_errors: true
+      with_items:
+        - "oc delete -n openshift-local-storage localvolume local-disks"
 
-  - name: Get local PVs
-    shell: "oc get pv | grep local | cut -f 1 -d \" \""
-    environment:
-      <<: *oc_env
-    register: local_pvs
+    - name: Get local PVs
+      ansible.builtin.shell: "oc get pv | grep local | cut -f 1 -d \" \""
+      environment:
+        <<: *oc_env
+      register: local_pvs
 
-  - name: cleanup local pvs
-    command: "oc delete pv {{ item }}"
-    environment:
-      <<: *oc_env
-    ignore_errors: true
-    with_items: "{{ local_pvs.stdout_lines | list }}"
+    - name: Cleanup local pvs
+      ansible.builtin.command: "oc delete pv {{ item }}"
+      environment:
+        <<: *oc_env
+      ignore_errors: true
+      with_items: "{{ local_pvs.stdout_lines | list }}"
 
-  - name: Cleanup VM attached Local Storage for dev-scripts
-    include_role:
-      name: local_storage
-      tasks_from: cleanup
-    vars:
-      domain: "{{ ocp_cluster_name }}_worker_{{ item }}"
-    loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
-    when: not (ocp_ai | bool)
+    - name: Cleanup VM attached Local Storage for dev-scripts
+      ansible.builtin.include_role:
+        name: local_storage
+        tasks_from: cleanup
+      vars:
+        domain: "{{ ocp_cluster_name }}_worker_{{ item }}"
+      loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
+      when: not (ocp_ai | bool)
 
-  - name: Cleanup VM attached Local Storage for AI
-    include_role:
-      name: local_storage
-      tasks_from: cleanup
-    vars:
-      domain: "{{ ocp_cluster_name }}-worker-{{ item }}"
-    loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
-    when: (ocp_ai | bool)
+    - name: Cleanup VM attached Local Storage for AI
+      ansible.builtin.include_role:
+        name: local_storage
+        tasks_from: cleanup
+      vars:
+        domain: "{{ ocp_cluster_name }}-worker-{{ item }}"
+      loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
+      when: (ocp_ai | bool)
 
-  # NOTE: this can take awhile to terminate as the nodes will reboot above
-  - name: Uninstall Local Storage Operator and Namespace  (worker rebooted...)
-    environment:
-      <<: *oc_env
-    command: "oc delete project openshift-local-storage"
-    ignore_errors: true
+    # NOTE: this can take awhile to terminate as the nodes will reboot above
+    - name: Uninstall Local Storage Operator and Namespace  (worker rebooted...)
+      environment:
+        <<: *oc_env
+      ansible.builtin.command: "oc delete project openshift-local-storage"
+      ignore_errors: true

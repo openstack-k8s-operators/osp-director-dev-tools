@@ -2,7 +2,6 @@
 csv_version: latest-17.1
 osp_release_auto_version: 17.1-RHEL-9
 
-
 ocp_num_workers: 3
 ocp_num_extra_workers: 5
 ocp_ai_bmc_protocol: redfish-virtualmedia+http
@@ -11,7 +10,8 @@ enable_freeipa: true
 
 osp_release_defaults:
   tlse: true
-  base_image_url: https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
+  base_image_url:
+    https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
   networks: ipv4_dcn
   vmset:
     Controller:
@@ -58,23 +58,23 @@ osp_release_defaults:
     - dmbs
 
 tempest_test_dict:
-  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+  regex: "(?!.*\\[.*\\bslow\\b.*\\])(^tempest\\.(api|scenario))"
   includelist: []
   # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
   excludelist:
-      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
-      # The scenario/tests create an image which is not in raw format and/or not in DCN site's store which causes the test to fail
-      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
-      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_instance_hard_reboot_after_vol_snap_deletion"
-      - "^tempest.api.compute.admin.test_volume.AttachSCSIVolumeTestJSON.test_attach_scsi_disk_with_config_drive"
-      - "^tempest.api.volume.admin.test_volume_types.VolumeTypesTest.test_volume_crud_with_volume_type_and_extra_specs"
-      - "^tempest.api.volume.test_volume_delete_cascade.VolumesDeleteCascade.test_volume_from_snapshot_cascade_delete"
-      - "^tempest.api.volume.admin.test_volume_retype.VolumeRetypeWithoutMigrationTest.test_available_volume_retype"
+    - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+    - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+    - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+    - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+    # The scenario/tests create an image which is not in raw format and/or not in DCN site's store which causes the test to fail
+    - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
+    - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_instance_hard_reboot_after_vol_snap_deletion"
+    - "^tempest.api.compute.admin.test_volume.AttachSCSIVolumeTestJSON.test_attach_scsi_disk_with_config_drive"
+    - "^tempest.api.volume.admin.test_volume_types.VolumeTypesTest.test_volume_crud_with_volume_type_and_extra_specs"
+    - "^tempest.api.volume.test_volume_delete_cascade.VolumesDeleteCascade.test_volume_from_snapshot_cascade_delete"
+    - "^tempest.api.volume.admin.test_volume_retype.VolumeRetypeWithoutMigrationTest.test_available_volume_retype"
 
 # disble block_migration_for_live_migration: false
 tempest_enable_feature_dict:
@@ -84,7 +84,7 @@ tempest_enable_feature_dict:
     block_migration_for_live_migration: false
     volume_backed_live_migration: true
     console_output: true
-# Create nova/volume resources in the AZ of the DCN's site
+  # Create nova/volume resources in the AZ of the DCN's site
   compute:
     compute_volume_common_az: az-dcn1
 

@@ -1,23 +1,23 @@
 ---
-- hosts: convergence_base
+- name: Libvirt Cleanup
+  hosts: convergence_base
   become: true
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+    - name: Include variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Remove libvirt data disks (if any)
+      ansible.builtin.file:
+        path: "{{ ocp_storage_data_dir }}"
+        state: absent
 
-  - name: Remove libvirt data disks (if any)
-    file:
-      path: "{{ ocp_storage_data_dir }}"
-      state: absent
+    - name: Restart libvirt
+      ansible.builtin.service:
+        name: libvirtd
+        state: restarted
 
-  - name: Restart libvirt
-    service:
-       name: libvirtd
-       state: restarted
-
-  - name: Remove inactive vnet network manager connections
-    shell: |
-      for conn in $(nmcli --fields NAME,UUID,ACTIVE -t con show | grep 'no$' | grep '^vnet' | cut -d : -f 2); do
-        nmcli con delete uuid $conn;
-      done
+    - name: Remove inactive vnet network manager connections
+      ansible.builtin.shell: |
+        for conn in $(nmcli --fields NAME,UUID,ACTIVE -t con show | grep 'no$' | grep '^vnet' | cut -d : -f 2); do
+          nmcli con delete uuid $conn;
+        done

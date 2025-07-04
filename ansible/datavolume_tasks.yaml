@@ -1,18 +1,18 @@
 ---
 # Make sure we delete the datavolume e.g. when switch from rhel image to centos image
 # This won't solve the problem when the both images exist and we switch back.
-- name: delete {{ _datavolume }} datavolume and PVC if image got downloaded
+- name: Delete {{ _datavolume }} datavolume and PVC if image got downloaded
   when: not stat_result.stat.exists
-  shell: >
+  ansible.builtin.shell: |
     oc delete datavolume --ignore-not-found=true {{ _datavolume }} -n {{ namespace }}
     oc delete pvc --ignore-not-found=true {{ _datavolume }} -n {{ namespace }}
   environment: &oc_env
     PATH: "{{ oc_env_path }}"
     KUBECONFIG: "{{ kubeconfig }}"
 
-- name: does the PVC {{ _datavolume }} already exist
+- name: Does the PVC {{ _datavolume }} already exist
   ignore_errors: true
-  shell: >
+  ansible.builtin.shell: |
     oc get pvc {{ _datavolume }} -n {{ namespace }}
   environment:
     <<: *oc_env
@@ -24,25 +24,26 @@
     <<: *oc_env
   block:
     - name: Upload OSP Controller base image
-      shell: |
-        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].root_disk.disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure --access-mode ReadWriteOnce
+      ansible.builtin.shell: |
+        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} \
+          --size={{ osp.vmset[_role].root_disk.disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure --access-mode ReadWriteOnce
   rescue:
     - name: Remove datavolume {{ _datavolume }} from failed upload
-      command: oc delete datavolume {{ _datavolume }} -n {{ namespace }} --ignore-not-found=true
-      ignore_errors: yes
+      ansible.builtin.command: oc delete datavolume {{ _datavolume }} -n {{ namespace }} --ignore-not-found=true
+      ignore_errors: true
 
     - name: Remove PVC {{ _datavolume }} from failed upload
-      command: oc delete pvc {{ _datavolume }} -n {{ namespace }} --ignore-not-found=true
-      ignore_errors: yes
+      ansible.builtin.command: oc delete pvc {{ _datavolume }} -n {{ namespace }} --ignore-not-found=true
+      ignore_errors: true
 
     - name: Re-Upload base image {{ _datavolume }}
-      shell: |
-        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} --size={{ osp.vmset[_role].root_disk.disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure --access-mode ReadWriteOnce
-
+      ansible.builtin.shell: |
+        virtctl image-upload dv {{ _datavolume }} -n {{ namespace }} \
+          --size={{ osp.vmset[_role].root_disk.disk_size }}G --image-path={{ osp_base_image_url_path }} --insecure --access-mode ReadWriteOnce
 - name: Wait for the PVC {{ _datavolume }} to be ready
-  retries: "{{ (default_timeout / 5)|int }}"
+  retries: "{{ (default_timeout / 5) | int }}"
   delay: 5
-  shell: |
+  ansible.builtin.shell: |
     res=$(oc get pvc {{ _datavolume }} -n {{ namespace }} -o json | jq -r '.metadata.annotations["cdi.kubevirt.io/storage.pod.phase"]')
     if [ "$res" == "Succeeded" ]; then
       exit 0

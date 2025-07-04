@@ -1,13 +1,15 @@
 ---
-- hosts: localhost
+- name: Disable Fencing
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Disable fencing
-    command:
-      cmd: oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory --become -m shell -a 'pcs property set stonith-enabled=false' Controller[0]"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Disable fencing
+      ansible.builtin.command:
+        cmd: oc exec -t -n openstack openstackclient -- /bin/bash -c "ansible -i ~/ctlplane-ansible-inventory --become -m shell -a 'pcs property set
+          stonith-enabled=false' Controller[0]"
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"

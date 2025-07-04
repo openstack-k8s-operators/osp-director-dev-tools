@@ -1,75 +1,74 @@
 ---
-- hosts: localhost
+- name: FreeIPA Cleanup
+  hosts: localhost
   vars_files: vars/default.yaml
   become: true
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+    - name: Include variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Update dev_script dnsmasq to stop forwarding to freeipa
+      ansible.builtin.lineinfile:
+        path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
+        regexp: "# Forward to FreeIPA"
+        state: absent
+      when: not (ocp_ai | bool)
+      register: ds_dnsmasq
 
-  - name: Update dev_script dnsmasq to stop forwarding to freeipa
-    lineinfile:
-      path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
-      regexp: '# Forward to FreeIPA'
-      state: absent
-    when: not (ocp_ai|bool)
-    register: ds_dnsmasq
+    - name: Reload NetworkManager
+      ansible.builtin.service:
+        name: NetworkManager
+        state: reloaded
+        enabled: true
+      when:
+        - not (ocp_ai | bool)
+        - ds_dnsmasq.changed
 
-  - name: Reload NetworkManager
-    service:
-      name: NetworkManager
-      state: reloaded
-      enabled: yes
-    when:
-      - not (ocp_ai|bool)
-      - ds_dnsmasq.changed
+    - name: Update AI dnsmasq to stop forwarding to freeipa
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.d/dnsmasq_ai.conf
+        regexp: "# Forward to FreeIPA"
+        state: absent
+      when: ocp_ai | bool
+      register: ai_dnsmasq
 
-  - name: Update AI dnsmasq to stop forwarding to freeipa
-    lineinfile:
-      path: /etc/dnsmasq.d/dnsmasq_ai.conf
-      regexp: '# Forward to FreeIPA'
-      state: absent
-    when: ocp_ai|bool
-    register: ai_dnsmasq
+    - name: Restart dnsmasq
+      ansible.builtin.service:
+        name: dnsmasq
+        state: restarted
+      when:
+        - ocp_ai | bool
+        - ai_dnsmasq.changed
 
-  - name: Restart dnsmasq
-    service:
-      name: dnsmasq
-      state: restarted
-    when:
-      - ocp_ai|bool
-      - ai_dnsmasq.changed
+    - name: Stop FreeIPA
+      ansible.builtin.service:
+        name: container-freeipa-server
+        state: stopped
+        enabled: false
+      ignore_errors: true
 
-  - name: Stop FreeIPA
-    service:
-      name: container-freeipa-server
-      state: stopped
-      enabled: no
-    ignore_errors: true
+    - name: Remove freeipa-server container
+      containers.podman.podman_container:
+        name: freeipa-server
+        state: absent
 
-  - name: Remove freeipa-server container
-    containers.podman.podman_container:
-      name: freeipa-server
-      state: absent
+    - name: Remove freeipa-network
+      containers.podman.podman_network:
+        name: freeipa-network
+        state: absent
 
-  - name: Remove freeipa-network
-    containers.podman.podman_network:
-      name: freeipa-network
-      state: absent
+    - name: Delete FreeIPA data
+      ansible.builtin.file:
+        path: /opt/freeipa/data
+        state: absent
 
-  - name: Delete FreeIPA data
-    file:
-      path: /opt/freeipa/data
-      state: absent
+    - name: Delete freeipa service
+      ansible.builtin.file:
+        path: /etc/systemd/system/container-freeipa-server.service
+        state: absent
 
-  - name: Delete freeipa service
-    file:
-      path: /etc/systemd/system/container-freeipa-server.service
-      state: absent
-
-  - name: Reload systemd service
-    systemd:
-      daemon_reload: yes
-
+    - name: Reload systemd service
+      ansible.builtin.systemd:
+        daemon_reload: true

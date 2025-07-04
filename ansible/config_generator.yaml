@@ -1,74 +1,77 @@
 ---
-- hosts: localhost
+- name: ConfigGenerator
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set directory for generator yaml files
-    set_fact:
-      config_generator_yaml_dir: "{{ working_yamls_dir }}/config_generator_{{ config_generator_name|default('default') }}"
+    - name: Set directory for generator yaml files
+      ansible.builtin.set_fact:
+        config_generator_yaml_dir: "{{ working_yamls_dir }}/config_generator_{{ config_generator_name | default('default') }}"
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ config_generator_yaml_dir }} locally"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg: "yamls will be written to {{ config_generator_yaml_dir }} locally"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ config_generator_yaml_dir }}/"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ config_generator_yaml_dir }}/"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ config_generator_yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ config_generator_yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Render templates to yaml dir
-    template:
-      src: "osp/config_generator/{{ item }}.j2"
-      dest: "{{ config_generator_yaml_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - "openstackconfiggenerator.yaml"
+    - name: Render templates to yaml dir
+      ansible.builtin.template:
+        src: "osp/config_generator/{{ item }}.j2"
+        dest: "{{ config_generator_yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - "openstackconfiggenerator.yaml"
 
-  - name: Check if config generator exists
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    ignore_errors: true
-    command: oc get osconfiggenerator -n openstack {{ config_generator_name|default('default') }} -o name
-    register: osconfiggen_check_exists
+    - name: Check if config generator exists
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      ignore_errors: true
+      ansible.builtin.command: oc get osconfiggenerator -n openstack {{ config_generator_name | default('default') }} -o name
+      register: osconfiggen_check_exists
 
-  - set_fact:
-      osconfiggen_exists: "{{ osconfiggen_check_exists.rc == 0 }}"
+    - name: Set fact
+      ansible.builtin.set_fact:
+        osconfiggen_exists: "{{ osconfiggen_check_exists.rc == 0 }}"
 
-  - name: Start config generator
-    shell: |
-      set -e
-      oc apply -n openstack -f "{{ config_generator_yaml_dir }}/openstackconfiggenerator.yaml"
-    environment:
-      <<: *oc_env
-    when: osconfiggen_exists|bool == false
+    - name: Start config generator
+      ansible.builtin.shell: |
+        set -e
+        oc apply -n openstack -f "{{ config_generator_yaml_dir }}/openstackconfiggenerator.yaml"
+      environment:
+        <<: *oc_env
+      when: not osconfiggen_exists | bool
 
-  - name: Refresh config generator image
-    shell: |
-      oc patch osconfiggenerator -n openstack {{ config_generator_name|default('default') }} --type=json -p="[
-        {'op': 'remove', 'path': '/spec/imageURL'}
-      ]"
-    environment:
-      <<: *oc_env
-    when:
-      - config_generator_update_image|default(False)
-      - osconfiggen_exists|bool
+    - name: Refresh config generator image
+      ansible.builtin.shell: |
+        oc patch osconfiggenerator -n openstack {{ config_generator_name | default('default') }} --type=json -p="[
+          {'op': 'remove', 'path': '/spec/imageURL'}
+        ]"
+      environment:
+        <<: *oc_env
+      when:
+        - config_generator_update_image | default(False)
+        - osconfiggen_exists | bool
 
-  - name: wait for config generator to finish
-    shell: |
-      set -e
-      oc wait -n openstack osconfiggenerator {{ config_generator_name|default('default') }} --for condition=Finished --timeout="{{ (default_timeout * 20)|int }}s"
-    environment:
-      <<: *oc_env
+    - name: Wait for config generator to finish
+      ansible.builtin.shell: |
+        set -e
+        oc wait -n openstack osconfiggenerator {{ config_generator_name | default('default') }} \
+          --for condition=Finished --timeout="{{ (default_timeout * 20) | int }}s"
+      environment:
+        <<: *oc_env

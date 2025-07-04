@@ -1,40 +1,40 @@
 ---
 - name: Set directory for ovn yaml files
-  set_fact:
+  ansible.builtin.set_fact:
     ovn_yaml_dir: "{{ working_yamls_dir }}/ovn"
 
-- name: show yaml output dir
-  debug:
+- name: Show yaml output dir
+  ansible.builtin.debug:
     msg: "yamls will be written to {{ ovn_yaml_dir }} locally"
 
 - name: Clean yaml dir
-  file:
+  ansible.builtin.file:
     state: absent
     path: "{{ ovn_yaml_dir }}/"
 
 - name: Create yaml dir
-  file:
+  ansible.builtin.file:
     path: "{{ ovn_yaml_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy deployment yamls to working dir
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ ovn_yaml_dir }}/"
-    mode: '0644'
+    mode: "0644"
   with_fileglob:
-  - "ovn/*"
+    - "ovn/*"
 
 - name: Delete OVN
-  shell: |
+  ansible.builtin.shell: |
     oc delete --ignore-not-found -f "{{ ovn_yaml_dir }}"
   environment: &oc_env
     PATH: "{{ oc_env_path }}"
     KUBECONFIG: "{{ kubeconfig }}"
 
 - name: Delete ovn-connection config map
-  shell: |
+  ansible.builtin.shell: |
     oc delete --ignore-not-found configmap -n openstack ovn-connection
   environment:
     <<: *oc_env

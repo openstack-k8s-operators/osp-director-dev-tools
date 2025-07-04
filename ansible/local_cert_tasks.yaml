@@ -5,8 +5,8 @@
   become_user: root
   block:
     - name: Lookup ControlPlane IP on ctlplane network
-      shell: >
-        oc get -n {{ namespace }} osnet ctlplane -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip 
+      ansible.builtin.shell: |
+        oc get -n {{ namespace }} osnet ctlplane -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip
       register: get_control_plane_ip_ctlplane
       until: get_control_plane_ip_ctlplane.stdout|trim|ansible.utils.ipaddr != False
       retries: 60
@@ -16,8 +16,8 @@
         KUBECONFIG: "{{ kubeconfig }}"
 
     - name: Lookup ControlPlane IP on external network
-      shell: >
-        oc get -n {{ namespace }} osnet external -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip 
+      ansible.builtin.shell: |
+        oc get -n {{ namespace }} osnet external -o json | jq -r .spec.roleReservations.ControlPlane.reservations[0].ip
       register: get_control_plane_ip_external
       until: get_control_plane_ip_external.stdout|trim|ansible.utils.ipaddr != False
       retries: 60
@@ -26,48 +26,49 @@
         <<: *oc_env
 
     - name: Create server key
-      command:
+      ansible.builtin.command:
         cmd: openssl genrsa -out /opt/local_CA/private/openstack.pem 2048
         creates: /opt/local_CA/private/openstack.pem
 
     - name: Set server key owner
-      file:
+      ansible.builtin.file:
         path: /opt/local_CA/private/openstack.pem
         owner: "{{ ansible_real_user_id }}"
         group: "{{ ansible_real_group_id }}"
 
     - name: Create CSR template
-      template:
+      ansible.builtin.template:
         src: templates/local_CA/openssl.cnf.j2
         dest: /opt/local_CA/certs/openstack/openssl.cnf
         mode: "0644"
       vars:
         control_plane_dns_name: "overcloud.{{ osp.domain_name }}"
-        control_plane_ip_ctlplane: "{{ get_control_plane_ip_ctlplane.stdout|trim }}"
-        control_plane_ip_external: "{{ get_control_plane_ip_external.stdout|trim }}"
-        common_name: "{{ control_plane_ip_external if osp.tls_public_endpoints_ip|default(false)|bool else control_plane_dns_name }}"
+        control_plane_ip_ctlplane: "{{ get_control_plane_ip_ctlplane.stdout | trim }}"
+        control_plane_ip_external: "{{ get_control_plane_ip_external.stdout | trim }}"
+        common_name: "{{ control_plane_ip_external if osp.tls_public_endpoints_ip | default(false) | bool else control_plane_dns_name }}"
 
     - name: Generate CSR
-      command:
+      ansible.builtin.command:
         cmd: openssl req -nodes -config /opt/local_CA/certs/openstack/openssl.cnf -new -out /opt/local_CA/certs/openstack/openstack.csr.pem -batch
         creates: /opt/local_CA/certs/openstack/openstack.csr.pem
 
     - name: Generate Certificate
-      command:
-        cmd: openssl ca -config /opt/local_CA/certs/openstack/openssl.cnf -in /opt/local_CA/certs/openstack/openstack.csr.pem -out /opt/local_CA/certs/openstack/openstack.crt.pem -batch -notext
+      ansible.builtin.command:
+        cmd: openssl ca -config /opt/local_CA/certs/openstack/openssl.cnf -in /opt/local_CA/certs/openstack/openstack.csr.pem -out
+          /opt/local_CA/certs/openstack/openstack.crt.pem -batch -notext
         creates: /opt/local_CA/certs/openstack/openstack.crt.pem
 
     - name: Add OSP public endpoint to ctlplane dnsmasq
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/dnsmasq.d/ctlplane.conf
-        line: 'address=/overcloud.{{ osp.domain_name }}/{{ get_control_plane_ip_external.stdout|trim }} # OSP public endpoint'
-        regexp: '# OSP public endpoint'
+        line: "address=/overcloud.{{ osp.domain_name }}/{{ get_control_plane_ip_external.stdout | trim }} # OSP public endpoint"
+        regexp: "# OSP public endpoint"
         insertafter: EOF
       register: ctlplane_dnsmasq
 
     - name: Restart dnsmasq
-      service:
+      ansible.builtin.service:
         name: dnsmasq
         state: restarted
       when:
-        - ctlplane_dnsmasq.changed
+        - ctlplane_dnsmasq.changed # noqa: no-handler

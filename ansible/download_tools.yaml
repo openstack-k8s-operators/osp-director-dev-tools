@@ -1,7 +1,8 @@
 #!/usr/bin/env ansible-playbook
 ---
-- hosts: localhost
+- name: Download Tools
+  hosts: localhost
   vars_files: "vars/default.yaml"
   roles:
-  - oc_local
-  - download_tools
+    - oc_local
+    - download_tools

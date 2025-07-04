@@ -1,21 +1,21 @@
 ---
-- name: create openstackclient yamls dir
-  file:
+- name: Create openstackclient yamls dir
+  ansible.builtin.file:
     path: "{{ working_dir }}/yamls/openstackclient"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
-- name: create openstackclient-pod.yaml from template
+- name: Create openstackclient-pod.yaml from template
   vars:
     os_password: foobar123
     os_auth_url: http://keystone-openstack.apps.ostest.test.metalkube.org/
-  template:
-    src:  "openstackclient-pod.yaml.j2"
+  ansible.builtin.template:
+    src: "openstackclient-pod.yaml.j2"
     dest: "{{ working_dir }}/yamls/openstackclient/openstackclient-pod.yaml"
-    mode: '0644'
+    mode: "0644"
 
-- name: create openstackclient pod
-  shell: |
+- name: Create openstackclient pod
+  ansible.builtin.shell: |
     oc project openstack
     oc delete --ignore-not-found pod openstackclient
     oc apply -f {{ working_dir }}/yamls/openstackclient/openstackclient-pod.yaml

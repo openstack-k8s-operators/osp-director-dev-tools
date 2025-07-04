@@ -1,11 +1,11 @@
 ---
 # operator github url where operators repos are underneath - default https://github.com/openstack-k8s-operators
-#openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
+# openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
 openstack_k8s_operators_https_url: "https://github.com/stuggi"
-#openstack_k8s_operators_nova_branch: defaults to "HEAD"
-#openstack_k8s_operators_neutron_branch: defaults to "HEAD"
-#openstack_k8s_operators_keystone_branch: defaults to "HEAD"
-#openstack_k8s_operators_heat_branch: defaults to "HEAD"
+# openstack_k8s_operators_nova_branch: defaults to "HEAD"
+# openstack_k8s_operators_neutron_branch: defaults to "HEAD"
+# openstack_k8s_operators_keystone_branch: defaults to "HEAD"
+# openstack_k8s_operators_heat_branch: defaults to "HEAD"
 openstack_k8s_operators_cluster_branch: fix_registry_urls
 
 # operator images and tag to use
@@ -24,4 +24,3 @@ cinder_operator_image: quay.io/openstack-k8s-operators/cinder-operator:v0.0.1
 _csv_version: 0.0.1
 
 default_timeout: 180
-

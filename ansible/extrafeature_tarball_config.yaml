@@ -1,12 +1,13 @@
+---
 - name: Get stats of the local feature dir
-  stat:
-    path="{{ feature_dir }}"
+  ansible.builtin.stat:
+    path: "{{ feature_dir }}"
   delegate_to: localhost
   register: p
 
-- name: copy feature files if directory exists
+- name: Copy feature files if directory exists
   when: p.stat.exists
-  copy:
+  ansible.builtin.copy:
     src: "{{ feature_dir }}/"
     dest: "{{ ooo_tarball_dir }}"
-    mode: '0644'
+    mode: "0644"

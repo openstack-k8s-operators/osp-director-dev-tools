@@ -4,80 +4,81 @@
 # 2) Enables a 'defaultRoute' for the registry. This allows us to easily push images from outside the cluster.
 
 ---
-- hosts: localhost
+- name: OpenShift Image Registry
+  hosts: localhost
   gather_facts: false
   vars_files: vars/default.yaml
   roles:
     - oc_local
 
   tasks:
-  - name: Set directory for image-registry yaml files
-    set_fact:
-      registry_yaml_dir: "{{ working_dir }}/yamls/image-registry"
+    - name: Set directory for image-registry yaml files
+      ansible.builtin.set_fact:
+        registry_yaml_dir: "{{ working_dir }}/yamls/image-registry"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ registry_yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ registry_yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Copy PVC to working dir
-    copy:
-      src: openshift-image-registry-pvc.yaml
-      dest: "{{ registry_yaml_dir }}/"
-      mode: '0644'
+    - name: Copy PVC to working dir
+      ansible.builtin.copy:
+        src: openshift-image-registry-pvc.yaml
+        dest: "{{ registry_yaml_dir }}/"
+        mode: "0644"
 
-  - name: Configure image registry # noqa var-spacing
-    shell: |
-      set -e
+    - name: Configure image registry # noqa jinja[spacing]
+      ansible.builtin.shell: |
+        set -e
 
-      # Create PVC
-      oc apply -f "{{ registry_yaml_dir }}/openshift-image-registry-pvc.yaml"
+        # Create PVC
+        oc apply -f "{{ registry_yaml_dir }}/openshift-image-registry-pvc.yaml"
 
-      # set image registry to managed
-      oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge \
-          --patch '{"spec":{"managementState":"Managed"}}'
+        # set image registry to managed
+        oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge \
+            --patch '{"spec":{"managementState":"Managed"}}'
 
-      # enable default route on image registry
-      oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge \
-          --patch '{"spec":{"defaultRoute":true}}'
+        # enable default route on image registry
+        oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge \
+            --patch '{"spec":{"defaultRoute":true}}'
 
-      # configure storage pvc for openshift-image-registry
-      oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
-          --patch '{"spec":{"storage":{"pvc":{"claim": "openshift-image-registry-pvc"}}}}'
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+        # configure storage pvc for openshift-image-registry
+        oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
+            --patch '{"spec":{"storage":{"pvc":{"claim": "openshift-image-registry-pvc"}}}}'
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: add OpenShift CA cert to local disk (so we can access the image registry)
-    shell: >
-      cat $KUBECONFIG | grep certificate-authority-data | \
-        head -n 1 | cut -f 6 -d " " | base64 -d > /etc/ssl/certs/openshift.pem
-    environment:
-      KUBECONFIG: "{{ kubeconfig }}"
-    become_user: root
-    become: true
+    - name: Add OpenShift CA cert to local disk (so we can access the image registry)
+      ansible.builtin.shell: |
+        cat $KUBECONFIG | grep certificate-authority-data | \
+          head -n 1 | cut -f 6 -d " " | base64 -d > /etc/ssl/certs/openshift.pem
+      environment:
+        KUBECONFIG: "{{ kubeconfig }}"
+      become_user: root
+      become: true
 
-  - name: wait for deployment to be created
-    shell: |
-      oc get -n openshift-image-registry deployment/image-registry
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: image_registry_deployment
-    until: image_registry_deployment is not failed
-    retries: "{{ (default_timeout / 5)|int }}"
-    delay: 5
+    - name: Wait for deployment to be created
+      ansible.builtin.shell: |
+        oc get -n openshift-image-registry deployment/image-registry
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      register: image_registry_deployment
+      until: image_registry_deployment is not failed
+      retries: "{{ (default_timeout / 5) | int }}"
+      delay: 5
 
-  - name: wait for image registry to be deployed
-    shell: |
-      set -e
-      oc wait --for condition=available -n openshift-image-registry \
-          deployment/image-registry --timeout={{ default_timeout }}s
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: image_registry_available
-    until: image_registry_available is not failed
-    retries: "{{ (default_timeout / 5)|int }}"
-    delay: 5
+    - name: Wait for image registry to be deployed
+      ansible.builtin.shell: |
+        set -e
+        oc wait --for condition=available -n openshift-image-registry \
+            deployment/image-registry --timeout={{ default_timeout }}s
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      register: image_registry_available
+      until: image_registry_available is not failed
+      retries: "{{ (default_timeout / 5) | int }}"
+      delay: 5

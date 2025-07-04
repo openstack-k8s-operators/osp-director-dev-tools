@@ -1,23 +1,24 @@
+---
 - name: Install NFS packages
-  yum:
+  ansible.builtin.dnf:
     name: nfs-utils
     state: present
 
 - name: Start and enable NFS services
-  systemd:
+  ansible.builtin.systemd:
     name: nfs-server
     state: started
-    enabled: yes
+    enabled: true
 
-- name: open nfsv4 port 2049/tcp (permanent config)
-  firewalld:
+- name: Open nfsv4 port 2049/tcp (permanent config)
+  ansible.posix.firewalld:
     zone: libvirt
     port: 2049/tcp
-    permanent: yes
+    permanent: true
     state: enabled
 
-- name: open nfsv4 port 2049/tcp (running config)
-  firewalld:
+- name: Open nfsv4 port 2049/tcp (running config)
+  ansible.posix.firewalld:
     zone: libvirt
     port: 2049/tcp
     state: enabled

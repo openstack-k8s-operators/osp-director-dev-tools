@@ -1,5 +1,4 @@
 ---
-
 - name: Generate redeploy custom config
   import_playbook: osp_custom_config.yaml
   vars:

@@ -1,131 +1,126 @@
 ---
-- hosts: convergence_base
+- name: OpenShift AI
+  hosts: convergence_base
   gather_facts: false
   tasks:
-  - name: Include default variables
-    include_vars: vars/default.yaml
-
-  - name: Include AI variables
-    include_vars: vars/ocp_ai.yaml
-
-
-  ### EXECUTE ASSISTED INSTALLER PLAYBOOK
-
-  - name: Run Assisted Installer
-    become: true
-    become_user: ocp
-    block:
-    - name: Delete existing AI cluster (if any)
-      shell: |
-        CLUSTER=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster | grep {{ ocp_cluster_name }})
-        while [[ "$CLUSTER" != "" ]];
-        do
-          aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete cluster $(echo "$CLUSTER" | head -1 | awk '{print $4}')
-          CLUSTER=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster | grep {{ ocp_cluster_name }})
-        done
-      environment:
-        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
-      register: delete_ai_cluster
-      failed_when: delete_ai_cluster.stderr != "" and "Cluster {{ ocp_cluster_name }} not found" not in delete_ai_cluster.stderr
-
-    - name: Delete existing AI infraenv (if any)
-      shell: |
-        INFRAENV=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list infraenv | grep {{ ocp_cluster_name }})
-        while [[ "$INFRAENV" != "" ]];
-        do
-          aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete infraenv $(echo "$INFRAENV" | head -1 | awk '{print $4}')
-          INFRAENV=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list infraenv | grep {{ ocp_cluster_name }})
-        done
-      environment:
-        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
-      register: delete_ai_infraenv
-      failed_when: delete_ai_infraenv.stderr != "" and "Infraenv {{ ocp_cluster_name }} not found" not in delete_ai_infraenv.stderr
-
-    - name: show installer info
-      debug:
-        msg: |
-          Executing the assisted installer playbook.  You can tail the logs at {{ base_path }}/ai.log on
-          the host for progress.  Furthermore, you can view the assisted installer console by entering the
-          URL http://192.168.111.1:8080/clusters/.  If you do not have direct access to that IP from
-          your browser, you can use a tool like "sshuttle" to provide connectivity like so:
-          sshuttle --dns -r <user>@<cluster host> 192.168.111.0/24.  You would then hit this
-          URL in your browser: http://<cluster host>:8080/clusters/
-
-    - name: Run the assisted installer playbook
-      shell: |
-        ./deploy_cluster.sh
-      args:
-        chdir: "{{ base_path }}/crucible"
-      environment:
-        ANSIBLE_HOST_KEY_CHECKING: false
-
-    - name: Download assisted installer cluster kubeconfig and kubeadmin password
-      shell: |
-        aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
-        aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
-      args:
-        chdir: "{{ base_path }}/crucible"
-      environment:
-        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
-
-    - name: Set kubeconfig fact
-      set_fact:
-        ai_kubeconfig: lookup('file', '{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}')
-
-  - name: Create assisted installer kubeconfig locally
-    block:
-    - name: Include oc_local role
-      include_role:
-        name: oc_local
-
     - name: Include default variables
-      include_vars: vars/default.yaml
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Include AI variables
+      ansible.builtin.include_vars: vars/ocp_ai.yaml
+    - name: Run Assisted Installer
+      become: true
+      become_user: ocp
+      block:
+        - name: Delete existing AI cluster (if any)
+          ansible.builtin.shell: |
+            CLUSTER=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster | grep {{ ocp_cluster_name }})
+            while [[ "$CLUSTER" != "" ]];
+            do
+              aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete cluster $(echo "$CLUSTER" | head -1 | awk '{print $4}')
+              CLUSTER=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list cluster | grep {{ ocp_cluster_name }})
+            done
+          environment:
+            PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+          register: delete_ai_cluster
+          failed_when: delete_ai_cluster.stderr != "" and "Cluster {{ ocp_cluster_name }} not found" not in delete_ai_cluster.stderr
 
-    - name: Render kubeconfig
-      template:
-        src: ai/crucible/kubeconfig.j2
-        dest: "{{ working_dir }}/kubeconfig"
-        mode: '0664'
+        - name: Delete existing AI infraenv (if any)
+          ansible.builtin.shell: |
+            INFRAENV=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list infraenv | grep {{ ocp_cluster_name }})
+            while [[ "$INFRAENV" != "" ]];
+            do
+              aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} delete infraenv $(echo "$INFRAENV" | head -1 | awk '{print $4}')
+              INFRAENV=$(aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} list infraenv | grep {{ ocp_cluster_name }})
+            done
+          environment:
+            PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+          register: delete_ai_infraenv
+          failed_when: delete_ai_infraenv.stderr != "" and "Infraenv {{ ocp_cluster_name }} not found" not in delete_ai_infraenv.stderr
 
-    delegate_to: localhost
+        - name: Show installer info
+          ansible.builtin.debug:
+            msg: |
+              Executing the assisted installer playbook.  You can tail the logs at {{ base_path }}/ai.log on
+              the host for progress.  Furthermore, you can view the assisted installer console by entering the
+              URL http://192.168.111.1:8080/clusters/.  If you do not have direct access to that IP from
+              your browser, you can use a tool like "sshuttle" to provide connectivity like so:
+              sshuttle --dns -r <user>@<cluster host> 192.168.111.0/24.  You would then hit this
+              URL in your browser: http://<cluster host>:8080/clusters/
 
+        - name: Run the assisted installer playbook
+          ansible.builtin.shell: |
+            ./deploy_cluster.sh
+          args:
+            chdir: "{{ base_path }}/crucible"
+          environment:
+            ANSIBLE_HOST_KEY_CHECKING: "false"
 
-- hosts: localhost
+        - name: Download assisted installer cluster kubeconfig and kubeadmin password
+          ansible.builtin.shell: |
+            aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeconfig {{ ocp_cluster_name }}
+            aicli -U http://192.168.111.1:{{ ocp_ai_service_port | default('8090', true) }} download kubeadmin-password {{ ocp_cluster_name }}
+          args:
+            chdir: "{{ base_path }}/crucible"
+          environment:
+            PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+        - name: Set kubeconfig fact
+          ansible.builtin.set_fact:
+            ai_kubeconfig: lookup('file', '{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}')
+
+    - name: Create assisted installer kubeconfig locally
+      delegate_to: localhost
+
+      block:
+        - name: Include oc_local role
+          ansible.builtin.include_role:
+            name: oc_local
+
+        - name: Include default variables
+          ansible.builtin.include_vars: vars/default.yaml
+        - name: Render kubeconfig
+          ansible.builtin.template:
+            src: ai/crucible/kubeconfig.j2
+            dest: "{{ working_dir }}/kubeconfig"
+            mode: "0664"
+
+- name: OpenShift Client
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   ### OC CLIENT
 
   tasks:
-  - name: Get the ocp client tar gunzip file
-    get_url:
-      url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-{{ ocp_version }}/openshift-client-linux.tar.gz"
-      dest: "/tmp/openshift-client-linux.tar.gz"
-      mode: '0755'
-      timeout: 30
+    - name: Get the ocp client tar gunzip file
+      ansible.builtin.get_url:
+        url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-{{ ocp_version }}/openshift-client-linux.tar.gz"
+        dest: "/tmp/openshift-client-linux.tar.gz"
+        mode: "0755"
+        timeout: 30
 
-  - name: Remove temp files
-    become: true
-    become_user: root
-    ansible.builtin.file:
-      path: "/tmp/{{ item }}"
-      state: absent
-    with_items:
-    - oc
-    - kubectl
-    - README.md
+    - name: Remove temp files
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: "/tmp/{{ item }}"
+        state: absent
+      with_items:
+        - oc
+        - kubectl
+        - README.md
 
-  - name: "Untar the openshift-client-linux.tar.gz"
-    unarchive:
-      src: "/tmp/openshift-client-linux.tar.gz"
-      dest: "/tmp"
-      mode: '0755'
+    - name: "Untar the openshift-client-linux.tar.gz"
+      ansible.builtin.unarchive:
+        src: "/tmp/openshift-client-linux.tar.gz"
+        dest: "/tmp"
+        mode: "0755"
 
-  - name: Copy oc binary to /usr/local/bin
-    become: true
-    become_user: root
-    copy:
-      src: "/tmp/oc"
-      dest: /usr/local/bin/
-      mode: '0755'
+    - name: Copy oc binary to /usr/local/bin
+      become: true
+      become_user: root
+      ansible.builtin.copy:
+        src: "/tmp/oc"
+        dest: /usr/local/bin/
+        mode: "0755"

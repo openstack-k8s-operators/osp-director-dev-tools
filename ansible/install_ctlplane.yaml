@@ -1,56 +1,57 @@
 ---
-- hosts: localhost
+- name: Install ControlPlane
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set directory for compute yaml files
-    set_fact:
-      ctlplane_yaml_dir: "{{ working_yamls_dir }}/ctlplane"
+    - name: Set directory for compute yaml files
+      ansible.builtin.set_fact:
+        ctlplane_yaml_dir: "{{ working_yamls_dir }}/ctlplane"
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ ctlplane_yaml_dir }} locally"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg: "yamls will be written to {{ ctlplane_yaml_dir }} locally"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ ctlplane_yaml_dir }}/"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ ctlplane_yaml_dir }}/"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ ctlplane_yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ ctlplane_yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Create local CA
-    include_tasks: local_ca_tasks.yaml
-    when: osp.tls_public_endpoints|default(false)|bool
+    - name: Create local CA
+      ansible.builtin.include_tasks: local_ca_tasks.yaml
+      when: osp.tls_public_endpoints | default(false) | bool
 
-  - name: Render templates to yaml dir
-    template:
-      src: "osp/ctlplane/{{ item }}.j2"
-      dest: "{{ ctlplane_yaml_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - "osp-director_openstackcontrolplane.yaml"
-    - "password-secret.yaml"
-    - "idm-secret.yaml"
-    - "ca-certs-cm.yaml"
+    - name: Render templates to yaml dir
+      ansible.builtin.template:
+        src: "osp/ctlplane/{{ item }}.j2"
+        dest: "{{ ctlplane_yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - "osp-director_openstackcontrolplane.yaml"
+        - "password-secret.yaml"
+        - "idm-secret.yaml"
+        - "ca-certs-cm.yaml"
 
-  - name: Start ctlplane
-    shell: |
-      set -e
-      oc apply -n {{ namespace }} -f "{{ ctlplane_yaml_dir }}"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Start ctlplane
+      ansible.builtin.shell: |
+        set -e
+        oc apply -n {{ namespace }} -f "{{ ctlplane_yaml_dir }}"
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: Create openstack cert
-    include_tasks: local_cert_tasks.yaml
-    when: osp.tls_public_endpoints|default(false)|bool
+    - name: Create openstack cert
+      ansible.builtin.include_tasks: local_cert_tasks.yaml
+      when: osp.tls_public_endpoints | default(false) | bool

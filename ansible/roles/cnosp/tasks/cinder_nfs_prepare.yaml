@@ -1,14 +1,14 @@
 ---
 - name: Set cinder nfs directories
-  set_fact:
+  ansible.builtin.set_fact:
     nfs_cinder_dir: "{{ nfs_export_dir }}/cinder"
     nfs_cinder_backup_dir: "{{ nfs_export_dir }}/cinder-backup"
 
 - name: Create cinder nfs directories
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: 0777
+    mode: "0777"
     group: nobody
     owner: nobody
   with_items:
@@ -16,14 +16,14 @@
     - "{{ nfs_cinder_backup_dir }}"
 
 - name: Configure cinder export
-  lineinfile:
+  ansible.builtin.lineinfile:
     create: true
     path: /etc/exports.d/cinder.exports
     line: "{{ item }} *(rw,sync,no_root_squash)"
-    mode: '0644'
+    mode: "0644"
   with_items:
     - "{{ nfs_cinder_dir }}"
     - "{{ nfs_cinder_backup_dir }}"
 
 - name: Export NFS share to the server
-  command: "exportfs -r"
+  ansible.builtin.command: "exportfs -r"

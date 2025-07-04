@@ -1,38 +1,46 @@
-# This playbook sets up the OpenShift cluster to allow downstream containers to be used as insecure registries
-
 ---
-- hosts: localhost
+- name: OpenShift Custom Registries
+  hosts: localhost
   gather_facts: false
   vars_files: vars/default.yaml
   roles:
     - oc_local
 
   tasks:
-  - name: Configure custom (insecure) registries for downstream repos # noqa var-spacing
-    shell: |
-      set -e
+    - name: Configure custom (insecure) registries for downstream repos
+      ansible.builtin.shell: |
+        set -e
 
-      oc patch image.config.openshift.io/cluster --type merge \
-        --patch '{"spec":{"registrySources":{"allowedRegistries":["docker-registry.upshift.redhat.com","registry.redhat.io","quay.io","{{ registry_proxy }}","gcr.io","image-registry.openshift-image-registry.svc:5000"],"insecureRegistries":["docker-registry.upshift.redhat.com","{{ registry_proxy }}"]}}}'
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    when: not (ocp_ai | bool)
+        oc patch image.config.openshift.io/cluster --type merge \
+          --patch '{"spec":{"registrySources":{ \
+            "allowedRegistries":[ \
+              "docker-registry.upshift.redhat.com",\
+              "registry.redhat.io",\
+              "quay.io",\
+              "{{ registry_proxy }}",\
+              "gcr.io",\
+              "image-registry.openshift-image-registry.svc:5000"\
+              ], \
+            "insecureRegistries":["docker-registry.upshift.redhat.com","{{ registry_proxy }}"]}}}'
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      when: not (ocp_ai | bool)
 
-  - name: wait for the machine config pools to update for image registry customizations
-    shell: |
-      set -e
-      /bin/sleep 15 #wait a few seconds for the machine configs to update
-      oc wait --for condition=updated -n openshift-machine-api \
-         mcp/master --timeout={{ default_timeout }}s
-      oc wait --for condition=updated -n openshift-machine-api \
-         mcp/worker --timeout={{ default_timeout }}s
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: wait_for_machine_update
-    until: wait_for_machine_update is not failed
-    ignore_errors: yes
-    retries: "{{ (default_timeout / 5)|int }}"
-    delay: 5
-    when: not (ocp_ai | bool)
+    - name: Wait for the machine config pools to update for image registry customizations
+      ansible.builtin.shell: |
+        set -e
+        /bin/sleep 15 #wait a few seconds for the machine configs to update
+        oc wait --for condition=updated -n openshift-machine-api \
+           mcp/master --timeout={{ default_timeout }}s
+        oc wait --for condition=updated -n openshift-machine-api \
+           mcp/worker --timeout={{ default_timeout }}s
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      register: wait_for_machine_update
+      until: wait_for_machine_update is not failed
+      ignore_errors: true
+      retries: "{{ (default_timeout / 5) | int }}"
+      delay: 5
+      when: not (ocp_ai | bool)

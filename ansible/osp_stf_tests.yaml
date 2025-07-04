@@ -1,51 +1,71 @@
 ---
-- hosts: localhost
+- name: STF Tests
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
   tasks:
+    - name: Include sts_ha_tests
+      ansible.builtin.include_tasks: osp_sts_ha_tests.yaml
+      vars:
+        sts_script: "osp_operator_workload_vm_run.sh"
 
-  - name:
-    include_tasks: osp_sts_ha_tests.yaml
-    vars:
-        sts_script : 'osp_operator_workload_vm_run.sh'
+    # stf tests section
+    - name: Clone stf tests
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc exec -n openstack openstackclient -- bash -c " \
+        test -d /home/cloud-admin/feature-verification-tests || ( \
+          pushd /home/cloud-admin/ && git clone -b old_stf_job https://github.com/infrawatch/feature-verification-tests.git \
+          ) \
+        "
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  # stf tests section
-  - name: Clone stf tests
-    shell: |
-      #!/bin/bash
-      oc exec -n openstack openstackclient -- bash -c "test -d /home/cloud-admin/feature-verification-tests || (pushd /home/cloud-admin/ && git clone -b old_stf_job https://github.com/infrawatch/feature-verification-tests.git)"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-
-  - name: Create playbooks directory
-    shell: |
-      #!/bin/bash
-      oc exec -n openstack openstackclient -- bash -c "test -d /home/cloud-admin/playbooks/ || mkdir /home/cloud-admin/playbooks/"
-    environment:
-      <<: *oc_env
-  - name: Download jumphost key file
-    shell: |
-      #!/bin/bash
-      oc exec -n openstack openstackclient -- bash -c "curl --insecure  {{ devtools_stf_jumphost_key_url }} --output /home/cloud-admin/playbooks/jumphost.key;chmod 600 /home/cloud-admin/playbooks/jumphost.key"
-    environment:
-      <<: *oc_env
-  - name: Create public network
-    shell: >
-      #!/bin/bash
-      oc exec -n openstack openstackclient -- bash -c "openstack network list |grep public || openstack network create --external --provider-network-type flat --provider-physical-network datacentre public &&
-      openstack subnet create public --subnet-range 10.0.0.0/24 --allocation-pool start=10.0.0.200,end=10.0.0.250 --dns-nameserver 10.46.0.31 --network public &&
-      openstack router create router &&
-      openstack router set router --external-gateway public &&
-      openstack network list --external"
-    environment:
-      <<: *oc_env
-  - name: Run stf tests
-    vars:
-      ir_tripleo_overcloud_templates: 'custom-stf-ceph,stf-connectors-osp17.0,gnocchi-connectors-rbd,ceph-single-host-mode'
-    shell: |
-      #!/bin/bash
-      oc exec -n openstack openstackclient -- bash -c "pushd /home/cloud-admin/ && ANSIBLE_CALLBACK_WHITELIST=custom_logger ansible-playbook -i /home/cloud-admin/feature-verification-tests/default.inv /home/cloud-admin/feature-verification-tests/stf_functional_tests.yml" --tags {{ ir_tripleo_overcloud_templates }},OSP17.1
-    environment:
-      <<: *oc_env
+    - name: Create playbooks directory
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc exec -n openstack openstackclient -- bash -c "test -d /home/cloud-admin/playbooks/ || mkdir /home/cloud-admin/playbooks/"
+      environment:
+        <<: *oc_env
+    - name: Download jumphost key file
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc exec -n openstack openstackclient -- bash -c " \
+          curl --insecure  {{ devtools_stf_jumphost_key_url }} --output /home/cloud-admin/playbooks/jumphost.key; \
+          chmod 600 /home/cloud-admin/playbooks/jumphost.key \
+        "
+      environment:
+        <<: *oc_env
+    - name: Create public network
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc exec -n openstack openstackclient -- bash -c " \
+          openstack network list | grep public || \
+            openstack network create --external --provider-network-type flat --provider-physical-network datacentre public && \
+            openstack subnet create public \
+              --subnet-range 10.0.0.0/24 \
+              --allocation-pool start=10.0.0.200,end=10.0.0.250 \
+              --dns-nameserver 10.46.0.31 \
+              --network public && \
+            openstack router create router && \
+            openstack router set router --external-gateway public && \
+            openstack network list --external \
+        "
+      environment:
+        <<: *oc_env
+    - name: Run stf tests
+      vars:
+        ir_tripleo_overcloud_templates: "custom-stf-ceph,stf-connectors-osp17.0,gnocchi-connectors-rbd,ceph-single-host-mode"
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc exec -n openstack openstackclient -- bash -c " \
+          pushd /home/cloud-admin/ && \
+          ANSIBLE_CALLBACK_WHITELIST=custom_logger ansible-playbook \
+            -i /home/cloud-admin/feature-verification-tests/default.inv \
+            /home/cloud-admin/feature-verification-tests/stf_functional_tests.yml \
+          " \
+          --tags {{ ir_tripleo_overcloud_templates }},OSP17.1
+      environment:
+        <<: *oc_env

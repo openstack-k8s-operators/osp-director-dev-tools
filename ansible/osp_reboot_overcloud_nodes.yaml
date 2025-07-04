@@ -1,58 +1,58 @@
 ---
-- hosts: localhost
+- name: Configure
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+    - name: Include variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set directory for reboot nodes yaml files
+      ansible.builtin.set_fact:
+        reboot_yaml_dir: "{{ working_yamls_dir }}/reboot"
 
-  - name: Set directory for reboot nodes yaml files
-    set_fact:
-      reboot_yaml_dir: "{{ working_yamls_dir }}/reboot"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg: "yamls will be written to {{ reboot_yaml_dir }} locally"
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ reboot_yaml_dir }} locally"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ reboot_yaml_dir }}/"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ reboot_yaml_dir }}/"
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ reboot_yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ reboot_yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Render templates to yaml dir
+      vars:
+        controller_role: "{{ osp.vmset | dict2items | selectattr('value.count', '>', 0) | list | items2dict | first }}"
+      ansible.builtin.template:
+        src: "osp/{{ item }}.j2"
+        dest: "{{ reboot_yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - "reboot_nodes.yaml"
 
-  - name: Render templates to yaml dir
-    vars:
-      controller_role: "{{ osp.vmset|dict2items|selectattr('value.count', '>', 0) | list | items2dict | first }}"
-    template:
-      src: "osp/{{ item }}.j2"
-      dest: "{{ reboot_yaml_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - "reboot_nodes.yaml"
+    - name: Copy reboot playbook to openstackclient
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc cp -n openstack {{ reboot_yaml_dir }}/reboot_nodes.yaml openstackclient:/home/cloud-admin/reboot_nodes.yaml
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: copy reboot playbook to openstackclient
-    shell: |
-      #!/bin/bash
-      oc cp -n openstack {{ reboot_yaml_dir }}/reboot_nodes.yaml openstackclient:/home/cloud-admin/reboot_nodes.yaml
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-
-  - name: run reboot playbook via openstackclient
-    shell: |
-      oc rsh -n openstack openstackclient <<"EOF_RSH"
-        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/reboot_nodes.yaml
-      EOF_RSH
-    environment:
-      <<: *oc_env
+    - name: Run reboot playbook via openstackclient
+      ansible.builtin.shell: |
+        oc rsh -n openstack openstackclient <<"EOF_RSH"
+          ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/reboot_nodes.yaml
+        EOF_RSH
+      environment:
+        <<: *oc_env

@@ -1,33 +1,33 @@
 ---
 - name: Set directory for ctlplane yaml files
-  set_fact:
+  ansible.builtin.set_fact:
     ctlplane_yaml_dir: "{{ working_yamls_dir }}/ctlplane"
 
-- name: show yaml output dir
-  debug:
+- name: Show yaml output dir
+  ansible.builtin.debug:
     msg: "yamls will be written to {{ ctlplane_yaml_dir }} locally"
 
 - name: Clean yaml dir
-  file:
+  ansible.builtin.file:
     state: absent
     path: "{{ ctlplane_yaml_dir }}/"
 
 - name: Create yaml dir
-  file:
+  ansible.builtin.file:
     path: "{{ ctlplane_yaml_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy files to yaml dir
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ ctlplane_yaml_dir }}/"
-    mode: '0644'
+    mode: "0644"
   with_fileglob:
-  - "ctlplane/*"
+    - "ctlplane/*"
 
 - name: Delete ctlplane
-  shell: |
+  ansible.builtin.shell: |
     set -e
     oc delete --ignore-not-found -n openstack -f "{{ ctlplane_yaml_dir }}"
   environment: &oc_env
@@ -35,7 +35,7 @@
     KUBECONFIG: "{{ kubeconfig }}"
 
 - name: Delete keystone deployment
-  shell: |
+  ansible.builtin.shell: |
     set -e
     for i in $(oc get keystoneservices -o name); do oc delete -n openstack --ignore-not-found $i; done
     oc delete --ignore-not-found -n openstack deployment keystone
@@ -49,7 +49,7 @@
     <<: *oc_env
 
 - name: Delete databases
-  shell: |
+  ansible.builtin.shell: |
     set -e
     for i in $(oc get -n openstack mariadbdatabases -o name); do
       oc get -n openstack $i -o=json | jq '.metadata.finalizers = null' | oc apply -f -
@@ -62,36 +62,35 @@
 # Delete service custom configs
 #
 - name: Set directory for cinder yaml files
-  set_fact:
+  ansible.builtin.set_fact:
     cinder_yaml_dir: "{{ working_yamls_dir }}/cinder"
 
-- name: show yaml output dir
-  debug:
+- name: Show yaml output dir
+  ansible.builtin.debug:
     msg: "yamls will be written to {{ cinder_yaml_dir }} locally"
 
 - name: Clean yaml dir
-  file:
+  ansible.builtin.file:
     state: absent
     path: "{{ cinder_yaml_dir }}/"
 
 - name: Create yaml dir
-  file:
+  ansible.builtin.file:
     path: "{{ cinder_yaml_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy files to yaml dir
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ cinder_yaml_dir }}/"
-    mode: '0644'
+    mode: "0644"
   with_fileglob:
-  - "cinder/*"
+    - "cinder/*"
 
 - name: Delete Cinder custom ConfigMaps
-  shell: |
+  ansible.builtin.shell: |
     set -e
     oc delete --ignore-not-found -n openstack -f "{{ cinder_yaml_dir }}"
   environment:
     <<: *oc_env
-

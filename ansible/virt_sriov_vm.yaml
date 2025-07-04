@@ -7,45 +7,43 @@
     state: destroyed
 
 - name: Dump {{ item }} VM XML into temp file
-  shell: |
+  ansible.builtin.shell: |
     virsh dumpxml {{ item }} > {{ xml_dir }}/{{ item }}.xml
-
 - name: Add ioapic QEMU driver to {{ item }} VM XML
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ xml_dir }}/{{ item }}.xml"
-    insertbefore: '</features>'
+    insertbefore: "</features>"
     line: "    <ioapic driver='qemu'/>"
 
 - name: Add iommu device to {{ item }} VM XML
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ xml_dir }}/{{ item }}.xml"
-    insertbefore: '</devices>'
+    insertbefore: "</devices>"
     line: "    <iommu model='intel'/>"
 
 - name: Change machine type in {{ item }} VM XML
-  replace:
+  ansible.builtin.replace:
     path: "{{ xml_dir }}/{{ item }}.xml"
-    regexp: 'pc-q35-rhel8.2.0'
-    replace: 'pc-q35-5.0'
+    regexp: "pc-q35-rhel8.2.0"
+    replace: "pc-q35-5.0"
 
 - name: Change emulator location in {{ item }} VM XML
-  replace:
+  ansible.builtin.replace:
     path: "{{ xml_dir }}/{{ item }}.xml"
-    regexp: '/usr/libexec/qemu-kvm'
-    replace: '/usr/libexec/qemu-system-x86_64'
+    regexp: "/usr/libexec/qemu-kvm"
+    replace: "/usr/libexec/qemu-system-x86_64"
 
 - name: Update the {{ item }} VM with the latest XML changes
-  command: "virsh define {{ xml_dir }}/{{ item }}.xml"
-
+  ansible.builtin.command: "virsh define {{ xml_dir }}/{{ item }}.xml"
 - name: Remove USB device from {{ item }} VM
-  command: "virsh detach-device {{ item }} --file {{ xml_dir }}/usb-device.xml --config"
+  ansible.builtin.command: "virsh detach-device {{ item }} --file {{ xml_dir }}/usb-device.xml --config"
   register: usb_removed
   failed_when: usb_removed.stderr != "" and "device not found" not in usb_removed.stderr
 
 - name: Remove OSP network device from {{ item }} VM
-  command: "virsh detach-device {{ item }} --file {{ xml_dir }}/osp-interface-old.xml --config"
+  ansible.builtin.command: "virsh detach-device {{ item }} --file {{ xml_dir }}/osp-interface-old.xml --config"
   register: interface_removed
   failed_when: interface_removed.stderr != "" and "device not found" not in interface_removed.stderr
 
 - name: Attach e1000e OSP network device to {{ item }} VM
-  command: "virsh attach-device {{ item }} --file {{ xml_dir }}/osp-interface-new.xml --config"
+  ansible.builtin.command: "virsh attach-device {{ item }} --file {{ xml_dir }}/osp-interface-new.xml --config"

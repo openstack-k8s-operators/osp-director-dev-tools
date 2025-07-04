@@ -1,32 +1,33 @@
 ---
-- hosts: localhost
+- name: Install Namespace
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set directory for namespace yaml files
-    set_fact:
-      ns_yaml_dir: "{{ working_yamls_dir }}/namespace"
+    - name: Set directory for namespace yaml files
+      ansible.builtin.set_fact:
+        ns_yaml_dir: "{{ working_yamls_dir }}/namespace"
 
-  - name: Create namespace yaml dir
-    file:
-      path: "{{ ns_yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create namespace yaml dir
+      ansible.builtin.file:
+        path: "{{ ns_yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Render common namespace template to working dir
-    template:
-      src: "namespace/{{ item }}.j2"
-      dest: "{{ ns_yaml_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - "namespace.yaml"
+    - name: Render common namespace template to working dir
+      ansible.builtin.template:
+        src: "namespace/{{ item }}.j2"
+        dest: "{{ ns_yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - "namespace.yaml"
 
-  - name: Deploy namespace
-    shell: |
-      oc apply -f "{{ ns_yaml_dir }}/namespace.yaml"
-      oc apply -f "{{ ns_yaml_dir }}"
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Deploy namespace
+      ansible.builtin.shell: |
+        oc apply -f "{{ ns_yaml_dir }}/namespace.yaml"
+        oc apply -f "{{ ns_yaml_dir }}"
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"

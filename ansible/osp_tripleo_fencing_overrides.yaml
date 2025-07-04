@@ -1,61 +1,67 @@
 ---
-- hosts: localhost
+- name: Configure Fencing
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  # Note: with this the expectation is that the vmset with the largest role count is the one running the pacemaker cluster
-  - name: get VM role with biggest number of vmset role count
-    set_fact:
-      max_vm_role_count: "{{ osp.vmset[_role].count if osp.vmset[_role].count|int > max_vm_role_count|default(0)|int else max_vm_role_count|default(0) }}"
-    loop: "{{ osp.vmset.keys() | list }}"
-    loop_control:
-      loop_var: _role
+    # Note: with this the expectation is that the vmset with the largest role count is the one running the pacemaker cluster
+    - name: Get VM role with biggest number of vmset role count
+      ansible.builtin.set_fact:
+        max_vm_role_count: "{{
+          osp.vmset[_role].count
+            if osp.vmset[_role].count | int > max_vm_role_count | default(0) | int
+            else max_vm_role_count | default(0)
+          }}"
+      loop: "{{ osp.vmset.keys() | list }}"
+      loop_control:
+        loop_var: _role
 
-  - name: Fencing overrides for TripleO
-    block:
-    - name: Set directory for fencing override playbook
-      set_fact:
-        fencing_yaml_dir: "{{ working_yamls_dir }}/fencing"
+    - name: Fencing overrides for TripleO
+      when: max_vm_role_count | int > 2
+      block:
+        - name: Set directory for fencing override playbook
+          ansible.builtin.set_fact:
+            fencing_yaml_dir: "{{ working_yamls_dir }}/fencing"
 
-    - name: show yaml output dir
-      debug:
-        msg: "yamls will be written to {{ fencing_yaml_dir }} locally"
+        - name: Show yaml output dir
+          ansible.builtin.debug:
+            msg: "yamls will be written to {{ fencing_yaml_dir }} locally"
 
-    - name: Clean yaml dir
-      file:
-        state: absent
-        path: "{{ fencing_yaml_dir }}/"
+        - name: Clean yaml dir
+          ansible.builtin.file:
+            state: absent
+            path: "{{ fencing_yaml_dir }}/"
 
-    - name: Create yaml dir
-      file:
-        path: "{{ fencing_yaml_dir }}"
-        state: directory
-        mode: '0755'
+        - name: Create yaml dir
+          ansible.builtin.file:
+            path: "{{ fencing_yaml_dir }}"
+            state: directory
+            mode: "0755"
 
-    - name: Render template to yaml dir
-      template:
-        src: "osp/tripleo_fencing_overrides.yaml.j2"
-        dest: "{{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml"
-        mode: '0644'
+        - name: Render template to yaml dir
+          ansible.builtin.template:
+            src: "osp/tripleo_fencing_overrides.yaml.j2"
+            dest: "{{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml"
+            mode: "0644"
 
-    - name: Copy TripleO fencing overrides playbook to openstackclient
-      shell: |
-        #!/bin/bash
-        oc cp -n {{ namespace }} {{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml openstackclient:/home/cloud-admin/tripleo_fencing_overrides.yaml
-      environment: &oc_env
-        PATH: "{{ oc_env_path }}"
-        KUBECONFIG: "{{ kubeconfig }}"
+        - name: Copy TripleO fencing overrides playbook to openstackclient
+          ansible.builtin.shell: |
+            #!/bin/bash
+            oc cp -n {{ namespace }} {{ fencing_yaml_dir }}/tripleo_fencing_overrides.yaml openstackclient:/home/cloud-admin/tripleo_fencing_overrides.yaml
+          environment: &oc_env
+            PATH: "{{ oc_env_path }}"
+            KUBECONFIG: "{{ kubeconfig }}"
 
-    - name: Run TripleO fencing overrides playbook via openstackclient
-      shell: |
-        #!/bin/bash
-        oc rsh -n {{ namespace }} openstackclient ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/tripleo_fencing_overrides.yaml
-      environment:
-        <<: *oc_env
-    when: max_vm_role_count|int > 2
+        - name: Run TripleO fencing overrides playbook via openstackclient
+          ansible.builtin.shell: |
+            #!/bin/bash
+            oc rsh -n {{ namespace }} openstackclient \
+              ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/tripleo_fencing_overrides.yaml
+          environment:
+            <<: *oc_env

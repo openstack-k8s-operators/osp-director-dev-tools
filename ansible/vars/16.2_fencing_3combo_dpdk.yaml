@@ -12,7 +12,6 @@ ocp_master_vcpu: 12
 ocp_master_disk: 100
 
 osp_release_defaults:
-  networks: ipv4_subnet
   vmset:
     Controller:
       count: 3
@@ -33,8 +32,8 @@ osp_release_defaults:
   # OSP compute OCP worker settings
   bmset:
     Compute:
-        # number of OCP worker nodes should be OSP compute hosts
-        count: 0
+      # number of OCP worker nodes should be OSP compute hosts
+      count: 0
     ComputeOvsDpdk:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
@@ -59,32 +58,32 @@ osp_release_defaults:
   attach_configs:
     br-ctlplane:
       interfaces:
-      - type: bridge
-        name: br-ctlplane
-        interface: enp1s0
-        dhcp: true
-        mtu: 1500
+        - type: bridge
+          name: br-ctlplane
+          interface: enp1s0
+          dhcp: true
+          mtu: 1500
     br-osp:
       interfaces:
-      - type: bridge
-        name: br-osp
-        interface: enp7s0
-        mtu: 9000
-      - type: ethernet
-        interface: enp7s0
-        mtu: 9000
+        - type: bridge
+          name: br-osp
+          interface: enp7s0
+          mtu: 9000
+        - type: ethernet
+          interface: enp7s0
+          mtu: 9000
     br-ex:
       interfaces:
-      - type: bridge
-        name: br-ex-osp
-        interface: enp6s0
-        mtu: 1500
+        - type: bridge
+          name: br-ex-osp
+          interface: enp6s0
+          mtu: 1500
   networks: ipv4_hybrid
   extrafeatures:
-        - nfv_dpdk
+    - nfv_dpdk
   ovn_bridge_mac_mappings:
     phys_networks:
-    - name: datacentre
-      prefix: fa:16:3a
-    - name: datacentre2
-      prefix: fa:16:3b
+      - name: datacentre
+        prefix: fa:16:3a
+      - name: datacentre2
+        prefix: fa:16:3b

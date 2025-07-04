@@ -1,15 +1,15 @@
 ---
 - name: Set repo_dir for the {{ operator }} operator
-  set_fact:
+  ansible.builtin.set_fact:
     repo_dir: "{{ k8s_operators_dir }}/{{ operator }}"
 
 - name: Check if {{ operator }} repo is already checked out
-  stat:
+  ansible.builtin.stat:
     path: "{{ repo_dir }}"
   register: repo_dir_out
 
 - name: Clone {{ operator }} repo if not already present
-  git:
+  ansible.builtin.git:
     repo: "{{ base_url }}/{{ operator }}.git"
     dest: "{{ repo_dir }}"
     version: "{{ branch }}"

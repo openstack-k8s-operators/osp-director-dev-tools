@@ -1,5 +1,5 @@
 ---
-# this address needs to be reachable from IPMI/iDRAC if BM worker is used 
+# this address needs to be reachable from IPMI/iDRAC if BM worker is used
 ocp_ai_discovery_iso_server: 192.168.111.1
 
 # ocp_ai_ansible_repo: defaults to "https://github.com/openstack-k8s-operators/crucible.git"
@@ -24,7 +24,11 @@ ocp_ai_cli_lib_version: "2.3.0.post43"
 
 # WARNING: Changing these will likely break installation, so proceed with caution
 # Pin AI version based on ocp_version
-ocp_ai_version: "{{ 'v2.33.1' if ocp_version|string is version('4.15', '>=') else 'v2.20.0' if ocp_version|string is version('4.12', '>=') else 'v2.12.1' }}"
+ocp_ai_version: "{{
+   'v2.33.1' if ocp_version | string is version('4.15', '>=') else
+   'v2.20.0' if ocp_version | string is version('4.12', '>=') else
+   'v2.12.1'
+  }}"
 # These improve the speed of the spin-up of the image service container and thus reduce the
 # overall deployment time
 ocp_ai_image_hashes:

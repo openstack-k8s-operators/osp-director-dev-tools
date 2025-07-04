@@ -1,7 +1,6 @@
-#change this file to ansible/local-defaults.yaml to have affect
 ---
-osp_extra_env_files: ["services/neutron-ovn-dpdk.yaml","services/neutron-ovn-ha.yaml"]
-
+# change this file to ansible/local-defaults.yaml to have affect
+osp_extra_env_files: ["services/neutron-ovn-dpdk.yaml", "services/neutron-ovn-ha.yaml"]
 director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 
 default_timeout: 360
@@ -44,6 +43,5 @@ osp_ext_bm_interface: ens1f3
 
 # No dedicated OCP BM masters
 ocp_bm_masters: {}
-
 # No dedicated OCP BM workers
 ocp_bm_workers: {}

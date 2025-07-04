@@ -1,33 +1,33 @@
 ---
 - name: Set directory for ctlplane yaml files
-  set_fact:
+  ansible.builtin.set_fact:
     ctlplane_yaml_dir: "{{ working_yamls_dir }}/ctlplane"
 
-- name: show yaml output dir
-  debug:
+- name: Show yaml output dir
+  ansible.builtin.debug:
     msg: "yamls will be written to {{ ctlplane_yaml_dir }} locally"
 
 - name: Clean yaml dir
-  file:
+  ansible.builtin.file:
     state: absent
     path: "{{ ctlplane_yaml_dir }}/"
 
 - name: Create yaml dir
-  file:
+  ansible.builtin.file:
     path: "{{ ctlplane_yaml_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy files to yaml dir
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ ctlplane_yaml_dir }}/"
-    mode: '0644'
+    mode: "0644"
   with_fileglob:
-  - "ctlplane/*"
+    - "ctlplane/*"
 
 - name: Start ctlplane
-  shell: |
+  ansible.builtin.shell: |
     set -e
     oc apply -n openstack -f "{{ ctlplane_yaml_dir }}"
   environment: &oc_env
@@ -35,33 +35,33 @@
     KUBECONFIG: "{{ kubeconfig }}"
 
 - name: Wait for mariadb pod creation
-  shell: |
+  ansible.builtin.shell: |
     oc get -n openstack pod/mariadb
   environment:
     <<: *oc_env
   register: mariadb_pod_creation
   until: mariadb_pod_creation is not failed
-  retries: "{{ (default_timeout / 5)|int }}"
+  retries: "{{ (default_timeout / 5) | int }}"
   delay: 5
 
 - name: Wait for mariadb deployment
-  shell: |
+  ansible.builtin.shell: |
     oc wait -n openstack pod/mariadb --for condition=ready --timeout={{ default_timeout }}s
   environment:
     <<: *oc_env
 
 - name: Wait for keystone deployment to be created
-  shell: |
+  ansible.builtin.shell: |
     oc get -n openstack deployment/keystone
   environment:
     <<: *oc_env
   register: keystone_deployment_creation
   until: keystone_deployment_creation is not failed
-  retries: "{{ (default_timeout / 5)|int }}"
+  retries: "{{ (default_timeout / 5) | int }}"
   delay: 5
 
 - name: Wait for keystone deployment
-  shell: |
+  ansible.builtin.shell: |
     oc wait -n openstack deployment/keystone --for condition=Available \
         --timeout={{ default_timeout }}s
   environment:
@@ -70,7 +70,7 @@
 # This workaround can be removed when
 # https://issues.redhat.com/browse/OSPK8-248 is resolved.
 - name: Wait for keystone bootstrap
-  shell: |
+  ansible.builtin.shell: |
     set -e -o pipefail
 
     oc get -n openstack keystoneapi/keystone -o json | jq -re '.status.bootstrapHash'
@@ -78,5 +78,5 @@
     <<: *oc_env
   register: keystone_bootstrap
   until: keystone_bootstrap is not failed and keystone_bootstrap.stdout != ""
-  retries: "{{ (default_timeout / 5)|int }}"
+  retries: "{{ (default_timeout / 5) | int }}"
   delay: 5

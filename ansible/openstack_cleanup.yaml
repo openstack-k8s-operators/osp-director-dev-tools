@@ -1,162 +1,160 @@
 ---
-- hosts: localhost
+- name: OpenStack Cleanup
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: BaremetalSet cleanup
-    shell: |
-      set -e
-      oc delete -n openstack openstackbaremetalset --all
-      sleep 10
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    ignore_errors: true
+    - name: BaremetalSet cleanup
+      ansible.builtin.shell: |
+        set -e
+        oc delete -n openstack openstackbaremetalset --all
+        sleep 10
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      ignore_errors: true
 
-  - name: Wait for BMHs to settle
-    shell: |
-      for i in $(oc get bmh -A | grep -v STATE | grep openshift-worker | awk {'print $3'}); do
-          if [ "$i" != "available" ] && [ "$i" != "ready" ]; then
-             exit 1
-          fi
-      done
-    environment:
-      <<: *oc_env
-    retries: "{{ default_timeout | int }}"
-    delay: 5
-    register: result
-    until: result.rc == 0
-
-  - name: Openstack configmap cleanup
-    shell: |
-      for i in $(oc get -n openstack cm -o name | grep '^configmap\/tripleo-tarball-config'); do
-        oc delete -n openstack $i
-      done
-      for i in $(oc get -n openstack cm -o name | grep '^configmap\/heat-env-config'); do
-        oc delete -n openstack $i
-      done
-    environment:
-      <<: *oc_env
-
-  - name: Remaining openstack cleanup
-    command: "{{ item }}"
-    environment:
-      <<: *oc_env
-    ignore_errors: true
-    with_items:
-      - "oc delete -n openstack openstackdeploy --all"
-      - "oc delete -n openstack openstackconfiggenerator --all"
-      - "oc delete -n openstack openstackconfigversion --all"
-      - "oc delete -n openstack openstackephemeralheat --all"
-      - "oc delete -n openstack openstackcontrolplane --all"
-      - "oc delete -n openstack openstackvmset --all"
-      - "oc delete -n openstack openstackclient --all"
-      - "oc delete -n openstack openstacknetconfig --all"
-      - "oc delete -n openstack events --all"
-      - "oc delete -n openstack secret git-secret --ignore-not-found=true"
-
-  - name: check if ospnetwork NM vlan configs exists
-    become: true
-    become_user: root
-    shell: |
-      /usr/bin/nmcli --fields name con show | grep 'ospnetwork\.' | uniq
-    ignore_errors: true
-    register: ospnetworks
-
-  - name: Delete ospnetwork NM vlan configs (if any)
-    become: true
-    become_user: root
-    shell: |
-      /usr/bin/nmcli con delete "{{ item | trim }}"
-    with_items:
-      - "{{ ospnetworks.stdout_lines }}"
-    when: "'stdout_lines' in ospnetworks and ospnetworks.stdout_lines|length > 0"
-
-  # For virtualized 3-combo-node deployments, switch Metal3 provisioning network back to the default provisioning interface
-  - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
-    when: ocp_worker_count|int < 1 and ocp_num_masters > 0
-    block:
-    - name: Reset AI provisioning interface
-      when: ocp_ai|bool
-      block:
-      - name: Include AI variables
-        include_vars: vars/ocp_ai.yaml
-
-      - name: Reset AI provisioning interface
-        shell: |
-          oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "{{ ocp_ai_prov_interface }}"}]'
-        environment:
-          <<: *oc_env
-        ignore_errors: true
-
-    - name: Reset dev-scripts provisioning interface
-      when: not (ocp_ai|bool)
-      shell: |
-        oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "enp1s0"}]'
-      environment:
-          <<: *oc_env
-
-  - name: delete playbooks git repo dir
-    become: true
-    become_user: root
-    file:
-      path: "/home/{{ git.user }}/playbooks.git"
-      state: absent
-
-  - name: Remove bindings of PV's in Failed or Released state
-    environment:
-      <<: *oc_env
-    shell: |
-      #!/bin/bash
-      for i in $(oc get pv | egrep "Failed|Released" | awk {'print $1'}); do
-        oc patch pv $i --type='json' -p='[{"op": "remove", "path": "/spec/claimRef"}]'
-      done
-
-  - name: Detach additional Ceph OSD disks
-    become: true
-    become_user: root
-    shell: |
-      #!/bin/bash
-      for domain in $(virsh list --inactive --name); do
-        for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
-          virsh detach-disk  ${domain} ${disk} --persistent
-          rm -f /home/ocp/pool/${domain}-ceph-disk-${disk}.qcow2
+    - name: Wait for BMHs to settle
+      ansible.builtin.shell: |
+        for i in $(oc get bmh -A | grep -v STATE | grep openshift-worker | awk {'print $3'}); do
+            if [ "$i" != "available" ] && [ "$i" != "ready" ]; then
+               exit 1
+            fi
         done
-      done
+      environment:
+        <<: *oc_env
+      retries: "{{ default_timeout | int }}"
+      delay: 5
+      register: result
+      until: result.rc == 0
 
-  - name: Cleanup FreeIPA objects
-    become: true
-    become_user: root
-    ignore_errors: true
-    command: podman exec freeipa-server /root/bin/openstack_cleanup.sh
+    - name: Openstack configmap cleanup
+      ansible.builtin.shell: |
+        for i in $(oc get -n openstack cm -o name | grep '^configmap\/tripleo-tarball-config'); do
+          oc delete -n openstack $i
+        done
+        for i in $(oc get -n openstack cm -o name | grep '^configmap\/heat-env-config'); do
+          oc delete -n openstack $i
+        done
+      environment:
+        <<: *oc_env
 
-  - name: Remove local CA
-    become: true
-    become_user: root
-    file:
-      path: /opt/local_CA
-      state: absent
+    - name: Remaining openstack cleanup
+      ansible.builtin.command: "{{ item }}"
+      environment:
+        <<: *oc_env
+      ignore_errors: true
+      with_items:
+        - "oc delete -n openstack openstackdeploy --all"
+        - "oc delete -n openstack openstackconfiggenerator --all"
+        - "oc delete -n openstack openstackconfigversion --all"
+        - "oc delete -n openstack openstackephemeralheat --all"
+        - "oc delete -n openstack openstackcontrolplane --all"
+        - "oc delete -n openstack openstackvmset --all"
+        - "oc delete -n openstack openstackclient --all"
+        - "oc delete -n openstack openstacknetconfig --all"
+        - "oc delete -n openstack events --all"
+        - "oc delete -n openstack secret git-secret --ignore-not-found=true"
 
-  - name: Remove OSP public endpoint from ctlplane dnsmasq
-    become: true
-    become_user: root
-    file:
-      path: /etc/dnsmasq.d/ctlplane.conf
-      state: absent
-    register: ctlplane_dnsmasq
+    - name: Check if ospnetwork NM vlan configs exists
+      become: true
+      become_user: root
+      ansible.builtin.shell: |
+        /usr/bin/nmcli --fields name con show | grep 'ospnetwork\.' | uniq
+      ignore_errors: true
+      register: ospnetworks
 
-  - name: Restart dnsmasq
-    become: true
-    become_user: root
-    service:
-      name: dnsmasq
-      state: restarted
-    when:
-      - ctlplane_dnsmasq.changed
+    - name: Delete ospnetwork NM vlan configs (if any)
+      become: true
+      become_user: root
+      ansible.builtin.shell: |
+        /usr/bin/nmcli con delete "{{ item | trim }}"
+      with_items:
+        - "{{ ospnetworks.stdout_lines }}"
+      when: "'stdout_lines' in ospnetworks and ospnetworks.stdout_lines | length > 0"
 
-  - name: Remove "{{ working_vars_dir }}"
-    file:
-      path: "{{ working_vars_dir }}"
-      state: absent
+    # For virtualized 3-combo-node deployments, switch Metal3 provisioning network back to the default provisioning interface
+    - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
+      when: ocp_worker_count | int < 1 and ocp_num_masters > 0
+      block:
+        - name: Reset AI provisioning interface
+          when: ocp_ai | bool
+          block:
+            - name: Include AI variables
+              ansible.builtin.include_vars: vars/ocp_ai.yaml
+            - name: Reset AI provisioning interface
+              ansible.builtin.shell: |
+                oc patch provisioning provisioning-configuration --type='json' \
+                  -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "{{ ocp_ai_prov_interface }}"}]'
+              environment:
+                <<: *oc_env
+              ignore_errors: true
+
+        - name: Reset dev-scripts provisioning interface
+          when: not (ocp_ai | bool)
+          ansible.builtin.shell: |
+            oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "enp1s0"}]'
+          environment:
+            <<: *oc_env
+
+    - name: Delete playbooks git repo dir
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: "/home/{{ git.user }}/playbooks.git"
+        state: absent
+
+    - name: Remove bindings of PV's in Failed or Released state
+      environment:
+        <<: *oc_env
+      ansible.builtin.shell: |
+        #!/bin/bash
+        for i in $(oc get pv | egrep "Failed|Released" | awk {'print $1'}); do
+          oc patch pv $i --type='json' -p='[{"op": "remove", "path": "/spec/claimRef"}]'
+        done
+    - name: Detach additional Ceph OSD disks
+      become: true
+      become_user: root
+      ansible.builtin.shell: |
+        #!/bin/bash
+        for domain in $(virsh list --inactive --name); do
+          for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
+            virsh detach-disk  ${domain} ${disk} --persistent
+            rm -f /home/ocp/pool/${domain}-ceph-disk-${disk}.qcow2
+          done
+        done
+    - name: Cleanup FreeIPA objects
+      become: true
+      become_user: root
+      ignore_errors: true
+      ansible.builtin.command: podman exec freeipa-server /root/bin/openstack_cleanup.sh
+    - name: Remove local CA
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: /opt/local_CA
+        state: absent
+
+    - name: Remove OSP public endpoint from ctlplane dnsmasq
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: /etc/dnsmasq.d/ctlplane.conf
+        state: absent
+      register: ctlplane_dnsmasq
+
+    - name: Restart dnsmasq
+      become: true
+      become_user: root
+      ansible.builtin.service:
+        name: dnsmasq
+        state: restarted
+      when:
+        - ctlplane_dnsmasq.changed # noqa: no-handler
+
+    - name: Remove "{{ working_vars_dir }}"
+      ansible.builtin.file:
+        path: "{{ working_vars_dir }}"
+        state: absent

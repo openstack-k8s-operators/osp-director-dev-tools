@@ -1,6 +1,6 @@
 ---
-- name: olm cleanup
-  command: "{{ item }}"
+- name: Olm cleanup
+  ansible.builtin.command: "{{ item }}"
   environment:
     PATH: "{{ oc_env_path }}"
     KUBECONFIG: "{{ kubeconfig }}"

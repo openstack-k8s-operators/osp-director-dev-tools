@@ -1,11 +1,12 @@
 ---
-- hosts: localhost
+- name: Local Storage
+  hosts: localhost
   vars_files: vars/default.yaml
   become: true
   become_user: root
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Include Local Storage Operator tasks
-    include_tasks: local_storage_tasks.yaml
+    - name: Include Local Storage Operator tasks
+      ansible.builtin.include_tasks: local_storage_tasks.yaml

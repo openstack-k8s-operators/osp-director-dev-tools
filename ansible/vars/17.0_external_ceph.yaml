@@ -4,7 +4,8 @@ osp_release_auto_version: 17.0-RHEL-9
 osp_release_auto_compose: passed_phase2
 
 osp_release_defaults:
-  base_image_url: https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.0-20220420.0.x86_64.qcow2
+  base_image_url:
+    https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.0-20220420.0.x86_64.qcow2
   extrafeatures:
     - external_ceph
 
@@ -12,18 +13,17 @@ osp_release_defaults:
 # 17 requires RHCSv5 in TLV
 # https://code.engineering.redhat.com/gerrit/c/rhos-infrared/+/313490
 external_ceph_data:
-  cinder_rbd_pool_name: ''
-  nova_rbd_pool_name: ''
-  glance_rbd_pool_name: ''
-  cinder_backup_rbd_pool_name: ''
-  ceph_client_user_name: ''
-  ceph_cluster_fsid: ''
-  ceph_external_mon_host: ''
-  ceph_client_key: ''
+  cinder_rbd_pool_name: ""
+  nova_rbd_pool_name: ""
+  glance_rbd_pool_name: ""
+  cinder_backup_rbd_pool_name: ""
+  ceph_client_user_name: ""
+  ceph_cluster_fsid: ""
+  ceph_external_mon_host: ""
+  ceph_client_key: ""
 
 ephemeral_heat:
   heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
   heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
   mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
   rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
-

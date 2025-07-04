@@ -4,7 +4,7 @@
 #
 
 parameter_defaults:
-{% if containers_prepare_docker_insecure|default(False) %}
+{% if containers_prepare_docker_insecure | default(False) %}
   DockerInsecureRegistryAddress:
     - {{ registry_proxy }}
     - registry.access.redhat.com
@@ -17,8 +17,8 @@ parameter_defaults:
       name_prefix: rhosp17-openstack-
       namespace: {{ registry_proxy }}/rh-osbs
       ceph_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_image: {{ ceph_image_override|default(osp.ceph_image) }}
-      ceph_tag: {{ ceph_tag_override|default(osp.ceph_tag) }}
+      ceph_image: {{ ceph_image_override | default(osp.ceph_image) }}
+      ceph_tag: {{ ceph_tag_override | default(osp.ceph_tag) }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
       ceph_alertmanager_tag: v4.10
@@ -31,7 +31,7 @@ parameter_defaults:
       ceph_prometheus_image: openshift-ose-prometheus
       ceph_prometheus_namespace: {{ registry_proxy }}/rh-osbs
       ceph_prometheus_tag: v4.10
-{% if custom_config_action|default('deploy') in ("upgrade", "system-upgrade") and custom_config_rhel8_roles|default(False) %}
+{% if custom_config_action | default('deploy') in ("upgrade", "system-upgrade") and custom_config_rhel8_roles | default(False) %}
   ContainerImagePrepareRhel8: &container_image_prepare_rhel8
   - push_destination: false
     set:
@@ -39,8 +39,8 @@ parameter_defaults:
       name_prefix: rhosp17-openstack-
       namespace: {{ registry_proxy }}/rh-osbs
       ceph_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_image: {{ ceph_image_override|default(osp.ceph_image) }}
-      ceph_tag: {{ ceph_tag_override|default(osp.ceph_tag) }}
+      ceph_image: {{ ceph_image_override | default(osp.ceph_image) }}
+      ceph_tag: {{ ceph_tag_override | default(osp.ceph_tag) }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
       ceph_alertmanager_tag: v4.10
@@ -62,8 +62,8 @@ parameter_defaults:
       name_prefix: rhosp17-openstack-
       namespace: {{ registry_proxy }}/rh-osbs
       ceph_namespace: {{ registry_proxy }}/rh-osbs
-      ceph_image: {{ ceph_image_override|default(osp.ceph_image) }}
-      ceph_tag: {{ ceph_tag_override|default(osp.ceph_tag) }}
+      ceph_image: {{ ceph_image_override | default(osp.ceph_image) }}
+      ceph_tag: {{ ceph_tag_override | default(osp.ceph_tag) }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
       ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
       ceph_alertmanager_tag: v4.10
@@ -79,7 +79,7 @@ parameter_defaults:
     includes:
     - collectd
     - nova-libvirt
-{% for role in custom_config_rhel8_roles|default([]) %}
+{% for role in custom_config_rhel8_roles | default([]) %}
   {{ role }}ContainerImagePrepare: *container_image_prepare_rhel8
 {% endfor %}
 {% endif %}

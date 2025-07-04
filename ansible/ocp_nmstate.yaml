@@ -1,86 +1,87 @@
 ---
-- hosts: localhost
+- name: OpenShift NMState
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: NMState install
-    when: ocp_version is version('4.11', '>=')
-    block:
-    - name: Set directory for nmstate yaml files
-      set_fact:
-        yaml_dir: "{{ working_yamls_dir }}/nmstate"
+    - name: NMState install
+      when: ocp_version is version('4.11', '>=')
+      block:
+        - name: Set directory for nmstate yaml files
+          ansible.builtin.set_fact:
+            yaml_dir: "{{ working_yamls_dir }}/nmstate"
 
-    - name: show yaml output dir
-      debug:
-        msg: "yamls will be written to {{ yaml_dir }} locally"
+        - name: Show yaml output dir
+          ansible.builtin.debug:
+            msg: "yamls will be written to {{ yaml_dir }} locally"
 
-    - name: Clean yaml dir
-      file:
-        state: absent
-        path: "{{ yaml_dir }}"
+        - name: Clean yaml dir
+          ansible.builtin.file:
+            state: absent
+            path: "{{ yaml_dir }}"
 
-    - name: Create local yamldir
-      file:
-        path: "{{ yaml_dir }}"
-        state: directory
-        mode: '0755'
+        - name: Create local yamldir
+          ansible.builtin.file:
+            path: "{{ yaml_dir }}"
+            state: directory
+            mode: "0755"
 
-    - name: Render all NMState Operator templates
-      template:
-        src:  "nmstate/{{ item }}.j2"
-        dest: "{{ yaml_dir }}/{{ item }}"
-        mode: "0644"
-      with_items:
-      - namespace.yaml
-      - operatorgroup.yaml
-      - subscription.yaml
-      - deploy_operator.yaml
+        - name: Render all NMState Operator templates
+          ansible.builtin.template:
+            src: "nmstate/{{ item }}.j2"
+            dest: "{{ yaml_dir }}/{{ item }}"
+            mode: "0644"
+          with_items:
+            - namespace.yaml
+            - operatorgroup.yaml
+            - subscription.yaml
+            - deploy_operator.yaml
 
-    - name: Create namespace, operatorgroup and subscription
-      shell: |
-        set -e
-        oc apply -f "{{ yaml_dir }}/{{ item }}"
-      with_items:
-      - namespace.yaml
-      - operatorgroup.yaml
-      - subscription.yaml
-      environment: &oc_env
-        PATH: "{{ oc_env_path }}"
-        KUBECONFIG: "{{ kubeconfig }}"
+        - name: Create namespace, operatorgroup and subscription
+          ansible.builtin.shell: |
+            set -e
+            oc apply -f "{{ yaml_dir }}/{{ item }}"
+          with_items:
+            - namespace.yaml
+            - operatorgroup.yaml
+            - subscription.yaml
+          environment: &oc_env
+            PATH: "{{ oc_env_path }}"
+            KUBECONFIG: "{{ kubeconfig }}"
 
-    - name: wait for NMState subscription installed
-      shell: |
-        oc wait pod -n openshift-nmstate --for condition=Ready \
-            -l name=kubernetes-nmstate-operator \
-            --timeout={{ default_timeout }}s
-      environment:
-        <<: *oc_env
-      retries: 100
-      delay: 5
-      register: result
-      until: result.rc == 0
+        - name: Wait for NMState subscription installed
+          ansible.builtin.shell: |
+            oc wait pod -n openshift-nmstate --for condition=Ready \
+                -l name=kubernetes-nmstate-operator \
+                --timeout={{ default_timeout }}s
+          environment:
+            <<: *oc_env
+          retries: 100
+          delay: 5
+          register: result
+          until: result.rc == 0
 
-    - name: Install OpenShift nmstate instance
-      shell: |
-        set -e
-        sleep 10
-        oc apply -f "{{ yaml_dir }}/deploy_operator.yaml"
-      environment:
-        <<: *oc_env
-      retries: 5
-      delay: 30
-      register: result
-      until: result.rc == 0
+        - name: Install OpenShift nmstate instance
+          ansible.builtin.shell: |
+            set -e
+            sleep 10
+            oc apply -f "{{ yaml_dir }}/deploy_operator.yaml"
+          environment:
+            <<: *oc_env
+          retries: 5
+          delay: 30
+          register: result
+          until: result.rc == 0
 
-    - name: wait for OpenShift nmstate Operator instance to be up
-      shell: |
-        oc wait pod -n openshift-nmstate -l component=kubernetes-nmstate-handler \
-          --for condition=Ready --timeout={{ default_timeout }}s
-      environment:
-        <<: *oc_env
-      retries: 100
-      delay: 5
-      register: result
-      until: result.rc == 0
+        - name: Wait for OpenShift nmstate Operator instance to be up
+          ansible.builtin.shell: |
+            oc wait pod -n openshift-nmstate -l component=kubernetes-nmstate-handler \
+              --for condition=Ready --timeout={{ default_timeout }}s
+          environment:
+            <<: *oc_env
+          retries: 100
+          delay: 5
+          register: result
+          until: result.rc == 0

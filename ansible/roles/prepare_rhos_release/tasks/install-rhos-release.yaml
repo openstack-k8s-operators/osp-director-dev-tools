@@ -1,8 +1,9 @@
+---
 - name: Install rhos-release package
-  become: yes
+  become: true
   retries: 3
   delay: 5
-  package:
+  ansible.builtin.package:
     name: "{{ rhos_release_rpm_url }}"
   register: task_result
   until: task_result is success

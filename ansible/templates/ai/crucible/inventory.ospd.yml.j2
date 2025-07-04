@@ -44,13 +44,13 @@ all:
     # Proxy settings. These settings apply to: Assisted Installer, Day1 clusters and Day2 clusters.
     # This assumes the host where the AI runs and the OpenShift cluster share the same proxy settings.
 {% if enable_ocp_cluster_wide_proxy is defined and enable_ocp_cluster_wide_proxy is sameas true %}
-{% if ocp_http_proxy is defined and ocp_http_proxy|length %}
+{% if ocp_http_proxy is defined and ocp_http_proxy | length %}
     http_proxy: {{ ocp_http_proxy }}
 {% endif %}
-{% if ocp_https_proxy is defined and ocp_https_proxy|length %}
+{% if ocp_https_proxy is defined and ocp_https_proxy | length %}
     https_proxy: {{ ocp_https_proxy }}
 {% endif %}
-{% if ocp_no_proxy is defined and ocp_no_proxy|length %}
+{% if ocp_no_proxy is defined and ocp_no_proxy | length %}
     no_proxy: {{ ocp_no_proxy }}
 {% endif %}
 {% endif %}
@@ -61,23 +61,23 @@ all:
     assisted_installer_hardware_validation:
     - version: default
       master:
-        cpu_cores: {{ ocp_master_vcpu|default(4) }}
-        ram_mib: {{ ocp_master_memory|default(16384) }}
-        disk_size_gb: {{ ocp_master_disk|default(120) }}
+        cpu_cores: {{ ocp_master_vcpu | default(4) }}
+        ram_mib: {{ ocp_master_memory | default(16384) }}
+        disk_size_gb: {{ ocp_master_disk | default(120) }}
         installation_disk_speed_threshold_ms: 10
         network_latency_threshold_ms: 100
         packet_loss_percentage: 0
       worker:
-        cpu_cores: {{ ocp_worker_vcpu|default(2) }}
-        ram_mib: {{ ocp_worker_memory|default(8192) }}
-        disk_size_gb: {{ ocp_worker_disk|default(120) }}
+        cpu_cores: {{ ocp_worker_vcpu | default(2) }}
+        ram_mib: {{ ocp_worker_memory | default(8192) }}
+        disk_size_gb: {{ ocp_worker_disk | default(120) }}
         installation_disk_speed_threshold_ms: 10
         network_latency_threshold_ms: 1000
         packet_loss_percentage: 10
       sno:
-        cpu_cores: {{ ocp_master_vcpu|default(8) }}
-        ram_mib: {{ ocp_master_memory|default(16384) }}
-        disk_size_gb: {{ ocp_master_disk|default(120) }}
+        cpu_cores: {{ ocp_master_vcpu | default(8) }}
+        ram_mib: {{ ocp_master_memory | default(16384) }}
+        disk_size_gb: {{ ocp_master_disk | default(120) }}
         installation_disk_speed_threshold_ms: 10
 
     ai_version: {{ ocp_ai_version }}
@@ -184,7 +184,7 @@ all:
         - template: 50-worker-remove-ipi-leftovers.yml.j2
         - template: 02-fix-ingress-config.yml.j2
 {# Needed for 4.11 and earlier, but must not be included for 4.12+ #}
-{% if ocp_version|string is version('4.12', '<') %}
+{% if ocp_version | string is version('4.12', '<') %}
         - template: 01-master-node-scheduler.yml.j2
 {% endif %}
 
@@ -272,7 +272,7 @@ all:
           # gateway: 10.60.0.1
 
         http_store:
-          ansible_host: {{ ocp_ai_bm_cidr_prefix~'.1' if not (ocp_cluster_has_bm|bool) else ocp_bmc_interface_ip.stdout }}
+          ansible_host: {{ ocp_ai_bm_cidr_prefix~'.1' if not (ocp_cluster_has_bm | bool) else ocp_bmc_interface_ip.stdout }}
           ansible_connection: local
 
         ntp_host:

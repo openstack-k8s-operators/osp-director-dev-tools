@@ -9,7 +9,7 @@ spec:
   openStackClientStorageClass: {{ openstackclient_storage_class }}
   passwordSecret: userpassword
   caConfigMap: cacerts
-{% if osp.tlse|default(false)|bool %}
+{% if osp.tlse | default(false) | bool %}
   idmSecret: idmsecret
 {% endif %}
   virtualMachineRoles:
@@ -30,7 +30,7 @@ spec:
         storageClass: {{ role.root_disk.storage_class }}
         storageAccessMode:  {{ role.root_disk.storage_access_mode | default('ReadWriteMany', true) }}
         storageVolumeMode: {{ role.root_disk.storage_volume_mode | default('Filesystem', true) }}
-{% if role.additional_disks is defined and role.additional_disks|length %}
+{% if role.additional_disks is defined and role.additional_disks | length %}
       additionalDisks:
 {% for disk in role.additional_disks %}
         - name: {{ disk.name }}

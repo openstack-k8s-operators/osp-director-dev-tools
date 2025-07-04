@@ -5,10 +5,10 @@
   become_user: root
   block:
     - name: Create local CA directories
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
       with_items:
         - /opt/local_CA
         - /opt/local_CA/private
@@ -18,22 +18,23 @@
         - /opt/local_CA/certs/openstack
 
     - name: Create pki CA index
-      file:
+      ansible.builtin.file:
         path: /opt/local_CA/index.txt
         state: touch
-        mode: '0644'
+        mode: "0644"
         modification_time: preserve
         access_time: preserve
 
     - name: Create pki CA serial
-      copy:
+      ansible.builtin.copy:
         dest: /opt/local_CA/serial
         content: |
           1000
-        force: no
-        mode: '0644'
+        force: false
+        mode: "0644"
 
     - name: Create local CA
-      command:
-        cmd: openssl req -x509 -nodes -newkey rsa:4096 -keyout /opt/local_CA/private/cakey.pem -out /opt/local_CA/cacert.pem -days 7300 -extensions v3_ca -subj '/C=US/ST=North Carolina/L=Raleigh/O=Red Hat/OU=OSP Director Operator devtools/CN={{ ansible_fqdn }}' -batch
+      ansible.builtin.command:
+        cmd: openssl req -x509 -nodes -newkey rsa:4096 -keyout /opt/local_CA/private/cakey.pem -out /opt/local_CA/cacert.pem -days 7300 -extensions v3_ca -subj
+          '/C=US/ST=North Carolina/L=Raleigh/O=Red Hat/OU=OSP Director Operator devtools/CN={{ ansible_fqdn }}' -batch
         creates: /opt/local_CA/cacert.pem

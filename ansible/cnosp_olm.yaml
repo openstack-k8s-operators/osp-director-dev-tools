@@ -1,15 +1,15 @@
 #!/usr/bin/env ansible-playbook
 ---
-- hosts: localhost
+- name: CNOSP OLM
+  hosts: localhost
   vars_files: "vars/default.yaml"
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Deploy cnosp operators
-    include_role:
-      name: cnosp
-      tasks_from: olm
-    vars:
-      _csv_version: "{{ cnosp_csv_version }}"
-
+    - name: Deploy cnosp operators
+      ansible.builtin.include_role:
+        name: cnosp
+        tasks_from: olm
+      vars:
+        _csv_version: "{{ cnosp_csv_version }}"

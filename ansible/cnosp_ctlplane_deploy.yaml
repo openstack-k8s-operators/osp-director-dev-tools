@@ -1,38 +1,40 @@
 ---
-- hosts: convergence_base
+- name: CNOSP Prepare NFS service for cinder
+  hosts: convergence_base
   gather_facts: false
   become: true
   user: root
   vars_files: vars/default.yaml
 
   tasks:
-  - name: Prepare NFS service for cinder
-    include_role:
-      name: cnosp
-      tasks_from: cinder_nfs_prepare
+    - name: Prepare NFS service for cinder
+      ansible.builtin.include_role:
+        name: cnosp
+        tasks_from: cinder_nfs_prepare
 
-- hosts: localhost
+- name: CNOSP ControlPlane
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Config OSP ctlplane services
-    include_role:
-      name: cnosp
-      tasks_from: ctlplane_config
+    - name: Config OSP ctlplane services
+      ansible.builtin.include_role:
+        name: cnosp
+        tasks_from: ctlplane_config
 
-  - name: Setup OVN
-    include_role:
-      name: cnosp
-      tasks_from: ovn_install
+    - name: Setup OVN
+      ansible.builtin.include_role:
+        name: cnosp
+        tasks_from: ovn_install
 
-  - name: Deploy the ctlplane
-    include_role:
-      name: cnosp
-      tasks_from: ctlplane_deploy
+    - name: Deploy the ctlplane
+      ansible.builtin.include_role:
+        name: cnosp
+        tasks_from: ctlplane_deploy
 
-  - name: Deploy the cnosp openstackclient
-    include_role:
-      name: cnosp
-      tasks_from: openstackclient_install
+    - name: Deploy the cnosp openstackclient
+      ansible.builtin.include_role:
+        name: cnosp
+        tasks_from: openstackclient_install

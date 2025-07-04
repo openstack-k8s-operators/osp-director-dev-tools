@@ -1,23 +1,23 @@
 ---
 - name: Get stats of the local feature dir
   ansible.builtin.stat:
-    path="{{ feature_dir }}"
+    path: "{{ feature_dir }}"
   delegate_to: localhost
   register: p
 
-- name: copy feature files if directory exists
+- name: Copy feature files if directory exists
   when: p.stat.exists
   block:
-  - name: Find template files in feature dir
-    delegate_to: localhost
-    find:
-      paths: "{{ feature_dir }}"
-      patterns: "^.*\\.j2"
-      use_regex: yes
-    register: f
-  - name: copy feature {{ feature }} files to custom tripleo environment files
-    template:
-      src: "{{ item.path }}"
-      dest: "{{ ooo_yaml_dir }}/{{ item.path | basename | splitext | first }}"
-      mode: '0644'
-    with_items: "{{ f.files }}"
+    - name: Find template files in feature dir
+      delegate_to: localhost
+      ansible.builtin.find:
+        paths: "{{ feature_dir }}"
+        patterns: "^.*\\.j2"
+        use_regex: true
+      register: f
+    - name: Copy feature {{ feature }} files to custom tripleo environment files
+      ansible.builtin.template:
+        src: "{{ item.path }}"
+        dest: "{{ ooo_yaml_dir }}/{{ item.path | basename | splitext | first }}"
+        mode: "0644"
+      with_items: "{{ f.files }}"

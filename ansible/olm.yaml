@@ -1,76 +1,77 @@
 #!/usr/bin/env ansible-playbook
 ---
-- hosts: localhost
+- name: OLM
+  hosts: localhost
   vars_files: "vars/default.yaml"
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set directory for osp-director-operator yaml files
-    set_fact:
-      yaml_dir: "{{ working_yamls_dir }}/osp-director-operator"
+    - name: Set directory for osp-director-operator yaml files
+      ansible.builtin.set_fact:
+        yaml_dir: "{{ working_yamls_dir }}/osp-director-operator"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ yaml_dir }}"
-      state: directory
-      mode: "0755"
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: render all osp-director-operator templates
-    template:
-      src:  "osp-director-operator/{{ item }}.j2"
-      dest: "{{ yaml_dir }}/{{ item }}"
-      mode: "0644"
-    with_items:
-    - catalogsource.yaml
-    - operatorgroup.yaml
-    - subscription.yaml
+    - name: Render all osp-director-operator templates
+      ansible.builtin.template:
+        src: "osp-director-operator/{{ item }}.j2"
+        dest: "{{ yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - catalogsource.yaml
+        - operatorgroup.yaml
+        - subscription.yaml
 
-  - name: Deploy the catalogsource
-    shell: |
-      oc apply -f "{{ yaml_dir }}/catalogsource.yaml"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Deploy the catalogsource
+      ansible.builtin.shell: |
+        oc apply -f "{{ yaml_dir }}/catalogsource.yaml"
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: Waiting for packagemanifest 'osp-director-operator' to be created
-    shell: |
-      oc get -n "{{ namespace }}" packagemanifest/osp-director-operator
-    environment:
-      <<: *oc_env
-    register: packagemanifest_creation
-    until: packagemanifest_creation is not failed
-    retries: "{{ (default_timeout / 5)|int }}"
-    delay: 5
+    - name: Waiting for packagemanifest 'osp-director-operator' to be created
+      ansible.builtin.shell: |
+        oc get -n "{{ namespace }}" packagemanifest/osp-director-operator
+      environment:
+        <<: *oc_env
+      register: packagemanifest_creation
+      until: packagemanifest_creation is not failed
+      retries: "{{ (default_timeout / 5) | int }}"
+      delay: 5
 
-  - name: Deploy the operatorgroup
-    shell: |
-      oc apply -f "{{ yaml_dir }}/operatorgroup.yaml"
-    environment:
-      <<: *oc_env
+    - name: Deploy the operatorgroup
+      ansible.builtin.shell: |
+        oc apply -f "{{ yaml_dir }}/operatorgroup.yaml"
+      environment:
+        <<: *oc_env
 
-  - name: Deploy the subscription
-    shell: |
-      oc apply -f "{{ yaml_dir }}/subscription.yaml"
-    environment:
-      <<: *oc_env
+    - name: Deploy the subscription
+      ansible.builtin.shell: |
+        oc apply -f "{{ yaml_dir }}/subscription.yaml"
+      environment:
+        <<: *oc_env
 
-  - name: Waiting for deployment 'osp-director-operator-controller-manager' to be created
-    shell: |
-      oc get -n "{{ namespace }}" deploy/osp-director-operator-controller-manager
-    environment:
-      <<: *oc_env
-    register: manager_creation
-    until: manager_creation is not failed
-    retries: "{{ (default_timeout / 5)|int }}"
-    delay: 5
+    - name: Waiting for deployment 'osp-director-operator-controller-manager' to be created
+      ansible.builtin.shell: |
+        oc get -n "{{ namespace }}" deploy/osp-director-operator-controller-manager
+      environment:
+        <<: *oc_env
+      register: manager_creation
+      until: manager_creation is not failed
+      retries: "{{ (default_timeout / 5) | int }}"
+      delay: 5
 
-  - name: Waiting for osp-director-operator-controller-manager pod to be ready
-    shell: |
-      oc wait pod -l control-plane=controller-manager --for condition=ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
-    environment:
-      <<: *oc_env
-    retries: 5
-    delay: 5
-    register: result
-    until: result.rc == 0
+    - name: Waiting for osp-director-operator-controller-manager pod to be ready
+      ansible.builtin.shell: |
+        oc wait pod -l control-plane=controller-manager --for condition=ready -n "{{ namespace }}" --timeout={{ default_timeout }}s
+      environment:
+        <<: *oc_env
+      retries: 5
+      delay: 5
+      register: result
+      until: result.rc == 0

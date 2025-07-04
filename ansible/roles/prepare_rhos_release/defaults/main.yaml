@@ -1,5 +1,6 @@
+---
 # Set default rhos-release location
-rhos_release_bin: '/usr/bin/rhos-release'
+rhos_release_bin: /usr/bin/rhos-release
 
 # Default rhos-release RPM path
-rhos_release_rpm_url: 'http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm'
+rhos_release_rpm_url: http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm

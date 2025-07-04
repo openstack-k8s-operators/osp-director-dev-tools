@@ -1,81 +1,81 @@
 ---
-- hosts: localhost
+- name: OpenShift Client Environment File
+  hosts: localhost
   gather_facts: false
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
   tasks:
+    - name: Install pip
+      ansible.builtin.dnf:
+        name:
+          - python3-pip
+      become: true
 
-  - name: Install pip
-    yum:
-      name:
-      - python3-pip
-    become: yes
+    - name: Upgrade pip
+      ansible.builtin.pip:
+        name: pip>=21.1
+        executable: /usr/bin/pip-3
+      become: true
 
-  - name: Upgrade pip
-    pip:
-      name: pip>=21.1
-      executable: /usr/bin/pip-3
-    become: yes
+    - name: Install OpenStack Client
+      ansible.builtin.pip:
+        name:
+          - python-openstackclient
+          - osc-placement
+        extra_args: "--user"
+        executable: /usr/bin/pip-3
+      become: true
 
-  - name: Upgrade pip
-    pip:
-      name:
-        - python-openstackclient
-        - osc-placement
-      extra_args: "--user"
-      executable: /usr/bin/pip-3
-    become: yes
+    - name: Create environment file
+      ansible.builtin.template:
+        src: oc_env.sh.j2
+        dest: "{{ working_dir }}/oc_env.sh"
+        mode: "0744"
 
-  - name: Create environment file
-    template:
-      src: oc_env.sh.j2
-      dest: "{{ working_dir }}/oc_env.sh"
-      mode: '0744'
+    - name: Store local locations for fetch targets
+      ansible.builtin.set_fact:
+        kubeconfig: "{{ kubeconfig }}"
+        working_bin_dir: "{{ working_bin_dir }}"
 
-  - name: Store local locations for fetch targets
-    set_fact:
-      kubeconfig: "{{ kubeconfig }}"
-      working_bin_dir: "{{ working_bin_dir }}"
-
-- hosts: convergence_base
+- name: OpenShift Client
+  hosts: convergence_base
   gather_facts: false
   become: true
   become_user: ocp
   vars_files: vars/default.yaml
   tasks:
+    - name: Copy kubeconfig for dev-scripts
+      ansible.builtin.fetch:
+        dest: "{{ hostvars['localhost']['kubeconfig'] }}"
+        src: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
+        flat: true
+      when: not (ocp_ai | bool)
 
-  - name: Copy kubeconfig for dev-scripts
-    fetch:
-      dest: "{{ hostvars['localhost']['kubeconfig'] }}"
-      src: "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/auth/kubeconfig"
-      flat: true
-    when: not (ocp_ai|bool)
+    - name: Copy kubeconfig for assisted installer
+      ansible.builtin.fetch:
+        dest: "{{ hostvars['localhost']['kubeconfig'] }}"
+        src: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
+        flat: true
+        become: true
+      when: ocp_ai | bool
 
-  - name: Copy kubeconfig for assisted installer
-    fetch:
-      dest: "{{ hostvars['localhost']['kubeconfig'] }}"
-      src: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
-      flat: true
-      become: true
-    when: ocp_ai|bool
+    - name: Copy oc binary
+      ansible.builtin.fetch:
+        dest: "{{ hostvars['localhost']['working_bin_dir'] }}/"
+        src: "/usr/local/bin/oc"
+        flat: true
+        mode: "0755"
 
-  - name: Copy oc binary
-    fetch:
-      dest: "{{ hostvars['localhost']['working_bin_dir'] }}/"
-      src: "/usr/local/bin/oc"
-      flat: true
-      mode: 0755
-
-- hosts: localhost
+- name: OpenShift Client Permissions
+  hosts: localhost
   gather_facts: false
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
   tasks:
-
-  - name: Fix permissions on oc binary
-    file:
-      path: "{{ working_bin_dir }}/oc"
-      mode: 0755
-      state: file
+    - name: Fix permissions on oc binary
+      ansible.builtin.file:
+        path: "{{ working_bin_dir }}/oc"
+        mode: "0755"
+        state: file
