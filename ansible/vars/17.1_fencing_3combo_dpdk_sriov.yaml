@@ -3,7 +3,6 @@ enable_fencing: true
 csv_version: latest-17.1
 osp_release_auto_version: 17.1-RHEL-9
 
-
 # (mschuppert) can be deleted when released
 openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
 
@@ -12,7 +11,6 @@ ephemeral_heat:
   heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
   mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
   rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
-
 
 openstackclient_networks:
   - ctlplane
@@ -25,8 +23,8 @@ ocp_master_vcpu: 12
 ocp_master_disk: 100
 
 osp_release_defaults:
-  base_image_url: https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
-  networks: ipv4_subnet
+  base_image_url:
+    https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
   vmset:
     Controller:
       count: 0
@@ -56,8 +54,8 @@ osp_release_defaults:
   # OSP compute OCP worker settings
   bmset:
     Compute:
-        # number of OCP worker nodes should be OSP compute hosts
-        count: 0
+      # number of OCP worker nodes should be OSP compute hosts
+      count: 0
     ComputeOvsDpdkSriov:
       # number of OCP worker nodes should be OSP compute hosts
       count: 2
@@ -82,32 +80,32 @@ osp_release_defaults:
   attach_configs:
     br-ctlplane:
       interfaces:
-      - type: bridge
-        name: br-ctlplane
-        interface: enp1s0
-        dhcp: true
-        mtu: 1500
+        - type: bridge
+          name: br-ctlplane
+          interface: enp1s0
+          dhcp: true
+          mtu: 1500
     br-osp:
       interfaces:
-      - type: bridge
-        name: br-osp
-        interface: enp7s0
-        mtu: 9000
-      - type: ethernet
-        interface: enp7s0
-        mtu: 9000
+        - type: bridge
+          name: br-osp
+          interface: enp7s0
+          mtu: 9000
+        - type: ethernet
+          interface: enp7s0
+          mtu: 9000
     br-ex:
       interfaces:
-      - type: bridge
-        name: br-ex-osp
-        interface: enp6s0
-        mtu: 1500
+        - type: bridge
+          name: br-ex-osp
+          interface: enp6s0
+          mtu: 1500
   networks: ipv4_hybrid
   extrafeatures:
-        - nfv_dpdk_sriov
+    - nfv_dpdk_sriov
   ovn_bridge_mac_mappings:
     phys_networks:
-    - name: datacentre
-      prefix: fa:16:3a
-    - name: datacentre2
-      prefix: fa:16:3b
+      - name: datacentre
+        prefix: fa:16:3a
+      - name: datacentre2
+        prefix: fa:16:3b

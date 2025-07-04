@@ -63,14 +63,14 @@ $TEMPESTCONF \
   --debug \
   --create \
   --network-id ${PUB_NETWORK_ID} \
-{% if tempest_disable_feature_dict is defined and tempest_disable_feature_dict|length %}
+{% if tempest_disable_feature_dict is defined and tempest_disable_feature_dict | length %}
 {% for component, features in tempest_disable_feature_dict.items() %}
 {% for feature, setting in features.items() %}
   --remove {{ component }}.{{ feature }} {{ setting }} \
 {% endfor %}
 {% endfor %}
 {% endif %}
-{% if tempest_enable_feature_dict is defined and tempest_enable_feature_dict|length %}
+{% if tempest_enable_feature_dict is defined and tempest_enable_feature_dict | length %}
 {% for component, features in tempest_enable_feature_dict.items() %}
 {% for feature, setting in features.items() %}
   {{ component }}.{{ feature }} {{ setting }} \
@@ -81,7 +81,7 @@ $TEMPESTCONF \
 
 tempest cleanup --init-saved-state
 
-{% if (tempest_smoketest|bool) %}
+{% if (tempest_smoketest | bool) %}
   # Run for example smoke tests
   tempest run --smoke
 {% else %}

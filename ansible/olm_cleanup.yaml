@@ -1,37 +1,37 @@
 ---
-- hosts: localhost
+- name: OLM Cleanup
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-
-  #NOTE: operatorgroup is named differently depending if it is created via
+  # NOTE: operatorgroup is named differently depending if it is created via
   # the webUI so we register the name here and delete it below by name
-  - name: set operatorgroup name
-    ignore_errors: true
-    shell: >
-      oc get operatorgroup -n {{ namespace }} -o name
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: operatorgroup_name
+    - name: Set operatorgroup name
+      ignore_errors: true
+      ansible.builtin.shell: |
+        oc get operatorgroup -n {{ namespace }} -o name
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      register: operatorgroup_name
 
-  - name: Lookup currentCSV for osp-director-operator
-    shell: >
-      oc get -n {{ namespace }} -o json packagemanifest osp-director-operator | jq -re .status.channels[0].currentCSV
-    register: _current_csv
-    environment:
-      <<: *oc_env
+    - name: Lookup currentCSV for osp-director-operator
+      ansible.builtin.shell: |
+        oc get -n {{ namespace }} -o json packagemanifest osp-director-operator | \
+          jq -re .status.channels[0].currentCSV
+      register: _current_csv
+      environment:
+        <<: *oc_env
 
-  - name: olm cleanup
-    command: "{{ item }}"
-    environment:
-      <<: *oc_env
-    ignore_errors: true
-    with_items:
-      - "oc delete -n {{ namespace }} csv {{ _current_csv.stdout }}"
-      - "oc delete -n {{ namespace }} subscription osp-director-operator"
-      - "oc delete -n {{ namespace }} catalogsource osp-director-operator-index"
-      - "oc delete -n {{ namespace }} {{ operatorgroup_name.stdout }}"
-
+    - name: Olm cleanup
+      ansible.builtin.command: "{{ item }}"
+      environment:
+        <<: *oc_env
+      ignore_errors: true
+      with_items:
+        - "oc delete -n {{ namespace }} csv {{ _current_csv.stdout }}"
+        - "oc delete -n {{ namespace }} subscription osp-director-operator"
+        - "oc delete -n {{ namespace }} catalogsource osp-director-operator-index"
+        - "oc delete -n {{ namespace }} {{ operatorgroup_name.stdout }}"

@@ -2,30 +2,30 @@
 apiVersion: osp-director.openstack.org/v1beta1
 kind: OpenStackConfigGenerator
 metadata:
-  name: "{{ config_generator_name|default('default') }}"
+  name: "{{ config_generator_name | default('default') }}"
   namespace: openstack
 spec:
   enableFencing: {{ enable_fencing }}
   gitSecret: git-secret
   heatEnvs:
-{%- if osp.tls_public_endpoints|default(false)|bool %}
-{%- if osp.tls_public_endpoints_ip|default(false)|bool %}
+{%- if osp.tls_public_endpoints | default(false) | bool %}
+{%- if osp.tls_public_endpoints_ip | default(false) | bool %}
     - ssl/tls-endpoints-public-ip.yaml
 {%- else %}
     - ssl/tls-endpoints-public-dns.yaml
 {%- endif %}
     - ssl/enable-tls.yaml
 {%- endif %}
-{%- if config_generator_action|default('deploy') == 'update' %}
+{%- if config_generator_action | default('deploy') == 'update' %}
     - lifecycle/update-prepare.yaml
 {%- endif %}
-{%- if config_generator_action|default('deploy') == 'upgrade' %}
+{%- if config_generator_action | default('deploy') == 'upgrade' %}
     - lifecycle/upgrade-prepare.yaml
 {%- endif %}
-{%- if config_generator_action|default('deploy') in ['upgrade', 'ceph-upgrade', 'system-upgrade'] %}
+{%- if config_generator_action | default('deploy') in ['upgrade', 'ceph-upgrade', 'system-upgrade'] %}
     - nova-hw-machine-type-upgrade.yaml
 {%- endif %}
-{%- if osp.tlse|default(false)|bool %}
+{%- if osp.tlse | default(false) | bool %}
     - ssl/tls-everywhere-endpoints-dns.yaml
     - services/haproxy-public-tls-certmonger.yaml
     - ssl/enable-internal-tls.yaml
@@ -33,21 +33,21 @@ spec:
 {%- if "dcn" in osp.extrafeatures %}
     - nova-az-config.yaml
 {%- endif %}
-{%- if custom_config_dmbs_remote_site|default(false) %}
+{%- if custom_config_dmbs_remote_site | default(false) %}
     - dcn-storage.yaml
 {%- endif %}
-{%- for envfile in osp_extra_env_files|default([]) %}
+{%- for envfile in osp_extra_env_files | default([]) %}
     - {{ envfile }}
 {%- endfor %}
-  heatEnvConfigMap: heat-env-config-{{ custom_config_name|default('deploy') }}
-  tarballConfigMap: tripleo-tarball-config-{{ custom_config_name|default('deploy') }}
-{%- if config_generator_roles|default(False) %}
+  heatEnvConfigMap: heat-env-config-{{ custom_config_name | default('deploy') }}
+  tarballConfigMap: tripleo-tarball-config-{{ custom_config_name | default('deploy') }}
+{%- if config_generator_roles | default(False) %}
   roles:
   {%- for role in config_generator_roles %}
     - {{ role }}
   {%- endfor %}
 {%- endif %}
-{%- if config_generator_role_overrides|default(False) %}
+{%- if config_generator_role_overrides | default(False) %}
   tripleoRoleOverride:
     {{ config_generator_role_overrides|to_nice_yaml|indent(4) }}
 {%- endif %}

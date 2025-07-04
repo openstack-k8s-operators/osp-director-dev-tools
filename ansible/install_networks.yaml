@@ -1,197 +1,192 @@
 ---
-- hosts: localhost
+- name: Install Networks
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Include network file {{ osp.networks }}.yaml
-    include_vars:
-      file: "{{ osp.networks }}.yaml"
+    - name: Include network file {{ osp.networks }}.yaml
+      ansible.builtin.include_vars:
+        file: "{{ osp.networks }}.yaml"
 
-  - name: Set directory for networks yaml files
-    set_fact:
-      network_yaml_dir: "{{ working_yamls_dir }}/networks"
+    - name: Set directory for networks yaml files
+      ansible.builtin.set_fact:
+        network_yaml_dir: "{{ working_yamls_dir }}/networks"
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ network_yaml_dir }} locally"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg: "yamls will be written to {{ network_yaml_dir }} locally"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ network_yaml_dir }}/"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ network_yaml_dir }}/"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ network_yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ network_yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Render templates to yaml dir
-    template:
-      src: "osp/netconfig/osnetconfig.yaml.j2"
-      dest: "{{ network_yaml_dir }}/osnetconfig.yaml"
-      mode: '0644'
+    - name: Render templates to yaml dir
+      ansible.builtin.template:
+        src: "osp/netconfig/osnetconfig.yaml.j2"
+        dest: "{{ network_yaml_dir }}/osnetconfig.yaml"
+        mode: "0644"
 
-  - name: Start networks
-    shell: |
-      set -e
-      oc apply -n {{ namespace }} -f "{{ network_yaml_dir }}"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    # Retry on failure, probably osnet does not exist yet
-    retries: 15
-    delay: 10
+    - name: Start networks
+      ansible.builtin.shell: |
+        set -e
+        oc apply -n {{ namespace }} -f "{{ network_yaml_dir }}"
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      # Retry on failure, probably osnet does not exist yet
+      retries: 15
+      delay: 10
 
-  - name: wait for osnetcfg to have configured interfaces + networks
-    shell: |
-      set -e
-      oc wait osnetcfg --for condition=provisioned -n {{ namespace }} openstacknetconfig --timeout="{{ (default_timeout * 2)|int }}s"
-    environment:
-      <<: *oc_env
+    - name: Wait for osnetcfg to have configured interfaces + networks
+      ansible.builtin.shell: |
+        set -e
+        oc wait osnetcfg --for condition=provisioned -n {{ namespace }} openstacknetconfig --timeout="{{ (default_timeout * 2) | int }}s"
+      environment:
+        <<: *oc_env
 
-  # For virtualized 3-combo-node deployments, switch Metal3 provisioning network to the OSP control plane bridge
-  - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
-    when: ocp_worker_count|int < 1 and ocp_num_masters > 0
-    environment:
-      <<: *oc_env
-    block:
-    - name: Get name of OSP control plane bridge on OCP nodes
-      shell: |
-        oc get osnet -n {{ namespace }} ctlplane -o json | jq -r '.spec.attachConfiguration'
-      register: osnetconfig_ctlplane_intf
+    # For virtualized 3-combo-node deployments, switch Metal3 provisioning network to the OSP control plane bridge
+    - name: Adjust Metal3 provisioning network for OCP 3-combo-node scenario
+      when: ocp_worker_count | int < 1 and ocp_num_masters > 0
+      environment:
+        <<: *oc_env
+      block:
+        - name: Get name of OSP control plane bridge on OCP nodes
+          ansible.builtin.shell: |
+            oc get osnet -n {{ namespace }} ctlplane -o json | jq -r '.spec.attachConfiguration'
+          register: osnetconfig_ctlplane_intf
 
-    - name: Patch Metal3 Provisioning CR with desired interface name
-      shell: |
-        oc patch provisioning provisioning-configuration --type='json' -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "{{ osnetconfig_ctlplane_intf.stdout }}"}]'
+        - name: Patch Metal3 Provisioning CR with desired interface name
+          ansible.builtin.shell: |
+            oc patch provisioning provisioning-configuration --type='json' \
+              -p='[{"op": "replace", "path": "/spec/provisioningInterface", "value": "{{ osnetconfig_ctlplane_intf.stdout }}"}]'
+    - name: Allow BOOTP 0.0.0.0 source on trusted network
+      become: true
+      become_user: root
+      ansible.builtin.shell: |
+        firewall-cmd --zone=trusted --add-source=0.0.0.0/32 {{ item }}
+      with_items:
+        - ""
+        - "--permanent"
 
-  # Notes:
-  # * can not use nmcli module https://github.com/ansible/ansible/issues/48055
-  # * don't apply these persistent, in case of a host reboot those need to be reapplied
-
-  # REMOVEME?: Seems to be needed in RHEL 9, otherwise PXE boot requests coming in on
-  # ostestpr bridge from source 0.0.0.0 are dropped
-  - name: Allow BOOTP 0.0.0.0 source on trusted network
-    become: true
-    become_user: root
-    shell: |
-      firewall-cmd --zone=trusted --add-source=0.0.0.0/32 {{ item }}
-    with_items:
-      - ""
-      - "--permanent"
-
-  - name: Create IPv4 gateways on ctlplane network
-    become: true
-    become_user: root
-    vars:
-      cidr_suffix: "{{ item.1.ipv4.cidr | regex_search('.*/(.+)', '\\1') | first }}"
-    shell: |
-      set -e
-      ip addr replace {{ item.1.ipv4.gateway }}/{{ cidr_suffix }} dev {{ ocp_cluster_name }}pr
-      firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
-      firewall-cmd --zone=trusted --add-source={{ item.1.ipv4.cidr }}
-      iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
-      iptables -t nat -A POSTROUTING -o {{ ocp_cluster_name }}pr -d {{ item.1.ipv4.cidr }} -j SNAT --to-source {{ item.1.ipv4.gateway }}
-    with_subelements:
-    - "{{ osp_networks }}"
-    - subnets
-    when:
-    - item.1.ipv4.gateway is defined
-    - item.0.is_control_plane|default(False)
-
-  - name: Create IPv6 gateways on ctlplane network
-    become: true
-    become_user: root
-    vars:
-      cidr_suffix: "{{ item.1.ipv6.cidr | regex_search('.*/(.+)', '\\1') | first }}"
-    shell: |
-      set -e
-      ip addr replace {{ item.1.ipv6.gateway }}/{{ cidr_suffix }} dev {{ ocp_cluster_name }}pr
-      firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
-      firewall-cmd --zone=trusted --add-source={{ item.1.ipv6.cidr }}
-      ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
-      ip6tables -t nat -A POSTROUTING -o {{ ocp_cluster_name }}pr -d {{ item.1.ipv6.cidr }} -j SNAT --to-source {{ item.1.ipv6.gateway }}
-    args:
-      executable: /bin/bash
-    with_subelements:
-    - "{{ osp_networks }}"
-    - subnets
-    when:
-    - item.1.ipv6.gateway is defined
-    - item.0.is_control_plane|default(False)
-
-  - name: Create IPv4 gateways on isolated vlan networks
-    become: true
-    become_user: root
-    vars:
-      cidr_suffix: "{{ item.1.ipv4.cidr | regex_search('.*/(.+)', '\\1') | first }}"
-    shell: |
-      set -e
-      ip link del link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
-      ip link add link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
-      ip addr flush dev ospnetwork.{{ item.1.vlan }}
-      ip addr add {{ item.1.ipv4.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
-      ip link set ospnetwork.{{ item.1.vlan }} up
-      firewall-cmd --zone=trusted --change-interface=ospnetwork.{{ item.1.vlan }}
-      firewall-cmd --zone=trusted --add-source={{ item.1.ipv4.cidr }}
-      iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
-    with_subelements:
-    - "{{ osp_networks }}"
-    - subnets
-    when:
-    - item.1.vlan is defined
-    - item.1.ipv4.gateway is defined
-    - not item.0.is_control_plane|default(False)
-
-  - name: Create IPv6 gateways on isolated vlan networks
-    become: true
-    become_user: root
-    vars:
-      cidr_suffix: "{{ item.1.ipv6.cidr | regex_search('.*/(.+)', '\\1') | first }}"
-    shell: |
-      set -e
-      ip link del link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
-      ip link add link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
-      sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.autoconf=0
-      sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.accept_ra=0
-      sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.disable_ipv6=0
-      ip addr flush dev ospnetwork.{{ item.1.vlan }}
-      ip addr add {{ item.1.ipv6.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
-      ip link set ospnetwork.{{ item.1.vlan }} up
-      firewall-cmd --zone=trusted --change-interface=ospnetwork.{{ item.1.vlan }}
-      firewall-cmd --zone=trusted --add-source={{ item.1.ipv6.cidr }}
-      ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
-    args:
-      executable: /bin/bash
-    with_subelements:
-    - "{{ osp_networks }}"
-    - subnets
-    when:
-    - item.1.vlan is defined
-    - item.1.ipv6.gateway is defined
-    - not item.0.is_control_plane|default(False)
-
-  - name: Create forwarding dnsmasq on ctlplane network
-    become: true
-    become_user: root
-    block:
-    - name: Create ctlplane dnsmasq conf
-      template:
-        src: "dnsmasq/ctlplane.conf.j2"
-        dest: "/etc/dnsmasq.d/ctlplane.conf"
-        mode: '0644'
-      register: ctlplane_dnsmasq
-
-    - name: Restart dnsmasq
-      service:
-        name: dnsmasq
-        state: restarted
-        enabled: yes
+    - name: Create IPv4 gateways on ctlplane network
+      become: true
+      become_user: root
+      vars:
+        cidr_suffix: "{{ item.1.ipv4.cidr | regex_search('.*/(.+)', '\\1') | first }}"
+      ansible.builtin.shell: |
+        set -e
+        ip addr replace {{ item.1.ipv4.gateway }}/{{ cidr_suffix }} dev {{ ocp_cluster_name }}pr
+        firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
+        firewall-cmd --zone=trusted --add-source={{ item.1.ipv4.cidr }}
+        iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
+        iptables -t nat -A POSTROUTING -o {{ ocp_cluster_name }}pr -d {{ item.1.ipv4.cidr }} -j SNAT --to-source {{ item.1.ipv4.gateway }}
+      with_subelements:
+        - "{{ osp_networks }}"
+        - subnets
       when:
-      - ctlplane_dnsmasq.changed
+        - item.1.ipv4.gateway is defined
+        - item.0.is_control_plane | default(False)
+
+    - name: Create IPv6 gateways on ctlplane network
+      become: true
+      become_user: root
+      vars:
+        cidr_suffix: "{{ item.1.ipv6.cidr | regex_search('.*/(.+)', '\\1') | first }}"
+      ansible.builtin.shell: |
+        set -e
+        ip addr replace {{ item.1.ipv6.gateway }}/{{ cidr_suffix }} dev {{ ocp_cluster_name }}pr
+        firewall-cmd --zone=trusted --change-interface={{ ocp_cluster_name }}pr
+        firewall-cmd --zone=trusted --add-source={{ item.1.ipv6.cidr }}
+        ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
+        ip6tables -t nat -A POSTROUTING -o {{ ocp_cluster_name }}pr -d {{ item.1.ipv6.cidr }} -j SNAT --to-source {{ item.1.ipv6.gateway }}
+      args:
+        executable: /bin/bash
+      with_subelements:
+        - "{{ osp_networks }}"
+        - subnets
+      when:
+        - item.1.ipv6.gateway is defined
+        - item.0.is_control_plane | default(False)
+
+    - name: Create IPv4 gateways on isolated vlan networks
+      become: true
+      become_user: root
+      vars:
+        cidr_suffix: "{{ item.1.ipv4.cidr | regex_search('.*/(.+)', '\\1') | first }}"
+      ansible.builtin.shell: |
+        set -e
+        ip link del link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
+        ip link add link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
+        ip addr flush dev ospnetwork.{{ item.1.vlan }}
+        ip addr add {{ item.1.ipv4.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
+        ip link set ospnetwork.{{ item.1.vlan }} up
+        firewall-cmd --zone=trusted --change-interface=ospnetwork.{{ item.1.vlan }}
+        firewall-cmd --zone=trusted --add-source={{ item.1.ipv4.cidr }}
+        iptables -I FORWARD 1 -s {{ item.1.ipv4.cidr }} ! -d {{ item.1.ipv4.cidr }} -j ACCEPT
+      with_subelements:
+        - "{{ osp_networks }}"
+        - subnets
+      when:
+        - item.1.vlan is defined
+        - item.1.ipv4.gateway is defined
+        - not item.0.is_control_plane | default(False)
+
+    - name: Create IPv6 gateways on isolated vlan networks
+      become: true
+      become_user: root
+      vars:
+        cidr_suffix: "{{ item.1.ipv6.cidr | regex_search('.*/(.+)', '\\1') | first }}"
+      ansible.builtin.shell: |
+        set -e
+        ip link del link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
+        ip link add link ospnetwork name ospnetwork.{{ item.1.vlan }} type vlan id {{ item.1.vlan }} || true
+        sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.autoconf=0
+        sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.accept_ra=0
+        sysctl net.ipv6.conf.ospnetwork/{{ item.1.vlan }}.disable_ipv6=0
+        ip addr flush dev ospnetwork.{{ item.1.vlan }}
+        ip addr add {{ item.1.ipv6.gateway }}/{{ cidr_suffix }} dev ospnetwork.{{ item.1.vlan }}
+        ip link set ospnetwork.{{ item.1.vlan }} up
+        firewall-cmd --zone=trusted --change-interface=ospnetwork.{{ item.1.vlan }}
+        firewall-cmd --zone=trusted --add-source={{ item.1.ipv6.cidr }}
+        ip6tables -I FORWARD 1 -s {{ item.1.ipv6.cidr }} ! -d {{ item.1.ipv6.cidr }} -j ACCEPT
+      args:
+        executable: /bin/bash
+      with_subelements:
+        - "{{ osp_networks }}"
+        - subnets
+      when:
+        - item.1.vlan is defined
+        - item.1.ipv6.gateway is defined
+        - not item.0.is_control_plane | default(False)
+
+    - name: Create forwarding dnsmasq on ctlplane network
+      become: true
+      become_user: root
+      block:
+        - name: Create ctlplane dnsmasq conf
+          ansible.builtin.template:
+            src: "dnsmasq/ctlplane.conf.j2"
+            dest: "/etc/dnsmasq.d/ctlplane.conf"
+            mode: "0644"
+          register: ctlplane_dnsmasq
+
+        - name: Restart dnsmasq
+          ansible.builtin.service:
+            name: dnsmasq
+            state: restarted
+            enabled: true
+          when:
+            - ctlplane_dnsmasq.changed # noqa: no-handler

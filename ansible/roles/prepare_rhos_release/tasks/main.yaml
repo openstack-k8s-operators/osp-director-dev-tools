@@ -1,24 +1,24 @@
 ---
 - name: Install and configure repositories
-  block:
-    - name: Install rhos-release package
-      include: install-rhos-release.yaml
-      when: rhos_release_rpm_url is defined
-
-    - name: Set the rhos-release command
-      include: check-if-rhos-release-exists.yaml
-      when: rhos_release_bin is defined
-
-    - name: Execute rhos-release command
-      include: execute-rhos-release.yaml
-      when: rhos_release_command is defined
-
-    - name: Disable or enable appropriate repositories
-      include: disable-or-enable-repositories.yaml
-      when: (enable_repositories is defined and
-            enable_repositories|length>0) or
-            (disable_repositories is defined and
-            disable_repositories|length>0)
   when:
     - ansible_os_family == 'RedHat'
     - rhos_release_args is defined
+  block:
+    - name: Install rhos-release package
+      ansible.builtin.include_tasks: install-rhos-release.yaml
+      when: rhos_release_rpm_url is defined
+
+    - name: Set the rhos-release command
+      ansible.builtin.include_tasks: check-if-rhos-release-exists.yaml
+      when: rhos_release_bin is defined
+
+    - name: Execute rhos-release command
+      ansible.builtin.include_tasks: execute-rhos-release.yaml
+      when: rhos_release_command is defined
+
+    - name: Disable or enable appropriate repositories
+      ansible.builtin.include_tasks: disable-or-enable-repositories.yaml
+      when: (enable_repositories is defined and
+             enable_repositories | length>0) or
+             (disable_repositories is defined and
+             disable_repositories | length>0)

@@ -188,7 +188,7 @@
     - OS::TripleO::Services::Tuned
     - OS::TripleO::Services::Unbound
     - OS::TripleO::Services::Vpp
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: Compute{{rolesuffix}}                                                 #
 ###############################################################################
@@ -251,7 +251,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -275,7 +275,7 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
 {% endfor %}
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: ComputeLeaf1{{ rolesuffix}}                                           #
 ###############################################################################
@@ -338,7 +338,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -362,7 +362,7 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
 {% endfor %}
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: ComputeLeaf2{{ rolesuffix }}                                          #
 ###############################################################################
@@ -425,7 +425,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -449,7 +449,7 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
 {% endfor %}
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: ComputeHCI{{ rolesuffix }}                                            #
 ###############################################################################
@@ -502,7 +502,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -526,7 +526,7 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
 {% endfor %}
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: ComputeHCILeaf1{{ rolesuffix }}                                       #
 ###############################################################################
@@ -579,7 +579,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -603,7 +603,7 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
 {% endfor %}
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: ComputeHCILeaf2{{ rolesuffix }}                                       #
 ###############################################################################
@@ -656,7 +656,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -680,7 +680,7 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
 {% endfor %}
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: DistributedComputeHCILeaf1{{ rolesuffix }}                            #
 ###############################################################################
@@ -742,7 +742,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -947,7 +947,7 @@
     - OS::TripleO::Services::Tuned
     - OS::TripleO::Services::Unbound
     - OS::TripleO::Services::Vpp
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: ComputeOvsDpdkSriov{{ rolesuffix }}                                   #
 ###############################################################################
@@ -994,7 +994,7 @@
     - OS::TripleO::Services::NeutronSriovAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt
@@ -1018,7 +1018,7 @@
     - OS::TripleO::Services::Podman
     - OS::TripleO::Services::Ptp
 {% endfor %}
-{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles|default(False) else ("",)) %}
+{% for rolesuffix in (("", "Rhel8") if custom_config_rhel8_roles | default(False) else ("",)) %}
 ###############################################################################
 # Role: ComputeSriov{{ rolesuffix }}                                          #
 ###############################################################################
@@ -1066,7 +1066,7 @@
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaAZConfig
     - OS::TripleO::Services::NovaCompute
-{% if custom_config_libvirt_legacy|default(false) or rolesuffix == "Rhel8" %}
+{% if custom_config_libvirt_legacy | default(false) or rolesuffix == "Rhel8" %}
     - OS::TripleO::Services::NovaLibvirtLegacy
 {% else %}
     - OS::TripleO::Services::NovaLibvirt

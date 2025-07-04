@@ -1,722 +1,715 @@
 ---
-- hosts: convergence_base
+- name: OpenShift AI Prep
+  hosts: convergence_base
   gather_facts: false
   tasks:
+    - name: Gather minimal facts
+      ansible.builtin.setup:
+        gather_subset:
+          - "!all"
 
-  - name: Gather minimal facts
-    setup:
-     gather_subset:
-      - '!all'
+    - name: Include default variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Include AI variables
+      ansible.builtin.include_vars: vars/ocp_ai.yaml
+    - name: Install assisted installer CLI
+      become: true
+      become_user: root
+      ansible.builtin.pip:
+        name: aicli
+        version: "{{ ocp_ai_cli_version }}"
+        executable: /usr/bin/pip-3
 
-  - name: Include default variables
-    include_vars: vars/default.yaml
+    - name: Install assisted installer CLI - user directory
+      ansible.builtin.pip:
+        name: aicli
+        version: "{{ ocp_ai_cli_version }}"
+        extra_args: "--user"
+        executable: /usr/bin/pip-3
 
-  - name: Include AI variables
-    include_vars: vars/ocp_ai.yaml
+    - name: Install assisted installed CLI lib
+      become: true
+      become_user: root
+      ansible.builtin.pip:
+        name: assisted-service-client
+        version: "{{ ocp_ai_cli_lib_version }}"
+        executable: /usr/bin/pip-3
 
-
-  ### ASSISTED INSTALLER CLI BINARY
-
-  - name: Install assisted installer CLI
-    become: true
-    become_user: root
-    pip:
-      name: aicli
-      version: "{{ ocp_ai_cli_version }}"
-      executable: /usr/bin/pip-3
-
-  - name: Install assisted installer CLI - user directory
-    pip:
-      name: aicli
-      version: "{{ ocp_ai_cli_version }}"
-      extra_args: "--user"
-      executable: /usr/bin/pip-3
-
-  - name: Install assisted installed CLI lib
-    become: true
-    become_user: root
-    pip:
-      name: assisted-service-client
-      version: "{{ ocp_ai_cli_lib_version }}"
-      executable: /usr/bin/pip-3
-
-  - name: Install assisted installed CLI lib - user directory
-    pip:
-      name: assisted-service-client
-      version: "{{ ocp_ai_cli_lib_version }}"
-      extra_args: "--user"
-      executable: /usr/bin/pip-3
-
+    - name: Install assisted installed CLI lib - user directory
+      ansible.builtin.pip:
+        name: assisted-service-client
+        version: "{{ ocp_ai_cli_lib_version }}"
+        extra_args: "--user"
+        executable: /usr/bin/pip-3
 
   ### ADDITIONAL SET-FACTS
 
-  - name: Set fact for full cluster name
-    set_fact:
-      ocp_ai_full_cluster_name: "{{ ocp_cluster_name }}.{{ ocp_domain_name | default('test.metalkube.org', true) }}"
+    - name: Set fact for full cluster name
+      ansible.builtin.set_fact:
+        ocp_ai_full_cluster_name: "{{ ocp_cluster_name }}.{{ ocp_domain_name | default('test.metalkube.org', true) }}"
 
-  # TODO: Add support for ipv6 for this and the following set_facts
-  - name: Set fact for BM CIDR prefix
-    set_fact:
-      ocp_ai_bm_cidr_prefix: "192.168.111"
+    # TODO: Add support for ipv6 for this and the following set_facts
+    - name: Set fact for BM CIDR prefix
+      ansible.builtin.set_fact:
+        ocp_ai_bm_cidr_prefix: "192.168.111"
 
-  - name: Set fact for reverse BM CIDR suffix
-    set_fact:
-      ocp_ai_bm_cidr_rev_suffix: "111.168.192"
+    - name: Set fact for reverse BM CIDR suffix
+      ansible.builtin.set_fact:
+        ocp_ai_bm_cidr_rev_suffix: "111.168.192"
 
-  - name: Set fact for ocp node roles
-    set_fact:
-      ocp_node_roles:
-        - master
-        - worker
-        - worker-sriov
+    - name: Set fact for ocp node roles
+      ansible.builtin.set_fact:
+        ocp_node_roles:
+          - master
+          - worker
+          - worker-sriov
 
   ### BRIDGES
 
-  - name: Prepare bridges
-    become: true
-    become_user: root
-    block:
-    # FIXME?: Should this task target the playbook host instead?
-    - name: Install needed network manager libs
-      package:
-        name:
-          - NetworkManager-libnm
-          - nm-connection-editor
-        state: present
-
-    - name: Create AI bridges
+    - name: Prepare bridges
+      become: true
+      become_user: root
       block:
-      - name: Remove lingering bridges from dev-scripts (if any)
-        shell: |
-          virsh net-destroy {{ ocp_cluster_name }}{{ item }};
-          virsh net-undefine {{ ocp_cluster_name }}{{ item }}
-        with_items:
-          - bm
-          - pr
-        register: dev_scripts_br_rm
-        failed_when: dev_scripts_br_rm.stderr != "" and "no network with matching name" not in dev_scripts_br_rm.stderr and "is not active" not in dev_scripts_br_rm.stderr
-
-      - name: Delete existing bridges (if any)
-        nmcli:
-          conn_name: "{{ item }}"
-          type: bridge
-          state: absent
-        with_items:
-          - "{{ ocp_cluster_name }}bm"
-          - "{{ ocp_cluster_name }}pr"
-          - "ospnetwork"
-          - "external"
-        ignore_errors: yes
-
-      - name: Make sure bridge ifcfg files are removed
-        file:
-          path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
-          state: absent
-        with_items:
-          - "{{ ocp_cluster_name }}bm"
-          - "{{ ocp_cluster_name }}pr"
-          - "ospnetwork"
-          - "external"
-
-      - name: Delete existing bridge slaves (if any)
-        nmcli:
-          conn_name: "bridge-slave-{{ item }}"
-          type: bridge-slave
-          state: absent
-        register: delete_bridge_slaves
-        failed_when: delete_bridge_slaves.stderr is defined and "unknown connection" not in delete_bridge_slaves.stderr
-        when: item != ""
-        with_items:
-          - "{{ ocp_bm_prov_interface }}"
-          - "{{ ocp_bm_interface }}"
-          - "{{ osp_bm_interface }}"
-          - "{{ osp_ext_bm_interface }}"
-
-      - name: Make sure bridge slave ifcfg files are removed
-        file:
-          path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ item }}"
-          state: absent
-        when: item != ""
-        with_items:
-          - "{{ ocp_bm_prov_interface }}"
-          - "{{ ocp_bm_interface }}"
-          - "{{ osp_bm_interface }}"
-          - "{{ osp_ext_bm_interface }}"
-
-      - name: Create BM bridge
-        community.general.nmcli:
-          conn_name: "{{ ocp_cluster_name }}bm"
-          type: bridge
-          ifname: "{{ ocp_cluster_name }}bm"
-          autoconnect: yes
-          stp: off
-          # TODO: Support any netmask?
-          ip4: "192.168.111.1/24"
-          zone: libvirt
-          state: present
-
-      - name: Add BM interface to BM bridge
-        when: ocp_bm_interface is defined and ocp_bm_interface != ""
-        block:
-        - name: Make sure old BM interface connection is down
-          shell: |
-            /usr/bin/nmcli con down {{ ocp_bm_interface }}
-          register: bm_intf_down
-          failed_when: bm_intf_down.stderr != "" and "no active connection provided" not in bm_intf_down.stderr
-
-        - name: Add BM interface to BM bridge
-          nmcli:
-            conn_name: "bridge-slave-{{ ocp_bm_interface }}"
-            type: bridge-slave
-            ifname: "{{ ocp_bm_interface }}"
-            autoconnect: yes
-            hairpin: no
-            master: "{{ ocp_cluster_name }}bm"
+        # FIXME?: Should this task target the playbook host instead?
+        - name: Install needed network manager libs
+          ansible.builtin.package:
+            name:
+              - NetworkManager-libnm
+              - nm-connection-editor
             state: present
 
-      - name: Create provisioning bridge
-        community.general.nmcli:
-          conn_name: "{{ ocp_cluster_name }}pr"
-          type: bridge
-          ifname: "{{ ocp_cluster_name }}pr"
-          autoconnect: yes
-          stp: off
-          # TODO: Support any netmask?
-          ip4: "172.22.0.1/24"
-          zone: libvirt
-          state: present
+        - name: Create AI bridges
+          block:
+            - name: Remove lingering bridges from dev-scripts (if any)
+              ansible.builtin.shell: |
+                virsh net-destroy {{ ocp_cluster_name }}{{ item }};
+                virsh net-undefine {{ ocp_cluster_name }}{{ item }}
+              with_items:
+                - bm
+                - pr
+              register: dev_scripts_br_rm
+              failed_when: dev_scripts_br_rm.stderr != "" and "no network with matching name" not in dev_scripts_br_rm.stderr and "is not active" not in
+                dev_scripts_br_rm.stderr
 
-      - name: Add prov interface to prov bridge
-        when: ocp_bm_prov_interface is defined and ocp_bm_prov_interface != ""
-        block:
-        - name: Make sure old prov interface connection is down
-          shell: |
-            /usr/bin/nmcli con down {{ ocp_bm_prov_interface }}
-          register: prov_intf_down
-          failed_when: prov_intf_down.stderr != "" and "no active connection provided" not in prov_intf_down.stderr
+            - name: Delete existing bridges (if any)
+              community.general.nmcli:
+                conn_name: "{{ item }}"
+                type: bridge
+                state: absent
+              with_items:
+                - "{{ ocp_cluster_name }}bm"
+                - "{{ ocp_cluster_name }}pr"
+                - "ospnetwork"
+                - "external"
+              ignore_errors: true
 
-        - name: Add prov interface to prov bridge
-          nmcli:
-            conn_name: "bridge-slave-{{ ocp_bm_prov_interface }}"
-            type: bridge-slave
-            ifname: "{{ ocp_bm_prov_interface }}"
-            autoconnect: yes
-            hairpin: no
-            master: "{{ ocp_cluster_name }}pr"
-            state: present
+            - name: Make sure bridge ifcfg files are removed
+              ansible.builtin.file:
+                path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
+                state: absent
+              with_items:
+                - "{{ ocp_cluster_name }}bm"
+                - "{{ ocp_cluster_name }}pr"
+                - "ospnetwork"
+                - "external"
 
-      - name: Reload bridges
-        shell: |
-          /usr/bin/nmcli con reload {{ ocp_cluster_name }}{{ item }}; /usr/bin/nmcli con up {{ ocp_cluster_name }}{{ item }}
-        with_items:
-          - bm
-          - pr
+            - name: Delete existing bridge slaves (if any)
+              community.general.nmcli:
+                conn_name: "bridge-slave-{{ item }}"
+                type: bridge-slave
+                state: absent
+              register: delete_bridge_slaves
+              failed_when: delete_bridge_slaves.stderr is defined and "unknown connection" not in delete_bridge_slaves.stderr
+              when: item != ""
+              with_items:
+                - "{{ ocp_bm_prov_interface }}"
+                - "{{ ocp_bm_interface }}"
+                - "{{ osp_bm_interface }}"
+                - "{{ osp_ext_bm_interface }}"
 
+            - name: Make sure bridge slave ifcfg files are removed
+              ansible.builtin.file:
+                path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ item }}"
+                state: absent
+              when: item != ""
+              with_items:
+                - "{{ ocp_bm_prov_interface }}"
+                - "{{ ocp_bm_interface }}"
+                - "{{ osp_bm_interface }}"
+                - "{{ osp_ext_bm_interface }}"
 
-  ### FIREWALL
+            - name: Create BM bridge
+              community.general.nmcli:
+                conn_name: "{{ ocp_cluster_name }}bm"
+                type: bridge
+                ifname: "{{ ocp_cluster_name }}bm"
+                autoconnect: true
+                stp: false
+                # TODO: Support any netmask?
+                ip4: "192.168.111.1/24"
+                zone: libvirt
+                state: present
 
-  - name: Prepare firewall
-    become: true
-    become_user: root
-    block:
-    - name: Acquire default external interface
-      shell: |
-        ip r | grep default | head -1 | cut -d ' ' -f 5
-      register: ocp_ai_ext_intf
+            - name: Add BM interface to BM bridge
+              when: ocp_bm_interface is defined and ocp_bm_interface != ""
+              block:
+                - name: Make sure old BM interface connection is down
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con down {{ ocp_bm_interface }}
+                  register: bm_intf_down
+                  failed_when: bm_intf_down.stderr != "" and "no active connection provided" not in bm_intf_down.stderr
 
-    - name: Fail when unable to determine external interface
-      fail:
-        msg: |
-          Unable to determine external interface
-      when: ocp_ai_ext_intf.stdout == ""
+                - name: Add BM interface to BM bridge
+                  community.general.nmcli:
+                    conn_name: "bridge-slave-{{ ocp_bm_interface }}"
+                    type: bridge-slave
+                    ifname: "{{ ocp_bm_interface }}"
+                    autoconnect: true
+                    hairpin: false
+                    master: "{{ ocp_cluster_name }}bm"
+                    state: present
 
-    - name: Add BM bridge to libvirt zone
-      command: "firewall-cmd --zone libvirt --change-interface {{ ocp_cluster_name }}bm --permanent"
+            - name: Create provisioning bridge
+              community.general.nmcli:
+                conn_name: "{{ ocp_cluster_name }}pr"
+                type: bridge
+                ifname: "{{ ocp_cluster_name }}pr"
+                autoconnect: true
+                stp: false
+                # TODO: Support any netmask?
+                ip4: "172.22.0.1/24"
+                zone: libvirt
+                state: present
 
-    - name: Add TCP firewall rules for BM bridge
-      firewalld:
-        port: "{{ item }}/tcp"
-        state: enabled
-        zone: libvirt
-        permanent: yes
-        immediate: yes
-      with_items:
-        - 8000
-        - 80
-        - "{{ ocp_ai_sushy_port | default(8082, true) }}"
-        - "{{ ocp_ai_service_port | default(8090, true) }}"
-        - 8888
+            - name: Add prov interface to prov bridge
+              when: ocp_bm_prov_interface is defined and ocp_bm_prov_interface != ""
+              block:
+                - name: Make sure old prov interface connection is down
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con down {{ ocp_bm_prov_interface }}
+                  register: prov_intf_down
+                  failed_when: prov_intf_down.stderr != "" and "no active connection provided" not in prov_intf_down.stderr
 
-    - name: Add provisioning bridge to libvirt zone
-      command: "firewall-cmd --zone libvirt --change-interface {{ ocp_cluster_name }}pr --permanent"
+                - name: Add prov interface to prov bridge
+                  community.general.nmcli:
+                    conn_name: "bridge-slave-{{ ocp_bm_prov_interface }}"
+                    type: bridge-slave
+                    ifname: "{{ ocp_bm_prov_interface }}"
+                    autoconnect: true
+                    hairpin: false
+                    master: "{{ ocp_cluster_name }}pr"
+                    state: present
 
-    - name: Add TCP firewall rules for provisioning bridge
-      firewalld:
-        port: "{{ item }}/tcp"
-        state: enabled
-        zone: libvirt
-        permanent: yes
-        immediate: yes
-      with_items:
-        - 80
-        - 2049
-        - 5000
-        - 5050
-        - 6180
-        - 6385
-        - 8000
-        - 9999
+            - name: Reload bridges
+              ansible.builtin.shell: |
+                /usr/bin/nmcli con reload {{ ocp_cluster_name }}{{ item }}; /usr/bin/nmcli con up {{ ocp_cluster_name }}{{ item }}
+              with_items:
+                - bm
+                - pr
 
-    - name: Add UDP firewall rules for provisioning bridge
-      firewalld:
-        port: "{{ item }}/udp"
-        state: enabled
-        zone: libvirt
-        permanent: yes
-        immediate: yes
-      with_items:
-        - 53
-        - 5353
-        - 546
-        - 547
-        - 6230-6239
-        - 67
-        - 68
-        - 69
+    - name: Prepare firewall
+      become: true
+      become_user: root
+      block:
+        - name: Acquire default external interface
+          ansible.builtin.shell: |
+            ip r | grep default | head -1 | cut -d ' ' -f 5
+          register: ocp_ai_ext_intf
 
-    # FIXME: Use firewalld rich-rules instead?
-    - name: Add direct firewall rules for BM bridge
-      shell: |
-        firewall-cmd --zone libvirt --add-masquerade --permanent
-        firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_cluster_name }}bm" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
-        firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" -m state --state RELATED,ESTABLISHED -j ACCEPT;
-        firewall-cmd --reload
+        - name: Fail when unable to determine external interface
+          ansible.builtin.fail:
+            msg: |
+              Unable to determine external interface
+          when: ocp_ai_ext_intf.stdout == ""
+
+        - name: Add BM bridge to libvirt zone
+          ansible.builtin.command: "firewall-cmd --zone libvirt --change-interface {{ ocp_cluster_name }}bm --permanent"
+
+        - name: Add TCP firewall rules for BM bridge
+          ansible.posix.firewalld:
+            port: "{{ item }}/tcp"
+            state: enabled
+            zone: libvirt
+            permanent: true
+            immediate: true
+          with_items:
+            - 8000
+            - 80
+            - "{{ ocp_ai_sushy_port | default(8082, true) }}"
+            - "{{ ocp_ai_service_port | default(8090, true) }}"
+            - 8888
+
+        - name: Add provisioning bridge to libvirt zone
+          ansible.builtin.command: "firewall-cmd --zone libvirt --change-interface {{ ocp_cluster_name }}pr --permanent"
+
+        - name: Add TCP firewall rules for provisioning bridge
+          ansible.posix.firewalld:
+            port: "{{ item }}/tcp"
+            state: enabled
+            zone: libvirt
+            permanent: true
+            immediate: true
+          with_items:
+            - 80
+            - 2049
+            - 5000
+            - 5050
+            - 6180
+            - 6385
+            - 8000
+            - 9999
+
+        - name: Add UDP firewall rules for provisioning bridge
+          ansible.posix.firewalld:
+            port: "{{ item }}/udp"
+            state: enabled
+            zone: libvirt
+            permanent: true
+            immediate: true
+          with_items:
+            - 53
+            - 5353
+            - 546
+            - 547
+            - 6230-6239
+            - 67
+            - 68
+            - 69
+
+        # FIXME: Use firewalld rich-rules instead?
+        - name: Add direct firewall rules for BM bridge
+          ansible.builtin.shell: |
+            firewall-cmd --zone libvirt --add-masquerade --permanent
+            firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_cluster_name }}bm" -o "{{ ocp_ai_ext_intf.stdout }}" -j ACCEPT;
+            firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "{{ ocp_ai_ext_intf.stdout }}" -o "{{ ocp_cluster_name }}bm" \
+              -m state --state RELATED,ESTABLISHED -j ACCEPT;
+            firewall-cmd --reload
 
 
   ### HTTP STORE
 
-  - name: Create an HTTP server container to hold ISOs/QCOW2s
-    become: true
-    become_user: root
-    block:
-    - name: Create HTTP server storage directory
-      file:
-        path: /opt/http_store/data/images
-        state: directory
-        mode: '0777'
+    - name: Create an HTTP server container to hold ISOs/QCOW2s
+      become: true
+      become_user: root
+      block:
+        - name: Create HTTP server storage directory
+          ansible.builtin.file:
+            path: /opt/http_store/data/images
+            state: directory
+            mode: "0777"
 
-    - name: Start httpd container
-      containers.podman.podman_container:
-        name: httpd
-        image: quay.io/openstack-k8s-operators/httpd-24-centos7:2.4
-        state: started
-        restart: yes
-        ports:
-          - "80:8080"
-        volumes:
-          - "/opt/http_store/data:/var/www/html:z"
-
+        - name: Start httpd container
+          containers.podman.podman_container:
+            name: httpd
+            image: quay.io/openstack-k8s-operators/httpd-24-centos7:2.4
+            state: started
+            restart: true
+            ports:
+              - "80:8080"
+            volumes:
+              - "/opt/http_store/data:/var/www/html:z"
 
   ### DNSMASQ
 
-  - name: Prepare dnsmasq
-    become: true
-    become_user: root
-    block:
-    - name: Acquire podman interface name
-      shell: ip a | grep "podman0:" | cut -d ' ' -f 2 | sed 's/.$//'
-      register: podman_intf
+    - name: Prepare dnsmasq
+      become: true
+      become_user: root
+      block:
+        - name: Acquire podman interface name
+          ansible.builtin.shell: ip a | grep "podman0:" | cut -d ' ' -f 2 | sed 's/.$//'
+          register: podman_intf
 
-    - name: Create dnsmasq conf
-      template:
-        src: "ai/dnsmasq/dnsmasq.conf.j2"
-        dest: "/etc/dnsmasq.d/dnsmasq_ai.conf"
-        mode: '0644'
+        - name: Create dnsmasq conf
+          ansible.builtin.template:
+            src: "ai/dnsmasq/dnsmasq.conf.j2"
+            dest: "/etc/dnsmasq.d/dnsmasq_ai.conf"
+            mode: "0644"
 
-    - name: Create NetworkManager dnsmasq DNS conf (to disable it)
-      template:
-        src: "ai/dnsmasq/nm_dnsmasq.conf.j2"
-        dest: "/etc/NetworkManager/conf.d/dnsmasq.conf"
-        mode: '0644'
+        - name: Create NetworkManager dnsmasq DNS conf (to disable it)
+          ansible.builtin.template:
+            src: "ai/dnsmasq/nm_dnsmasq.conf.j2"
+            dest: "/etc/NetworkManager/conf.d/dnsmasq.conf"
+            mode: "0644"
 
-    - name: Restart NetworkManager
-      service:
-        name: NetworkManager
-        state: restarted
-        enabled: yes
+        - name: Restart NetworkManager
+          ansible.builtin.service:
+            name: NetworkManager
+            state: restarted
+            enabled: true
 
-    - name: Stop all libvirt networks to clear DHCP socket bindings
-      shell: |
-        #!/bin/bash
-        for i in $(virsh net-list | grep -v Autostart | grep -v "---------------" | awk '{print $1}'); do
-          virsh net-destroy $i
-        done
+        - name: Stop all libvirt networks to clear DHCP socket bindings
+          ansible.builtin.shell: |
+            #!/bin/bash
+            for i in $(virsh net-list | grep -v Autostart | grep -v "---------------" | awk '{print $1}'); do
+              virsh net-destroy $i
+            done
 
-    - name: Start dnsmasq
-      service:
-        name: dnsmasq
-        state: restarted
-        enabled: yes
+        - name: Start dnsmasq
+          ansible.builtin.service:
+            name: dnsmasq
+            state: restarted
+            enabled: true
 
-    - name: Configure /etc/resolv.conf
-      template:
-          src: "ai/dnsmasq/resolv.conf.j2"
-          dest: "/etc/resolv.conf"
-          mode: '0644'
+        - name: Configure /etc/resolv.conf
+          ansible.builtin.template:
+            src: "ai/dnsmasq/resolv.conf.j2"
+            dest: "/etc/resolv.conf"
+            mode: "0644"
 
   ### VMs
 
-  - name: Provision VMs for use with the assisted installer
-    become: true
-    become_user: root
-    block:
-    - name: set fact for total workers
-      set_fact:
-        total_workers: "{{ ocp_num_workers|int + ocp_num_extra_workers|int }}"
-
-    - name: Delete existing VMs and disk QCOW2s (if any)
-      shell: |
-        for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
-          virsh destroy $i
-        done
-
-        for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
-          virsh undefine --nvram $i
-        done
-
-        for i in $(virsh vol-list --pool default  | grep "{{ ocp_cluster_name }}-" | awk '{print $1}'); do
-          virsh vol-delete --pool default $i
-        done
-
-    # FIXME: Sushy-tools does not allow you to specify the libvirt storage pool, and assumes
-    #        that default exists, so we need to make sure that it does
-    - name: Check if default storage pool exists with the expected {{ ocp_ai_libvirt_storage_dir }} path
-      shell: virsh pool-dumpxml default | grep "<path>{{ ocp_ai_libvirt_storage_dir }}</path>"
-      register: libvirt_default_pool
-      failed_when: libvirt_default_pool.stderr != "" and "no storage pool with matching name" not in libvirt_default_pool.stderr
-
-    - name: Handle default storage pool
-      when: libvirt_default_pool.stdout == ""
+    - name: Provision VMs for use with the assisted installer
+      become: true
+      become_user: root
       block:
-      - name: Render libvirt default storage pool XML
-        template:
-          src: ai/libvirt/storage-pool.xml.j2
-          dest: "/tmp/storage-pool.xml"
-          mode: '0664'
+        - name: Set fact for total workers
+          ansible.builtin.set_fact:
+            total_workers: "{{ ocp_num_workers | int + ocp_num_extra_workers | int }}"
 
-      - name: Remove any storage pools currently named "default"
-        shell: |
-          virsh pool-destroy default
-          virsh pool-undefine default
-        register: virsh_pool_destroy
-        failed_when: virsh_pool_destroy.stderr != "" and "Storage pool not found" not in virsh_pool_destroy.stderr and "storage pool 'default' is not active" not in virsh_pool_destroy.stderr
+        - name: Delete existing VMs and disk QCOW2s (if any)
+          ansible.builtin.shell: |
+            for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
+              virsh destroy $i
+            done
 
-      - name: Remove any storage pools currently using {{ ocp_ai_libvirt_storage_dir }}
-        shell: |
-          for i in $(virsh pool-list --all | grep -v "Autostart" | grep -v "\-\-\-\-\-\-\-\-\-" | awk '{print $1}'); do
-            if [[ -n '$(virsh pool-dumpxml $i | grep "<path>{{ ocp_ai_libvirt_storage_dir }}</path>")' ]]; then
-              virsh pool-destroy $i
-              virsh pool-undefine $i
-            fi
-          done
+            for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
+              virsh undefine --nvram $i
+            done
 
-      - name: Create default storage pool
-        shell: |
-          virsh pool-define /tmp/storage-pool.xml
-          virsh pool-autostart default
-          virsh pool-start default
+            for i in $(virsh vol-list --pool default  | grep "{{ ocp_cluster_name }}-" | awk '{print $1}'); do
+              virsh vol-delete --pool default $i
+            done
+
+        # FIXME: Sushy-tools does not allow you to specify the libvirt storage pool, and assumes
+        #        that default exists, so we need to make sure that it does
+        - name: Check if default storage pool exists with the expected {{ ocp_ai_libvirt_storage_dir }} path
+          ansible.builtin.shell: virsh pool-dumpxml default | grep "<path>{{ ocp_ai_libvirt_storage_dir }}</path>"
+          register: libvirt_default_pool
+          failed_when: libvirt_default_pool.stderr != "" and "no storage pool with matching name" not in libvirt_default_pool.stderr
+
+        - name: Handle default storage pool
+          when: libvirt_default_pool.stdout == ""
+          block:
+            - name: Render libvirt default storage pool XML
+              ansible.builtin.template:
+                src: ai/libvirt/storage-pool.xml.j2
+                dest: "/tmp/storage-pool.xml"
+                mode: "0664"
+
+            - name: Remove any storage pools currently named "default"
+              ansible.builtin.shell: |
+                virsh pool-destroy default
+                virsh pool-undefine default
+              register: virsh_pool_destroy
+              failed_when: virsh_pool_destroy.stderr != "" and "Storage pool not found" not in virsh_pool_destroy.stderr and "storage pool 'default' is not
+                active" not in virsh_pool_destroy.stderr
+
+            - name: Remove any storage pools currently using {{ ocp_ai_libvirt_storage_dir }}
+              ansible.builtin.shell: |
+                for i in $(virsh pool-list --all | grep -v "Autostart" | grep -v "\-\-\-\-\-\-\-\-\-" | awk '{print $1}'); do
+                  if [[ -n '$(virsh pool-dumpxml $i | grep "<path>{{ ocp_ai_libvirt_storage_dir }}</path>")' ]]; then
+                    virsh pool-destroy $i
+                    virsh pool-undefine $i
+                  fi
+                done
+
+            - name: Create default storage pool
+              ansible.builtin.shell: |
+                virsh pool-define /tmp/storage-pool.xml
+                virsh pool-autostart default
+                virsh pool-start default
 
 
-    # Create libvirt volumes for the vm hosts.
-    - name: Create master vm storage
-      command: >
-        virsh vol-create-as 'default'
-        '{{ ocp_cluster_name }}-master-{{ item }}'.qcow2 '{{ ocp_master_disk }}'G
-        --format qcow2
-      with_sequence: start=0 end={{ ocp_num_masters-1 if ocp_num_masters > 0 else 0 }}
-      when: ocp_num_masters > 0
+        # Create libvirt volumes for the vm hosts.
+        - name: Create master vm storage
+          ansible.builtin.command: >
+            virsh vol-create-as 'default'
+            '{{ ocp_cluster_name }}-master-{{ item }}'.qcow2 '{{ ocp_master_disk }}'G
+            --format qcow2
+          with_sequence: start=0 end={{ ocp_num_masters - 1 if ocp_num_masters > 0 else 0 }}
+          when: ocp_num_masters > 0
 
-    - name: Create worker vm storage
-      command: >
-        virsh vol-create-as 'default'
-        '{{ ocp_cluster_name }}-worker-{{ item }}'.qcow2 '{{ ocp_worker_disk }}'G
-        --format qcow2
-      with_sequence: start=0 end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
-      when: total_workers|int > 0
+        - name: Create worker vm storage
+          ansible.builtin.command: >
+            virsh vol-create-as 'default'
+            '{{ ocp_cluster_name }}-worker-{{ item }}'.qcow2 '{{ ocp_worker_disk }}'G
+            --format qcow2
+          with_sequence: start=0 end={{ total_workers | int - 1 if (total_workers | int - 1) > 0 else 0 }}
+          when: total_workers | int > 0
 
-    - name: define master vms
-      vars:
-        memory: "{{ ocp_storage_memory if (enable_ocs|bool and ocp_worker_count|int < ocp_num_storage_workers) else ocp_master_memory }}"
-        vcpu: "{{ ocp_storage_vcpu if (enable_ocs|bool and ocp_worker_count|int < ocp_num_storage_workers) else ocp_master_vcpu }}"
-        role: master
-        prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_master_mac_prefix }}"
-        bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_master_mac_prefix }}"
-      virt:
-        name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
-        command: define
-        xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
-        uri: qemu:///system
-      with_sequence: start=0 end={{ ocp_num_masters-1 if ocp_num_masters > 0 else 0 }}
-      when: ocp_num_masters > 0
+        - name: Define master vms
+          vars:
+            memory: "{{ ocp_storage_memory if (enable_ocs | bool and ocp_worker_count | int < ocp_num_storage_workers) else ocp_master_memory }}"
+            vcpu: "{{ ocp_storage_vcpu if (enable_ocs | bool and ocp_worker_count | int < ocp_num_storage_workers) else ocp_master_vcpu }}"
+            role: master
+            prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_master_mac_prefix }}"
+            bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_master_mac_prefix }}"
+          community.libvirt.virt:
+            name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
+            command: define
+            xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
+            uri: qemu:///system
+          with_sequence: start=0 end={{ ocp_num_masters - 1 if ocp_num_masters > 0 else 0 }}
+          when: ocp_num_masters > 0
 
-    - name: define worker vms when OCS disabled
-      when: (not (enable_ocs | bool)) and total_workers|int > 0
-      vars:
-        memory: "{{ ocp_worker_memory }}"
-        vcpu: "{{ ocp_worker_vcpu }}"
-        role: worker
-        prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
-        bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
-      virt:
-        name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
-        command: define
-        xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
-        uri: qemu:///system
-      with_sequence: start=0 end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
+        - name: Define worker vms when OCS disabled
+          when: (not (enable_ocs | bool)) and total_workers | int > 0
+          vars:
+            memory: "{{ ocp_worker_memory }}"
+            vcpu: "{{ ocp_worker_vcpu }}"
+            role: worker
+            prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
+            bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
+          community.libvirt.virt:
+            name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
+            command: define
+            xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
+            uri: qemu:///system
+          with_sequence: start=0 end={{ total_workers | int - 1 if (total_workers | int - 1) > 0 else 0 }}
 
-    - name: define worker vms when OCS enabled
-      when: (enable_ocs | bool) and total_workers|int > 0
-      block:
-      - name: define storage worker vms
-        vars:
-          memory: "{{ ocp_storage_memory }}"
-          vcpu: "{{ ocp_storage_vcpu }}"
-          role: worker
-          prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
-          bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
-        virt:
-          name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
-          command: define
-          xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
-          uri: qemu:///system
-        with_sequence: start=0 end={{ ocp_num_storage_workers-1 }}
-        when: ocp_num_workers >= ocp_num_storage_workers
+        - name: Define worker vms when OCS enabled
+          when: (enable_ocs | bool) and total_workers | int > 0
+          block:
+            - name: Define storage worker vms
+              vars:
+                memory: "{{ ocp_storage_memory }}"
+                vcpu: "{{ ocp_storage_vcpu }}"
+                role: worker
+                prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
+                bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
+              community.libvirt.virt:
+                name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
+                command: define
+                xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
+                uri: qemu:///system
+              with_sequence: start=0 end={{ ocp_num_storage_workers - 1 }}
+              when: ocp_num_workers >= ocp_num_storage_workers
 
-      - name: define non-storage and extra worker vms
-        vars:
-          memory: "{{ ocp_worker_memory }}"
-          vcpu: "{{ ocp_worker_vcpu }}"
-          role: worker
-          prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
-          bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
-        virt:
-          name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
-          command: define
-          xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
-          uri: qemu:///system
-        with_sequence: start={{ ocp_num_storage_workers if (enable_ocs|bool and ocp_num_workers >= ocp_num_storage_workers) else 0 }} end={{ total_workers|int-1 if (total_workers|int-1) > 0 else 0 }}
+            - name: Define non-storage and extra worker vms
+              vars:
+                memory: "{{ ocp_worker_memory }}"
+                vcpu: "{{ ocp_worker_vcpu }}"
+                role: worker
+                prov_bridge_mac_prefix: "{{ ocp_ai_prov_bridge_worker_mac_prefix }}"
+                bm_bridge_mac_prefix: "{{ ocp_ai_bm_bridge_worker_mac_prefix }}"
+              community.libvirt.virt:
+                name: "{{ ocp_cluster_name }}-{{ role }}-{{ item }}"
+                command: define
+                xml: "{{ lookup('template', 'ai/libvirt/baremetalvm.xml.j2') }}"
+                uri: qemu:///system
+              with_sequence: >-
+                start={{ ocp_num_storage_workers if (enable_ocs | bool and ocp_num_workers >= ocp_num_storage_workers) else 0 }}
+                end={{ total_workers | int - 1 if (total_workers | int - 1) > 0 else 0 }}
 
-    - name: Get worker domain names
-      shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk '{print $2}'"
-      register: worker_list
+        - name: Get worker domain names
+          ansible.builtin.shell: "virsh list --all | grep {{ ocp_cluster_name }}-worker- | awk '{print $2}'"
+          register: worker_list
 
-    - name: Print extra worker domain UUIDs
-      shell: virsh dumpxml {{ item }} | grep uuid | cut -d '>' -f 2 | cut -d '<' -f 1
-      when: index >= ocp_num_workers
-      loop: "{{ worker_list.stdout_lines }}"
-      loop_control:
-        index_var: index
-      register: extra_worker_uuids
+        - name: Print extra worker domain UUIDs
+          ansible.builtin.shell: virsh dumpxml {{ item }} | grep uuid | cut -d '>' -f 2 | cut -d '<' -f 1
+          when: index >= ocp_num_workers
+          loop: "{{ worker_list.stdout_lines }}"
+          loop_control:
+            index_var: index
+          register: extra_worker_uuids
 
   ### OCS PREP (if requested)
 
-  - name: OCS and local storage injection, if requested and only if backed by VMs
-    when: (enable_ocs | bool) and
-          (
-            (ocp_num_masters >= ocp_num_storage_workers and ocp_bm_masters | default({}) | length < 1)
-            or (ocp_num_workers >= ocp_num_storage_workers and ocp_bm_workers | default({}) | length < 1)
-          )
-    block:
-    - name: Create VM attached Local Storage for local-storage-operator for AI
-      include_role:
-        name: local_storage
-      vars:
-        ocs_local_storage: true
-        domain: "{{ ocp_cluster_name }}-{{ 'worker' if ocp_num_workers >= ocp_num_storage_workers else 'master' }}-{{ item }}"
-      loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
+    - name: OCS and local storage injection, if requested and only if backed by VMs
+      when: >-
+        (enable_ocs | bool) and
+        ((ocp_num_masters >= ocp_num_storage_workers and ocp_bm_masters | default({}) | length < 1) or
+        (ocp_num_workers >= ocp_num_storage_workers and ocp_bm_workers | default({}) | length < 1))
+      block:
+        - name: Create VM attached Local Storage for local-storage-operator for AI
+          ansible.builtin.include_role:
+            name: local_storage
+          vars:
+            ocs_local_storage: true
+            domain: "{{ ocp_cluster_name }}-{{ 'worker' if ocp_num_workers >= ocp_num_storage_workers else 'master' }}-{{ item }}"
+          loop: "{{ range(0, ocp_num_storage_workers, 1) | list }}"
 
   ### CRs
 
-  - name: Create Metal3 extra baremetal hosts CRs
-    block:
-    - name: Include oc_local role
-      include_role:
-        name: oc_local
+    - name: Create Metal3 extra baremetal hosts CRs
+      delegate_to: localhost
+      when: ocp_extra_worker_count | int > 0
+      block:
+        - name: Include oc_local role
+          ansible.builtin.include_role:
+            name: oc_local
 
-    - name: Include default variables
-      include_vars: vars/default.yaml
+        - name: Include default variables
+          ansible.builtin.include_vars: vars/default.yaml
 
-    - name: Set directory for storing AI Metal3 yaml files
-      set_fact:
-        ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
+        - name: Set directory for storing AI Metal3 yaml files
+          ansible.builtin.set_fact:
+            ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
 
-    - name: Create local yamldir for AI Metal3 yaml files
-      file:
-        path: "{{ ai_metal3_yaml_dir }}"
-        state: directory
-        mode: '0755'
+        - name: Create local yamldir for AI Metal3 yaml files
+          ansible.builtin.file:
+            path: "{{ ai_metal3_yaml_dir }}"
+            state: directory
+            mode: "0755"
 
-    - name: Render Metal3 extra baremetal hosts CRs
-      template:
-        src: ai/metal3/extra_workers_bmhs.yml.j2
-        dest: "{{ ai_metal3_yaml_dir }}/extra_workers_bmhs.yml"
-        mode: '0664'
-
-    delegate_to: localhost
-    when: ocp_extra_worker_count|int > 0
-
+        - name: Render Metal3 extra baremetal hosts CRs
+          ansible.builtin.template:
+            src: ai/metal3/extra_workers_bmhs.yml.j2
+            dest: "{{ ai_metal3_yaml_dir }}/extra_workers_bmhs.yml"
+            mode: "0664"
 
   ### SUSHY-TOOLS
 
-  - name: Install sushy-tools
-    become: true
-    become_user: root
-    block:
-    - name: Create sushy-tools conf directory
-      file:
-        path: /opt/sushy-tools
-        state: directory
-        mode: '0755'
+    - name: Install sushy-tools
+      become: true
+      become_user: root
+      block:
+        - name: Create sushy-tools conf directory
+          ansible.builtin.file:
+            path: /opt/sushy-tools
+            state: directory
+            mode: "0755"
 
-    - name: Install sushy-tools in virtualenv
-      pip:
-        name: ['sushy-tools<0.21.1', 'libvirt-python']
-        virtualenv: /opt/sushy-tools/venv
-        virtualenv_command: /usr/bin/python3.9 -m venv
-        state: latest
+        - name: Install sushy-tools in virtualenv
+          ansible.builtin.pip:
+            name: ["sushy-tools<0.21.1", "libvirt-python"]
+            virtualenv: /opt/sushy-tools/venv
+            virtualenv_command: /usr/bin/python3.9 -m venv
+            state: latest # noqa: package-latest
 
-    - name: Create sushy-tools conf
-      template:
-        src: ai/sushy-tools/sushy-emulator.conf.j2
-        dest: /opt/sushy-tools/sushy-emulator.conf
-        mode: '0664'
+        - name: Create sushy-tools conf
+          ansible.builtin.template:
+            src: ai/sushy-tools/sushy-emulator.conf.j2
+            dest: /opt/sushy-tools/sushy-emulator.conf
+            mode: "0664"
 
-    - name: Create sushy-tools service
-      template:
-        src: ai/sushy-tools/sushy-tools.service.j2
-        dest: /etc/systemd/system/sushy-tools.service
-        mode: '0664'
+        - name: Create sushy-tools service
+          ansible.builtin.template:
+            src: ai/sushy-tools/sushy-tools.service.j2
+            dest: /etc/systemd/system/sushy-tools.service
+            mode: "0664"
 
-    - name: Reload systemd service
-      systemd:
-        daemon_reload: yes
+        - name: Reload systemd service
+          ansible.builtin.systemd:
+            daemon_reload: true
 
-    - name: Start sushy-tools service
-      service:
-        name: sushy-tools
-        state: restarted
-        enabled: yes
-
+        - name: Start sushy-tools service
+          ansible.builtin.service:
+            name: sushy-tools
+            state: restarted
+            enabled: true
 
   ### ASSISTED INSTALLER SERVICE VIA CRUCIBLE
 
-  - name: Register SSH public key
-    become: true
-    become_user: root
-    command: "cat /root/.ssh/id_rsa.pub"
-    register: ssh_root_pub_key
+    - name: Register SSH public key
+      become: true
+      become_user: root
+      ansible.builtin.command: "cat /root/.ssh/id_rsa.pub"
+      register: ssh_root_pub_key
 
-  - name: Download and configure assisted installer playbooks
-    become: true
-    become_user: ocp
-    block:
-    - name: Pull secret processing
-      include_tasks: pull-secret.yaml
-
-    - name: Clone the assisted installer playbooks repo
-      git:
-        repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/crucible.git', true) }}"
-        dest: "{{ base_path }}/crucible"
-        force: true
-        version: "{{ ocp_ai_ansible_branch | default('82801743b9510192d3f737b47fffeb53af80e0bb', true) }}"
-
-    # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
-    - name: Clone the assisted installer Ansible collection repo
-      git:
-        repo: "{{ ocp_ai_ansible_collection_repo | default('https://github.com/openstack-k8s-operators/ansible-collection-redhatci-ocp.git', true) }}"
-        dest: "{{ base_path }}/ansible-collection-redhatci-ocp"
-        force: true
-        version: "{{ ocp_ai_ansible_collection_branch | default('ocp_4_16', true) }}"
-
-    # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
-    - name: Build the assisted installer Ansible collection
-      shell: |
-        ansible-galaxy collection build --force
-      args:
-        chdir: "{{ base_path }}/ansible-collection-redhatci-ocp"
-
-    # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
-    - name: Install the assisted installer Ansible collection
-      shell: |
-        ansible-galaxy collection install {{ base_path }}/ansible-collection-redhatci-ocp/redhatci-ocp-0.15.0.tar.gz
-      args:
-        chdir: "{{ base_path }}/crucible"
-
-    - name: Get BMC-network-connected interface's IP for baremetal deployments
-      when: ocp_cluster_has_bm|bool
-      shell: |
-        /usr/bin/nmcli -g ip4.address device show {{ ocp_bmc_interface }} | cut -d '/' -f 1
-      register: ocp_bmc_interface_ip
-
-    - name: Create Crucible templates dir
-      file:
-        path: "{{ base_path }}/crucible/playbooks/templates"
-        state: directory
-        mode: 0755
-
-    - name: Add Crucible template to inject Red Hat CA
-      template:
-        src: ai/crucible/50-RH-Root-CA.yml.j2
-        dest: "{{ base_path }}/crucible/playbooks/templates/50-{{ ocp_node_role }}-RH-Root-CA.yml.j2"
-        mode: '0664'
-      loop_control:
-        loop_var: ocp_node_role
-      loop: "{{ ocp_node_roles }}"
-
-    - name: Inject specific RHCOS image version
+    - name: Download and configure assisted installer playbooks
+      become: true
+      become_user: ocp
       block:
-      - name: Get RHCOS image version raw data for {{ ocp_version }}.{{ ocp_minor_version }}
-        uri:
-          url: "{{ ocp_release_data_url }}"
-          method: GET
-          status_code: [200]
-          return_content: True
-        register: rhcos_image_version_raw_data
+        - name: Pull secret processing
+          ansible.builtin.include_tasks: pull-secret.yaml
 
-      - name: Get RHCOS image version for {{ ocp_version }}.{{ ocp_minor_version }}
-        set_fact:
-          rhcos_image_version: "{{ rhcos_image_version_raw_data.content | regex_search('machine-os\\s(.+)\\sRed\\sHat\\sEnterprise\\sLinux\\sCoreOS', '\\1') | default ([''], true) | first }}"
+        - name: Clone the assisted installer playbooks repo
+          ansible.builtin.git:
+            repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/crucible.git', true) }}"
+            dest: "{{ base_path }}/crucible"
+            force: true
+            version: "{{ ocp_ai_ansible_branch | default('82801743b9510192d3f737b47fffeb53af80e0bb', true) }}"
 
-      - name: Fail when an RHCOS version cannot be determined
-        fail:
-          msg: "Unable to determine RHCOS version for OCP version {{ ocp_version }}.{{ ocp_minor_version }}"
-        when: rhcos_image_version == ""
+        # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+        - name: Clone the assisted installer Ansible collection repo
+          ansible.builtin.git:
+            repo: "{{ ocp_ai_ansible_collection_repo | default('https://github.com/openstack-k8s-operators/ansible-collection-redhatci-ocp.git', true) }}"
+            dest: "{{ base_path }}/ansible-collection-redhatci-ocp"
+            force: true
+            version: "{{ ocp_ai_ansible_collection_branch | default('ocp_4_16', true) }}"
 
-    - name: Configure inventory variables
-      template:
-        src: ai/crucible/inventory.ospd.yml.j2
-        dest: "{{ base_path }}/crucible/inventory.ospd.yml"
-        mode: '0664'
-      vars:
-        ssh_pub_key: "{{ ssh_root_pub_key.stdout }}"
+        # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+        - name: Build the assisted installer Ansible collection
+          ansible.builtin.shell: |
+            ansible-galaxy collection build --force
+          args:
+            chdir: "{{ base_path }}/ansible-collection-redhatci-ocp"
 
-    - name: Configure inventory vault variables
-      template:
-        src: ai/crucible/inventory.vault.ospd.yml.j2
-        dest: "{{ base_path }}/crucible/inventory.vault.ospd.yml"
-        mode: '0664'
+        # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
+        - name: Install the assisted installer Ansible collection
+          ansible.builtin.shell: |
+            ansible-galaxy collection install {{ base_path }}/ansible-collection-redhatci-ocp/redhatci-ocp-0.15.0.tar.gz
+          args:
+            chdir: "{{ base_path }}/crucible"
 
-    - name: Create assisted installer service bash script
-      template:
-        src: ai/crucible/deploy_ai_service.sh.j2
-        dest: "{{ base_path }}/crucible/deploy_ai_service.sh"
-        mode: '0755'
+        - name: Get BMC-network-connected interface's IP for baremetal deployments
+          when: ocp_cluster_has_bm | bool
+          ansible.builtin.shell: |
+            /usr/bin/nmcli -g ip4.address device show {{ ocp_bmc_interface }} | cut -d '/' -f 1
+          register: ocp_bmc_interface_ip
 
-    - name: Create assisted installer deploy-cluster bash script
-      template:
-        src: ai/crucible/deploy_cluster.sh.j2
-        dest: "{{ base_path }}/crucible/deploy_cluster.sh"
-        mode: '0755'
+        - name: Create Crucible templates dir
+          ansible.builtin.file:
+            path: "{{ base_path }}/crucible/playbooks/templates"
+            state: directory
+            mode: "0755"
+
+        - name: Add Crucible template to inject Red Hat CA
+          ansible.builtin.template:
+            src: ai/crucible/50-RH-Root-CA.yml.j2
+            dest: "{{ base_path }}/crucible/playbooks/templates/50-{{ ocp_node_role }}-RH-Root-CA.yml.j2"
+            mode: "0664"
+          loop_control:
+            loop_var: ocp_node_role
+          loop: "{{ ocp_node_roles }}"
+
+        - name: Inject specific RHCOS image version
+          block:
+            - name: Get RHCOS image version raw data for {{ ocp_version }}.{{ ocp_minor_version }}
+              ansible.builtin.uri:
+                url: "{{ ocp_release_data_url }}"
+                method: GET
+                status_code: [200]
+                return_content: true
+              register: rhcos_image_version_raw_data
+
+            - name: Get RHCOS image version for {{ ocp_version }}.{{ ocp_minor_version }}
+              ansible.builtin.set_fact:
+                rhcos_image_version: "{{ rhcos_image_version_raw_data.content |
+                    regex_search('machine-os\\s(.+)\\sRed\\sHat\\sEnterprise\\sLinux\\sCoreOS', '\\1') |
+                    default([''], true) | first }}"
+
+            - name: Fail when an RHCOS version cannot be determined
+              ansible.builtin.fail:
+                msg: "Unable to determine RHCOS version for OCP version {{ ocp_version }}.{{ ocp_minor_version }}"
+              when: rhcos_image_version == ""
+
+        - name: Configure inventory variables
+          ansible.builtin.template:
+            src: ai/crucible/inventory.ospd.yml.j2
+            dest: "{{ base_path }}/crucible/inventory.ospd.yml"
+            mode: "0664"
+          vars:
+            ssh_pub_key: "{{ ssh_root_pub_key.stdout }}"
+
+        - name: Configure inventory vault variables
+          ansible.builtin.template:
+            src: ai/crucible/inventory.vault.ospd.yml.j2
+            dest: "{{ base_path }}/crucible/inventory.vault.ospd.yml"
+            mode: "0664"
+
+        - name: Create assisted installer service bash script
+          ansible.builtin.template:
+            src: ai/crucible/deploy_ai_service.sh.j2
+            dest: "{{ base_path }}/crucible/deploy_ai_service.sh"
+            mode: "0755"
+
+        - name: Create assisted installer deploy-cluster bash script
+          ansible.builtin.template:
+            src: ai/crucible/deploy_cluster.sh.j2
+            dest: "{{ base_path }}/crucible/deploy_cluster.sh"
+            mode: "0755"
 
     # FIXME: Add this back once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
     # - name: Install Crucible Ansible dependencies
@@ -725,16 +718,16 @@
     #   args:
     #     chdir: "{{ base_path }}/crucible"
 
-    - name: Show assisted service info
-      debug:
-        msg: |
-          Deploying the assisted installer service containers. You can tail the logs at {{ base_path }}/ai_service.log on
-          the host for progress.
+        - name: Show assisted service info
+          ansible.builtin.debug:
+            msg: |
+              Deploying the assisted installer service containers. You can tail the logs at {{ base_path }}/ai_service.log on
+              the host for progress.
 
-    - name: Deploy the assisted installer service
-      shell: |
-        ./deploy_ai_service.sh
-      args:
-        chdir: "{{ base_path }}/crucible"
-      environment:
-        ANSIBLE_HOST_KEY_CHECKING: false
+        - name: Deploy the assisted installer service
+          ansible.builtin.shell: |
+            ./deploy_ai_service.sh
+          args:
+            chdir: "{{ base_path }}/crucible"
+          environment:
+            ANSIBLE_HOST_KEY_CHECKING: "false"

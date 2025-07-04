@@ -1,51 +1,52 @@
 ---
-- hosts: localhost
+- name: Run nova cells_v2 discovery
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
     - oc_local
 
   tasks:
     - name: Set combined osp dict
-      set_fact:
+      ansible.builtin.set_fact:
         osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
     - name: Set directory for yaml files
-      set_fact:
+      ansible.builtin.set_fact:
         discovery_yaml_dir: "{{ working_yamls_dir }}/osp_cell_v2_discovery"
 
-    - name: show yaml output dir
-      debug:
+    - name: Show yaml output dir
+      ansible.builtin.debug:
         msg: "yamls will be written to {{ discovery_yaml_dir }} locally"
 
     - name: Clean yaml dir
-      file:
+      ansible.builtin.file:
         state: absent
         path: "{{ discovery_yaml_dir }}/"
 
     - name: Create yaml dir
-      file:
+      ansible.builtin.file:
         path: "{{ discovery_yaml_dir }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Render templates to yaml dir
-      template:
+      ansible.builtin.template:
         src: "osp/{{ item }}.j2"
         dest: "{{ discovery_yaml_dir }}/{{ item }}"
-        mode: '0644'
+        mode: "0644"
       with_items:
-      - "cell_v2_discovery.yaml"
+        - "cell_v2_discovery.yaml"
 
-    - name: copy discovery playbook to openstackclient
-      shell: |
+    - name: Copy discovery playbook to openstackclient
+      ansible.builtin.shell: |
         #!/bin/bash
         oc cp -n openstack {{ discovery_yaml_dir }}/cell_v2_discovery.yaml openstackclient:/home/cloud-admin/cell_v2_discovery.yaml
       environment: &oc_env
         PATH: "{{ oc_env_path }}"
         KUBECONFIG: "{{ kubeconfig }}"
 
-    - name: run discovery playbook via openstackclient
-      shell: |
+    - name: Run discovery playbook via openstackclient
+      ansible.builtin.shell: |
         oc rsh -n openstack openstackclient <<"EOF_RSH"
           ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory  /home/cloud-admin/cell_v2_discovery.yaml
         EOF_RSH

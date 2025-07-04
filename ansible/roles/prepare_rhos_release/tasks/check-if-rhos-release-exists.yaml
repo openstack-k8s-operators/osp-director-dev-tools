@@ -1,9 +1,10 @@
+---
 - name: Check if rhos-release exists
-  stat:
+  ansible.builtin.stat:
     path: "{{ rhos_release_bin }}"
   register: rhos_release_command_stat
 
 - name: Define rhos_release_command fact
-  set_fact:
+  ansible.builtin.set_fact:
     rhos_release_command: "{{ rhos_release_bin }}"
   when: rhos_release_command_stat.stat.exists

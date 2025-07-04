@@ -63,4 +63,3 @@ osp_release_defaults:
         - storage_mgmt_leaf2
   extrafeatures:
     - hci
-

@@ -1,90 +1,90 @@
 ---
-- hosts: localhost
+- name: OpenShift AI Post Install
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Extra post-install steps for assisted installer
-    when: (ocp_ai | bool)
-    block:
-    - name: Include AI variables
-      include_vars: vars/ocp_ai.yaml
-
-    - name: Wait until the OpenShift cluster is stable
-      shell: |
-        oc adm wait-for-stable-cluster --minimum-stable-period=0.5m --timeout={{ (default_timeout * 10)|int }}s
-      environment: &oc_env
-        PATH: "{{ oc_env_path }}"
-        KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
+    - name: Extra post-install steps for assisted installer
+      when: (ocp_ai | bool)
+      block:
+        - name: Include AI variables
+          ansible.builtin.include_vars: vars/ocp_ai.yaml
+        - name: Wait until the OpenShift cluster is stable
+          ansible.builtin.shell: |
+            oc adm wait-for-stable-cluster --minimum-stable-period=0.5m --timeout={{ (default_timeout * 10) | int }}s
+          environment: &oc_env
+            PATH: "{{ oc_env_path }}"
+            KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
 
     ### UN-SCHEDULABLE MASTERS
 
-    - name: Unschedulable masters for AI
-      when: ocp_worker_count|int > 0 and (not enable_ocs|bool or ocp_worker_count|int > 2)
-      block:
-      - name: Set directory for storing schedule/ingress yaml files
-        set_fact:
-          ai_sched_ingress_yaml_dir: "{{ working_yamls_dir }}/ai_schedule_ingress"
+        - name: Unschedulable masters for AI
+          when: ocp_worker_count | int > 0 and (not enable_ocs | bool or ocp_worker_count | int > 2)
+          block:
+            - name: Set directory for storing schedule/ingress yaml files
+              ansible.builtin.set_fact:
+                ai_sched_ingress_yaml_dir: "{{ working_yamls_dir }}/ai_schedule_ingress"
 
-      - name: Set facts to disable schedulable masters
-        set_fact:
-          ocp_ai_masters_schedulable: false
+            - name: Set facts to disable schedulable masters
+              ansible.builtin.set_fact:
+                ocp_ai_masters_schedulable: false
 
-      - name: Create local yaml dir for schedule/ingress CRs
-        file:
-          path: "{{ ai_sched_ingress_yaml_dir }}"
-          state: directory
-          mode: '0755'
+            - name: Create local yaml dir for schedule/ingress CRs
+              ansible.builtin.file:
+                path: "{{ ai_sched_ingress_yaml_dir }}"
+                state: directory
+                mode: "0755"
 
-      - name: Create schedule CR
-        template:
-          src: ai/crucible/50-master-scheduler.yml.j2
-          dest: "{{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml"
-          mode: '0664'
+            - name: Create schedule CR
+              ansible.builtin.template:
+                src: ai/crucible/50-master-scheduler.yml.j2
+                dest: "{{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml"
+                mode: "0664"
 
-      - name: Make masters unschedulable
-        shell: |
-          oc apply -f {{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml
-        environment:
-          <<: *oc_env
+            - name: Make masters unschedulable
+              ansible.builtin.shell: |
+                oc apply -f {{ ai_sched_ingress_yaml_dir }}/50-master-scheduler.yml
+              environment:
+                <<: *oc_env
 
 
     ### PROVISIONING NETWORK
 
-    - name: Set directory for storing AI Metal3 yaml files
-      set_fact:
-        ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
+        - name: Set directory for storing AI Metal3 yaml files
+          ansible.builtin.set_fact:
+            ai_metal3_yaml_dir: "{{ working_yamls_dir }}/ai_metal3"
 
-    - name: Create local yaml dir for Metal3 CRs
-      file:
-        path: "{{ ai_metal3_yaml_dir }}"
-        state: directory
-        mode: '0755'
+        - name: Create local yaml dir for Metal3 CRs
+          ansible.builtin.file:
+            path: "{{ ai_metal3_yaml_dir }}"
+            state: directory
+            mode: "0755"
 
-    - name: Create Metal3 provisioning CR
-      template:
-        src: ai/metal3/provisioning.yml.j2
-        dest: "{{ ai_metal3_yaml_dir }}/provisioning.yml"
-        mode: '0664'
+        - name: Create Metal3 provisioning CR
+          ansible.builtin.template:
+            src: ai/metal3/provisioning.yml.j2
+            dest: "{{ ai_metal3_yaml_dir }}/provisioning.yml"
+            mode: "0664"
 
-    - name: Apply Metal3 provisioning CR
-      shell: |
-        oc apply -f {{ ai_metal3_yaml_dir }}/provisioning.yml
-      environment:
-        <<: *oc_env
+        - name: Apply Metal3 provisioning CR
+          ansible.builtin.shell: |
+            oc apply -f {{ ai_metal3_yaml_dir }}/provisioning.yml
+          environment:
+            <<: *oc_env
 
 
     ### OCS (if requested)
 
-    - name: Install Local Storage and OCS
-      when: (enable_ocs | bool)
-      block:
-      - name: Install Local Storage Operator
-        include_tasks: local_storage_tasks.yaml
-        vars:
-          local_storage_volume_mode: Block
-          ocs_local_storage: true
+        - name: Install Local Storage and OCS
+          when: (enable_ocs | bool)
+          block:
+            - name: Install Local Storage Operator
+              ansible.builtin.include_tasks: local_storage_tasks.yaml
+              vars:
+                local_storage_volume_mode: Block
+                ocs_local_storage: true
 
-      - name: Install OCS
-        include_tasks: ocs.yaml
+            - name: Install OCS
+              ansible.builtin.include_tasks: ocs.yaml

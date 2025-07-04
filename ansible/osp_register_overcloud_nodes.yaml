@@ -1,116 +1,116 @@
 ---
-- hosts: localhost
+- name: Configure
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+    - name: Include variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set directory for rhsm yaml files
+      ansible.builtin.set_fact:
+        rhsm_yaml_dir: "{{ working_yamls_dir }}/rhsm"
 
-  - name: Set directory for rhsm yaml files
-    set_fact:
-      rhsm_yaml_dir: "{{ working_yamls_dir }}/rhsm"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg: "yamls will be written to {{ rhsm_yaml_dir }} locally"
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ rhsm_yaml_dir }} locally"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ rhsm_yaml_dir }}/"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ rhsm_yaml_dir }}/"
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ rhsm_yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ rhsm_yaml_dir }}"
-      state: directory
-      mode: '0755'
-
-  - name: Register to subscription manager
-    when: osp_registry_method == "rhsm"
-    block:
-    - name: use local rhel-subscription info
-      when: secrets_repo is undefined
+    - name: Register to subscription manager
+      when: osp_registry_method == "rhsm"
       block:
-      - name: Include rhel-subscription info
-        include_vars: vars/rhel-subscription.yaml
-      rescue:
-      - name: fail if required subscription information was not provided
-        fail:
-          msg: |
-            vars/rhel-subscription.yaml is not present. You must create this
-            file manually. The format of the file is:
+        - name: Use local rhel-subscription info
+          when: secrets_repo is undefined
+          block:
+            - name: Include rhel-subscription info
+              ansible.builtin.include_vars: vars/rhel-subscription.yaml
+          rescue:
+            - name: Fail if required subscription information was not provided
+              ansible.builtin.fail:
+                msg: |
+                  vars/rhel-subscription.yaml is not present. You must create this
+                  file manually. The format of the file is:
 
-            rhel_subscription_activation_key: <activation key>
-            rhel_subscription_org_id: "xxxxxxx"
+                  rhel_subscription_activation_key: <activation key>
+                  rhel_subscription_org_id: "xxxxxxx"
 
-    - name: use secrets_repo
-      when: secrets_repo is defined
-      block:
-      - name: set secrets_repo_path from provided secrets_repo
-        set_fact:
-          secrets_repo_path: "{{ ansible_env.HOME }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
-      - name: create base dir for secrets_repo repo
-        file:
-          path: "{{ secrets_repo_path }}"
-          state: directory
-          mode: "0755"
-      - name: Clone the repo specified in secrets_repo
-        git:
-          repo: "{{ secrets_repo }}"
-          dest: "{{ secrets_repo_path }}"
-          version: "{{ secrets_branch | default('HEAD', true) }}"
-        environment:
-          GIT_SSL_NO_VERIFY: "true"
-      - name: Include rhel-subscription info
-        include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
-      rescue:
-      - name: fail if required subscription information file is not in repo
-        fail:
-          msg: |
-            rhel-subscription.yaml is not present in {{ secrets_repo }}. You must create this
-            file. The format of the file is:
+        - name: Use secrets_repo
+          when: secrets_repo is defined
+          block:
+            - name: Set secrets_repo_path from provided secrets_repo
+              ansible.builtin.set_fact:
+                secrets_repo_path: "{{ ansible_env.HOME }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
+            - name: Create base dir for secrets_repo repo
+              ansible.builtin.file:
+                path: "{{ secrets_repo_path }}"
+                state: directory
+                mode: "0755"
+            - name: Clone the repo specified in secrets_repo
+              ansible.builtin.git:
+                repo: "{{ secrets_repo }}"
+                dest: "{{ secrets_repo_path }}"
+                version: "{{ secrets_branch | default('HEAD', true) }}"
+              environment:
+                GIT_SSL_NO_VERIFY: "true"
+            - name: Include rhel-subscription info
+              ansible.builtin.include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
+          rescue:
+            - name: Fail if required subscription information file is not in repo
+              ansible.builtin.fail:
+                msg: |
+                  rhel-subscription.yaml is not present in {{ secrets_repo }}. You must create this
+                  file. The format of the file is:
 
-            rhel_subscription_activation_key: <activation key>
-            rhel_subscription_org_id: "xxxxxxx"
+                  rhel_subscription_activation_key: <activation key>
+                  rhel_subscription_org_id: "xxxxxxx"
 
-  - name: set centos8 version
-    when: osp.release == "train"
-    set_fact:
-      centos_release: centos8
+    - name: Set centos8 version
+      when: osp.release == "train"
+      ansible.builtin.set_fact:
+        centos_release: centos8
 
-  - name: set centos9 version
-    when: osp.release == "wallaby"
-    set_fact:
-      centos_release: centos9
+    - name: Set centos9 version
+      when: osp.release == "wallaby"
+      ansible.builtin.set_fact:
+        centos_release: centos9
 
-  - name: Render templates to yaml dir
-    template:
-      src: "osp/{{ item }}.j2"
-      dest: "{{ rhsm_yaml_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - "rhsm.yaml"
+    - name: Render templates to yaml dir
+      ansible.builtin.template:
+        src: "osp/{{ item }}.j2"
+        dest: "{{ rhsm_yaml_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - "rhsm.yaml"
 
-  - name: copy rhsm playbook to openstackclient
-    shell: |
-      #!/bin/bash
-      oc cp -n openstack {{ rhsm_yaml_dir }}/rhsm.yaml openstackclient:/home/cloud-admin/rhsm.yaml
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Copy rhsm playbook to openstackclient
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc cp -n openstack {{ rhsm_yaml_dir }}/rhsm.yaml openstackclient:/home/cloud-admin/rhsm.yaml
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: run rhsm playbook via openstackclient
-    shell: |
-      oc rsh -n openstack openstackclient <<"EOF_RSH"
-        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory {{ limit }} /home/cloud-admin/rhsm.yaml
-      EOF_RSH
-    environment:
-      <<: *oc_env
-    vars:
-      limit: "{{ '--limit ' + ','.join(config_generator_roles) if config_generator_roles|default(false) else '' }}"
+    - name: Run rhsm playbook via openstackclient
+      ansible.builtin.shell: |
+        oc rsh -n openstack openstackclient <<"EOF_RSH"
+          ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory {{ limit }} /home/cloud-admin/rhsm.yaml
+        EOF_RSH
+      environment:
+        <<: *oc_env
+      vars:
+        limit: "{{ '--limit ' + ','.join(config_generator_roles) if config_generator_roles | default(false) else '' }}"

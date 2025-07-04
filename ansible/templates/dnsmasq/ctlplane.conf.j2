@@ -8,11 +8,11 @@ no-hosts
 {% for dns_server in external_dns %}
 server={{ dns_server }}
 {% endfor %}
-{% if osp.tlse|default(false)|bool %}
+{% if osp.tlse | default(false) | bool %}
 server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA
 {% endif %}
 
-{% if osp.tlse|default(false)|bool %}
+{% if osp.tlse | default(false) | bool %}
 {% for id, net in osp_networks.items() %}
 {% if net.name_lower != "external" %}
 {% for subnet in net.subnets %}

@@ -1,219 +1,234 @@
 ---
-- hosts: localhost
+- name: OpenShift VMs Setup Extra NICs
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Setup extra VM nics
+    - name: Setup extra VM nics
     # Only do this if virtualized dedicated workers or virtualized master-worker nodes are present
-    when: (ocp_num_workers > 0 or (ocp_num_workers < 1 and ocp_bm_workers|default({})|length < 1 and ocp_num_masters > 1))
-    become: true
-    become_user: root
-    block:
-    - name: Include variables
-      include_vars: vars/default.yaml
-
-    - name: check if osp network already exists
-      shell: >
-        /usr/bin/nmcli con show ospnetwork
-      ignore_errors: true
-      register: ospnetwork_exist
-
-    - name: check if osp external network already exists
-      shell: >
-        /usr/bin/nmcli con show external
-      ignore_errors: true
-      register: extnetwork_exist
-
-    - name: create osp networks
-      when: "'no such connection profile' in ospnetwork_exist.stderr or 'no such connection profile' in extnetwork_exist.stderr"
-      block:
-      - name: Set combined osp dict
-        set_fact:
-          osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
-
-      - name: Find requested MTU for ospnetwork bridge and interface
-        set_fact:
-          ospnetwork_bridge_mtu: "{{ (osp.attach_configs['br-osp']['interfaces'] | selectattr('type', 'equalto', 'bridge') | map(attribute='mtu') | first) }}"
-          ospnetwork_intf_mtu: "{{ (osp.attach_configs['br-osp']['interfaces'] | selectattr('type', 'equalto', 'ethernet') | map(attribute='mtu') | first) }}"
-
-      - name: Create ospnetwork bridge
-        shell: |
-          /usr/bin/nmcli connection add ifname ospnetwork type bridge con-name ospnetwork stp no ipv4.method disabled ipv6.method disabled ethernet.mtu {{ ospnetwork_bridge_mtu }}
-        register: add_ospnetwork_bridge
-        failed_when: add_ospnetwork_bridge.stderr != '' and 'There is another connection with the name' not in add_ospnetwork_bridge.stderr
-
-      - name: Handle ospnetwork interface, if necessary
-        when: osp_bm_interface is defined and osp_bm_interface != ""
-        block:
-        - name: Make sure old OSP interface is down
-          shell: |
-            /usr/bin/nmcli con down {{ osp_bm_interface }}
-          ignore_errors: true
-
-        - name: Check if ospnetwork interface is already attached to ospnetwork bridge
-          shell: |
-            /usr/bin/nmcli con show bridge-slave-{{ osp_bm_interface }}
-          ignore_errors: true
-          register: check_ospnetwork_bridge_exists
-
-        - name: Add ospnetwork interface to ospnetwork bridge
-          shell: |
-            /usr/bin/nmcli con add type bridge-slave ifname {{ osp_bm_interface }} master ospnetwork ethernet.mtu {{ ospnetwork_intf_mtu }}
-          when: check_ospnetwork_bridge_exists.stderr != "" and 'no such connection profile' in check_ospnetwork_bridge_exists.stderr
-
-      - name: Create osp external bridge (if IP set)
-        community.general.nmcli:
-          conn_name: "external"
-          type: bridge
-          ifname: "external"
-          autoconnect: yes
-          stp: off
-          ip4: "{{ osp_ext_bridge_ip4 }}"
-          ip6: "{{ osp_ext_bridge_ip6 }}"
-          zone: libvirt
-          state: present
-        when: osp_ext_bridge_ip4|default != ""
-
-      - name: Create osp external bridge (if IP unset)
-        shell: |
-          /usr/bin/nmcli connection add ifname external type bridge con-name external stp no ipv4.method disabled ipv6.method disabled
-        register: add_external_bridge
-        failed_when: add_external_bridge.stderr != '' and 'There is another connection with the name' not in add_external_bridge.stderr
-        when: osp_ext_bridge_ip4|default == ""
-
-      - name: Handle external interface, if necessary
-        when: osp_ext_bm_interface is defined and osp_ext_bm_interface != ""
-        block:
-        - name: Make sure old external OSP interface is down
-          shell: |
-            /usr/bin/nmcli con down {{ osp_ext_bm_interface }}
-          ignore_errors: true
-
-        - name: Check if external interface is already attached to external bridge
-          shell: |
-            /usr/bin/nmcli con show bridge-slave-{{ osp_ext_bm_interface }}
-          ignore_errors: true
-          register: check_external_bridge_exists
-
-        - name: Add external interface to external bridge
-          shell: |
-            /usr/bin/nmcli con add type bridge-slave ifname {{ osp_ext_bm_interface }} master external
-          when: check_external_bridge_exists.stderr != "" and 'no such connection profile' in check_external_bridge_exists.stderr
-
-
-      - name: Add OSP bridges to libvirt zone
-        command: "firewall-cmd --zone libvirt --change-interface {{ item.0 }} {{ item.1 }}"
-        with_nested:
-          - ['external', 'ospnetwork']
-          - ['', '--permanent']
-
-      - name: set accept_ra = 2  due to "enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss"
-        sysctl:
-          name: net.ipv6.conf.all.accept_ra
-          value: '2'
-          sysctl_file: /etc/sysctl.d/90-network.conf
-
-      - name: enable ipv4 forwarding
-        sysctl:
-          name: net.ipv4.ip_forward
-          value: '1'
-          sysctl_file: /etc/sysctl.d/90-network.conf
-
-      - name: enable ipv6 forwarding
-        sysctl:
-          name: net.ipv6.conf.all.forwarding
-          value: '1'
-          sysctl_file: /etc/sysctl.d/90-network.conf
-
-      - name: Reload bridges
-        shell: |
-          /usr/bin/nmcli con reload {{ item }}; /usr/bin/nmcli con up {{ item }}
-        with_items:
-          - ospnetwork
-          - external
-
-    # on CI runs it has seen that the network interface was still down
-    # lets make sure the OSP network interfaces are up
-    - name: make sure the network interfaces are up
-      become: true
-      become_user: root
-      shell: |
-        set -e
-        ip link set {{ item }} up
-      with_items:
-          - external
-          - ospnetwork
-
-    - name: Attach OSP networks to OCP worker VMs
+      when: (ocp_num_workers > 0 or (ocp_num_workers < 1 and ocp_bm_workers | default({}) | length < 1 and ocp_num_masters > 1))
       become: true
       become_user: root
       block:
-      - name: get active worker nodes, if they exist
-        shell: >
-            echo $(virsh list --name | grep worker)
-        register: worker_ocp_active_dedicated
-        when: ocp_num_workers > 0
-
-      - name: get active master nodes and count them as workers, if this cluster has no dedicated workers
-        shell: >
-            echo $(virsh list --name | grep master)
-        register: worker_ocp_active_masters
-        when: ocp_num_workers < 1
-
-      - name: set active worker nodes fact, if dedicated workers exist
-        set_fact:
-          worker_ocp_active: "{{ worker_ocp_active_dedicated.stdout_lines }}"
-        when: "'stdout_lines' in worker_ocp_active_dedicated and worker_ocp_active_dedicated.stdout_lines|length > 0"
-
-      - name: set active worker nodes fact, if no dedicated workers exist
-        set_fact:
-          worker_ocp_active: "{{ worker_ocp_active_masters.stdout_lines }}"
-        when: "'stdout_lines' in worker_ocp_active_masters and worker_ocp_active_masters.stdout_lines|length > 0"
-
-      - name: get inactive worker nodes
-        shell: >
-            echo $(virsh list --inactive --name | grep worker)
-        register: worker_ocp_inactive
-
-      - name: Attach/detach network interfaces for INACTIVE workers
-        when: worker_ocp_inactive.stdout_lines|length > 0
-        block:
-        - name: Detach network interface from INACTIVE worker VM's if this is a rerun of the playbook
-          shell: |
-            ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
-            for mac in $ifmacs; do
-              virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent
-            done
-          with_nested:
-          - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
-          - ['external', 'ospnetwork']
+        - name: Include variables
+          ansible.builtin.include_vars: vars/default.yaml
+        - name: Check if osp network already exists
+          ansible.builtin.shell: |
+            /usr/bin/nmcli con show ospnetwork
           ignore_errors: true
+          register: ospnetwork_exist
 
-        - name: Attach the osp network to INACTIVE worker VM's
-          command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent"
-          with_nested:
-          - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
-          - ['external', 'ospnetwork']
-
-      - name: Attach/detach network interfaces for ACTIVE workers
-        when: worker_ocp_active|length > 0
-        block:
-        - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
-          shell: |
-            ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
-            for mac in $ifmacs; do
-              virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent --live
-            done
-          with_nested:
-          - "{{ worker_ocp_active[0].split(' ') }}"
-          - ['external',  'ospnetwork']
+        - name: Check if osp external network already exists
+          ansible.builtin.shell: |
+            /usr/bin/nmcli con show external
           ignore_errors: true
+          register: extnetwork_exist
 
-        - name: Attach the osp network to ACTIVE worker VM's
-          when: not (ocp_ai|bool)
+        - name: Create osp networks
+          when: "'no such connection profile' in ospnetwork_exist.stderr or 'no such connection profile' in extnetwork_exist.stderr"
           block:
+            - name: Set combined osp dict
+              ansible.builtin.set_fact:
+                osp: "{{
+                  osp_defaults |
+                  combine((osp_release_defaults | default({})), recursive=True) |
+                  combine((osp_local | default({})), recursive=True)
+                  }}
+                "
+
+            - name: Find requested MTU for ospnetwork bridge and interface
+              ansible.builtin.set_fact:
+                ospnetwork_bridge_mtu: "{{
+                  (osp.attach_configs['br-osp']['interfaces'] |
+                   selectattr('type', 'equalto', 'bridge') |
+                   map(attribute='mtu') |
+                   first)
+                }}"
+                ospnetwork_intf_mtu: "{{
+                  (osp.attach_configs['br-osp']['interfaces'] |
+                   selectattr('type', 'equalto', 'ethernet') |
+                   map(attribute='mtu') |
+                   first)
+                }}"
+
+            - name: Create ospnetwork bridge
+              ansible.builtin.shell: |
+                /usr/bin/nmcli connection add \
+                  ifname ospnetwork type bridge con-name ospnetwork stp no ipv4.method disabled ipv6.method disabled ethernet.mtu {{ ospnetwork_bridge_mtu }}
+              register: add_ospnetwork_bridge
+              failed_when: add_ospnetwork_bridge.stderr != '' and 'There is another connection with the name' not in add_ospnetwork_bridge.stderr
+
+            - name: Handle ospnetwork interface, if necessary
+              when: osp_bm_interface is defined and osp_bm_interface != ""
+              block:
+                - name: Make sure old OSP interface is down
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con down {{ osp_bm_interface }}
+                  ignore_errors: true
+
+                - name: Check if ospnetwork interface is already attached to ospnetwork bridge
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con show bridge-slave-{{ osp_bm_interface }}
+                  ignore_errors: true
+                  register: check_ospnetwork_bridge_exists
+
+                - name: Add ospnetwork interface to ospnetwork bridge
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con add type bridge-slave ifname {{ osp_bm_interface }} master ospnetwork ethernet.mtu {{ ospnetwork_intf_mtu }}
+                  when: check_ospnetwork_bridge_exists.stderr != "" and 'no such connection profile' in check_ospnetwork_bridge_exists.stderr
+
+            - name: Create osp external bridge (if IP set)
+              community.general.nmcli:
+                conn_name: "external"
+                type: bridge
+                ifname: "external"
+                autoconnect: true
+                stp: false
+                ip4: "{{ osp_ext_bridge_ip4 }}"
+                ip6: "{{ osp_ext_bridge_ip6 }}"
+                zone: libvirt
+                state: present
+              when: osp_ext_bridge_ip4 | default != ""
+
+            - name: Create osp external bridge (if IP unset)
+              ansible.builtin.shell: |
+                /usr/bin/nmcli connection add ifname external type bridge con-name external stp no ipv4.method disabled ipv6.method disabled
+              register: add_external_bridge
+              failed_when: add_external_bridge.stderr != '' and 'There is another connection with the name' not in add_external_bridge.stderr
+              when: osp_ext_bridge_ip4 | default == ""
+
+            - name: Handle external interface, if necessary
+              when: osp_ext_bm_interface is defined and osp_ext_bm_interface != ""
+              block:
+                - name: Make sure old external OSP interface is down
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con down {{ osp_ext_bm_interface }}
+                  ignore_errors: true
+
+                - name: Check if external interface is already attached to external bridge
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con show bridge-slave-{{ osp_ext_bm_interface }}
+                  ignore_errors: true
+                  register: check_external_bridge_exists
+
+                - name: Add external interface to external bridge
+                  ansible.builtin.shell: |
+                    /usr/bin/nmcli con add type bridge-slave ifname {{ osp_ext_bm_interface }} master external
+                  when: check_external_bridge_exists.stderr != "" and 'no such connection profile' in check_external_bridge_exists.stderr
+
+            - name: Add OSP bridges to libvirt zone
+              ansible.builtin.command: "firewall-cmd --zone libvirt --change-interface {{ item.0 }} {{ item.1 }}"
+              with_nested:
+                - ["external", "ospnetwork"]
+                - ["", "--permanent"]
+
+            - name: Set accept_ra = 2  due to "enabling IPv6 forwarding with RA routes without accept_ra set to 2 is likely to cause routes loss"
+              ansible.posix.sysctl:
+                name: net.ipv6.conf.all.accept_ra
+                value: "2"
+                sysctl_file: /etc/sysctl.d/90-network.conf
+
+            - name: Enable ipv4 forwarding
+              ansible.posix.sysctl:
+                name: net.ipv4.ip_forward
+                value: "1"
+                sysctl_file: /etc/sysctl.d/90-network.conf
+
+            - name: Enable ipv6 forwarding
+              ansible.posix.sysctl:
+                name: net.ipv6.conf.all.forwarding
+                value: "1"
+                sysctl_file: /etc/sysctl.d/90-network.conf
+
+            - name: Reload bridges
+              ansible.builtin.shell: |
+                /usr/bin/nmcli con reload {{ item }}; /usr/bin/nmcli con up {{ item }}
+              with_items:
+                - ospnetwork
+                - external
+
+        # on CI runs it has seen that the network interface was still down
+        # lets make sure the OSP network interfaces are up
+        - name: Make sure the network interfaces are up
+          become: true
+          become_user: root
+          ansible.builtin.shell: |
+            set -e
+            ip link set {{ item }} up
+          with_items:
+            - external
+            - ospnetwork
+
+        - name: Attach OSP networks to OCP worker VMs
+          become: true
+          become_user: root
+          block:
+            - name: Get active worker nodes, if they exist
+              ansible.builtin.shell: |
+                echo $(virsh list --name | grep worker)
+              register: worker_ocp_active_dedicated
+              when: ocp_num_workers > 0
+
+            - name: Get active master nodes and count them as workers, if this cluster has no dedicated workers
+              ansible.builtin.shell: |
+                echo $(virsh list --name | grep master)
+              register: worker_ocp_active_masters
+              when: ocp_num_workers < 1
+
+            - name: Set active worker nodes fact, if dedicated workers exist
+              ansible.builtin.set_fact:
+                worker_ocp_active: "{{ worker_ocp_active_dedicated.stdout_lines }}"
+              when: "'stdout_lines' in worker_ocp_active_dedicated and worker_ocp_active_dedicated.stdout_lines | length > 0"
+
+            - name: Set active worker nodes fact, if no dedicated workers exist
+              ansible.builtin.set_fact:
+                worker_ocp_active: "{{ worker_ocp_active_masters.stdout_lines }}"
+              when: "'stdout_lines' in worker_ocp_active_masters and worker_ocp_active_masters.stdout_lines | length > 0"
+
+            - name: Get inactive worker nodes
+              ansible.builtin.shell: |
+                echo $(virsh list --inactive --name | grep worker)
+              register: worker_ocp_inactive
+
+            - name: Attach/detach network interfaces for INACTIVE workers
+              when: worker_ocp_inactive.stdout_lines | length > 0
+              block:
+                - name: Detach network interface from INACTIVE worker VM's if this is a rerun of the playbook
+                  ansible.builtin.shell: |
+                    ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
+                    for mac in $ifmacs; do
+                      virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent
+                    done
+                  with_nested:
+                    - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+                    - ["external", "ospnetwork"]
+                  ignore_errors: true
+
+                - name: Attach the osp network to INACTIVE worker VM's
+                  ansible.builtin.command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent"
+                  with_nested:
+                    - "{{ worker_ocp_inactive.stdout_lines[0].split(' ') }}"
+                    - ["external", "ospnetwork"]
+
+            - name: Attach/detach network interfaces for ACTIVE workers
+              when: worker_ocp_active | length > 0
+              block:
+                - name: Detach osp network interface from ACTIVE worker VM's if this is a rerun of the playbook
+                  ansible.builtin.shell: |
+                    ifmacs=$(virsh domiflist {{ item.0 }} | grep {{ item.1 }} | awk '{ print $5}')
+                    for mac in $ifmacs; do
+                      virsh detach-interface {{ item.0 }} bridge --mac $mac --persistent --live
+                    done
+                  with_nested:
+                    - "{{ worker_ocp_active[0].split(' ') }}"
+                    - ["external", "ospnetwork"]
+                  ignore_errors: true
+
+                - name: Attach the osp network to ACTIVE worker VM's
+                  when: not (ocp_ai | bool)
+                  block:
           # HACK to fix dev-scripts bug
           # It's not possible to hot-plug 2 nics with the default libvirt pci topology
           # The "right way" to fix this is to add more pci root ports at VM create.
@@ -223,26 +238,26 @@
           # Sushy-tools is paused while this is being done so that it and metal3/ironic do not react to the
           # power state changing.
 
-          - name: pause sushy-tools
-            command:
-              cmd: podman pause sushy-tools
+                    - name: Pause sushy-tools
+                      ansible.builtin.command:
+                        cmd: podman pause sushy-tools
 
-          - name: attach interfaces to vm
-            shell: |
-              virsh destroy {{ item }} --graceful
-              for net in "external" "ospnetwork"; do
-                virsh attach-interface {{ item }} bridge ${net} --model virtio --persistent --config
-              done
-              virsh start {{ item }}
-            with_items: "{{ worker_ocp_active[0].split(' ') }}"
+                    - name: Attach interfaces to vm
+                      ansible.builtin.shell: |
+                        virsh destroy {{ item }} --graceful
+                        for net in "external" "ospnetwork"; do
+                          virsh attach-interface {{ item }} bridge ${net} --model virtio --persistent --config
+                        done
+                        virsh start {{ item }}
+                      with_items: "{{ worker_ocp_active[0].split(' ') }}"
 
-          - name: unpause sushy-tools
-            command:
-              cmd: podman unpause sushy-tools
+                    - name: Unpause sushy-tools
+                      ansible.builtin.command:
+                        cmd: podman unpause sushy-tools
 
-        - name: Attach the osp network to ACTIVE worker VM's
-          command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config"
-          with_nested:
-          - "{{ worker_ocp_active[0].split(' ') }}"
-          - ['external', 'ospnetwork']
-          when: ocp_ai|bool
+                - name: Attach the osp network to ACTIVE worker VM's
+                  ansible.builtin.command: "virsh attach-interface {{ item.0 }} bridge {{ item.1 }} --model virtio --persistent --config"
+                  with_nested:
+                    - "{{ worker_ocp_active[0].split(' ') }}"
+                    - ["external", "ospnetwork"]
+                  when: ocp_ai | bool

@@ -1,14 +1,15 @@
 #!/usr/bin/env ansible-playbook
 ---
-- hosts: localhost
+- name: CNOSP OLM Cleanup
+  hosts: localhost
   vars_files: "vars/default.yaml"
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Deinstall cnosp operators
-    include_role:
-      name: cnosp
-      tasks_from: olm_cleanup
-    vars:
-      _csv_version: "{{ cnosp_csv_version }}"
+    - name: Deinstall cnosp operators
+      ansible.builtin.include_role:
+        name: cnosp
+        tasks_from: olm_cleanup
+      vars:
+        _csv_version: "{{ cnosp_csv_version }}"

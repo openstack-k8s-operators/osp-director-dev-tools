@@ -1,109 +1,110 @@
 #!/usr/bin/env ansible-playbook
 ---
-- hosts: localhost
+- name: DataVolume
+  hosts: localhost
   vars_files: "vars/default.yaml"
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set path to RHEL base image for dev-scripts
-    set_fact:
-      osp_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp.base_image_url | basename }}"
-    when: not (ocp_ai|bool)
+    - name: Set path to RHEL base image for dev-scripts
+      ansible.builtin.set_fact:
+        osp_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp.base_image_url | basename }}"
+      when: not (ocp_ai | bool)
 
-  - name: Set path to RHEL base image for assisted installer
-    set_fact:
-      osp_base_image_url_path: "/opt/http_store/data/images/{{ osp.base_image_url | basename }}"
-    when: ocp_ai|bool
+    - name: Set path to RHEL base image for assisted installer
+      ansible.builtin.set_fact:
+        osp_base_image_url_path: "/opt/http_store/data/images/{{ osp.base_image_url | basename }}"
+      when: ocp_ai | bool
 
-  # NOTE: we copy this to the Ironic images directory to reuse it for
-  # the provision server (openstackbaremetalsets). This avoids downloading
-  # the same image twice.
-  - name: Check if {{ osp.base_image_url | basename }} already exist
-    stat:
-      path: "{{ osp_base_image_url_path }}"
-    register: stat_result
+    # NOTE: we copy this to the Ironic images directory to reuse it for
+    # the provision server (openstackbaremetalsets). This avoids downloading
+    # the same image twice.
+    - name: Check if {{ osp.base_image_url | basename }} already exist
+      ansible.builtin.stat:
+        path: "{{ osp_base_image_url_path }}"
+      register: stat_result
 
-  # Note: the CentOS image right now has some ifcfg configs, lets make sure they are deleted
-  - name: Get RHEL/CentOS guest base image
-    become: true
-    become_user: ocp
-    when: not stat_result.stat.exists
-    block:
-      - name: Download RHEL/CentOS guest image {{ osp.base_image_url }}
-        get_url:
-          url: "{{ osp.base_image_url }}"
-          dest: "{{ osp_base_image_url_path }}.tmp"
-          owner: ocp
-          group: ocp
-          mode: '0644'
-          timeout: 30
+    # Note: the CentOS image right now has some ifcfg configs, lets make sure they are deleted
+    - name: Get RHEL/CentOS guest base image
+      become: true
+      become_user: ocp
+      when: not stat_result.stat.exists
+      block:
+        - name: Download RHEL/CentOS guest image {{ osp.base_image_url }}
+          ansible.builtin.get_url:
+            url: "{{ osp.base_image_url }}"
+            dest: "{{ osp_base_image_url_path }}.tmp"
+            owner: ocp
+            group: ocp
+            mode: "0644"
+            timeout: 30
 
-      - name: add CA cert to image
-        when: osp.base_image_add_ca|bool
-        block:
-        - name: copy CA cert to working_dir
-          copy:
-            src:  "RH-Root-CA.pem"
-            dest: "/tmp/"
-            mode: 0644
-        - name: add RH-Root-CA.pem to image
-          command: virt-copy-in -a "{{ osp_base_image_url_path }}.tmp" "/tmp/RH-Root-CA.pem" /etc/pki/ca-trust/source/anchors/
+        - name: Add CA cert to image
+          when: osp.base_image_add_ca | bool
+          block:
+            - name: Copy CA cert to working_dir
+              ansible.builtin.copy:
+                src: "RH-Root-CA.pem"
+                dest: "/tmp/"
+                mode: "0644"
+            - name: Add RH-Root-CA.pem to image
+              ansible.builtin.command: virt-copy-in -a "{{ osp_base_image_url_path }}.tmp" "/tmp/RH-Root-CA.pem" /etc/pki/ca-trust/source/anchors/
+              environment:
+                LIBGUESTFS_BACKEND: direct
+
+        - name: Create virt-customize script to remove net.ifnames=0 kernel param from {{ osp_base_image_url_path }}
+          ansible.builtin.copy:
+            dest: "{{ osp_base_image_url_path }}_customize.sh"
+            mode: "0755"
+            content: |
+              #!/bin/bash
+
+              set -eux
+
+              if [ -e /etc/kernel/cmdline ]; then
+                echo 'Updating /etc/kernel/cmdline'
+                sed -i -e "s/^\(.*\)net\.ifnames=0\s*\(.*\)/\1\2/" /etc/kernel/cmdline
+              fi
+
+              source /etc/default/grub
+
+              if grep -q "net.ifnames=0" <<< "$GRUB_CMDLINE_LINUX"; then
+                echo 'Updating /etc/default/grub'
+                sed -i -e "s/^\(GRUB_CMDLINE_LINUX=.*\)net\.ifnames=0\s*\(.*\)/\1\2/" /etc/default/grub
+              fi
+
+              if [ "$GRUB_ENABLE_BLSCFG" == "true" ]; then
+                echo 'Fixing BLS entries'
+                find /boot/loader/entries -type f -exec sed -i -e "s/^\(.*\)net\.ifnames=0\s*\(.*\)/\1\2/" {} \;
+              fi
+
+              # Always do this, on RHEL8 with BLS we still need it as the BLS entry uses $kernelopts from grubenv
+              echo 'Running grub2-mkconfig'
+              grub2-mkconfig -o /etc/grub2.cfg
+              grub2-mkconfig -o /etc/grub2-efi.cfg
+
+              rm -f /etc/sysconfig/network-scripts/ifcfg-ens* /etc/sysconfig/network-scripts/ifcfg-eth*
+
+              update-ca-trust extract
+
+        - name: Run virt-customize
+          ansible.builtin.command: virt-customize -a "{{ osp_base_image_url_path }}.tmp" --run "{{ osp_base_image_url_path }}_customize.sh" --truncate
+            /etc/machine-id
           environment:
             LIBGUESTFS_BACKEND: direct
 
-      - name: Create virt-customize script to remove net.ifnames=0 kernel param from {{ osp_base_image_url_path }}
-        copy:
-          dest: "{{ osp_base_image_url_path }}_customize.sh"
-          mode: '0755'
-          content: |
-            #!/bin/bash
-            
-            set -eux
-            
-            if [ -e /etc/kernel/cmdline ]; then
-              echo 'Updating /etc/kernel/cmdline'
-              sed -i -e "s/^\(.*\)net\.ifnames=0\s*\(.*\)/\1\2/" /etc/kernel/cmdline
-            fi
-            
-            source /etc/default/grub
-            
-            if grep -q "net.ifnames=0" <<< "$GRUB_CMDLINE_LINUX"; then
-              echo 'Updating /etc/default/grub'
-              sed -i -e "s/^\(GRUB_CMDLINE_LINUX=.*\)net\.ifnames=0\s*\(.*\)/\1\2/" /etc/default/grub
-            fi
-            
-            if [ "$GRUB_ENABLE_BLSCFG" == "true" ]; then
-              echo 'Fixing BLS entries'
-              find /boot/loader/entries -type f -exec sed -i -e "s/^\(.*\)net\.ifnames=0\s*\(.*\)/\1\2/" {} \;
-            fi
-            
-            # Always do this, on RHEL8 with BLS we still need it as the BLS entry uses $kernelopts from grubenv
-            echo 'Running grub2-mkconfig'
-            grub2-mkconfig -o /etc/grub2.cfg
-            grub2-mkconfig -o /etc/grub2-efi.cfg
-            
-            rm -f /etc/sysconfig/network-scripts/ifcfg-ens* /etc/sysconfig/network-scripts/ifcfg-eth*
-
-            update-ca-trust extract
-
-      - name: Run virt-customize
-        command: virt-customize -a "{{ osp_base_image_url_path }}.tmp" --run "{{ osp_base_image_url_path }}_customize.sh" --truncate /etc/machine-id
-        environment:
-          LIBGUESTFS_BACKEND: direct
-
-      - name: Rename guest image to final path
-        command: mv "{{ osp_base_image_url_path }}.tmp" "{{ osp_base_image_url_path }}"
-
-  - name: create datavolume for vmset roles
-    include_tasks: datavolume_tasks.yaml
-    vars:
-      _datavolume: "{{ _role | lower }}-base-img"
-    loop: "{{ osp.vmset.keys() | list }}"
-    loop_control:
-      loop_var: _role
-    when: osp.vmset[_role].count > 0
+        - name: Rename guest image to final path
+          ansible.builtin.command: mv "{{ osp_base_image_url_path }}.tmp" "{{ osp_base_image_url_path }}"
+    - name: Create datavolume for vmset roles
+      ansible.builtin.include_tasks: datavolume_tasks.yaml
+      vars:
+        _datavolume: "{{ _role | lower }}-base-img"
+      loop: "{{ osp.vmset.keys() | list }}"
+      loop_control:
+        loop_var: _role
+      when: osp.vmset[_role].count > 0

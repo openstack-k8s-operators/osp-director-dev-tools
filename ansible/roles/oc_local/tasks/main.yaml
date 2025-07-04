@@ -1,4 +1,8 @@
 ---
-- import_tasks: auto_dict.yaml
+- name: Fetch OSP version data
+  ansible.builtin.import_tasks: auto_dict.yaml
   when: (oc_env_path is undefined) or
-        (osp_release_auto_url_cache_key|default('') != osp_release_auto_url + '/' + osp_release_auto_version + '/' + osp_release_auto_compose + ':' + osp_release_auto_version_rhel8|default('') )
+        (
+          osp_release_auto_url_cache_key | default('') !=
+          osp_release_auto_url + '/' + osp_release_auto_version + '/' + osp_release_auto_compose + ':' + osp_release_auto_version_rhel8 | default('')
+        )

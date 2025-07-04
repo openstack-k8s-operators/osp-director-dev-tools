@@ -1,186 +1,190 @@
 ---
-- hosts: localhost
+- name: Tempest
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set tempest yaml facts
-    set_fact:
-      tempest_yaml_dir: "{{ working_yamls_dir }}/tempest"
-      tempest_working_dir: "{{ working_dir }}/tempest"
+    - name: Set tempest yaml facts
+      ansible.builtin.set_fact:
+        tempest_yaml_dir: "{{ working_yamls_dir }}/tempest"
+        tempest_working_dir: "{{ working_dir }}/tempest"
 
-  - name: show yaml output dir
-    debug:
-      msg:
-      - "tempest yamls will be written to {{ tempest_yaml_dir }} locally"
-      - "tempest config will be written to {{ tempest_working_dir }} locally"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg:
+          - "tempest yamls will be written to {{ tempest_yaml_dir }} locally"
+          - "tempest config will be written to {{ tempest_working_dir }} locally"
 
-  - name: Clean directories
-    file:
-      state: absent
-      path: "{{ item }}/"
-    with_items:
-    - "{{ tempest_yaml_dir }}"
-    - "{{ tempest_working_dir }}"
-
-  - name: Create tempest directories
-    file:
-      path: "{{ item }}"
-      state: directory
-      mode: '0755'
-    with_items:
-    - "{{ tempest_yaml_dir }}"
-    - "{{ tempest_working_dir }}"
-
-  - name: render tempest osclient to {{ tempest_yaml_dir }} dir
-    vars:
-      os_password: "{{ os_password_ret.stdout }}"
-    template:
-      src: "tempest/tempest_openstackclient.yaml.j2"
-      dest: "{{ tempest_yaml_dir }}/tempest_openstackclient.yaml"
-      mode: '0644'
-
-  - name: render tempest working templates to {{ tempest_working_dir }}
-    vars:
-      os_password: "{{ os_password_ret.stdout }}"
-    template:
-      src: "tempest/{{ item }}.j2"
-      dest: "{{ tempest_working_dir }}/{{ item }}"
-      mode: '0644'
-    with_items:
-    - tempest-deployer-input.conf
-    - tempest_script.sh
-    - include_file
-    - exclude_file
-
-  - name: create tempest osclient
-    shell: |
-      if oc get -n openstack osclient/tempest; then
-        oc delete -n openstack osclient tempest
-      fi
-      oc apply -f {{ tempest_yaml_dir }}/tempest_openstackclient.yaml
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-
-  - name: wait for tempest pod in ready state
-    shell: |
-      oc wait pod -n openstack tempest --for condition=Ready --timeout="{{ tempest_timeout }}s"
-    environment:
-      <<: *oc_env
-    retries: 12
-    delay: 10
-    register: pod_result
-    until: pod_result.rc == 0
-
-  - name: prepare config and run tempest
-    when: pod_result.rc == 0
-    block:
-    - name: get clouds.yaml from openstackclient pod
-      shell: |
-        #!/bin/bash
-        set -e
-        oc cp -n openstack openstackclient:/home/cloud-admin/.config/openstack/clouds.yaml {{ tempest_working_dir }}/clouds.yaml
-      environment:
-        <<: *oc_env
-
-    - name: Set CA bundle path in clouds.yaml
-      when: osp.tlse|default(false)|bool or osp.tls_public_endpoints
-      shell: |
-        #!/bin/bash
-        set -e
-        sed -i -e 's!\(\s*cacert:\).*!\1 /var/lib/tempest/.config/openstack/ca.crt!' {{ tempest_working_dir }}/clouds.yaml
-      environment:
-        <<: *oc_env
-
-    - name: Add IPA CA cert to CA bundle
-      when: osp.tlse|default(false)|bool
-      shell: |
-        #!/bin/bash
-        set -e
-        cat /opt/freeipa/data/etc/ipa/ca.crt >> {{ tempest_working_dir }}/ca.crt
-      environment:
-        <<: *oc_env
-
-    - name: Add local CA cert to CA bundle
-      when: osp.tls_public_endpoints
-      shell: |
-        #!/bin/bash
-        set -e
-        cat /opt/local_CA/cacert.pem >> {{ tempest_working_dir }}/ca.crt
-      environment:
-        <<: *oc_env
-
-    - name: create /var/lib/tempest/.config/openstack directory and copy clouds.yaml
-      shell: |
-        #!/bin/bash
-        set -e
-        oc rsh -n openstack tempest mkdir -p /var/lib/tempest/.config/openstack
-        oc cp -n openstack {{ tempest_working_dir }}/clouds.yaml tempest:/var/lib/tempest/.config/openstack/clouds.yaml
-        test -e {{ tempest_working_dir }}/ca.crt && oc cp -n openstack {{ tempest_working_dir }}/ca.crt tempest:/var/lib/tempest/.config/openstack/ca.crt || true
-      environment:
-        <<: *oc_env
-
-    - name: download cirros and convert the image to raw format
-      shell: |
-        #!/bin/bash
-        curl --location --insecure --output /tmp/cirros-0.5.2-x86_64-disk.img https://github.com/cirros-dev/cirros/releases/download/0.5.2/cirros-0.5.2-x86_64-disk.img
-        qemu-img convert -f qcow2 -O raw /tmp/cirros-0.5.2-x86_64-disk.img /tmp/cirros-0.5.2-x86_64-disk.raw
-        oc cp -n openstack /tmp/cirros-0.5.2-x86_64-disk.raw tempest:/var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw
-      environment:
-        <<: *oc_env
-
-    - name: copy rendered tempest config
-      shell: |
-        #!/bin/bash
-        set -e
-        oc cp -n openstack {{ tempest_working_dir }}/{{ item }} tempest:/var/lib/tempest/{{ item }}
-      environment:
-        <<: *oc_env
+    - name: Clean directories
+      ansible.builtin.file:
+        state: absent
+        path: "{{ item }}/"
       with_items:
-      - tempest-deployer-input.conf
-      - tempest_script.sh
-      - include_file
-      - exclude_file
+        - "{{ tempest_yaml_dir }}"
+        - "{{ tempest_working_dir }}"
 
-    - name: Run tempest, the output gets logged at {{ working_log_dir }}/tempest.log
-      shell: |
-        #!/bin/bash
-        set -e
-        oc rsh -n openstack tempest timeout {{ osp.deploy_timeout }} sh /var/lib/tempest/tempest_script.sh > {{ working_log_dir }}/tempest.log 2>&1
+    - name: Create tempest directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      with_items:
+        - "{{ tempest_yaml_dir }}"
+        - "{{ tempest_working_dir }}"
+
+    - name: Render tempest osclient to {{ tempest_yaml_dir }} dir
+      vars:
+        os_password: "{{ os_password_ret.stdout }}"
+      ansible.builtin.template:
+        src: "tempest/tempest_openstackclient.yaml.j2"
+        dest: "{{ tempest_yaml_dir }}/tempest_openstackclient.yaml"
+        mode: "0644"
+
+    - name: Render tempest working templates to {{ tempest_working_dir }}
+      vars:
+        os_password: "{{ os_password_ret.stdout }}"
+      ansible.builtin.template:
+        src: "tempest/{{ item }}.j2"
+        dest: "{{ tempest_working_dir }}/{{ item }}"
+        mode: "0644"
+      with_items:
+        - tempest-deployer-input.conf
+        - tempest_script.sh
+        - include_file
+        - exclude_file
+
+    - name: Create tempest osclient
+      ansible.builtin.shell: |
+        if oc get -n openstack osclient/tempest; then
+          oc delete -n openstack osclient tempest
+        fi
+        oc apply -f {{ tempest_yaml_dir }}/tempest_openstackclient.yaml
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+
+    - name: Wait for tempest pod in ready state
+      ansible.builtin.shell: |
+        oc wait pod -n openstack tempest --for condition=Ready --timeout="{{ tempest_timeout }}s"
       environment:
         <<: *oc_env
-      ignore_errors: true
-      register: tempest_run
+      retries: 12
+      delay: 10
+      register: pod_result
+      until: pod_result.rc == 0
 
-    - name: Get tempest summary
-      shell: |
-        #!/bin/bash
-        set -e
-        sed -n '/^Totals/,$p' {{ working_log_dir }}/tempest.log
-      register: tempest_summary
+    - name: Prepare config and run tempest
+      when: pod_result.rc == 0
+      block:
+        - name: Get clouds.yaml from openstackclient pod
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            oc cp -n openstack openstackclient:/home/cloud-admin/.config/openstack/clouds.yaml {{ tempest_working_dir }}/clouds.yaml
+          environment:
+            <<: *oc_env
 
-    - name: Get failed tempest tests
-      shell: |
-        #!/bin/bash
-        set -e
-        grep FAILED {{ working_log_dir }}/tempest.log || true
-      register: tempest_failed
+        - name: Set CA bundle path in clouds.yaml
+          when: osp.tlse | default(false) | bool or osp.tls_public_endpoints
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            sed -i -e 's!\(\s*cacert:\).*!\1 /var/lib/tempest/.config/openstack/ca.crt!' {{ tempest_working_dir }}/clouds.yaml
+          environment:
+            <<: *oc_env
 
-    - name: Tempest run summary
-      debug:
-        msg: "{{ tempest_summary.stdout.split('\n') }}"
+        - name: Add IPA CA cert to CA bundle
+          when: osp.tlse | default(false) | bool
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            cat /opt/freeipa/data/etc/ipa/ca.crt >> {{ tempest_working_dir }}/ca.crt
+          environment:
+            <<: *oc_env
 
-    - name: Tempest failed tests
-      debug:
-        msg: "{{ tempest_failed.stdout.split('\n') }}"
+        - name: Add local CA cert to CA bundle
+          when: osp.tls_public_endpoints
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            cat /opt/local_CA/cacert.pem >> {{ tempest_working_dir }}/ca.crt
+          environment:
+            <<: *oc_env
 
-    - name: Fail playbook if tempest run failed or timed out
-      fail:
-        msg: Tempest run failed or timed out, check output {{ working_log_dir }}/tempest.log
-      when: tempest_run.rc == 1 or tempest_failed.stdout | length != 0
+        - name: Create /var/lib/tempest/.config/openstack directory and copy clouds.yaml
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            oc rsh -n openstack tempest mkdir -p /var/lib/tempest/.config/openstack
+            oc cp -n openstack {{ tempest_working_dir }}/clouds.yaml tempest:/var/lib/tempest/.config/openstack/clouds.yaml
+            test -e {{ tempest_working_dir }}/ca.crt && \
+              oc cp -n openstack {{ tempest_working_dir }}/ca.crt tempest:/var/lib/tempest/.config/openstack/ca.crt || \
+              true
+          environment:
+            <<: *oc_env
+
+        - name: Download cirros and convert the image to raw format
+          ansible.builtin.shell: |
+            #!/bin/bash
+            curl --location --insecure --output /tmp/cirros-0.5.2-x86_64-disk.img \
+              https://github.com/cirros-dev/cirros/releases/download/0.5.2/cirros-0.5.2-x86_64-disk.img
+            qemu-img convert -f qcow2 -O raw /tmp/cirros-0.5.2-x86_64-disk.img /tmp/cirros-0.5.2-x86_64-disk.raw
+            oc cp -n openstack /tmp/cirros-0.5.2-x86_64-disk.raw tempest:/var/lib/tempest/.config/openstack/cirros-0.5.2-x86_64-disk.raw
+          environment:
+            <<: *oc_env
+
+        - name: Copy rendered tempest config
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            oc cp -n openstack {{ tempest_working_dir }}/{{ item }} tempest:/var/lib/tempest/{{ item }}
+          environment:
+            <<: *oc_env
+          with_items:
+            - tempest-deployer-input.conf
+            - tempest_script.sh
+            - include_file
+            - exclude_file
+
+        - name: Run tempest, the output gets logged at {{ working_log_dir }}/tempest.log
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            oc rsh -n openstack tempest timeout {{ osp.deploy_timeout }} sh /var/lib/tempest/tempest_script.sh > {{ working_log_dir }}/tempest.log 2>&1
+          environment:
+            <<: *oc_env
+          ignore_errors: true
+          register: tempest_run
+
+        - name: Get tempest summary
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            sed -n '/^Totals/,$p' {{ working_log_dir }}/tempest.log
+          register: tempest_summary
+
+        - name: Get failed tempest tests
+          ansible.builtin.shell: |
+            #!/bin/bash
+            set -e
+            grep FAILED {{ working_log_dir }}/tempest.log || true
+          register: tempest_failed
+
+        - name: Tempest run summary
+          ansible.builtin.debug:
+            msg: "{{ tempest_summary.stdout.split('\n') }}"
+
+        - name: Tempest failed tests
+          ansible.builtin.debug:
+            msg: "{{ tempest_failed.stdout.split('\n') }}"
+
+        - name: Fail playbook if tempest run failed or timed out
+          ansible.builtin.fail:
+            msg: Tempest run failed or timed out, check output {{ working_log_dir }}/tempest.log
+          when: tempest_run.rc == 1 or tempest_failed.stdout | length != 0

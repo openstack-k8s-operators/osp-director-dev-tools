@@ -1,8 +1,8 @@
 parameter_defaults:
-    {{controller_role|default('Controller')}}ExtraConfig:
-        nova::availability_zone::default_schedule_zone: az-{{ custom_config_name|default('deploy') }}
-    NovaComputeAvailabilityZone: az-{{ custom_config_name|default('deploy') }}
+    {{controller_role | default('Controller')}}ExtraConfig:
+        nova::availability_zone::default_schedule_zone: az-{{ custom_config_name | default('deploy') }}
+    NovaComputeAvailabilityZone: az-{{ custom_config_name | default('deploy') }}
     NovaCrossAZAttach: false
 
 parameter_merge_strategies:
-    {{controller_role|default('Controller')}}ExtraConfig: merge
+    {{controller_role | default('Controller')}}ExtraConfig: merge

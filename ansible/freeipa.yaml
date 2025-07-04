@@ -1,153 +1,151 @@
 ---
-
-- hosts: localhost
+- name: FreeIPA
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+    - name: Include variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Create freeipa server
+      become: true
+      become_user: root
+      when: enable_freeipa | default(false) | bool
+      block:
+        - name: Create freeipa data directory
+          ansible.builtin.file:
+            path: /opt/freeipa/data
+            state: directory
+            mode: "0755"
 
-  - name: Create freeipa server
-    become: true
-    become_user: root
-    when: enable_freeipa|default(false)|bool
-    block:
+        - name: Create freeipa script directory
+          ansible.builtin.file:
+            path: /opt/freeipa/bin
+            state: directory
+            mode: "0755"
 
-      - name: Create freeipa data directory
-        file:
-          path: /opt/freeipa/data
-          state: directory
-          mode: '0755'
+        - name: Create install params file ipa-server-install-options
+          ansible.builtin.template:
+            src: freeipa/ipa-server-install-options.j2
+            dest: /opt/freeipa/data/ipa-server-install-options
+            mode: "0664"
 
-      - name: Create freeipa script directory
-        file:
-          path: /opt/freeipa/bin
-          state: directory
-          mode: '0755'
+        - name: Create podman network
+          containers.podman.podman_network:
+            name: freeipa-network
+            disable_dns: true
+            subnet: 10.99.0.0/30
 
-      - name: Create install params file ipa-server-install-options
-        template:
-          src: freeipa/ipa-server-install-options.j2
-          dest: /opt/freeipa/data/ipa-server-install-options
-          mode: '0664'
+        - name: Create freeipa-server container
+          containers.podman.podman_container:
+            state: created
+            name: freeipa-server
+            network: freeipa-network
+            ip: 10.99.0.2
+            conmon_pidfile: /run/podman-freeipa-server-conman.pid
+            hostname: freeipa.test.metalkube.org
+            image: "{{ freeipa_image_url }}"
+            # FIXME: need this to workaround a bug in podman ansible module
+            stop_signal: 37
+            env:
+              IPA_SERVER_IP: 10.99.0.2
+            volume:
+              - "/opt/freeipa/data/:/data:Z"
+              - "/opt/freeipa/bin/:/root/bin:Z"
+            publish:
+              - 192.168.111.1:443:443
 
-      - name: Create podman network
-        containers.podman.podman_network:
-          name: freeipa-network
-          disable_dns: true
-          subnet: 10.99.0.0/30
+        - name: Create freeipa-server service
+          ansible.builtin.template:
+            src: freeipa/ipa-server.service.j2
+            dest: /etc/systemd/system/container-freeipa-server.service
+            mode: "0664"
 
-      - name: Create freeipa-server container
-        containers.podman.podman_container:
-          state: created
-          name: freeipa-server
-          network: freeipa-network
-          ip: 10.99.0.2
-          conmon_pidfile: /run/podman-freeipa-server-conman.pid
-          hostname: freeipa.test.metalkube.org
-          image: "{{ freeipa_image_url }}"
-          #FIXME: need this to workaround a bug in podman ansible module
-          stop_signal: 37
-          env:
-            IPA_SERVER_IP: 10.99.0.2
-          volume:
-            - "/opt/freeipa/data/:/data:Z"
-            - "/opt/freeipa/bin/:/root/bin:Z"
-          publish:
-            - 192.168.111.1:443:443
+        - name: Reload systemd service
+          ansible.builtin.systemd:
+            daemon_reload: true
 
-      - name: Create freeipa-server service
-        template:
-          src: freeipa/ipa-server.service.j2
-          dest: /etc/systemd/system/container-freeipa-server.service
-          mode: '0664'
+        - name: Start FreeIPA service
+          ansible.builtin.service:
+            name: container-freeipa-server
+            state: started
+            enabled: true
 
-      - name: Reload systemd service
-        systemd:
-          daemon_reload: yes
+        - name: Wait for freeipa-server setup
+          ansible.builtin.slurp:
+            src: /opt/freeipa/data/var/log/ipa-server-configure-first.log
+          register: freeipa_podman_config_log
+          until: "'FreeIPA server configured.' in freeipa_podman_config_log['content'] | default('') | b64decode"
+          ignore_errors: true
+          retries: 20
+          delay: 60
 
-      - name: Start FreeIPA service
-        service:
-          name: container-freeipa-server
-          state: started
-          enabled: yes
+        - name: Create IPA admin scripts
+          ansible.builtin.template:
+            src: freeipa/{{ item }}.j2
+            dest: /opt/freeipa/bin/{{ item }}
+            mode: "0755"
+          loop:
+            - openstack_cleanup.sh
 
-      - name: Wait for freeipa-server setup
-        slurp:
-          src: /opt/freeipa/data/var/log/ipa-server-configure-first.log
-        register: freeipa_podman_config_log
-        until: "'FreeIPA server configured.' in freeipa_podman_config_log['content'] | default('') | b64decode"
-        ignore_errors: true
-        retries: 20
-        delay: 60
+        - name: Update FreeIPA DNS ACL
+          ansible.builtin.blockinfile:
+            path: /opt/freeipa/data/etc/named/ipa-options-ext.conf
+            block: |
+              allow-recursion { any; };
+              allow-query-cache { any; };
 
-      - name: Create IPA admin scripts
-        template:
-          src: freeipa/{{ item }}.j2
-          dest: /opt/freeipa/bin/{{ item }}
-          mode: '0755'
-        loop:
-          - openstack_cleanup.sh
+        - name: Workaround BZ1571897
+          ansible.builtin.lineinfile:
+            path: /opt/freeipa/data/etc/pki/pki-tomcat/ca/CS.cfg
+            line: "ca.crl.MasterCRL.publishOnStart=true"
+            regexp: "^ca\\.crl\\.MasterCRL\\.publishOnStart="
 
-      - name: Update FreeIPA DNS ACL
-        blockinfile:
-          path: /opt/freeipa/data/etc/named/ipa-options-ext.conf
-          block: |
-            allow-recursion { any; };
-            allow-query-cache { any; };
+        - name: Restart FreeIPA service
+          ansible.builtin.service:
+            name: container-freeipa-server
+            state: restarted
 
-      - name: Workaround BZ1571897
-        lineinfile:
-          path: /opt/freeipa/data/etc/pki/pki-tomcat/ca/CS.cfg
-          line: 'ca.crl.MasterCRL.publishOnStart=true'
-          regexp: '^ca\.crl\.MasterCRL\.publishOnStart='
+        - name: Wait for freeipa-server startup
+          ansible.builtin.slurp:
+            src: /opt/freeipa/data/var/log/ipa-server-run.log
+          register: freeipa_podman_log
+          until: "'FreeIPA server started.' in freeipa_podman_log['content'] | default('') | b64decode"
+          ignore_errors: true
+          retries: 30
+          delay: 10
 
-      - name: Restart FreeIPA service
-        service:
-          name: container-freeipa-server
-          state: restarted
+        - name: Update dev_script dnsmasq to forward to freeipa
+          ansible.builtin.lineinfile:
+            path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
+            line: "server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA"
+            regexp: "# Forward to FreeIPA"
+          when: not (ocp_ai | bool)
+          register: ds_dnsmasq
 
-      - name: Wait for freeipa-server startup
-        slurp:
-          src: /opt/freeipa/data/var/log/ipa-server-run.log
-        register: freeipa_podman_log
-        until: "'FreeIPA server started.' in freeipa_podman_log['content'] | default('') | b64decode"
-        ignore_errors: true
-        retries: 30
-        delay: 10
+        - name: Reload NetworkManager
+          ansible.builtin.service:
+            name: NetworkManager
+            state: reloaded
+            enabled: true
+          when:
+            - not (ocp_ai | bool)
+            - ds_dnsmasq.changed
 
-      - name: Update dev_script dnsmasq to forward to freeipa
-        lineinfile:
-          path: /etc/NetworkManager/dnsmasq.d/openshift-{{ ocp_cluster_name }}.conf
-          line: 'server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA'
-          regexp: '# Forward to FreeIPA'
-        when: not (ocp_ai|bool)
-        register: ds_dnsmasq
+        - name: Update AI dnsmasq to forward to freeipa
+          ansible.builtin.lineinfile:
+            path: /etc/dnsmasq.d/dnsmasq_ai.conf
+            line: "server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA"
+            regexp: "# Forward to FreeIPA"
+            insertbefore: "^server="
+          when: ocp_ai | bool
+          register: ai_dnsmasq
 
-      - name: Reload NetworkManager
-        service:
-          name: NetworkManager
-          state: reloaded
-          enabled: yes
-        when:
-          - not (ocp_ai|bool)
-          - ds_dnsmasq.changed
-
-      - name: Update AI dnsmasq to forward to freeipa
-        lineinfile:
-          path: /etc/dnsmasq.d/dnsmasq_ai.conf
-          line: 'server=/{{ base_domain_name }}/10.99.0.2 # Forward to FreeIPA'
-          regexp: '# Forward to FreeIPA'
-          insertbefore: '^server='
-        when: ocp_ai|bool
-        register: ai_dnsmasq
-
-      - name: Restart dnsmasq
-        service:
-          name: dnsmasq
-          state: restarted
-        when:
-          - ocp_ai|bool
-          - ai_dnsmasq.changed
+        - name: Restart dnsmasq
+          ansible.builtin.service:
+            name: dnsmasq
+            state: restarted
+          when:
+            - ocp_ai | bool
+            - ai_dnsmasq.changed

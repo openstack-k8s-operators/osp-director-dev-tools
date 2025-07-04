@@ -2,7 +2,7 @@
 - name: Get current {{ domain }} VM attached disk count
   become: true
   become_user: root
-  shell: "virsh dumpxml {{ domain }} | grep \"source file='{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk\" | wc -l"
+  ansible.builtin.shell: "virsh dumpxml {{ domain }} | grep \"source file='{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk\" | wc -l"
   register: cur_storage_disks
 
 - name: Change {{ domain }} VM specs
@@ -10,33 +10,31 @@
   become_user: root
   when: (cur_storage_disks.stdout | int) > 0
   block:
+    - name: Clear host VM memory cache
+      ansible.builtin.shell: echo 3 | tee /proc/sys/vm/drop_caches
+    - name: Detach data disks from {{ domain }} VM
+      ansible.builtin.command: "virsh detach-disk {{ domain }} --target {{ disk }} --persistent"
+      ignore_errors: true
+      loop: "{{ ocp_storage_data_disks }}"
+      loop_control:
+        index_var: index
+        loop_var: disk
 
-  - name: Clear host VM memory cache
-    shell: echo 3 | tee /proc/sys/vm/drop_caches
-
-  - name: Detach data disks from {{ domain }} VM
-    command: "virsh detach-disk {{ domain }} --target {{ disk }} --persistent"
-    ignore_errors: yes
-    loop: "{{ ocp_storage_data_disks }}"
-    loop_control:
-      index_var: index
-      loop_var: disk
-
-  - name: Destroy local storage data disks for {{ domain }} VM
-    file:
-      state: absent
-      path: "{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk_{{ index + 1 }}"
-    loop: "{{ ocp_storage_data_disks }}"
-    loop_control:
-      index_var: index
-      loop_var: disk
+    - name: Destroy local storage data disks for {{ domain }} VM
+      ansible.builtin.file:
+        state: absent
+        path: "{{ ocp_storage_data_dir }}/{{ domain }}/local_storage_disk_{{ index + 1 }}"
+      loop: "{{ ocp_storage_data_disks }}"
+      loop_control:
+        index_var: index
+        loop_var: disk
 
 - name: Stop {{ domain }} VM
-  virt:
+  community.libvirt.virt:
     name: "{{ domain }}"
     state: destroyed
 
 - name: Start {{ domain }} VM
-  virt:
+  community.libvirt.virt:
     name: "{{ domain }}"
     state: running

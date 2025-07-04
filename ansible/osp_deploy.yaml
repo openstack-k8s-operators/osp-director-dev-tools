@@ -1,5 +1,4 @@
 ---
-
 - name: Generate deploy custom config
   import_playbook: osp_custom_config.yaml
 
@@ -14,4 +13,3 @@
 
 - name: Overcloud deployment
   import_playbook: osp_deployment.yaml
-

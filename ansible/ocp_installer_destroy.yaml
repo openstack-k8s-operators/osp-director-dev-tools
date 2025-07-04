@@ -1,20 +1,22 @@
 ---
-- hosts: localhost
+- name: Configure
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
-- hosts: convergence_base
+- name: OpenShift Installer Destroy
+  hosts: convergence_base
   become: true
   become_user: root
   gather_facts: false
 
   tasks:
-  - name: Check if ocp user exists
-    getent:
-      database: passwd
-      key: "ocp"
-      fail_key: False
+    - name: Check if ocp user exists
+      ansible.builtin.getent:
+        database: passwd
+        key: "ocp"
+        fail_key: false
 
 - name: Destroy the dev-scripts OCP cluster
   when: getent_passwd.ocp != None

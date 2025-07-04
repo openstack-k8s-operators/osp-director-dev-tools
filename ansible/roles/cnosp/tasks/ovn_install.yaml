@@ -1,33 +1,33 @@
 ---
 - name: Set directory for ovn yaml files
-  set_fact:
+  ansible.builtin.set_fact:
     ovn_yaml_dir: "{{ working_yamls_dir }}/ovn"
 
-- name: show yaml output dir
-  debug:
+- name: Show yaml output dir
+  ansible.builtin.debug:
     msg: "yamls will be written to {{ ovn_yaml_dir }} locally"
 
 - name: Clean yaml dir
-  file:
+  ansible.builtin.file:
     state: absent
     path: "{{ ovn_yaml_dir }}/"
 
 - name: Create yaml dir
-  file:
+  ansible.builtin.file:
     path: "{{ ovn_yaml_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy deployment yamls to working dir
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ ovn_yaml_dir }}/"
-    mode: '0644'
+    mode: "0644"
   with_fileglob:
-  - "ovn/*"
+    - "ovn/*"
 
 - name: Deploy OVN
-  shell: |
+  ansible.builtin.shell: |
     oc apply -f "{{ ovn_yaml_dir }}"
 
     # Unlike a deployment, you can't wait for a StatefulSet to become
@@ -40,7 +40,7 @@
     KUBECONFIG: "{{ kubeconfig }}"
 
 - name: Get service IP addresses
-  shell: |
+  ansible.builtin.shell: |
     set -e -o pipefail
 
     oc get -n openstack svc -l app=ovn-ovsdb -o json | jq -re '.items[].spec.clusterIP'
@@ -49,16 +49,16 @@
     <<: *oc_env
 
 - name: Construct connection strings for nb and sb databases
-  set_fact:
-    ovn_nb_connection: "{{ ovn_nb_connection }}{{ (ovn_nb_connection|length > 0) | ternary(',', '', omit) }}tcp:{{ item }}:6641"
-    ovn_sb_connection: "{{ ovn_sb_connection }}{{ (ovn_sb_connection|length > 0) | ternary(',', '', omit) }}tcp:{{ item }}:6642"
+  ansible.builtin.set_fact:
+    ovn_nb_connection: "{{ ovn_nb_connection }}{{ (ovn_nb_connection | length > 0) | ternary(',', '', omit) }}tcp:{{ item }}:6641"
+    ovn_sb_connection: "{{ ovn_sb_connection }}{{ (ovn_sb_connection | length > 0) | ternary(',', '', omit) }}tcp:{{ item }}:6642"
   loop: "{{ ovn_ovsdb_ips.stdout_lines }}"
   vars:
     ovn_nb_connection: ""
     ovn_sb_connection: ""
 
 - name: Create config map
-  shell: |
+  ansible.builtin.shell: |
     oc create configmap -n openstack ovn-connection \
         --dry-run=client --save-config=true -o json \
         --from-literal=NBConnection={{ ovn_nb_connection }} \

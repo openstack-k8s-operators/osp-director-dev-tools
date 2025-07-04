@@ -1,10 +1,10 @@
+---
 skip_list:
-  - '204'
-  - '301'
-  - '306'
-  - '602'
-  - '701'
-  - 'ignore-errors'
+  - "no-changed-when"
+  - "ignore-errors"
+  - "name[template]"
+  - "risky-shell-pipe"
+  - "var-naming[no-role-prefix]"
 
 # warn_list: # or 'skip_list' to silence them completely
 
@@ -13,6 +13,7 @@ exclude_paths:
   - ansible/files
   - ansible/roles/cnosp/files
   - .github/workflows
+  - .ansible
 
 kinds:
   - tasks: "**/*_tasks.yaml"

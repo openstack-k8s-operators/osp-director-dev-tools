@@ -1,28 +1,28 @@
 ---
 - name: Make sure required tools are installed
-  import_role:
+  ansible.builtin.import_role:
     name: download_tools
 
 - name: Checkout openstack-cluster-operator
-  import_role:
-     name: git_checkout_operator
+  ansible.builtin.import_role:
+    name: git_checkout_operator
   vars:
     operator: openstack-cluster-operator
 
 - name: Ensure a clean build
-  shell: |
+  ansible.builtin.shell: |
     make clean
   args:
     chdir: "{{ repo_dir }}"
 
-- name: build the csv-merger
-  shell: >
+- name: Build the csv-merger
+  ansible.builtin.shell: |
     make csv-merger
   args:
     chdir: "{{ repo_dir }}"
 
-- name: build CSV manifest {{ _csv_version }} locally
-  command: /bin/bash "{{ repo_dir }}/scripts/build-manifests.sh"
+- name: Build CSV manifest {{ _csv_version }} locally
+  ansible.builtin.command: /bin/bash "{{ repo_dir }}/scripts/build-manifests.sh"
   args:
     chdir: "{{ repo_dir }}"
   environment:
@@ -39,30 +39,30 @@
     CINDER_IMAGE: "{{ cinder_operator_image }}"
     NAMESPACE: openstack
 
-- name: switch to openstack project/namespace
-  shell: >
+- name: Switch to openstack project/namespace
+  ansible.builtin.shell: |
     oc project openstack
   environment: &oc_env
     PATH: "{{ oc_env_path }}"
     KUBECONFIG: "{{ kubeconfig }}"
 
-- name: create and push a local bundle image to the registry
-  command: /bin/bash "{{ repo_dir }}/scripts/create-local-bundle.sh"
+- name: Create and push a local bundle image to the registry
+  ansible.builtin.command: /bin/bash "{{ repo_dir }}/scripts/create-local-bundle.sh"
   args:
     chdir: "{{ repo_dir }}"
   environment:
     <<: *oc_env
     BUNDLE_VERSION: "{{ _csv_version }}" # as a convention our bundle version will follow the CSV version
 
-- name: get_image_registry_url
-  shell: >
+- name: Get_image_registry_url
+  ansible.builtin.shell: |
     oc get route -n openshift-image-registry -o json | jq ".items[0].spec.host" -r
   register: image_registry_url
   environment:
     <<: *oc_env
 
-- name: create and push a local index image to the registry
-  command: /bin/bash "{{ repo_dir }}/scripts/create-local-index.sh"
+- name: Create and push a local index image to the registry
+  ansible.builtin.command: /bin/bash "{{ repo_dir }}/scripts/create-local-index.sh"
   args:
     chdir: "{{ repo_dir }}"
   environment:
@@ -71,23 +71,23 @@
     BUNDLE_VERSION: "{{ _csv_version }}" # as a convention our bundle version will follow the CSV version
     BUNDLE_IMAGE: "{{ image_registry_url.stdout }}/openstack/openstack-cluster-bundle:v{{ _csv_version }}"
 
-- name: deploy operators via OLM using the index
-  command: /bin/bash "{{ repo_dir }}/scripts/deploy-with-olm.sh"
+- name: Deploy operators via OLM using the index
+  ansible.builtin.command: /bin/bash "{{ repo_dir }}/scripts/deploy-with-olm.sh"
   args:
     chdir: "{{ repo_dir }}"
   environment:
     <<: *oc_env
     CSV_VERSION: "{{ _csv_version }}"
-    #NOTE: we use the internal service name as this is how the catalogsource will pull this index image from the OpenShift image registry
+    # NOTE: we use the internal service name as this is how the catalogsource will pull this index image from the OpenShift image registry
     INDEX_IMAGE: "image-registry.openshift-image-registry.svc:5000/openstack/openstack-operators-index:v{{ _csv_version }}"
 
 - name: Wait for the csv to complete installation
-  shell: |
+  ansible.builtin.shell: |
     oc get -n openstack "csv/openstack-cluster-operator.v{{ _csv_version }}" -o json | \
         jq -r '.status.phase'
   environment:
     <<: *oc_env
   register: csv_object_fetch
   until: csv_object_fetch is not failed and csv_object_fetch.stdout == 'Succeeded'
-  retries: "{{ (default_timeout / 5)|int }}"
+  retries: "{{ (default_timeout / 5) | int }}"
   delay: 5

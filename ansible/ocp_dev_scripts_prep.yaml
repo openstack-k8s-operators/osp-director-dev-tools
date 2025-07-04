@@ -1,77 +1,77 @@
 ---
-- hosts: convergence_base
+- name: OpenShift DevScripts Prep
+  hosts: convergence_base
   gather_facts: false
   become: true
   become_user: ocp
 
   tasks:
     - name: Include variables
-      include_vars: vars/default.yaml
-
+      ansible.builtin.include_vars: vars/default.yaml
     - name: Clone the dev-scripts repo
-      git:
+      ansible.builtin.git:
         repo: "{{ dev_scripts_repo | default('https://github.com/openshift-metal3/dev-scripts.git', true) }}"
         dest: "{{ base_path }}/dev-scripts"
         version: "{{ dev_scripts_branch | default('HEAD', true) }}"
-        force: yes
+        force: true
 
     - name: Copy the config_example.sh to config_$USER.sh
-      copy:
+      ansible.builtin.copy:
         src: "{{ base_path }}/dev-scripts/config_example.sh"
         dest: "{{ base_path }}/dev-scripts/config_$USER.sh"
-        mode: 0755
-        remote_src: yes
+        mode: "0755"
+        remote_src: true
 
     - name: Pull secret processing
-      include_tasks: pull-secret.yaml
-
+      ansible.builtin.include_tasks: pull-secret.yaml
     - name: Verify ci_token variable is present
-      fail:
-        msg: ci_token is not set in your vars or as environment variable. You must obtain it from https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ (by clicking the upper right drop-down and selecting "Copy Login Command").
-      when: (ci_token is undefined or (ci_token|string|length == 0)) and (lookup('env','CI_TOKEN')|length == 0)
+      ansible.builtin.fail:
+        msg: ci_token is not set in your vars or as environment variable. You must obtain it from
+          https://console-openshift-console.apps.ci.l2s4.p1.openshiftapps.com/ (by clicking the upper right drop-down and selecting "Copy Login Command").
+      when: (ci_token is undefined or (ci_token | string | length == 0)) and (lookup('env', 'CI_TOKEN') | length == 0)
 
     - name: Set dev-scripts config values
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-        regexp: '^export {{ item.Item }}'
-        line: 'export {{ item.Value }}'
+        regexp: "^export {{ item.Item }}"
+        line: "export {{ item.Value }}"
       with_items:
-        - { Item: 'CLUSTER_NAME=', Value: 'CLUSTER_NAME={{ ocp_cluster_name }}' }
-        - { Item: 'EXTRA_WORKERS_ONLINE_STATUS=.*', Value: 'EXTRA_WORKERS_ONLINE_STATUS={{ ocp_extra_workers_online_status }}' }
-        - { Item: 'IP_STACK=', Value: 'IP_STACK={{ ocp_ip_stack }}' }
-        - { Item: 'MASTER_DISK=.*', Value: 'MASTER_DISK={{ ocp_master_disk }}' }
-        - { Item: 'MASTER_MEMORY=.*', Value: 'MASTER_MEMORY={{ ocp_master_memory }}' }
-        - { Item: 'MASTER_VCPU=.*', Value: 'MASTER_VCPU={{ ocp_master_vcpu }}' }
-        - { Item: 'NETWORK_TYPE=.*', Value: 'NETWORK_TYPE={{ ocp_network_type }}' }
-        - { Item: 'NUM_EXTRA_WORKERS=.*', Value: 'NUM_EXTRA_WORKERS={{ ocp_num_extra_workers }}' }
-        - { Item: 'NUM_MASTERS=.*', Value: 'NUM_MASTERS={{ ocp_num_masters | default(3, true) }}' }
-        - { Item: 'NUM_WORKERS=.*', Value: 'NUM_WORKERS={{ ocp_num_workers }}' }
-        - { Item: 'OPENSHIFT_RELEASE_IMAGE=.*', Value: 'OPENSHIFT_RELEASE_IMAGE={{ ocp_release_image }}' }
-        - { Item: 'OPENSHIFT_RELEASE_TYPE=.*', Value: 'OPENSHIFT_RELEASE_TYPE={{ ocp_release_type }}' }
-        - { Item: 'OPENSHIFT_VERSION=.*', Value: 'OPENSHIFT_VERSION={{ ocp_version }}' }
-        - { Item: 'PERSONAL_PULL_SECRET=', Value: 'PERSONAL_PULL_SECRET={{ secrets_repo_path }}/pull-secret' }
-        - { Item: 'WORKER_DISK=.*', Value: 'WORKER_DISK={{ ocp_worker_disk }}' }
-        - { Item: 'WORKER_MEMORY=.*', Value: 'WORKER_MEMORY={{ ocp_worker_memory }}' }
-        - { Item: 'WORKER_VCPU=.*', Value: 'WORKER_VCPU={{ ocp_worker_vcpu }}' }
-        - { Item: 'WORKING_DIR=', Value: 'WORKING_DIR={{ base_path }}' }
+        - { Item: "CLUSTER_NAME=", Value: "CLUSTER_NAME={{ ocp_cluster_name }}" }
+        - { Item: "EXTRA_WORKERS_ONLINE_STATUS=.*", Value: "EXTRA_WORKERS_ONLINE_STATUS={{ ocp_extra_workers_online_status }}" }
+        - { Item: "IP_STACK=", Value: "IP_STACK={{ ocp_ip_stack }}" }
+        - { Item: "MASTER_DISK=.*", Value: "MASTER_DISK={{ ocp_master_disk }}" }
+        - { Item: "MASTER_MEMORY=.*", Value: "MASTER_MEMORY={{ ocp_master_memory }}" }
+        - { Item: "MASTER_VCPU=.*", Value: "MASTER_VCPU={{ ocp_master_vcpu }}" }
+        - { Item: "NETWORK_TYPE=.*", Value: "NETWORK_TYPE={{ ocp_network_type }}" }
+        - { Item: "NUM_EXTRA_WORKERS=.*", Value: "NUM_EXTRA_WORKERS={{ ocp_num_extra_workers }}" }
+        - { Item: "NUM_MASTERS=.*", Value: "NUM_MASTERS={{ ocp_num_masters | default(3, true) }}" }
+        - { Item: "NUM_WORKERS=.*", Value: "NUM_WORKERS={{ ocp_num_workers }}" }
+        - { Item: "OPENSHIFT_RELEASE_IMAGE=.*", Value: "OPENSHIFT_RELEASE_IMAGE={{ ocp_release_image }}" }
+        - { Item: "OPENSHIFT_RELEASE_TYPE=.*", Value: "OPENSHIFT_RELEASE_TYPE={{ ocp_release_type }}" }
+        - { Item: "OPENSHIFT_VERSION=.*", Value: "OPENSHIFT_VERSION={{ ocp_version }}" }
+        - { Item: "PERSONAL_PULL_SECRET=", Value: "PERSONAL_PULL_SECRET={{ secrets_repo_path }}/pull-secret" }
+        - { Item: "WORKER_DISK=.*", Value: "WORKER_DISK={{ ocp_worker_disk }}" }
+        - { Item: "WORKER_MEMORY=.*", Value: "WORKER_MEMORY={{ ocp_worker_memory }}" }
+        - { Item: "WORKER_VCPU=.*", Value: "WORKER_VCPU={{ ocp_worker_vcpu }}" }
+        - { Item: "WORKING_DIR=", Value: "WORKING_DIR={{ base_path }}" }
 
     # because we are stuck to a specific dev-scripts release right now, set provisioningDHCPRange hard in the ocp_install_env.sh
-    - name: set metal3 provisioning dhcp range
-      lineinfile:
+    - name: Set metal3 provisioning dhcp range
+      ansible.builtin.lineinfile:
         dest: "{{ base_path }}/dev-scripts/ocp_install_env.sh"
-        insertafter: '^ *provisioningNetworkInterface:.*'
-        line: '    provisioningDHCPRange: 172.22.0.10,172.22.0.50'
+        insertafter: "^ *provisioningNetworkInterface:.*"
+        line: "    provisioningDHCPRange: 172.22.0.10,172.22.0.50"
 
-    - name: set CI_TOKEN from ansible vars in {{ base_path }}/dev-scripts/config_$USER.sh
-      lineinfile:
+    - name: Set CI_TOKEN from ansible vars in {{ base_path }}/dev-scripts/config_$USER.sh
+      ansible.builtin.lineinfile:
         path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-        regexp: '^export CI_TOKEN='
+        regexp: "^export CI_TOKEN="
         line: "export CI_TOKEN={{ ci_token }}"
-      when: lookup('env','CI_TOKEN')|length == 0
+      when: lookup('env', 'CI_TOKEN') | length == 0
 
-    - name: set CI_TOKEN from shell vars in {{ base_path }}/dev-scripts/config_$USER.sh
-      lineinfile:
+    - name: Set CI_TOKEN from shell vars in {{ base_path }}/dev-scripts/config_$USER.sh
+      ansible.builtin.lineinfile:
         path: "{{ base_path }}/dev-scripts/config_$USER.sh"
-        regexp: '^export CI_TOKEN='
-        line: "export CI_TOKEN={{ lookup('env','CI_TOKEN') }}"
-      when: lookup('env','CI_TOKEN')|length != 0
+        regexp: "^export CI_TOKEN="
+        line: "export CI_TOKEN={{ lookup('env', 'CI_TOKEN') }}"
+      when: lookup('env', 'CI_TOKEN') | length != 0

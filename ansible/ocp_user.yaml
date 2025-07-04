@@ -1,24 +1,25 @@
 ---
-- hosts: convergence_base
+- name: OpenShift User
+  hosts: convergence_base
   gather_facts: false
   become: true
 
   tasks:
-    - name: create ocp group
-      group:
+    - name: Create ocp group
+      ansible.builtin.group:
         name: ocp
         state: present
 
     - name: Create user to run installer dev scripts
-      user:
+      ansible.builtin.user:
         name: ocp
         comment: ocp user
         shell: /bin/bash
         group: ocp
         groups: wheel
 
-    - name: make sure /home/ocp is world readable
-      file:
+    - name: Make sure /home/ocp is world readable
+      ansible.builtin.file:
         path: /home/ocp
         state: directory
-        mode: '0755'
+        mode: "0755"

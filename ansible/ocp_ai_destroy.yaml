@@ -1,192 +1,178 @@
 ---
-- hosts: convergence_base
+- name: OpenShift AI Destroy
+  hosts: convergence_base
   become: true
   become_user: root
   gather_facts: false
 
   tasks:
-  - name: Include default variables
-    include_vars: vars/default.yaml
-
-  - name: Include AI variables
-    include_vars: vars/ocp_ai.yaml
-
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
-
+    - name: Include default variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Include AI variables
+      ansible.builtin.include_vars: vars/ocp_ai.yaml
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
   ### DNSMASQ
 
-  - name: Remove dnsmasq conf
-    file:
-      path: "/etc/dnsmasq.d/dnsmasq_ai.conf"
-      state: absent
+    - name: Remove dnsmasq conf
+      ansible.builtin.file:
+        path: "/etc/dnsmasq.d/dnsmasq_ai.conf"
+        state: absent
 
-  - name: Remove dnsmasq DNS conf
-    file:
-      path: "/etc/NetworkManager/conf.d/dnsmasq.conf"
-      state: absent
+    - name: Remove dnsmasq DNS conf
+      ansible.builtin.file:
+        path: "/etc/NetworkManager/conf.d/dnsmasq.conf"
+        state: absent
 
-  - name: Remove dnsmasq leases
-    file:
-      path: "/var/lib/dnsmasq/dnsmasq.leases"
-      state: absent
+    - name: Remove dnsmasq leases
+      ansible.builtin.file:
+        path: "/var/lib/dnsmasq/dnsmasq.leases"
+        state: absent
 
-  - name: Restart NetworkManager
-    service:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
+    - name: Restart NetworkManager
+      ansible.builtin.service:
+        name: NetworkManager
+        state: restarted
+        enabled: true
 
-  - name: Stop dnsmasq
-    service:
-      name: dnsmasq
-      state: stopped
-
+    - name: Stop dnsmasq
+      ansible.builtin.service:
+        name: dnsmasq
+        state: stopped
 
   ### VMs
 
-  - name: Delete VMs and disks
-    shell: |
-      for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
-        virsh destroy $i
-      done
+    - name: Delete VMs and disks
+      ansible.builtin.shell: |
+        for i in $(virsh list | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
+          virsh destroy $i
+        done
 
-      for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
-        virsh undefine --nvram --remove-all-storage $i
-      done
+        for i in $(virsh list --all | grep "{{ ocp_cluster_name }}-" | awk '{print $2}'); do
+          virsh undefine --nvram --remove-all-storage $i
+        done
+    - name: Stop sushy-tools service
+      ansible.builtin.service:
+        name: sushy-tools
+        state: stopped
+        enabled: false
+      ignore_errors: true
 
+    - name: Delete sushy-tools service
+      ansible.builtin.file:
+        path: /etc/systemd/system/sushy-tools.service
+        state: absent
 
-  ### SUSHY-TOOLS
+    - name: Reload systemd service
+      ansible.builtin.systemd:
+        daemon_reload: true
 
-  - name: Stop sushy-tools service
-    service:
-      name: sushy-tools
-      state: stopped
-      enabled: no
-    ignore_errors: true
+    - name: Remove sushy-tools
+      ansible.builtin.file:
+        path: /opt/sushy-tools
+        state: absent
 
-  - name: Delete sushy-tools service
-    file:
-      path: /etc/systemd/system/sushy-tools.service
-      state: absent
-
-  - name: Reload systemd service
-    systemd:
-      daemon_reload: yes
-
-  - name: Remove sushy-tools
-    file:
-      path: /opt/sushy-tools
-      state: absent
-
-  - name: Delete sushy-tools disks
-    shell: |
-      for i in $(virsh -q vol-list default | sed -s 's/\s\+/ /g' | cut -d ' ' -f2 | grep 'boot-.*\.img'); do
-          virsh vol-delete $i default
-      done
-
-  ### HTTP STORE
-
-  - name: Stop and remove httpd container
-    containers.podman.podman_container:
-      name: httpd
-      image: quay.io/openstack-k8s-operators/httpd-24-centos7:2.4
-      state: absent
-
+    - name: Delete sushy-tools disks
+      ansible.builtin.shell: |
+        for i in $(virsh -q vol-list default | sed -s 's/\s\+/ /g' | cut -d ' ' -f2 | grep 'boot-.*\.img'); do
+            virsh vol-delete $i default
+        done
+    - name: Stop and remove httpd container
+      containers.podman.podman_container:
+        name: httpd
+        image: quay.io/openstack-k8s-operators/httpd-24-centos7:2.4
+        state: absent
 
   ### ASSISTED INSTALLER SERVICE CONTAINERS
 
-  - name: Stop and remove assisted installer service containers
-    shell: |
-      podman pod stop assisted-installer;
-      podman pod rm assisted-installer -f
-    ignore_errors: true
+    - name: Stop and remove assisted installer service containers
+      ansible.builtin.shell: |
+        podman pod stop assisted-installer;
+        podman pod rm assisted-installer -f
+      ignore_errors: true
 
-  - name: Remove Postgres data store
-    file:
-      path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-installer', true) }}/data/postgresql"
-      state: absent
-
+    - name: Remove Postgres data store
+      ansible.builtin.file:
+        path: "{{ ocp_ai_service_store_dir | default('/opt/assisted-installer', true) }}/data/postgresql"
+        state: absent
 
   ### BRIDGES
 
-  - name: Delete existing bridges (if any)
-    nmcli:
-      conn_name: "{{ item }}"
-      type: bridge
-      state: absent
-    with_items:
-      - "{{ ocp_cluster_name }}bm"
-      - "{{ ocp_cluster_name }}pr"
-      - "ospnetwork"
-      - "external"
-    ignore_errors: yes
+    - name: Delete existing bridges (if any)
+      community.general.nmcli:
+        conn_name: "{{ item }}"
+        type: bridge
+        state: absent
+      with_items:
+        - "{{ ocp_cluster_name }}bm"
+        - "{{ ocp_cluster_name }}pr"
+        - "ospnetwork"
+        - "external"
+      ignore_errors: true
 
-  - name: Make sure bridge ifcfg files are removed
-    file:
-      path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
-      state: absent
-    with_items:
-      - "{{ ocp_cluster_name }}bm"
-      - "{{ ocp_cluster_name }}pr"
-      - "ospnetwork"
-      - "external"
+    - name: Make sure bridge ifcfg files are removed
+      ansible.builtin.file:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
+        state: absent
+      with_items:
+        - "{{ ocp_cluster_name }}bm"
+        - "{{ ocp_cluster_name }}pr"
+        - "ospnetwork"
+        - "external"
 
-  - name: Delete existing bridge slaves (if any)
-    nmcli:
-      conn_name: "bridge-slave-{{ item }}"
-      type: bridge-slave
-      state: absent
-    when: item != ""
-    with_items:
-      - "{{ ocp_bm_prov_interface }}"
-      - "{{ ocp_bm_interface }}"
-      - "{{ osp_bm_interface }}"
-      - "{{ osp_ext_bm_interface }}"
+    - name: Delete existing bridge slaves (if any)
+      community.general.nmcli:
+        conn_name: "bridge-slave-{{ item }}"
+        type: bridge-slave
+        state: absent
+      when: item != ""
+      with_items:
+        - "{{ ocp_bm_prov_interface }}"
+        - "{{ ocp_bm_interface }}"
+        - "{{ osp_bm_interface }}"
+        - "{{ osp_ext_bm_interface }}"
 
-  - name: Make sure bridge slave ifcfg files are removed
-    file:
-      path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ item }}"
-      state: absent
-    when: item != ""
-    with_items:
-      - "{{ ocp_bm_prov_interface }}"
-      - "{{ ocp_bm_interface }}"
-      - "{{ osp_bm_interface }}"
-      - "{{ osp_ext_bm_interface }}"
+    - name: Make sure bridge slave ifcfg files are removed
+      ansible.builtin.file:
+        path: "/etc/sysconfig/network-scripts/ifcfg-bridge-slave-{{ item }}"
+        state: absent
+      when: item != ""
+      with_items:
+        - "{{ ocp_bm_prov_interface }}"
+        - "{{ ocp_bm_interface }}"
+        - "{{ osp_bm_interface }}"
+        - "{{ osp_ext_bm_interface }}"
 
   ### remove osp_base_image
 
-  - name: Set path to RHEL base image for assisted installer
-    set_fact:
-      osp_base_image_url_path: "/opt/http_store/data/images/{{ osp.base_image_url | basename }}"
+    - name: Set path to RHEL base image for assisted installer
+      ansible.builtin.set_fact:
+        osp_base_image_url_path: "/opt/http_store/data/images/{{ osp.base_image_url | basename }}"
 
-  - name: Delete {{ osp_base_image_url_path }}
-    file:
-      path: "{{ osp_base_image_url_path }}"
-      state: absent
-
-  - name: Delete discovery images
-    shell: |
-      for i in $(virsh -q vol-list default | sed -s 's/\s\+/ /g' | cut -d ' ' -f2 | 'discovery_image_.*\.img'); do
-          virsh vol-delete $i default
-      done
-
-  - name: Delete AI podman images
-    shell: |
-      for i in $(podman images | grep -E '(assisted-service|assisted-image-service|assisted-installer-ui)' | awk '{print $3}'); do podman rmi $i; done
-
-  - name: Cleanup crucible
-    become: true
-    block:
-    - name: Cleanup crucible repo
-      file:
-        path: "{{ base_path }}/crucible"
+    - name: Delete {{ osp_base_image_url_path }}
+      ansible.builtin.file:
+        path: "{{ osp_base_image_url_path }}"
         state: absent
 
-    - name: Cleanup ansible
-      file:
-        path: "{{ base_path }}/.ansible"
-        state: absent
+    - name: Delete discovery images
+      ansible.builtin.shell: |
+        for i in $(virsh -q vol-list default | sed -s 's/\s\+/ /g' | cut -d ' ' -f2 | 'discovery_image_.*\.img'); do
+            virsh vol-delete $i default
+        done
+    - name: Delete AI podman images
+      ansible.builtin.shell: |
+        for i in $(podman images | grep -E '(assisted-service|assisted-image-service|assisted-installer-ui)' | awk '{print $3}'); do podman rmi $i; done
+    - name: Cleanup crucible
+      become: true
+      block:
+        - name: Cleanup crucible repo
+          ansible.builtin.file:
+            path: "{{ base_path }}/crucible"
+            state: absent
+
+        - name: Cleanup ansible
+          ansible.builtin.file:
+            path: "{{ base_path }}/.ansible"
+            state: absent

@@ -1,13 +1,17 @@
 ---
 base_path: /home/ocp
-#dev_scripts_repo: defaults to "https://github.com/openshift-metal3/dev-scripts.git"
-#dev_scripts_branch: defaults to "HEAD"
+# dev_scripts_repo: defaults to "https://github.com/openshift-metal3/dev-scripts.git"
+# dev_scripts_branch: defaults to "HEAD"
 # mschuppert: https://github.com/openshift-metal3/dev-scripts/commit/7430bfd427b1e46ad9b2ca79467d62707dc288c0
 # deploys python39 and ansible 4.6.0 which makes dev-tools to fail for the short term pin to b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 dev_scripts_branch: b8c619c1515d03f162adf08cbb89f9ba5c6d5cf1
 
 # Set site based on domain name, default to rdu
-site_location: "{{ 'tlv' if ansible_nodename | regex_search('tlv.*\\.redhat\\.com') else 'brq' if ansible_nodename | regex_search('brq.*\\.redhat\\.com') else 'default' }}"
+site_location: "{{
+    'tlv' if ansible_nodename | regex_search('tlv.*\\.redhat\\.com') else
+    'brq' if ansible_nodename | regex_search('brq.*\\.redhat\\.com') else
+    'default'
+  }}"
 
 # Site specific settings, local mirrors etc...
 site_settings:
@@ -69,8 +73,8 @@ ocp_ai: true
 #   rhel_subscription_server_hostname: <subscription server> (optional)
 # * pull-secret
 #   obtain it from https://cloud.redhat.com/openshift/install/pull-secret
-#secrets_repo: https uri to repo, no default manual local file is expected if not present
-#secrets_branch: defaults to "HEAD"
+# secrets_repo: https uri to repo, no default manual local file is expected if not present
+# secrets_branch: defaults to "HEAD"
 
 # dev scripts switched to ipv6 per default, for now switch back
 # https://github.com/openshift-metal3/dev-scripts/pull/969
@@ -97,10 +101,10 @@ ocp_worker_disk: 50
 # - "ocp_num_storage_workers" must be...
 #   * >= 3
 #   * <= "ocp_num_workers" if virtual worker nodes are used
-#   * <= "ocp_bm_workers|length" if baremetal worker nodes are used
+#   * <= "ocp_bm_workers | length" if baremetal worker nodes are used
 #   * <= "ocp_num_masters" if only virtual master/worker combo nodes are used
-#   * <= "ocp_bm_masters|length" if only baremetal master/worker combo nodes are used
-#   * <= "ocp_num_masters" or <= "ocp_bm_masters|length" if > "ocp_nm_workers" and > "ocp_bm_workers|length"
+#   * <= "ocp_bm_masters | length" if only baremetal master/worker combo nodes are used
+#   * <= "ocp_num_masters" or <= "ocp_bm_masters | length" if > "ocp_nm_workers" and > "ocp_bm_workers | length"
 # - nodes are enhanced to provide storage along with regular compute (kubelet) functionality
 ocp_num_storage_workers: 3
 ocp_storage_data_disks:
@@ -196,10 +200,10 @@ ocp_bm_extra_workers: {}
 # These are used to simplify considerations for masters and workers
 # across virtual and baremetal options.  *** Please leave them as they are ***
 ### LEAVE AS-IS vvv
-ocp_master_count: "{{ ocp_num_masters + ocp_bm_masters|default({})|length }}" # DO NOT EDIT
-ocp_worker_count: "{{ ocp_num_workers + ocp_bm_workers|default({})|length }}" # DO NOT EDIT
-ocp_extra_worker_count: "{{ ocp_num_extra_workers + ocp_bm_extra_workers|default({})|length }}" # DO NOT EDIT
-ocp_cluster_has_bm: "{{ (ocp_bm_masters|default({})|length > 0 or ocp_bm_workers|default({})|length > 0)|bool }}"
+ocp_master_count: "{{ ocp_num_masters + ocp_bm_masters | default({}) | length }}" # DO NOT EDIT
+ocp_worker_count: "{{ ocp_num_workers + ocp_bm_workers | default({}) | length }}" # DO NOT EDIT
+ocp_extra_worker_count: "{{ ocp_num_extra_workers + ocp_bm_extra_workers | default({}) | length }}" # DO NOT EDIT
+ocp_cluster_has_bm: "{{ (ocp_bm_masters | default({}) | length > 0 or ocp_bm_workers | default({}) | length > 0) | bool }}"
 ### LEAVE AS-IS ^^^
 
 # OCP cluster name
@@ -210,7 +214,7 @@ ocp_domain_name: "{{ base_domain_name }}"
 opm_version: v1.30.0
 
 # operator-sdk version to use (must be specific version)
-#sdk_version: v0.19.2 - cnosp is right now based on that version
+# sdk_version: v0.19.2 - cnosp is right now based on that version
 sdk_version: v1.20.0
 
 # kuttl version
@@ -223,34 +227,44 @@ go_version: 1.18.9
 kustomize_version: v4.0.1
 
 # SRIOV network operator version stable for 4.14+, OCP version for older
-sriov_version: "{{ ocp_version|string if ocp_version|string in ['4.8','4.9','4.10','4.11','4.12','4.13'] else 'stable' }}"
+sriov_version: "{{ ocp_version | string if ocp_version | string in ['4.8', '4.9', '4.10', '4.11', '4.12', '4.13'] else 'stable' }}"
 
 # Performance addon operator version (usually should correspond to X.X release)
 perf_version: "{{ ocp_version }}"
 
 # CNV addon operator version (usually should correspond to X.X release)
 # Current version from https://docs.openshift.com/container-platform/4.14/virt/install/installing-virt.html#installing-virt-operator-cli_installing-virt
-cnv_hyperconverged_operator_version: "{{ {'4.18':'4.18.0','4.16':'4.16.1', '4.15':'4.15.0', '4.14':'4.14.4', '4.13':'4.13.8', '4.12':'4.12.10', '4.11':'4.11.8', '4.10':'4.10.10', '4.9':'4.9.7', '4.8':'4.8.7'}.get(ocp_version|string) }}"
+cnv_hyperconverged_operator_version: "{{
+  {'4.18': '4.18.0',
+   '4.16': '4.16.1',
+   '4.15': '4.15.0',
+   '4.14': '4.14.4',
+   '4.13': '4.13.8',
+   '4.12': '4.12.10',
+   '4.11': '4.11.8',
+   '4.10': '4.10.10',
+   '4.9': '4.9.7',
+   '4.8': '4.8.7'}.get(ocp_version | string)
+}}"
 
 # namespace to deploy the operator to
 # Note: right now only openstack is supported as it is hardcoded in the Dockerfile
-namespace: openstack
+namespace: openstack # noqa: var-naming[no-reserved]
 watch_namespace: openstack,openshift-machine-api,openshift-sriov-network-operator
 
 # operator github url where operators repos are underneath - default https://github.com/openstack-k8s-operators
-#openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
-#openstack_k8s_operators_director_branch: defaults to "HEAD"
+# openstack_k8s_operators_https_url: defaults to "https://github.com/openstack-k8s-operators"
+# openstack_k8s_operators_director_branch: defaults to "HEAD"
 
 # osp-director-operator image and tag to use
 director_operator_image: quay.io/openstack-k8s-operators/osp-director-operator
 # CSV version is used for both the CSV version and container image tag
 csv_version: latest-16.2
 
-#ocp_network_type: OpenShiftSDN #for OCP pre 4.16
+# ocp_network_type: OpenShiftSDN #for OCP pre 4.16
 ocp_network_type: OVNKubernetes
 
 # ansible-sts test suite repo url
-sts_repo_url: https://code.engineering.redhat.com/gerrit/openstack-pidone-qe
 sts_repo_url: https://gitlab.cee.redhat.com/openstack-pidone-qe1/openstack-pidone-qe.git
 
 # image used to run tempest
@@ -272,39 +286,41 @@ tempest_enable_feature_dict:
     console_output: true
 
 # disable specific tempest features
-#tempest_disable_feature_dict:
-#  compute-feature-enabled:
-#    vnc_console: false
+# tempest_disable_feature_dict:
+#   compute-feature-enabled:
+#     vnc_console: false
 
 # specify tempest tests to run
 # for now phase1 tempest tests
 tempest_test_dict:
-  regex: ''
+  regex: ""
   includelist:
-      - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
-      - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
-      - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
-      - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
+    - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
+    - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
+    - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
+    - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
   # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
   excludelist:
-      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
-      # excluding tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance as it started to fail on latest 16.2 image, using 17,1 would work, but introduce some error on a nother tests. for now lets disable test_bootable_volume_snapshot_stop_start_instance
-      - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance"
+    - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+    # excluding tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance as it started to
+    # fail on latest 16.2 image, using 17,1 would work, but introduce some error on a nother tests.
+    # for now lets disable test_bootable_volume_snapshot_stop_start_instance
+    - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_bootable_volume_snapshot_stop_start_instance"
 
 # phase2 tempest tests
-#tempest_test_dict:
-#  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
-#  includelist: []
-#  # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
-#  excludelist:
-#      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
-#      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
-#      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
-#      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
-#      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
-#      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+# tempest_test_dict:
+#   regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+#   includelist: []
+#   # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
+#   excludelist:
+#       - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+#       - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+#       - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+#       - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+#       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+#       - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
 
 local_working_dir: "~/{{ ocp_cluster_name }}-working"
 
@@ -343,7 +359,7 @@ openstackclient_networks:
   - external
   - internal_api
 
-nfs_server: '172.22.0.1'
+nfs_server: "172.22.0.1"
 ntp_server: "{{ 'clock.redhat.com' if 'redhat.com' in ansible_fqdn else 'pool.ntp.org' }}"
 
 external_dns: "{{ site_settings[site_location]['dns_servers'] }}"
@@ -410,33 +426,33 @@ osp_defaults:
   attach_configs:
     br-ctlplane:
       interfaces:
-      - type: bridge
-        name: br-ctlplane
-        interface: enp1s0
-        dhcp: true
-        mtu: 1500
+        - type: bridge
+          name: br-ctlplane
+          interface: enp1s0
+          dhcp: true
+          mtu: 1500
     br-osp:
       interfaces:
-      - type: bridge
-        name: br-osp
-        interface: enp7s0
-        mtu: 9000
-      - type: ethernet
-        interface: enp7s0
-        mtu: 9000
+        - type: bridge
+          name: br-osp
+          interface: enp7s0
+          mtu: 9000
+        - type: ethernet
+          interface: enp7s0
+          mtu: 9000
     br-ex:
       interfaces:
-      - type: bridge
-        name: br-ex-osp
-        interface: enp6s0
-        mtu: 1500
+        - type: bridge
+          name: br-ex-osp
+          interface: enp6s0
+          mtu: 1500
   networks: ipv4
   ovn_bridge_mac_mappings:
     phys_networks:
-    - name: datacentre
-      prefix: fa:16:3a
-    - name: datacentre2
-      prefix: fa:16:3b
+      - name: datacentre
+        prefix: fa:16:3a
+      - name: datacentre2
+        prefix: fa:16:3b
   preserve_reservations: true
   container_tag: "{{ osp_release_auto.tag }}"
   ceph_image: "{{ osp_release_auto.ceph_image }}" # note for OSP17.0 its ceph_image
@@ -461,15 +477,12 @@ osp_defaults:
 
 # overwrite elements from osp_defaults for a specific release
 osp_release_defaults: {}
-
 # overwrite elements from osp_defaults or osp_release_defaults for local settings
 osp_local: {}
-
 # Relative paths to arbitrary extra Heat environment templates to include during OsConfigGenerator generation.
 # Relative to /usr/share/openstack-tripleo-heat-templates/environments/.
 # Example: ["services/neutron-ovn-sriov.yaml"]
 osp_extra_env_files: []
-
 # registration of the overcloud nodes, either rhsm or rhos-release
 osp_registry_method: rhos-release
 osp_rhos_release: "{{ osp_release_auto.release }}"
@@ -501,7 +514,7 @@ ocs_version: "{{ 4.10 if ocp_version >= 4.10 else ocp_version }}"
 # Virtualized SRIOV (for dev/test)
 enable_virt_sriov: false
 virt_sriov_repo: https://github.com/marcel-apf/qemu.git
-#virt_sriov_branch: defaults to "HEAD"
+# virt_sriov_branch: defaults to "HEAD"
 virt_sriov_domains:
   - "{{ ocp_cluster_name }}_worker_3"
   - "{{ ocp_cluster_name }}_worker_4"
@@ -533,85 +546,85 @@ cnosp_csv_version: 0.0.1
 
 rhel_repos:
   8:
-  - rhel-8-for-x86_64-appstream-rpms
-  - advanced-virt-for-rhel-8-x86_64-rpms
-  - openstack-16-for-rhel-8-x86_64-rpms
+    - rhel-8-for-x86_64-appstream-rpms
+    - advanced-virt-for-rhel-8-x86_64-rpms
+    - openstack-16-for-rhel-8-x86_64-rpms
   9:
-  - rhel-9-for-x86_64-appstream-rpms
-  - codeready-builder-for-rhel-9-x86_64-rpms
+    - rhel-9-for-x86_64-appstream-rpms
+    - codeready-builder-for-rhel-9-x86_64-rpms
 
 rhel_packages:
   8:
   # Directly configured/used in this playbook
-  - chrony
-  - sysstat
-  - cronie
-  - tuned
-  - firewalld
+    - chrony
+    - sysstat
+    - cronie
+    - tuned
+    - firewalld
 
-  # Required for dev-scripts
-  - libvirt-daemon-kvm
-  - libvirt-client
-  - libvirt
-  - podman
-  - buildah
-  - git
-  - make
+    # Required for dev-scripts
+    - libvirt-daemon-kvm
+    - libvirt-client
+    - libvirt
+    - podman
+    - buildah
+    - git
+    - make
 
-  # Required to run osp-director-operator/scripts/build_and_push_images.sh
-  - skopeo
+    # Required to run osp-director-operator/scripts/build_and_push_images.sh
+    - skopeo
 
-  # Required for assisted installer
-  - dnsmasq
-  - libvirt-devel
-  - python3-netaddr
-  - python3-pip
-  - qemu-kvm
-  - virt-install
+    # Required for assisted installer
+    - dnsmasq
+    - libvirt-devel
+    - python3-netaddr
+    - python3-pip
+    - qemu-kvm
+    - virt-install
 
-  # required to customize the guest-image to remove net.ifnames=0 kernel param
-  - libguestfs-tools-c
+    # required to customize the guest-image to remove net.ifnames=0 kernel param
+    - libguestfs-tools-c
 
-  # required to run recent sushy-tools
-  - python39
-  - python39-devel
-  - python3-virtualenv
-  - gcc
+    # required to run recent sushy-tools
+    - python39
+    - python39-devel
+    - python3-virtualenv
+    - gcc
 
   9:
   # Directly configured/used in this playbook
-  - chrony
-  - sysstat
-  - cronie
-  - tuned
-  - firewalld
+    - chrony
+    - sysstat
+    - cronie
+    - tuned
+    - firewalld
 
-  # Required for dev-scripts
-  - libvirt-daemon-kvm
-  - libvirt-client
-  - libvirt
-  - podman
-  - buildah
-  - git
-  - make
+    # Required for dev-scripts
+    - libvirt-daemon-kvm
+    - libvirt-client
+    - libvirt
+    - podman
+    - buildah
+    - git
+    - make
 
-  # Required to run osp-director-operator/scripts/build_and_push_images.sh
-  - skopeo
+    # Required to run osp-director-operator/scripts/build_and_push_images.sh
+    - skopeo
 
-  # Required for assisted installer
-  - dnsmasq
-  - libvirt-devel
-  - python3-jmespath
-  - python3-netaddr
-  - python3-pip
-  - python3.11-pip
-  - qemu-kvm
-  - virt-install
+    # Required for assisted installer
+    - dnsmasq
+    - libvirt-devel
+    - python3-jmespath
+    - python3-netaddr
+    - python3-pip
+    - python3.11-pip
+    - qemu-kvm
+    - virt-install
 
-  # required to customize the guest-image to remove net.ifnames=0 kernel param
-  - libguestfs-tools-c
+    # required to customize the guest-image to remove net.ifnames=0 kernel param
+    - libguestfs-tools-c
 
-  # required to run recent sushy-tools
-  - python3
-  - python3-devel
-  - gcc
+    # required to run recent sushy-tools
+    - python3
+    - python3-devel
+    - gcc

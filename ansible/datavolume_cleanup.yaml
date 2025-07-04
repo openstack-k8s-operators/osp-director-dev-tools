@@ -1,33 +1,34 @@
 #!/usr/bin/env ansible-playbook
 ---
-- hosts: localhost
+- name: DataVolume Cleanup
+  hosts: localhost
   vars_files: "vars/default.yaml"
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Delete base image {{ osp.base_image_url | basename }}
-    file:
-      path: "{{ item }}"
-      state: absent
-    with_fileglob:
-    - "{{ base_path }}/ironic/html/images/*.qcow2"
-    - "/opt/http_store/data/images/*.qcow2"
+    - name: Delete base image {{ osp.base_image_url | basename }}
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      with_fileglob:
+        - "{{ base_path }}/ironic/html/images/*.qcow2"
+        - "/opt/http_store/data/images/*.qcow2"
 
-  - name: Delete all datavolumes and base image PVC
-    shell: |
-      oc delete dv --all -n {{ namespace }}
-      oc delete pvc controller-base-img --ignore-not-found -n {{ namespace }}
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Delete all datavolumes and base image PVC
+      ansible.builtin.shell: |
+        oc delete dv --all -n {{ namespace }}
+        oc delete pvc controller-base-img --ignore-not-found -n {{ namespace }}
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: Delete provionserver
-    shell: >
-      oc delete openstackprovisionservers.osp-director.openstack.org --ignore-not-found=true openstack -n {{ namespace }}
-    environment:
-      <<: *oc_env
+    - name: Delete provionserver
+      ansible.builtin.shell: |
+        oc delete openstackprovisionservers.osp-director.openstack.org --ignore-not-found=true openstack -n {{ namespace }}
+      environment:
+        <<: *oc_env

@@ -1,5 +1,6 @@
 ---
-- hosts: convergence_base
+- name: OpenShift Default StorageClass
+  hosts: convergence_base
   gather_facts: false
   become: true
   user: root
@@ -8,119 +9,119 @@
     exports: "{{ nfs_pvs | expand_pvs | list }}"
 
   tasks:
-  - name: Create datadir
-    file:
-      path: "{{ nfs_data_dir }}"
-      state: directory
-      mode: 0751
-      group: root
-      owner: root
+    - name: Create datadir
+      ansible.builtin.file:
+        path: "{{ nfs_data_dir }}"
+        state: directory
+        mode: "0751"
+        group: root
+        owner: root
 
-  # This shell is single ansible task and therefore executes in nearly constant
-  # time. Doing this in multiple ansible tasks quickly becomes thousands of times
-  # slower than this script as the list size increases.
-  # The script is idempotent.
-  - name: Create storage
-    shell: |
-      set -e -o pipefail
+    # This shell is single ansible task and therefore executes in nearly constant
+    # time. Doing this in multiple ansible tasks quickly becomes thousands of times
+    # slower than this script as the list size increases.
+    # The script is idempotent.
+    - name: Create storage
+      ansible.builtin.shell: |
+        set -e -o pipefail
 
-      cat <<EOF | while read name size shared; do
-      {{ exports_by_line }}
-      EOF
-          fs="{{ nfs_data_dir }}/${name}"
-          mountpoint="{{ nfs_export_dir }}/${name}"
-          exports="/etc/exports.d/host-nfs-storageclass.exports"
+        cat <<EOF | while read name size shared; do
+        {{ exports_by_line }}
+        EOF
+            fs="{{ nfs_data_dir }}/${name}"
+            mountpoint="{{ nfs_export_dir }}/${name}"
+            exports="/etc/exports.d/host-nfs-storageclass.exports"
 
-          if [ ! -f "$fs" ]; then
-              # Create a sparse file of the correct size and populate it with an
-              # ext4 filesystem.
-              truncate -s ${size}G $fs
-              mkfs.ext4 -m 0 "$fs"
-          fi
+            if [ ! -f "$fs" ]; then
+                # Create a sparse file of the correct size and populate it with an
+                # ext4 filesystem.
+                truncate -s ${size}G $fs
+                mkfs.ext4 -m 0 "$fs"
+            fi
 
-          # Create the mountpoint, add it to fstab, and mount it
-          if [ ! -d "$mountpoint" ]; then
-              mkdir -p "$mountpoint"
-          fi
+            # Create the mountpoint, add it to fstab, and mount it
+            if [ ! -d "$mountpoint" ]; then
+                mkdir -p "$mountpoint"
+            fi
 
-          if ! grep -qs "$mountpoint " /etc/fstab; then
-              echo "$fs $mountpoint ext4 defaults 0 1" >> /etc/fstab
-          fi
+            if ! grep -qs "$mountpoint " /etc/fstab; then
+                echo "$fs $mountpoint ext4 defaults 0 1" >> /etc/fstab
+            fi
 
-          if ! grep -qs "$mountpoint " /proc/mounts; then
-              mount "$mountpoint"
-          fi
+            if ! grep -qs "$mountpoint " /proc/mounts; then
+                mount "$mountpoint"
+            fi
 
-          # Make the mount world readable
-          chown nobody.nobody "$mountpoint"
-          chmod 0777 "$mountpoint"
+            # Make the mount world readable
+            chown nobody.nobody "$mountpoint"
+            chmod 0777 "$mountpoint"
 
-          # Add the export to the relevant file in exports
-          if ! grep -qs "$mountpoint " "$exports"; then
-              echo "$mountpoint *(rw,sync,no_root_squash)" >> "$exports"
-          fi
+            # Add the export to the relevant file in exports
+            if ! grep -qs "$mountpoint " "$exports"; then
+                echo "$mountpoint *(rw,sync,no_root_squash)" >> "$exports"
+            fi
 
-          exportfs -ra
-      done
-    vars:
-      exports_by_line: "{{ exports | map('join', ' ') | join('\n') }}"
+            exportfs -ra
+        done
+      vars:
+        exports_by_line: "{{ exports | map('join', ' ') | join('\n') }}"
 
-  - name: Schedule fstrim on the host
-    cron:
-      name: fstrim
-      special_time: daily
-      job: "/usr/sbin/fstrim -a"
-  
-  - name: Remove "lost+found" dirs (if any) from PVs
-    shell: |
-      for i in $(find {{ nfs_export_dir }} -name lost+found); do
-        rm -rf $i
-      done
+    - name: Schedule fstrim on the host
+      ansible.builtin.cron:
+        name: fstrim
+        special_time: daily
+        job: "/usr/sbin/fstrim -a"
 
-- hosts: localhost
+    - name: Remove "lost+found" dirs (if any) from PVs
+      ansible.builtin.shell: |
+        for i in $(find {{ nfs_export_dir }} -name lost+found); do
+          rm -rf $i
+        done
+- name: Create storageclass and PVs
+  hosts: localhost
   gather_facts: false
   vars_files: vars/default.yaml
   vars:
     <<: *pv_exports
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set directory for host-nfs-storageclass yaml files
-    set_fact:
-      yaml_dir: "{{ working_yamls_dir }}/host-nfs-storageclass"
+    - name: Set directory for host-nfs-storageclass yaml files
+      ansible.builtin.set_fact:
+        yaml_dir: "{{ working_yamls_dir }}/host-nfs-storageclass"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ yaml_dir }}/"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ yaml_dir }}/"
 
-  - name: Create local yamldir
-    file:
-      path: "{{ yaml_dir }}"
-      state: directory
-      mode: '0755'
+    - name: Create local yamldir
+      ansible.builtin.file:
+        path: "{{ yaml_dir }}"
+        state: directory
+        mode: "0755"
 
-  - name: Create storageclass yaml
-    copy:
-      src: storageclass.yaml
-      dest: "{{ yaml_dir }}/"
-      mode: 0644
+    - name: Create storageclass yaml
+      ansible.builtin.copy:
+        src: storageclass.yaml
+        dest: "{{ yaml_dir }}/"
+        mode: "0644"
 
-  - name: Create PV yamls
-    template:
-      src: pv.yaml.j2
-      dest: "{{ yaml_dir }}/{{ item.0 }}.yaml"
-      mode: 0644
-      trim_blocks: false
-    vars:
-      name: "{{ item.0 }}"
-      size: "{{ item.1 }}"
-      shared: "{{ item.2 }}"
-    loop: "{{ exports }}"
+    - name: Create PV yamls
+      ansible.builtin.template:
+        src: pv.yaml.j2
+        dest: "{{ yaml_dir }}/{{ item.0 }}.yaml"
+        mode: "0644"
+        trim_blocks: false
+      vars:
+        pvname: "{{ item.0 }}"
+        size: "{{ item.1 }}"
+        shared: "{{ item.2 }}"
+      loop: "{{ exports }}"
 
-  - name: Create storageclass and PVs
-    command: oc apply -f {{ yaml_dir }}
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Create storageclass and PVs
+      ansible.builtin.command: oc apply -f {{ yaml_dir }}
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"

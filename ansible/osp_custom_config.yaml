@@ -1,161 +1,166 @@
 ---
-- hosts: localhost
+- name: OpenStack Custom Config
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Include network file {{ osp.networks }}.yaml
-    include_vars:
-      file: "{{ osp.networks }}.yaml"
+    - name: Include network file {{ osp.networks }}.yaml
+      ansible.builtin.include_vars:
+        file: "{{ osp.networks }}.yaml"
 
-  - name: Set directory for the tripleo deployment files
-    set_fact:
-      ooo_yaml_dir: "{{ working_yamls_dir }}/{{ custom_config_name|default('deploy') }}/tripleo_heat_envs"
-      ooo_tarball_dir: "{{ working_yamls_dir }}/{{ custom_config_name|default('deploy') }}/tripleo_deploy_tarball"
-      heat_env_cm: heat-env-config-{{ custom_config_name|default('deploy') }}
-      tripleo_tarball_cm: tripleo-tarball-config-{{ custom_config_name|default('deploy') }}
+    - name: Set directory for the tripleo deployment files
+      ansible.builtin.set_fact:
+        ooo_yaml_dir: "{{ working_yamls_dir }}/{{ custom_config_name | default('deploy') }}/tripleo_heat_envs"
+        ooo_tarball_dir: "{{ working_yamls_dir }}/{{ custom_config_name | default('deploy') }}/tripleo_deploy_tarball"
+        heat_env_cm: heat-env-config-{{ custom_config_name | default('deploy') }}
+        tripleo_tarball_cm: tripleo-tarball-config-{{ custom_config_name | default('deploy') }}
 
-  - name: Make sure to cleanup previous yaml dirs
-    file:
-      path: "{{ item }}"
-      state: absent
-    with_items:
-    - "{{ ooo_yaml_dir }}"
-    - "{{ ooo_tarball_dir }}"
+    - name: Make sure to cleanup previous yaml dirs
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ ooo_yaml_dir }}"
+        - "{{ ooo_tarball_dir }}"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ item }}"
-      state: directory
-      mode: '0755'
-    with_items:
-    - "{{ ooo_yaml_dir }}"
-    - "{{ ooo_tarball_dir }}"
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      with_items:
+        - "{{ ooo_yaml_dir }}"
+        - "{{ ooo_tarball_dir }}"
 
-  - name: render heat-env-config common templates to yaml dir
-    template:
-      src: "{{ item }}"
-      dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
-      mode: '0644'
-    with_fileglob:
-    - "templates/osp/tripleo_heat_envs/common/*.j2"
+    - name: Render heat-env-config common templates to yaml dir
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
+        mode: "0644"
+      with_fileglob:
+        - "templates/osp/tripleo_heat_envs/common/*.j2"
 
-  - name: render version specific heat-env-config templates to yaml dir
-    template:
-      src: "{{ item }}"
-      dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
-      mode: '0644'
-    with_fileglob:
-    - "templates/osp/tripleo_heat_envs/{{ osp.release }}/*.j2"
+    - name: Render version specific heat-env-config templates to yaml dir
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "{{ ooo_yaml_dir }}/{{ item | basename | splitext | first }}"
+        mode: "0644"
+      with_fileglob:
+        - "templates/osp/tripleo_heat_envs/{{ osp.release }}/*.j2"
 
   # enable osp extra features parameters
 
-  - include_tasks: extrafeature_heat_env.yaml
-    vars:
-      feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/common/{{ feature }}"
-    loop: "{{ osp.extrafeatures + custom_config_extrafeatures|default([]) }}"
-    loop_control:
-      loop_var: feature
+    - name: Enable extra features heat envs (common)
+      ansible.builtin.include_tasks: extrafeature_heat_env.yaml
+      vars:
+        feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/common/{{ feature }}"
+      loop: "{{ osp.extrafeatures + custom_config_extrafeatures | default([]) }}"
+      loop_control:
+        loop_var: feature
 
-  - include_tasks: extrafeature_heat_env.yaml
-    vars:
-      feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/{{ osp.release }}/{{ feature }}"
-    loop: "{{ osp.extrafeatures + custom_config_extrafeatures|default([]) }}"
-    loop_control:
-      loop_var: feature
+    - name: Enable extra features heat envs {{ osp.release }}
+      ansible.builtin.include_tasks: extrafeature_heat_env.yaml
+      vars:
+        feature_dir: "{{ playbook_dir }}/templates/osp/tripleo_heat_envs/features/{{ osp.release }}/{{ feature }}"
+      loop: "{{ osp.extrafeatures + custom_config_extrafeatures | default([]) }}"
+      loop_control:
+        loop_var: feature
 
-  - name: Import params from previous deployments
-    shell:
-      oc get cm -n openstack tripleo-exports-{{ import.deploy }} -o json | jq -r '.data."{{ import.src }}"' > {{ ooo_yaml_dir }}/{{ import.dest }}
-    loop: "{{ custom_config_imports|default([]) }}"
-    loop_control:
-      loop_var: import
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"   
+    - name: Import params from previous deployments
+      ansible.builtin.shell: oc get cm -n openstack tripleo-exports-{{ import.deploy }} -o json | jq -r '.data."{{ import.src }}"' > {{ ooo_yaml_dir }}/{{
+        import.dest }}
+      loop: "{{ custom_config_imports | default([]) }}"
+      loop_control:
+        loop_var: import
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: create heat-env-config ConfigMap
-    shell: |
-      oc create configmap -n openstack {{heat_env_cm}} --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
-    environment:
-      <<: *oc_env
+    - name: Create heat-env-config ConfigMap
+      ansible.builtin.shell: |
+        oc create configmap -n openstack {{ heat_env_cm }} --from-file={{ ooo_yaml_dir }}/ --dry-run -o yaml | oc apply -f -
+      environment:
+        <<: *oc_env
 
-  - name: copy {{tripleo_tarball_cm}} {{ osp.release }} custom tripleo tarball files
-    copy:
-      src: "osp/{{ osp.release }}/"
-      dest: "{{ ooo_tarball_dir }}/"
-      mode: '0644'
+    - name: Copy {{ tripleo_tarball_cm }} {{ osp.release }} custom tripleo tarball files
+      ansible.builtin.copy:
+        src: "osp/{{ osp.release }}/"
+        dest: "{{ ooo_tarball_dir }}/"
+        mode: "0644"
 
   # enable osp tarball extra features
 
-  - include_tasks: extrafeature_tarball_config.yaml
-    vars:
-      feature_dir: "{{ playbook_dir }}/files/osp/features/common/{{ feature }}"
-    loop: "{{ osp.extrafeatures }}"
-    loop_control:
-      loop_var: feature
+    - name: Enable extra features tarball (common)
+      ansible.builtin.include_tasks: extrafeature_tarball_config.yaml
+      vars:
+        feature_dir: "{{ playbook_dir }}/files/osp/features/common/{{ feature }}"
+      loop: "{{ osp.extrafeatures }}"
+      loop_control:
+        loop_var: feature
 
-  - include_tasks: extrafeature_tarball_config.yaml
-    vars:
-      feature_dir: "{{ playbook_dir }}/files/osp/features/{{ osp.release }}/{{ feature }}"
-    loop: "{{ osp.extrafeatures }}"
-    loop_control:
-      loop_var: feature
+    - name: Enable extra features tarball for {{ osp.release }}
+      ansible.builtin.include_tasks: extrafeature_tarball_config.yaml
+      vars:
+        feature_dir: "{{ playbook_dir }}/files/osp/features/{{ osp.release }}/{{ feature }}"
+      loop: "{{ osp.extrafeatures }}"
+      loop_control:
+        loop_var: feature
 
-  - name: render {{tripleo_tarball_cm}} templates to yaml dir
-    template:
-      src: "{{ item }}"
-      dest: "{{ ooo_tarball_dir }}/{{ item | basename | splitext | first }}"
-      mode: '0644'
-    with_fileglob:
-    - "templates/osp/tripleo_tarball_config/{{ osp.release }}/*.j2"
+    - name: Render {{ tripleo_tarball_cm }} templates to yaml dir
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "{{ ooo_tarball_dir }}/{{ item | basename | splitext | first }}"
+        mode: "0644"
+      with_fileglob:
+        - "templates/osp/tripleo_tarball_config/{{ osp.release }}/*.j2"
 
-  - name: create {{tripleo_tarball_cm}} ConfigMap with tarball
-    shell: |
-      cd {{ ooo_tarball_dir }}
-      tar -cvzf tarball-config.tar.gz *
-      oc create configmap -n openstack {{tripleo_tarball_cm}} --from-file=tarball-config.tar.gz --dry-run -o yaml | oc apply -f -
-      rm tarball-config.tar.gz
-    environment:
-      <<: *oc_env
+    - name: Create {{ tripleo_tarball_cm }} ConfigMap with tarball
+      ansible.builtin.shell: |
+        cd {{ ooo_tarball_dir }}
+        tar -cvzf tarball-config.tar.gz *
+        oc create configmap -n openstack {{ tripleo_tarball_cm }} --from-file=tarball-config.tar.gz --dry-run -o yaml | oc apply -f -
+        rm tarball-config.tar.gz
+      environment:
+        <<: *oc_env
 
-  - name: Create overcloud NFS shares
-    become: true
-    become_user: root
-    file:
-      path: "/home/nfs/{{ item }}"
-      state: directory
-      mode: '0777'
-      group: nobody
-      owner: nobody
-    with_items:
-      - glance
-      - glance-staging
-      - nova
-      - cinder
-      - cinder_image_conversion
+    - name: Create overcloud NFS shares
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: "/home/nfs/{{ item }}"
+        state: directory
+        mode: "0777"
+        group: nobody
+        owner: nobody
+      with_items:
+        - glance
+        - glance-staging
+        - nova
+        - cinder
+        - cinder_image_conversion
 
-  - name: Configure overcloud export
-    become: true
-    become_user: root
-    lineinfile:
-      path: /etc/exports.d/overcloud.exports
-      line: "/home/nfs/{{ item }} *(rw,sync,no_root_squash)"
-      create: yes
-      mode: '0644'
-    with_items:
-      - glance
-      - glance-staging
-      - nova
-      - cinder
-      - cinder_image_conversion
+    - name: Configure overcloud export
+      become: true
+      become_user: root
+      ansible.builtin.lineinfile:
+        path: /etc/exports.d/overcloud.exports
+        line: "/home/nfs/{{ item }} *(rw,sync,no_root_squash)"
+        create: true
+        mode: "0644"
+      with_items:
+        - glance
+        - glance-staging
+        - nova
+        - cinder
+        - cinder_image_conversion
 
-  - name: Export NFS share to the server
-    become: true
-    become_user: root
-    command: "exportfs -r"
+    - name: Export NFS share to the server
+      become: true
+      become_user: root
+      ansible.builtin.command: "exportfs -r"

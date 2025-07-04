@@ -1,5 +1,5 @@
 parameter_defaults:
-{% if osp.tls_public_endpoints|default(false)|bool %}
+{% if osp.tls_public_endpoints | default(false) | bool %}
   SSLCertificate: |
     {{ lookup('file', '/opt/local_CA/certs/openstack/openstack.crt.pem', rstrip=false)|indent(4) }}
   SSLIntermediateCertificate: ''
@@ -10,7 +10,7 @@ parameter_defaults:
     "redhat_CA":
       content: &root_ca_cert |
         {{ lookup('file', 'files/RH-Root-CA.pem', rstrip=false)|indent(8) }}
-{% if osp.tls_public_endpoints|default(false)|bool %}
+{% if osp.tls_public_endpoints | default(false) | bool %}
     "local_CA":
       content: |
         {{ lookup('file', '/opt/local_CA/cacert.pem', rstrip=false)|indent(8) }}

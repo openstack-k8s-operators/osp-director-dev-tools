@@ -1,5 +1,4 @@
 ---
-
 - name: Generate deploy custom config
   import_playbook: osp_custom_config.yaml
   vars:
@@ -34,5 +33,3 @@
   vars:
     config_generator_name: dcn1
     deploy_name: dcn1
-
-

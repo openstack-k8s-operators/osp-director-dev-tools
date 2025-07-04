@@ -1,75 +1,74 @@
-
 ---
-- hosts: localhost
+- name: Configure
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
-- hosts: convergence_base
+- name: OpenShift DevScripts Prep
+  hosts: convergence_base
   become: true
   become_user: ocp
 
   tasks:
-  - name: Include variables
-    include_vars: vars/default.yaml
+    - name: Include variables
+      ansible.builtin.include_vars: vars/default.yaml
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Clean dev-scripts deployment
+      ansible.builtin.shell: |
+        export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+        make clean
+      args:
+        chdir: "{{ base_path }}/dev-scripts"
+      ignore_errors: true
 
-  - name: Clean dev-scripts deployment
-    shell: |
-      export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-      make clean
-    args:
-      chdir: "{{ base_path }}/dev-scripts"
-    ignore_errors: true
+    - name: Kill any orphaned install
+      ansible.builtin.command:
+        cmd: pkill -9 -f '{{ ocp_cluster_name }}/openshift-baremetal-install'
+      ignore_errors: true
 
-  - name: Kill any orphaned install
-    command:
-      cmd: pkill -9 -f '{{ ocp_cluster_name }}/openshift-baremetal-install'
-    ignore_errors: true
+    - name: Ensure dev_scripts VMs and networks are deleted
+      become: true
+      become_user: root
+      ansible.builtin.shell: |
+        for i in $(virsh list --name | grep "^{{ ocp_cluster_name }}_"); do
+          virsh destroy $i
+        done
 
-  - name: Ensure dev_scripts VMs and networks are deleted
-    become: true
-    become_user: root
-    shell: |
-      for i in $(virsh list --name | grep "^{{ ocp_cluster_name }}_"); do
-        virsh destroy $i
-      done
+        for i in $(virsh list --all --name | grep "^{{ ocp_cluster_name }}_"); do
+          virsh undefine $i --remove-all-storage --nvram
+        done
 
-      for i in $(virsh list --all --name | grep "^{{ ocp_cluster_name }}_"); do
-        virsh undefine $i --remove-all-storage --nvram
-      done
+        for i in $(virsh net-list --name | grep "^{{ ocp_cluster_name }}"); do
+          virsh net-destroy $i
+        done
 
-      for i in $(virsh net-list --name | grep "^{{ ocp_cluster_name }}"); do
-        virsh net-destroy $i
-      done
+        for i in $(virsh net-list --all --name | grep "^{{ ocp_cluster_name }}"); do
+          virsh net-undefine $i
+        done
+    - name: Kill any orphaned dnsmasq
+      ansible.builtin.command:
+        cmd: pkill -f 'dnsmasq .*--conf-file=/var/lib/libvirt/dnsmasq/{{ ocp_cluster_name }}'
+      ignore_errors: true
 
-      for i in $(virsh net-list --all --name | grep "^{{ ocp_cluster_name }}"); do
-        virsh net-undefine $i
-      done
-
-  - name: Kill any orphaned dnsmasq
-    command:
-      cmd: pkill -f 'dnsmasq .*--conf-file=/var/lib/libvirt/dnsmasq/{{ ocp_cluster_name }}'
-    ignore_errors: true
-
-  - name: Removed cached deployment data
-    file:
-      path: "{{ item }}"
-      state: absent
-    with_items:
-      - "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}"
-      - "{{ base_path }}/{{ ocp_cluster_name }}"
+    - name: Removed cached deployment data
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}"
+        - "{{ base_path }}/{{ ocp_cluster_name }}"
 
   ### remove osp_base_image
 
-  - name: Set path to RHEL base image for dev-scripts
-    set_fact:
-      osp_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp.base_image_url | basename }}"
+    - name: Set path to RHEL base image for dev-scripts
+      ansible.builtin.set_fact:
+        osp_base_image_url_path: "{{ base_path }}/ironic/html/images/{{ osp.base_image_url | basename }}"
 
-  - name: Delete {{ osp_base_image_url_path }}
-    file:
-      path: "{{ osp_base_image_url_path }}"
-      state: absent
+    - name: Delete {{ osp_base_image_url_path }}
+      ansible.builtin.file:
+        path: "{{ osp_base_image_url_path }}"
+        state: absent

@@ -1,5 +1,6 @@
+---
 - name: Execute rhos-release to install OSP repos
-  become: yes
-  shell: |
-     {{ rhos_release_command }} -x
-     {{ rhos_release_command }} {{ rhos_release_args }}
+  become: true
+  ansible.builtin.shell: |
+    {{ rhos_release_command }} -x
+    {{ rhos_release_command }} {{ rhos_release_args }}

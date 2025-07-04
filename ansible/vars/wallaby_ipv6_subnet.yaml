@@ -12,14 +12,13 @@ ephemeral_heat:
   mariadb_image: quay.io/tripleowallaby/openstack-mariadb:current-tripleo
   rabbit_image: quay.io/tripleowallaby/openstack-rabbitmq:current-tripleo
 
-
 osp_release_defaults:
   release: wallaby
   container_tag: current-tripleo
   base_image_url: https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2
-  #TODO: which ceph images tag to use for upstream train?
-  #ceph_tag: 5-12
-  #ceph_image: daemon
+  # TODO: which ceph images tag to use for upstream train?
+  # ceph_tag: 5-12
+  # ceph_image: daemon
   networks: ipv6_subnet
   vmset:
     Controller:
@@ -62,20 +61,20 @@ osp_release_defaults:
 
 # TODO: create good set of ipv6 tempest tests, right now disabled those which create floating IP, which is not the case in IPv6
 tempest_test_dict:
-  regex: ''
+  regex: ""
   includelist:
-      - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
-      - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
-      - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
-      - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
+    - "tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern"
+    - "tempest.scenario.test_minimum_basic.TestMinimumBasicScenario"
+    - "tempest.scenario.test_network_basic_ops.TestNetworkBasicOps"
+    - "tempest.scenario.test_snapshot_pattern.TestSnapshotPattern"
   # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
   excludelist:
-      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
-      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
-      - "^tempest.scenario.test_snapshot_pattern.TestSnapshotPattern.test_snapshot_pattern"
-      - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_volume_boot_pattern"
+    - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_port_security_macspoofing_port"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+    - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
+    - "^tempest.scenario.test_snapshot_pattern.TestSnapshotPattern.test_snapshot_pattern"
+    - "^tempest.scenario.test_volume_boot_pattern.TestVolumeBootPattern.test_volume_boot_pattern"
 
 tempest_enable_feature_dict:
   network:

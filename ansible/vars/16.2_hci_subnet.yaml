@@ -1,3 +1,4 @@
+---
 osp_release_defaults:
   networks: ipv4_subnet
   vmset:

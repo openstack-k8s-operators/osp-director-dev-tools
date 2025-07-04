@@ -64,8 +64,8 @@ osp_release_defaults:
         - storage_leaf2
         - storage_mgmt_leaf2
   extrafeatures:
-  - hci
-  - ipv6
+    - hci
+    - ipv6
 
 tempest_enable_feature_dict:
   network:

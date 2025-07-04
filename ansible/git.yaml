@@ -1,5 +1,6 @@
 ---
-- hosts: convergence_base
+- name: Git
+  hosts: convergence_base
   gather_facts: false
   become: true
 
@@ -9,152 +10,153 @@
 
   tasks:
     - name: Include variables
-      include_vars: vars/default.yaml
-
+      ansible.builtin.include_vars: vars/default.yaml
     - name: Change sshd to listen on git.port
       when: git.port != "22"
       block:
-      - name: Merge the two lists
-        set_fact:
-          ssh_ports: "{{ ssh_ports + [ git.port ] }}"
+        - name: Merge the two lists
+          ansible.builtin.set_fact:
+            ssh_ports: "{{ ssh_ports + [git.port] }}"
 
-      - name: Remove unwanted ports
-        ansible.builtin.lineinfile:
-          regexp: ^Port (?!{{ ssh_ports | map('regex_escape') | join('|') }}).*$
-          state: absent
-          path: "/etc/ssh/sshd_config"
+        - name: Remove unwanted ports
+          ansible.builtin.lineinfile:
+            regexp: ^Port (?!{{ ssh_ports | map('regex_escape') | join('|') }}).*$
+            state: absent
+            path: "/etc/ssh/sshd_config"
 
-      - name: Add needed ports to config
-        ansible.builtin.lineinfile:
-          line: 'Port {{ item }}'
-          insertafter: "^#Port"
-          state: present
-          path: "/etc/ssh/sshd_config"
-        loop: "{{ ssh_ports }}"
+        - name: Add needed ports to config
+          ansible.builtin.lineinfile:
+            line: "Port {{ item }}"
+            insertafter: "^#Port"
+            state: present
+            path: "/etc/ssh/sshd_config"
+          loop: "{{ ssh_ports }}"
 
-      - name: Allow sshd to listen on tcp port {{ git.port }}
-        community.general.seport:
-          ports: "{{ git.port }}"
-          proto: tcp
-          setype: ssh_port_t
-          state: present
+        - name: Allow sshd to listen on tcp port {{ git.port }}
+          community.general.seport:
+            ports: "{{ git.port }}"
+            proto: tcp
+            setype: ssh_port_t
+            state: present
 
-      - name: Add TCP firewall rule
-        firewalld:
-          port: "{{ item }}/tcp"
-          state: enabled
-          zone: libvirt
-          permanent: yes
-          immediate: yes
-        with_items:
-          - "{{ git.port }}"
+        - name: Add TCP firewall rule
+          ansible.posix.firewalld:
+            port: "{{ item }}/tcp"
+            state: enabled
+            zone: libvirt
+            permanent: true
+            immediate: true
+          with_items:
+            - "{{ git.port }}"
 
-      - name: Restart sshd
-        service:
-          name: sshd
-          state: restarted
+        - name: Restart sshd
+          ansible.builtin.service:
+            name: sshd
+            state: restarted
 
-    - name: create git {{ git.group }} group
-      group:
+    - name: Create git {{ git.group }} group
+      ansible.builtin.group:
         name: "{{ git.group }}"
         state: present
 
     - name: Create git {{ git.user }} user
-      user:
+      ansible.builtin.user:
         name: "{{ git.user }}"
         comment: git user
         shell: /bin/bash
         group: "{{ git.group }}"
 
-    - name: make sure /home/{{ git.user }} is world readable
-      file:
+    - name: Make sure /home/{{ git.user }} is world readable
+      ansible.builtin.file:
         path: "/home/{{ git.user }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: "{{ git.user }}"
         group: "{{ git.group }}"
 
-    - name: create git .ssh dir
-      file:
+    - name: Create git .ssh dir
+      ansible.builtin.file:
         path: "/home/{{ git.user }}/.ssh"
         state: directory
-        mode: '0700'
+        mode: "0700"
         owner: "{{ git.user }}"
         group: "{{ git.group }}"
 
-    - name: create playbooks git repo dir
-      file:
+    - name: Create playbooks git repo dir
+      ansible.builtin.file:
         path: "/home/{{ git.user }}/playbooks.git"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: "{{ git.user }}"
         group: "{{ git.group }}"
 
-- hosts: convergence_base
+- name: Create git SSH Key
+  hosts: convergence_base
   become: true
   become_user: "{{ git.user }}"
 
   tasks:
-  - name: generate ssh keys for git
-    shell: |
+    - name: Generate ssh keys for git
+      ansible.builtin.shell: |
         ssh-keygen -t rsa -N "" -f .ssh/id_rsa
         cp .ssh/id_rsa.pub .ssh/authorized_keys
         chmod 600 .ssh/authorized_keys
-    args:
-      chdir: "/home/{{ git.user }}"
-      creates: .ssh/authorized_keys
-    environment:
-      PATH: /usr/local/bin:{{ ansible_env.PATH }}
+      args:
+        chdir: "/home/{{ git.user }}"
+        creates: .ssh/authorized_keys
+      environment:
+        PATH: /usr/local/bin:{{ ansible_env.PATH }}
 
-  - name: git init playbooks.git
-    # noqa 303
-    shell: |
-       git init --bare .
-    args:
-      chdir: "/home/{{ git.user }}/playbooks.git"
-      creates: "/home/{{ git.user }}/playbooks.git/.git"
-    environment:
-      PATH: /usr/local/bin:{{ ansible_env.PATH }}
+    - name: Git init playbooks.git # noqa command-instead-of-module
+      ansible.builtin.shell: |
+        git init --bare .
+      args:
+        chdir: "/home/{{ git.user }}/playbooks.git"
+        creates: "/home/{{ git.user }}/playbooks.git/.git"
+      environment:
+        PATH: /usr/local/bin:{{ ansible_env.PATH }}
 
-- hosts: convergence_base
+- name: Register git SSH Key
+  hosts: convergence_base
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-    - name: register git .ssh key
+    - name: Register git .ssh key
       become: true
       become_user: "{{ git.user }}"
-      command: "cat /home/{{ git.user }}/.ssh/id_rsa"
+      ansible.builtin.command: "cat /home/{{ git.user }}/.ssh/id_rsa"
       register: git_ssh_key
 
-    - name: copy git .ssh key to working_dir
-      copy:
+    - name: Copy git .ssh key to working_dir
+      ansible.builtin.copy:
         content: "{{ git_ssh_key.stdout }}{{ '\n' }}"
         dest: "{{ working_dir }}/git_id_rsa"
-        mode: 0644
+        mode: "0644"
 
-- hosts: convergence_base
+- name: Git Secret
+  hosts: convergence_base
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: does the git secret already exist
-    shell: >
-      oc get secret -n openstack git-secret --ignore-not-found
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    register: git_secret_exist_switch
+    - name: Does the git secret already exist
+      ansible.builtin.shell: |
+        oc get secret -n openstack git-secret --ignore-not-found
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      register: git_secret_exist_switch
 
-  - name: creat git_url
-    set_fact:
-      git_url: "ssh://{{ git.user }}@{{ ansible_default_ipv4.address }}{{ ':' + git.port if git.port != '22' else '' }}/home/{{ git.user }}/playbooks.git"
+    - name: Creat git_url
+      ansible.builtin.set_fact:
+        git_url: "ssh://{{ git.user }}@{{ ansible_default_ipv4.address }}{{ ':' + git.port if git.port != '22' else '' }}/home/{{ git.user }}/playbooks.git"
 
-  - name: create secret for git ssh key
-    shell: |
-      oc create secret generic git-secret -n openstack --from-file=git_ssh_identity={{ working_dir }}/git_id_rsa --from-literal=git_url={{ git_url }}
-    environment:
-      <<: *oc_env
-    when: git_secret_exist_switch.stdout | length == 0
+    - name: Create secret for git ssh key
+      ansible.builtin.shell: |
+        oc create secret generic git-secret -n openstack --from-file=git_ssh_identity={{ working_dir }}/git_id_rsa --from-literal=git_url={{ git_url }}
+      environment:
+        <<: *oc_env
+      when: git_secret_exist_switch.stdout | length == 0

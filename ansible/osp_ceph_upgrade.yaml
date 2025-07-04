@@ -1,33 +1,35 @@
 ---
-- hosts: localhost
+- name: Ceph Upgrade
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  # Create caphadm user, sshkeys
-  # TODO: allow OSPdO deploy with a custom playbook abspath etc... for tripleo-ansible playbooks
-  #       right now it assumes playbook path is relative to config download dir
-  #       In the meantime use a custom playbook that works with the OSPdO inventory
-  - name: copy ceph-admin-user-playbook to openstackclient
-    shell: |
-      #!/bin/bash
-      oc cp -n openstack {{ playbook_dir }}/files/osp/ceph-admin-user-playbook.yml openstackclient:/home/cloud-admin/ceph-admin-user-playbook.yml
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    # Create caphadm user, sshkeys
+    # TODO: allow OSPdO deploy with a custom playbook abspath etc... for tripleo-ansible playbooks
+    #       right now it assumes playbook path is relative to config download dir
+    #       In the meantime use a custom playbook that works with the OSPdO inventory
+    - name: Copy ceph-admin-user-playbook to openstackclient
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc cp -n openstack {{ playbook_dir }}/files/osp/ceph-admin-user-playbook.yml openstackclient:/home/cloud-admin/ceph-admin-user-playbook.yml
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: run ceph-admin-user-playbook playbook via openstackclient
-    shell: |
-      oc rsh -n openstack openstackclient <<"EOF_RSH"
-        ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory -e tripleo_admin_user=ceph-admin -e distribute_private_key=true /home/cloud-admin/ceph-admin-user-playbook.yml
-      EOF_RSH
-    environment:
-      <<: *oc_env
+    - name: Run ceph-admin-user-playbook playbook via openstackclient
+      ansible.builtin.shell: |
+        oc rsh -n openstack openstackclient <<"EOF_RSH"
+          ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory -e tripleo_admin_user=ceph-admin -e distribute_private_key=true \
+            /home/cloud-admin/ceph-admin-user-playbook.yml
+        EOF_RSH
+      environment:
+        <<: *oc_env
 
 # Upgrade Prepare for ceph upgrade
 
@@ -38,8 +40,8 @@
     custom_config_name: ceph-upgrade
     custom_config_action: ceph-upgrade
     ceph_tag_override: "{{ ceph_5_tag }}"
-    ceph_image_override: "{{ ceph_5_image|default(osp.ceph_image) }}"
-    custom_config_extrafeatures: [ "upgrade" ]
+    ceph_image_override: "{{ ceph_5_image | default(osp.ceph_image) }}"
+    custom_config_extrafeatures: ["upgrade"]
 
 - name: Ceph Upgrade Prepare config generate
   import_playbook: config_generator.yaml
@@ -53,7 +55,7 @@
 - name: Ceph Upgrade deployment
   import_playbook: osp_deployment.yaml
   vars:
-    ignore_deploy_error: "{{ workaround_BZ2226845|default(false) }}"
+    ignore_deploy_error: "{{ workaround_BZ2226845 | default(false) }}"
     config_generator_name: ceph-upgrade
     deploy_name: ceph-upgrade
     deploy_mode: externalUpgrade
@@ -69,7 +71,7 @@
 - name: Ceph Upgrade packages
   import_playbook: osp_deployment.yaml
   vars:
-    ignore_deploy_error: "{{ workaround_BZ2226845|default(false) }}"
+    ignore_deploy_error: "{{ workaround_BZ2226845 | default(false) }}"
     config_generator_name: ceph-upgrade
     deploy_name: ceph-upgrade-packages
     deploy_mode: upgrade
@@ -87,7 +89,7 @@
 - name: Ceph Upgrade cephadm adoption
   import_playbook: osp_deployment.yaml
   vars:
-    ignore_deploy_error: "{{ workaround_BZ2226845|default(false) }}"
+    ignore_deploy_error: "{{ workaround_BZ2226845 | default(false) }}"
     config_generator_name: ceph-upgrade
     deploy_name: ceph-upgrade-to-cephadm
     deploy_mode: externalUpgrade

@@ -1,126 +1,127 @@
 ---
-- hosts: localhost
+- name: Install Computes
+  hosts: localhost
   vars_files: vars/default.yaml
   roles:
-  - oc_local
+    - oc_local
 
   tasks:
-  - name: Set combined osp dict
-    set_fact:
-      osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
+    - name: Set combined osp dict
+      ansible.builtin.set_fact:
+        osp: "{{ osp_defaults | combine((osp_release_defaults | default({})), recursive=True) | combine((osp_local | default({})), recursive=True) }}"
 
-  - name: Set directory for compute yaml files
-    set_fact:
-      compute_yaml_dir: "{{ working_yamls_dir }}/compute"
+    - name: Set directory for compute yaml files
+      ansible.builtin.set_fact:
+        compute_yaml_dir: "{{ working_yamls_dir }}/compute"
 
-  - name: show yaml output dir
-    debug:
-      msg: "yamls will be written to {{ compute_yaml_dir }} locally"
+    - name: Show yaml output dir
+      ansible.builtin.debug:
+        msg: "yamls will be written to {{ compute_yaml_dir }} locally"
 
-  - name: Clean yaml dir
-    file:
-      state: absent
-      path: "{{ compute_yaml_dir }}/"
+    - name: Clean yaml dir
+      ansible.builtin.file:
+        state: absent
+        path: "{{ compute_yaml_dir }}/"
 
-  - name: Create yaml dir
-    file:
-      path: "{{ compute_yaml_dir }}"
-      state: directory
-      mode: '0755'
-
-  - name: VM OSP compute ceph disks
-    when: ocp_num_extra_workers > 0
-    block:
-    - name: Ensure that {{ base_path }}/pool exists
-      file:
-        path: "{{ base_path }}/pool"
+    - name: Create yaml dir
+      ansible.builtin.file:
+        path: "{{ compute_yaml_dir }}"
         state: directory
-        mode: '0755'
-      become: true
-      become_user: root
+        mode: "0755"
 
-    - name: Detach additional Ceph OSD disks
-      shell: |
-        #!/bin/bash
-        for domain in $(virsh list --inactive --name); do
-          for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
-            virsh detach-disk  ${domain} ${disk} --persistent
-            rm -f {{ base_path }}/pool/${domain}-ceph-disk-${disk}.qcow2
-          done
-        done
-      become: true
-      become_user: root
+    - name: VM OSP compute ceph disks
+      when: ocp_num_extra_workers > 0
+      block:
+        - name: Ensure that {{ base_path }}/pool exists
+          ansible.builtin.file:
+            path: "{{ base_path }}/pool"
+            state: directory
+            mode: "0755"
+          become: true
+          become_user: root
 
-    - name: Create additional Ceph OSD disks
-      shell: |
-        #!/bin/bash
-        for domain in $(virsh list --inactive --name); do
-          qemu-img create -f qcow2 -o preallocation=metadata {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp.ceph_num_osd_disk_size }}G
-          virsh attach-disk ${domain} --source {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 --target {{ item }} --persistent
-        done
-      with_items: "{{ osp.ceph_osd_disks }}"
-      become: true
-      become_user: root
+        - name: Detach additional Ceph OSD disks
+          ansible.builtin.shell: |
+            #!/bin/bash
+            for domain in $(virsh list --inactive --name); do
+              for disk in $(virsh domblklist ${domain} | grep ceph | awk '{print $1}'); do
+                virsh detach-disk  ${domain} ${disk} --persistent
+                rm -f {{ base_path }}/pool/${domain}-ceph-disk-${disk}.qcow2
+              done
+            done
+          become: true
+          become_user: root
 
-  - name: register dev-scripts prepared extra_hosts
-    shell: |
-      set -e
-      oc apply -f {{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/extra_host_manifests.yaml
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    when: not (ocp_ai|bool)
+        - name: Create additional Ceph OSD disks
+          ansible.builtin.shell: |
+            #!/bin/bash
+            for domain in $(virsh list --inactive --name); do
+              qemu-img create -f qcow2 -o preallocation=metadata {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 {{ osp.ceph_num_osd_disk_size }}G
+              virsh attach-disk ${domain} --source {{ base_path }}/pool/${domain}-ceph-disk-{{ item }}.qcow2 --target {{ item }} --persistent
+            done
+          with_items: "{{ osp.ceph_osd_disks }}"
+          become: true
+          become_user: root
 
-  - name: Include AI variables
-    include_vars: vars/ocp_ai.yaml
+    - name: Register dev-scripts prepared extra_hosts
+      ansible.builtin.shell: |
+        set -e
+        oc apply -f {{ base_path }}/dev-scripts/ocp/{{ ocp_cluster_name }}/extra_host_manifests.yaml
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      when: not (ocp_ai | bool)
 
-  - name: Register assisted installer prepared extra_hosts
-    shell: |
-      set -e
-      oc apply -f {{ working_yamls_dir }}/ai_metal3/extra_workers_bmhs.yml
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    when: ocp_ai|bool and ocp_extra_worker_count|int > 0
+    - name: Include AI variables
+      ansible.builtin.include_vars: vars/ocp_ai.yaml
+    - name: Register assisted installer prepared extra_hosts
+      ansible.builtin.shell: |
+        set -e
+        oc apply -f {{ working_yamls_dir }}/ai_metal3/extra_workers_bmhs.yml
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      when: ocp_ai | bool and ocp_extra_worker_count | int > 0
 
-  - name: Wait for BMHs to become available
-    shell: |
-      set -e
-      oc wait bmh -n openshift-machine-api --for jsonpath='{.status.provisioning.state}'=available -l app=openstack --timeout={{ (default_timeout * 2)|int }}s
-    environment:
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
-    when: ocp_ai|bool and ocp_extra_worker_count|int > 0
+    - name: Wait for BMHs to become available
+      ansible.builtin.shell: |
+        set -e
+        oc wait bmh -n openshift-machine-api \
+          --for jsonpath='{.status.provisioning.state}'=available -l app=openstack --timeout={{ (default_timeout * 2) | int }}s
+      environment:
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+      when: ocp_ai | bool and ocp_extra_worker_count | int > 0
 
-  # render openstackbaremetalset.yaml per bmset
-  - name: Render templates to yaml dir
-    template:
-      src: "osp/compute/openstackbaremetalset.yaml.j2"
-      dest: "{{ compute_yaml_dir }}/{{ _role }}_openstackbaremetalset.yaml"
-      mode: '0644'
-    loop: "{{ osp.bmset.keys() | list }}"
-    loop_control:
-      loop_var: _role
+    # render openstackbaremetalset.yaml per bmset
+    - name: Render templates to yaml dir
+      ansible.builtin.template:
+        src: "osp/compute/openstackbaremetalset.yaml.j2"
+        dest: "{{ compute_yaml_dir }}/{{ _role }}_openstackbaremetalset.yaml"
+        mode: "0644"
+      loop: "{{ osp.bmset.keys() | list }}"
+      loop_control:
+        loop_var: _role
 
-  - name: Render provisionserver template to yaml dir
-    template:
-      src: "osp/compute/openstackprovisionserver.yaml.j2"
-      dest: "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
-      mode: '0644'
+    - name: Render provisionserver template to yaml dir
+      ansible.builtin.template:
+        src: "osp/compute/openstackprovisionserver.yaml.j2"
+        dest: "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
+        mode: "0644"
 
-  - name: Start provisionserver
-    shell: |
-      set -e
-      oc apply -n {{ namespace }} -f "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
-    environment: &oc_env
-      PATH: "{{ oc_env_path }}"
-      KUBECONFIG: "{{ kubeconfig }}"
+    - name: Start provisionserver
+      ansible.builtin.shell: |
+        set -e
+        oc apply -n {{ namespace }} -f "{{ compute_yaml_dir }}/openstackprovisionserver.yaml"
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
 
-  - name: Start all baremetalsets
-    shell: |
-      set -e
-      oc apply -n {{ namespace }} -f "{{ item }}"
-    environment:
-      <<: *oc_env
-    with_fileglob:
-    - "{{ compute_yaml_dir }}/*_openstackbaremetalset.yaml"
+    - name: Start all baremetalsets
+      ansible.builtin.shell: |
+        set -e
+        oc apply -n {{ namespace }} -f "{{ item }}"
+      environment:
+        <<: *oc_env
+      with_fileglob:
+        - "{{ compute_yaml_dir }}/*_openstackbaremetalset.yaml"

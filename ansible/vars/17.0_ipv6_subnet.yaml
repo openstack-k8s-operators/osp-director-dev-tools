@@ -4,7 +4,8 @@ osp_release_auto_version: 17.0-RHEL-9
 osp_release_auto_compose: passed_phase2
 
 osp_release_defaults:
-  base_image_url: https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.0-20220420.0.x86_64.qcow2
+  base_image_url:
+    https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.0-20220420.0.x86_64.qcow2
   networks: ipv6_subnet
   vmset:
     Controller:
@@ -47,54 +48,54 @@ osp_release_defaults:
 
 # phase2 tempest tests
 tempest_test_dict:
-  regex: '(?!.*\[.*\bslow\b.*\])(^tempest\.(api|scenario))'
+  regex: "(?!.*\\[.*\\bslow\\b.*\\])(^tempest\\.(api|scenario))"
   includelist: []
   # per default with OVN there is no DHCPAgent, disable the tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON tests
   excludelist:
-      - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
-      - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
-      - "^tempest.api.compute.admin.test_create_server.ServersWithSpecificFlavorTestJSON.test_verify_created_server_ephemeral_disk"
-      - "^tempest.api.compute.admin.test_migrations.MigrationsAdminTest.test_list_migrations_in_flavor_resize_situation"
-      - "^tempest.api.compute.admin.test_volume.AttachSCSIVolumeTestJSON.test_attach_scsi_disk_with_config_drive"
-      - "^tempest.api.compute.admin.test_volumes_negative.VolumesAdminNegativeTest.test_update_attached_volume_with_nonexistent_volume_in_body"
-      - "^tempest.api.compute.floating_ips.*"
-      - "^tempest.api.compute.images.test_images_oneserver_negative.ImagesOneServerNegativeTestJSON.test_create_second_image_when_first_image_is_being_saved"
-      - "^tempest.api.compute.images.test_images_oneserver_negative.ImagesOneServerNegativeTestJSON.test_delete_image_that_is_not_yet_active"
-      - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON.test_create_list_show_delete_interfaces_by_fixed_ip"
-      - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON.test_create_list_show_delete_interfaces_by_network_port"
-      - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON.test_reassign_port_between_servers"
-      - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesUnderV243Test.test_add_remove_fixed_ip"
-      - "^tempest.api.compute.servers.test_create_server.ServersTestBootFromVolume"
-      - "^tempest.api.compute.servers.test_create_server.ServersTestJSON"
-      - "^tempest.api.compute.servers.test_create_server.ServersTestManualDisk"
-      - "^tempest.api.compute.servers.test_device_tagging.TaggedAttachmentsTest.test_tagged_attachment"
-      - "^tempest.api.compute.servers.test_disk_config.ServerDiskConfigTestJSON.test_resize_server_from_auto_to_manual"
-      - "^tempest.api.compute.servers.test_disk_config.ServerDiskConfigTestJSON.test_resize_server_from_manual_to_auto"
-      - "^tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON"
-      - "^tempest.api.compute.servers.test_server_rescue_negative.ServerRescueNegativeTestJSON.test_rescued_vm_detach_volume"
-      - "^tempest.api.compute.servers.test_server_rescue.ServerRescueTestJSONUnderV235.test_rescued_vm_associate_dissociate_floating_ip"
-      - "^tempest.api.compute.volumes.test_attach_volume.AttachVolumeTestJSON.test_list_get_volume_attachments"
-      - "^tempest.api.compute.volumes.test_attach_volume_negative.AttachVolumeNegativeTest.test_attach_attached_volume_to_different_server"
-      - "^tempest.api.compute.volumes.test_attach_volume_negative.AttachVolumeNegativeTest.test_attach_attached_volume_to_same_server"
-      - "^tempest.api.compute.volumes.test_attach_volume_negative.AttachVolumeNegativeTest.test_delete_attached_volume"
-      - "^tempest.api.network.admin.test_external_networks_negative.ExternalNetworksAdminNegativeTestJSON.test_create_port_with_precreated_floatingip_as_fixed_ip"
-      - "^tempest.api.network.admin.test_floating_ips_admin_actions.*"
-      - "^tempest.api.network.test_floating_ips.*"
-      - "^tempest.api.network.test_floating_ips_negative.*"
-      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_instance_hard_reboot_after_vol_snap_deletion"
-      - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
-      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_hotplug_nic"
-      - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops"
-      - "^tempest.scenario.test_security_groups_basic_ops.TestSecurityGroupsBasicOps.test_cross_tenant_traffic"
-      - "^tempest.scenario.test_security_groups_basic_ops.TestSecurityGroupsBasicOps.test_in_tenant_traffic"
-      - "^tempest.scenario.test_server_basic_ops.TestServerBasicOps.test_server_basic_ops"
-      - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeTest.test_router_set_gateway_used_ip_returns_409"
-      - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeIpV6Test.test_router_set_gateway_used_ip_returns_409"
-      - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_migration_with_trunk"
+    - "^tempest.api.compute.admin.test_auto_allocate_network.AutoAllocateNetworkTest.test_server_multi_create_auto_allocate"
+    - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_block_migration_paused"
+    - "^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_block_migration_paused"
+    - "^tempest.api.compute.admin.test_live_migration.LiveMigrationRemoteConsolesV26Test.test_live_block_migration_paused"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_add_remove_network_from_dhcp_agent"
+    - "^tempest.api.network.admin.test_dhcp_agent_scheduler.DHCPAgentSchedulersTestJSON.test_list_networks_hosted_by_one_dhcp"
+    - "^tempest.api.compute.admin.test_create_server.ServersWithSpecificFlavorTestJSON.test_verify_created_server_ephemeral_disk"
+    - "^tempest.api.compute.admin.test_migrations.MigrationsAdminTest.test_list_migrations_in_flavor_resize_situation"
+    - "^tempest.api.compute.admin.test_volume.AttachSCSIVolumeTestJSON.test_attach_scsi_disk_with_config_drive"
+    - "^tempest.api.compute.admin.test_volumes_negative.VolumesAdminNegativeTest.test_update_attached_volume_with_nonexistent_volume_in_body"
+    - "^tempest.api.compute.floating_ips.*"
+    - "^tempest.api.compute.images.test_images_oneserver_negative.ImagesOneServerNegativeTestJSON.test_create_second_image_when_first_image_is_being_saved"
+    - "^tempest.api.compute.images.test_images_oneserver_negative.ImagesOneServerNegativeTestJSON.test_delete_image_that_is_not_yet_active"
+    - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON.test_create_list_show_delete_interfaces_by_fixed_ip"
+    - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON.test_create_list_show_delete_interfaces_by_network_port"
+    - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON.test_reassign_port_between_servers"
+    - "^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesUnderV243Test.test_add_remove_fixed_ip"
+    - "^tempest.api.compute.servers.test_create_server.ServersTestBootFromVolume"
+    - "^tempest.api.compute.servers.test_create_server.ServersTestJSON"
+    - "^tempest.api.compute.servers.test_create_server.ServersTestManualDisk"
+    - "^tempest.api.compute.servers.test_device_tagging.TaggedAttachmentsTest.test_tagged_attachment"
+    - "^tempest.api.compute.servers.test_disk_config.ServerDiskConfigTestJSON.test_resize_server_from_auto_to_manual"
+    - "^tempest.api.compute.servers.test_disk_config.ServerDiskConfigTestJSON.test_resize_server_from_manual_to_auto"
+    - "^tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON"
+    - "^tempest.api.compute.servers.test_server_rescue_negative.ServerRescueNegativeTestJSON.test_rescued_vm_detach_volume"
+    - "^tempest.api.compute.servers.test_server_rescue.ServerRescueTestJSONUnderV235.test_rescued_vm_associate_dissociate_floating_ip"
+    - "^tempest.api.compute.volumes.test_attach_volume.AttachVolumeTestJSON.test_list_get_volume_attachments"
+    - "^tempest.api.compute.volumes.test_attach_volume_negative.AttachVolumeNegativeTest.test_attach_attached_volume_to_different_server"
+    - "^tempest.api.compute.volumes.test_attach_volume_negative.AttachVolumeNegativeTest.test_attach_attached_volume_to_same_server"
+    - "^tempest.api.compute.volumes.test_attach_volume_negative.AttachVolumeNegativeTest.test_delete_attached_volume"
+    - "^tempest.api.network.admin.test_external_networks_negative.ExternalNetworksAdminNegativeTestJSON.test_create_port_with_precreated_floatingip_as_fixed_ip"
+    - "^tempest.api.network.admin.test_floating_ips_admin_actions.*"
+    - "^tempest.api.network.test_floating_ips.*"
+    - "^tempest.api.network.test_floating_ips_negative.*"
+    - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_instance_hard_reboot_after_vol_snap_deletion"
+    - "^tempest.scenario.test_minimum_basic.TestMinimumBasicScenario.test_minimum_basic_scenario"
+    - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_hotplug_nic"
+    - "^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops"
+    - "^tempest.scenario.test_security_groups_basic_ops.TestSecurityGroupsBasicOps.test_cross_tenant_traffic"
+    - "^tempest.scenario.test_security_groups_basic_ops.TestSecurityGroupsBasicOps.test_in_tenant_traffic"
+    - "^tempest.scenario.test_server_basic_ops.TestServerBasicOps.test_server_basic_ops"
+    - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeTest.test_router_set_gateway_used_ip_returns_409"
+    - "^tempest.api.network.admin.test_routers_negative.RoutersAdminNegativeIpV6Test.test_router_set_gateway_used_ip_returns_409"
+    - "^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_migration_with_trunk"
 
 tempest_enable_feature_dict:
   network:
@@ -114,4 +115,3 @@ ephemeral_heat:
   heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
   mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
   rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
-
