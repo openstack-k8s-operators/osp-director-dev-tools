@@ -37,6 +37,10 @@ parameter_defaults:
       osd_numa_auto_affinity: true
     mgr:
       mgr/cephadm/autotune_memory_target_ratio: 0.2
+{% if ceph_extraconfig_network is defined %}
+    global:
+      {{ ceph_extraconfig_network|to_nice_yaml|indent(6) }}
+{%- endif %}
 {% endif %}
 {% if osp.release | int < 17 or custom_config_action | default('deploy') == 'ceph-upgrade'  %}
 {% if osp.release | int < 17 %}
