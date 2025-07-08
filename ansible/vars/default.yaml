@@ -45,7 +45,7 @@ podman_insecure_registries:
 # To set a specific release to install.
 # TODO: support "latest"/"stable" e.g https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.14/
 ocp_version: "4.16"
-ocp_minor_version: 40
+ocp_minor_version: 42
 ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version }}-x86_64"
 ocp_release_data_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}.{{ ocp_minor_version }}/release.txt"
 ocp_release_type: ga
@@ -235,12 +235,12 @@ perf_version: "{{ ocp_version }}"
 # CNV addon operator version (usually should correspond to X.X release)
 # Current version from https://docs.openshift.com/container-platform/4.14/virt/install/installing-virt.html#installing-virt-operator-cli_installing-virt
 cnv_hyperconverged_operator_version: "{{
-  {'4.18': '4.18.0',
-   '4.16': '4.16.1',
-   '4.15': '4.15.0',
-   '4.14': '4.14.4',
-   '4.13': '4.13.8',
-   '4.12': '4.12.10',
+  {'4.18': '4.18.8',
+   '4.16': '4.16.13',
+   '4.15': '4.15.10',
+   '4.14': '4.14.13',
+   '4.13': '4.13.11',
+   '4.12': '4.12.18',
    '4.11': '4.11.8',
    '4.10': '4.10.10',
    '4.9': '4.9.7',
