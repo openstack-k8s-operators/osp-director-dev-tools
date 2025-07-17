@@ -24,11 +24,11 @@
       until: result.rc == 0
       delay: 30
       vars:
-        jq_set_csv_envvar: |
-          (.items[].spec.install.spec.deployments[].spec.template.spec.containers[] | select(.env != null) | \
-          .env[] | select(.name==$envvar)).value|= $envval
+        jq_set_csv_envvar:
+          (.items[].spec.install.spec.deployments[].spec.template.spec.containers[] | select(.env != null) |
+          .env[] | select(.name==$envvar)).value |= $envval
       ansible.builtin.shell: |
-        set -e
+        set -e -o pipefail
         oc get csv -n openstack -o json \
         | jq --arg envvar 'OPENSTACKCLIENT_IMAGE_URL_DEFAULT' \
           --arg envval '{{ openstackclient_image_override | default(openstackclient_image) }}' \
