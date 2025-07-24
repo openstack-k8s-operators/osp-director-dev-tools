@@ -38,6 +38,17 @@
         "
       environment:
         <<: *oc_env
+
+    - name: Check for public network existence
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc exec -n openstack openstackclient -- bash -c " \
+          openstack network list --external -c ID -f value \
+        "
+      environment:
+        <<: *oc_env
+      register: external_network
+
     - name: Create public network
       ansible.builtin.shell: |
         #!/bin/bash
@@ -55,6 +66,8 @@
         "
       environment:
         <<: *oc_env
+      when: external_network.stdout | length == 0
+
     - name: Run stf tests
       vars:
         ir_tripleo_overcloud_templates: "custom-stf-ceph,stf-connectors-osp17.0,gnocchi-connectors-rbd,ceph-single-host-mode"
