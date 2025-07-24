@@ -8,3 +8,4 @@ osp_release_defaults:
 osp_extra_env_files:
   - metrics/ceilometer-write-qdr.yaml
   - metrics/qdr-edge-only.yaml
+  - enable-legacy-telemetry.yaml

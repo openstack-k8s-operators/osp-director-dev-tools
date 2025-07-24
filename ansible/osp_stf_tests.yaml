@@ -38,23 +38,6 @@
         "
       environment:
         <<: *oc_env
-    - name: Create public network
-      ansible.builtin.shell: |
-        #!/bin/bash
-        oc exec -n openstack openstackclient -- bash -c " \
-          openstack network list | grep public || \
-            openstack network create --external --provider-network-type flat --provider-physical-network datacentre public && \
-            openstack subnet create public \
-              --subnet-range 10.0.0.0/24 \
-              --allocation-pool start=10.0.0.200,end=10.0.0.250 \
-              --dns-nameserver 10.46.0.31 \
-              --network public && \
-            openstack router create router && \
-            openstack router set router --external-gateway public && \
-            openstack network list --external \
-        "
-      environment:
-        <<: *oc_env
     - name: Run stf tests
       vars:
         ir_tripleo_overcloud_templates: "custom-stf-ceph,stf-connectors-osp17.0,gnocchi-connectors-rbd,ceph-single-host-mode"
