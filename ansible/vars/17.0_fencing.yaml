@@ -2,7 +2,7 @@
 enable_fencing: true
 csv_version: latest-17.0
 osp_release_auto_version: 17.0-RHEL-9
-osp_release_auto_compose: passed_phase2
+osp_release_auto_compose: latest_cdn
 
 osp_release_defaults:
   base_image_url:

@@ -1,7 +1,7 @@
 ---
 csv_version: latest-17.0
 osp_release_auto_version: 17.0-RHEL-9
-osp_release_auto_compose: passed_phase2
+osp_release_auto_compose: latest_cdn
 osp_release_defaults:
   base_image_url:
     https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.0-20220420.0.x86_64.qcow2
