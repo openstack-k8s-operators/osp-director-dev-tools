@@ -3,6 +3,12 @@ enable_fencing: true
 csv_version: latest-17.1
 osp_release_auto_version: 17.1-RHEL-9
 
+ocp_master_memory: 50000
+ocp_master_vcpu: 12
+ocp_num_workers: 0
+ocp_worker_memory: 20000
+ocp_worker_disk: 20
+
 osp_release_defaults:
   base_image_url:
     https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
@@ -10,7 +16,7 @@ osp_release_defaults:
     Controller:
       count: 3
       cores: 6
-      memory: 20
+      memory: 30
       networks:
         - ctlplane
         - internal_api
