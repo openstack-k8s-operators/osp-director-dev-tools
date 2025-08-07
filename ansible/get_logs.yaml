@@ -1,0 +1,57 @@
+---
+- name: Get Logs
+  hosts: localhost
+  gather_facts: false
+  vars_files: vars/default.yaml
+  roles:
+    - oc_local
+
+  tasks:
+    - name: Include variables
+      ansible.builtin.include_vars: vars/default.yaml
+
+    - name: System logs run dir
+      ansible.builtin.set_fact:
+        _log_gather_dir: "{{ log_gather_directory | default(working_log_dir) }}/system-logs-{{ ansible_date_time.iso8601_basic }}"
+
+    - name: Create log run dir
+      ansible.builtin.file:
+        path: "{{ _log_gather_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy the log collection playbook to openstackclient
+      ansible.builtin.shell: |
+        #!/bin/bash
+        oc cp -n openstack files/get_logs.yaml openstackclient:/home/cloud-admin/get_logs.yaml
+      environment: &oc_env
+        PATH: "{{ oc_env_path }}"
+        KUBECONFIG: "{{ kubeconfig }}"
+
+    - name: Run log collection playbook via openstackclient
+      ansible.builtin.shell: |
+        oc rsh -n openstack openstackclient <<"EOF_RSH"
+          ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/get_logs.yaml
+        EOF_RSH
+      environment:
+        <<: *oc_env
+      register: playbook_run
+
+    - name: Display playbook execution output
+      ansible.builtin.debug:
+        var: playbook_run.stdout_lines
+
+    - name: Copy the collected log archives from the pod to the local host
+      ansible.builtin.command:
+        cmd: "oc -n openstack cp openstackclient:/tmp/ansible_collected_logs/ {{ _log_gather_dir }}/"
+      environment:
+        <<: *oc_env
+      changed_when: false
+
+    - name: Clean up temporary files inside the pod
+      ansible.builtin.command:
+        cmd: "oc -n openstack exec openstackclient -- rm -rf /tmp/ansible_collected_logs"
+      environment:
+        <<: *oc_env
+      changed_when: false
+      ignore_errors: true # Ignore if cleanup fails for any reason

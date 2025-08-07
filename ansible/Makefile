@@ -215,6 +215,7 @@ openstack_scenario_default:
 	$(MAKE) computes
 	$(MAKE) osp_deploy
 	$(MAKE) must_gather
+	$(MAKE) get_logs
 
 openstack_scenario_dcn:
 	$(MAKE) patch_csv
@@ -227,6 +228,7 @@ openstack_scenario_dcn:
 	$(MAKE) osp_deploy_dcn_1
 	$(MAKE) osp_cell_v2_discover_hosts
 	$(MAKE) must_gather
+	$(MAKE) get_logs
 
 osp_cell_v2_discover_hosts: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -247,6 +249,7 @@ openstack_scenario_dmbs:
 	$(MAKE) osp_redeploy_dcn_central
 	$(MAKE) osp_cell_v2_discover_hosts
 	$(MAKE) must_gather
+	$(MAKE) get_logs
 
 osp_redeploy_dcn_central: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -260,6 +263,7 @@ openstack_update: ## perform an overcloud minor update bu patching the csv for t
 	$(MAKE) patch_csv
 	$(MAKE) osp_update
 	$(MAKE) must_gather
+	$(MAKE) get_logs
 
 osp_update:
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -272,6 +276,7 @@ osp_update:
 openstack_upgrade:
 	$(MAKE) osp_upgrade
 	$(MAKE) must_gather
+	$(MAKE) get_logs
 
 osp_upgrade:
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \
@@ -286,6 +291,7 @@ openstack_upgrade_multirhel:
 	$(MAKE) osp_upgrade_multirhel_ctrls_comp1
 	$(MAKE) osp_upgrade_multirhel_computes
 	$(MAKE) must_gather
+	$(MAKE) get_logs
 
 .PHONY: osp_upgrade_multirhel_ctrls_comp1
 osp_upgrade_multirhel_ctrls_comp1:
@@ -509,6 +515,13 @@ must_gather: hosts local-defaults.yaml ## collect data from the env running must
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	must_gather.yaml
+
+.PHONY: get_logs
+get_logs: hosts local-defaults.yaml ## collect data from overcloud nodes
+	ANSIBLE_FORCE_COLOR=true ansible-playbook -i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	get_logs.yaml
 
 demo: hosts
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

@@ -1,0 +1,40 @@
+---
+- name: Collect Logs from Nodes
+  hosts: all
+  become: true
+  gather_facts: false
+  ignore_unreachable: yes # Continue with the next host if one is unreachable
+
+  tasks:
+    - name: Get short hostname from the remote node
+      ansible.builtin.shell: "hostname -s"
+      register: short_hostname
+      changed_when: false # This command doesn't change the state
+
+    - name: Create a temporary directory for the archive
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: ansible_log_
+      register: tmp_dir
+
+    - name: Archive logs from /var/log, excluding the journal directory
+      ansible.builtin.archive:
+        path: /var/log/*
+        dest: "{{ tmp_dir.path }}/all_logs_{{ short_hostname.stdout }}.tar.gz"
+        format: gz
+        exclude_path:
+          - /var/log/journal
+          - /var/log/audit
+      register: archive_result
+
+    - name: Fetch the log archive to the local machine
+      ansible.builtin.fetch:
+        src: "{{ archive_result.dest }}"
+        dest: /tmp/ansible_collected_logs/
+        flat: yes # Copies the file directly, without the remote path structure
+
+    - name: Clean up the temporary directory on the remote node
+      ansible.builtin.file:
+        path: "{{ tmp_dir.path }}"
+        state: absent
+      when: tmp_dir.path is defined
