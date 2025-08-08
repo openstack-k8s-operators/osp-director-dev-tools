@@ -25,3 +25,5 @@ osp_release_defaults:
           storage_class: host-nfs-storageclass
           storage_access_mode: ReadWriteMany
           storage_volume_mode: Filesystem
+
+workaround_jira18571: true

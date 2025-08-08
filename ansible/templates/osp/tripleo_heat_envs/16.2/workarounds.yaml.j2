@@ -1,3 +1,8 @@
+{%- if workaround_jira18571 | default(false) %}
+resource_registry:
+  OS::TripleO::NodeExtraConfigPost: ./extraconfig/post_deploy/validate_ovn_bundle.yaml
+{%- endif %}
+
 {%- if workaround_bz2087231 | default(false) %}
 parameter_defaults:
     ValidateGatewaysIcmp: false
