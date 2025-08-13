@@ -1,12 +1,18 @@
 ---
 enable_fencing: true
 
+ocp_master_memory: 50000
+ocp_master_vcpu: 12
+ocp_num_workers: 0
+ocp_worker_memory: 20000
+ocp_worker_disk: 20
+
 osp_release_defaults:
   vmset:
     Controller:
       count: 3
       cores: 6
-      memory: 20
+      memory: 30
       networks:
         - ctlplane
         - internal_api
@@ -28,3 +34,5 @@ osp_release_defaults:
   extrafeatures:
     - nova_nfs
     - cinder_nfs
+
+workaround_jira18571: true

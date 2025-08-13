@@ -1,0 +1,33 @@
+heat_template_version: 2015-04-30
+
+parameters:
+  servers:
+    type: json
+  EndpointMap:
+    default: {}
+    description: Mapping of service endpoint -> protocol.
+    type: json
+
+resources:
+  CustomPostConfigOvnCheck:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: |
+        #!/bin/bash
+        # This script will only execute on the node
+        # where the 'ovn-dbs-bundle-0' container is running.
+        if sudo podman ps --format '{{.Names}}' | grep -q '^ovn-dbs-bundle-podman-0$'; then
+          echo "Running post-deployment ovn check on the ovn-dbs-bundle-podman-0 node." >> /var/log/post_ovn_check_script.log
+          # validate if ovn bundle was reported as "not running" if so, restart
+          sudo pcs status |grep "ovn-dbs-bundle.*not running" && sudo pcs resource restart ovn-dbs-bundle
+        fi
+
+  MyPostDeployments:
+    type: OS::Heat::SoftwareDeploymentGroup
+    properties:
+      servers: {get_param: servers}
+      config: {get_resource: CustomPostConfigOvnCheck}
+      actions:
+        - CREATE
+        - UPDATE
