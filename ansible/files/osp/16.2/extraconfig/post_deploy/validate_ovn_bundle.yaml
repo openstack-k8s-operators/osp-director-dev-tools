@@ -19,8 +19,15 @@ resources:
         # where the 'ovn-dbs-bundle-0' container is running.
         if sudo podman ps --format '{{.Names}}' | grep -q '^ovn-dbs-bundle-podman-0$'; then
           echo "Running post-deployment ovn check on the ovn-dbs-bundle-podman-0 node." >> /var/log/post_ovn_check_script.log
-          # validate if ovn bundle was reported as "not running" if so, restart
-          sudo pcs status |grep "ovn-dbs-bundle.*not running" && sudo pcs resource restart ovn-dbs-bundle
+          # Explicitly check if the service is "not running"
+          if sudo pcs status | grep -q "ovn-dbs-bundle.*not running"; then
+            echo "OVN DBS bundle is 'not running'. Attempting to restart." >> /var/log/post_ovn_check_script.log
+            # Try to restart the service. The script's exit code will be determined by this command's success or failure.
+            sudo pcs resource restart ovn-dbs-bundle
+          else
+            echo "OVN DBS bundle is running correctly. No action needed." >> /var/log/post_ovn_check_script.log
+            # If the service is fine, we do nothing and the script will exit 0.
+          fi
         fi
 
   MyPostDeployments:
