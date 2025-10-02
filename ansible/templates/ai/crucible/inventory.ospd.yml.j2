@@ -373,7 +373,7 @@ all:
                 raw:
                   interfaces:
                     - name: {{ master.bm_interface }}
-                      mac: "{{ master.bm_mac | upper }}"
+                      mac-address: "{{ master.bm_mac | upper }}"
                       state: up
                       ipv4:
                         enabled: true
@@ -384,7 +384,7 @@ all:
 {% if master.disabled_interfaces is defined and master.disabled_interfaces | length > 0 %}
 {% for interface in master.disabled_interfaces %}
                     - name: {{ interface.name }}
-                      mac: "{{ interface.mac | upper }}"
+                      mac-address: "{{ interface.mac | upper }}"
                       state: up
                       ipv4:
                         enabled: false
@@ -438,7 +438,7 @@ all:
                 raw:
                   interfaces:
                     - name: {{ worker.bm_interface }}
-                      mac: "{{ worker.bm_mac | upper }}"
+                      mac-address: "{{ worker.bm_mac | upper }}"
                       state: up
                       ipv4:
                         enabled: true
@@ -449,7 +449,7 @@ all:
 {% if worker.disabled_interfaces is defined and worker.disabled_interfaces | length > 0 %}
 {% for interface in worker.disabled_interfaces %}
                     - name: {{ interface.name }}
-                      mac: "{{ interface.mac | upper }}"
+                      mac-address: "{{ interface.mac | upper }}"
                       state: up
                       ipv4:
                         enabled: false
