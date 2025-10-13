@@ -68,7 +68,14 @@ spec:
 {% endif %}
   hardwareProfile: unknown
   bootMode: legacy
+{% if worker["root_device_hints"] is defined and worker["root_device_hints"] | length > 0 %}
+  rootDeviceHints:
+{% for hint in worker["root_device_hints"] %}
+    {{ hint.name }}: "{{ hint.value }}"
+{% endfor %}
+{% else %}
   rootDeviceHints:
     deviceName: {{ worker["root_device"] | default("/dev/sda") }}
+{% endif %}
 {% endwith %}
 {% endfor %}

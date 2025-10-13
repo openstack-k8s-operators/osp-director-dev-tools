@@ -155,7 +155,10 @@ ocp_bm_masters: {}
 #     bmc_address: 10.10.1.5
 #     bmc_username: username
 #     bmc_password: password
-#     root_device: /dev/sda       # optional, defaults to /dev/sda
+#     root_device: /dev/sda       # optional, deprecated, use root_device_hints instead, defaults to /dev/sda
+#     root_device_hints:          # optional, if you need to specify root device hints
+#     - name: hctl
+#       value: "0:0:0:0"
 #     disabled_interfaces:        # optional, if you need to disable interfaces
 #     - name: eno1
 #       mac: 34:73:5a:9d:ee:dd
@@ -172,7 +175,10 @@ ocp_bm_workers: {}
 #     bmc_address: 10.10.1.15
 #     bmc_username: username
 #     bmc_password: password
-#     root_device: /dev/sda       # optional, defaults to /dev/sda
+#     root_device: /dev/sda       # optional, deprecated, use root_device_hints instead, defaults to /dev/sda
+#     root_device_hints:          # optional, if you need to specify root device hints
+#     - name: hctl
+#       value: "0:0:0:0"
 #     disabled_interfaces:        # optional, if you need to disable interfaces
 #     - name: eno1
 #       mac: 34:73:5a:9d:ee:ff
@@ -189,7 +195,10 @@ ocp_bm_extra_workers: {}
 #     bmc_username: username
 #     bmc_password: password
 #     bmc_disable_cert_verify: false  # optional, defaults to false
-#     root_device: /dev/sda           # optional, defaults to /dev/sda
+#     root_device: /dev/sda           # optional, deprecated, use root_device_hints instead, defaults to /dev/sda
+#     root_device_hints:              # optional, if you need to specify root device hints
+#     - name: hctl
+#       value: "0:0:0:0"
 #   worker-3:
 #     ...
 
