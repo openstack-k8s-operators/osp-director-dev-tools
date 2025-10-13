@@ -360,6 +360,12 @@ all:
               bmc_user: {{ master.bmc_username }}
               bmc_password: {{ master.bmc_password }}
               installation_disk_path: {{ master.root_device | default ("/dev/sda") }}
+{% if master.root_device_hints is defined and master.root_device_hints | length > 0 %}
+              root_device_hints:
+{% for hint in master.root_device_hints %}
+                {{ hint.name }}: "{{ hint.value }}"
+{% endfor %}
+{% endif %}
               mac_interface_map:
               - logical_nic_name: {{ master.bm_interface }}
                 mac_address: "{{ master.bm_mac | upper }}"
@@ -425,6 +431,12 @@ all:
               bmc_user: {{ worker.bmc_username }}
               bmc_password: {{ worker.bmc_password }}
               installation_disk_path: {{ worker.root_device | default ("/dev/sda") }}
+{% if worker.root_device_hints is defined and worker.root_device_hints | length > 0 %}
+              root_device_hints:
+{% for hint in worker.root_device_hints %}
+                {{ hint.name }}: "{{ hint.value }}"
+{% endfor %}
+{% endif %}
               mac_interface_map:
               - logical_nic_name: {{ worker.bm_interface }}
                 mac_address: "{{ worker.bm_mac | upper }}"
