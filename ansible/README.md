@@ -17,7 +17,7 @@ The quickstart procedure will allow you to deploy an OpenShift environment on a 
 
 1. If the host node is running RHEL, enable the required dependent repositories:
     ```
-    subscription-manager repos --enable advanced-virt-for-rhel-8-x86_64-rpms --enable ansible-2-for-rhel-8-x86_64-rpms --enable openstack-16-for-rhel-8-x86_64-rpms --enable rhel-8-for-x86_64-appstream-rpms --enable rhel-8-for-x86_64-baseos-rpms
+    subscription-manager repos --enable openstack-17.1-for-rhel-9-x86_64-rpms fast-datapath-for-rhel-9-x86_64-rpms rhel-9-for-x86_64-baseos-rpms rhel-9-for-x86_64-appstream-rpms codeready-builder-for-rhel-9-x86_64-rpms
     ```
 
 1. Update the host node:
