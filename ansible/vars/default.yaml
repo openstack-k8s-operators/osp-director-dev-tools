@@ -73,6 +73,11 @@ ocp_ai: true
 #   rhel_subscription_server_hostname: <subscription server> (optional)
 # * pull-secret
 #   obtain it from https://cloud.redhat.com/openshift/install/pull-secret
+# * registry-credentials.yaml (optional) - content:
+#   registry_credentials:
+#     - registry: registry.foo.io
+#       username: <username>
+#       password: <password>
 # secrets_repo: https uri to repo, no default manual local file is expected if not present
 # secrets_branch: defaults to "HEAD"
 
