@@ -97,6 +97,7 @@ post_install: hosts local-defaults.yaml
 	ocp_default_storageclass.yaml \
 	ocp_image_registry.yaml
 	$(MAKE) custom_registries
+	$(MAKE) update_pullsecret
 	$(MAKE) nics
 	$(MAKE) freeipa
 
@@ -106,6 +107,14 @@ custom_registries: hosts local-defaults.yaml
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	ocp_custom_registries.yaml
+
+.PHONY: update_pullsecret
+update_pullsecret: hosts local-defaults.yaml ## update OpenShift pull secret with additional registry credentials
+	ANSIBLE_FORCE_COLOR=true ansible-playbook \
+	-i hosts \
+	-e @vars/${OSP_RELEASE}.yaml \
+	-e @local-defaults.yaml \
+	ocp_pullsecret_update.yaml
 
 nics: hosts local-defaults.yaml
 	ANSIBLE_FORCE_COLOR=true ansible-playbook \

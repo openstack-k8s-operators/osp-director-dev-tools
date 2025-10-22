@@ -1,0 +1,11 @@
+---
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: {{ item.registry | replace('.', '-') }}
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - {{ item.registry }}
+    source: registry.redhat.io
+

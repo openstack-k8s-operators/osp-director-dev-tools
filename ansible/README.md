@@ -466,6 +466,49 @@ export KUBECONFIG=/home/ocp/crucible/kubeconfig.ostest
 oc get pods -n openstack
 ```
 
+### Update OpenShift Pull Secret with Additional Registry Credentials (Optional)
+
+If you need to add additional registry credentials to the OpenShift pull secret (for example, to access `registry.foo.io`), you can run the `ocp_pullsecret_update.yaml` playbook.
+
+**Note:** This playbook will skip all updates gracefully if no `registry-credentials.yaml` file is found in your `secrets_repo`, so it's safe to run even if you don't need additional registry credentials.
+
+To add registry credentials, place a `registry-credentials.yaml` file in the root of your `secrets_repo`:
+
+```yaml
+---
+registry_credentials:
+  - registry: registry.foo.io
+    username: YOUR_TOKENS_USERNAME_HERE
+    password: YOUR_TOKENS_PASSWORD_HERE
+```
+
+**Prerequisites:**
+- You must have `secrets_repo` defined in your `local-defaults.yaml`
+- The `registry-credentials.yaml` file must be in the root of your secrets repository
+
+Then run the playbook:
+```bash
+make update_pullsecret
+```
+
+Or alternatively:
+```bash
+ansible-playbook -i hosts -e @local-defaults.yaml ocp_pullsecret_update.yaml
+```
+
+The playbook will:
+1. Retrieve the current pull secret from OpenShift
+2. Add the specified registry credentials using `podman login`
+3. Update the pull secret in OpenShift
+4. Create and apply ImageContentSourcePolicy (ICSP) for each registry
+5. Wait for MachineConfigPools to update
+6. Wait for the cluster to stabilize
+
+**Note:**
+- The cluster nodes will need to reboot to apply the ImageContentSourcePolicy changes. This is handled automatically by OpenShift but may take several minutes.
+- Each registry will be configured as a mirror for `registry.redhat.io` via an ICSP.
+- If you need multiple registries (e.g., `registry.foo.io` and `registry.bar.io`), add both to the `registry_credentials` list.
+
 ### Install OSP
 
 If you ran all targets in the makefile (i.e. you invoked `make` without specifying a specific target) then the OSP deployment steps are also executed after the OCP cluster installation is finished. You can find the deployment logs at `/root/ostest-working/logs/osp-deploy.log` (if you changed the name of your cluster from the default `ostest` your local path will be different to reflect the cluster name).

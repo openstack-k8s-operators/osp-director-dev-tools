@@ -33,3 +33,17 @@
 
 - name: Cleanup local registry.conf
   import_playbook: registry_conf_cleanup.yaml
+
+- name: Cleanup cloned secrets_repo
+  hosts: convergence_base
+  become: true
+  become_user: root
+  gather_facts: false
+  vars_files: vars/default.yaml
+
+  tasks:
+    - name: Remove cloned secrets_repo directory
+      when: secrets_repo is defined
+      ansible.builtin.file:
+        path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
+        state: absent
