@@ -58,6 +58,11 @@
         msg: Only OCP 4.13+ is supported for RHEL 9 environments, due to CNV repo availability
       when: ocp_version is version('4.12', 'le', strict=True) and ansible_distribution_version | int == 9
 
+    - name: Disconnected validation check
+      ansible.builtin.fail:
+        msg: Disconnected installs are only supported for assisted installer deployments
+      when: (ocp_disconnected_install | bool) and not (ocp_ai | bool)
+
     - name: Add RH CA to ca store
       block:
         - name: Copy CA cert to anchors dir
