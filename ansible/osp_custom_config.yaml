@@ -14,6 +14,44 @@
       ansible.builtin.include_vars:
         file: "{{ osp.networks }}.yaml"
 
+    - name: Handle secrets_repo for registry credentials
+      when: secrets_repo is defined
+      block:
+        - name: Set secrets_repo_path
+          ansible.builtin.set_fact:
+            secrets_repo_path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}/{{ (secrets_repo | urlsplit('path') | splitext)[0] }}"
+
+        - name: Check if secrets_repo directory exists
+          ansible.builtin.stat:
+            path: "{{ secrets_repo_path }}"
+          register: secrets_repo_dir
+
+        - name: Clone secrets_repo if it doesn't exist
+          when: not secrets_repo_dir.stat.exists
+          block:
+            - name: Create base dir for secrets_repo
+              ansible.builtin.file:
+                path: "{{ secrets_repo_path }}"
+                state: directory
+                mode: "0755"
+
+            - name: Clone the repo specified in secrets_repo
+              ansible.builtin.git:
+                repo: "{{ secrets_repo }}"
+                dest: "{{ secrets_repo_path }}"
+                version: "{{ secrets_branch | default('HEAD', true) }}"
+              environment:
+                GIT_SSL_NO_VERIFY: "true"
+
+        - name: Check if registry credentials file exists in secrets_repo
+          ansible.builtin.stat:
+            path: "{{ secrets_repo_path }}/registry-credentials.yaml"
+          register: secrets_repo_registry_creds
+
+        - name: Include registry credentials from secrets_repo
+          ansible.builtin.include_vars: "{{ secrets_repo_path }}/registry-credentials.yaml"
+          when: secrets_repo_registry_creds.stat.exists
+
     - name: Set directory for the tripleo deployment files
       ansible.builtin.set_fact:
         ooo_yaml_dir: "{{ working_yamls_dir }}/{{ custom_config_name | default('deploy') }}/tripleo_heat_envs"

@@ -70,10 +70,10 @@ tempest_enable_feature_dict:
     console_output: true
 
 # (mschuppert) can be deleted when released
-openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
+openstackclient_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-tripleoclient:{{ osp_release_auto.tag }}"
 
 ephemeral_heat:
-  heat_api_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-api:{{ osp_release_auto.tag }}"
-  heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
-  mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
-  rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
+  heat_api_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-heat-api:{{ osp_release_auto.tag }}"
+  heat_engine_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-heat-engine:{{ osp_release_auto.tag }}"
+  mariadb_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-mariadb:{{ osp_release_auto.tag }}"
+  rabbit_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-rabbitmq:{{ osp_release_auto.tag }}"
