@@ -62,20 +62,45 @@
         osp_release_auto: "{{ osp_release_auto | default({}) | combine({item.key: item.value}) }}"
       with_items:
         - { "key": "debug", "value": "{{ osp_release_auto_content_rc.content }}" }
-        - "key": "namespace"
-          "value":
-            "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('namespace: (.+)', '\\1') | first).split('/', 1) | last }}"
-        - { "key": "prefix", "value": "{{ osp_release_auto_content_rc.content | regex_search('prefix: (.+)', '\\1') | first }}" }
-        - { "key": "name_prefix", "value": "{{ osp_release_auto_content_rc.content | regex_search('name_prefix: (.+)', '\\1') | first }}" }
-        - { "key": "tag", "value": "{{ osp_release_auto_content_rc.content | regex_search('tag: (.+)', '\\1') | first }}" }
-        - "key": "ceph_namespace"
-          "value":
-            "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('ceph[-_]namespace: (.+)', '\\1') | first).split('/', 1) | last }}"
-        - { "key": "ceph_image", "value": "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]image: (.+)', '\\1') | first }}" }
-        - { "key": "ceph_tag", "value": "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]tag: (.+)', '\\1') | first }}" }
-        - { "key": "release", "value": "{{ osp_release_auto_content_rc.content | regex_search('rhosp: (.+)', '\\1') | first }}" }
-        - { "key": "compose", "value": "{{ osp_release_auto_content_rc.content | regex_search('id: (.+)', '\\1') | first }}" }
-        - { "key": "rhel_version", "value": "{{ osp_release_auto_content_rc.content | regex_search('rhel_version: (.+)', '\\1') | first }}" }
+        - key: "namespace"
+          value: >-
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
+        - key: "prefix"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('prefix: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "name_prefix"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('name_prefix: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "tag"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('tag: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "ceph_namespace"
+          value: >-
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
+        - key: "ceph_image"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]image: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "ceph_tag"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]tag: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "release"
+          value: >-
+            {{ osp_release_auto_content_rc.content | regex_findall('rhosp: (.+)', '\\1') | first | default('') }}
+        - key: "compose"
+          value: >-
+            {{ osp_release_auto_content_rc.content | regex_findall('id: (.+)', '\\1') | first | default('') }}
+        - key: "rhel_version"
+          value: >-
+            {{ osp_release_auto_content_rc.content | regex_findall('rhel_version: (.+)', '\\1') | first | default('') }}
 
 - name: Create osp_release_auto_rhel8 dict
   when: osp_release_auto_version_rhel8 | default('')
@@ -101,20 +126,45 @@
         osp_release_auto_rhel8: "{{ osp_release_auto_rhel8 | default({}) | combine({item.key: item.value}) }}"
       with_items:
         - { "key": "debug", "value": "{{ osp_release_auto_content_rc.content }}" }
-        - "key": "namespace"
-          "value":
-            "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('namespace: (.+)', '\\1') | first).split('/', 1) | last }}"
-        - { "key": "prefix", "value": "{{ osp_release_auto_content_rc.content | regex_search('prefix: (.+)', '\\1') | first }}" }
-        - { "key": "name_prefix", "value": "{{ osp_release_auto_content_rc.content | regex_search('name_prefix: (.+)', '\\1') | first }}" }
-        - { "key": "tag", "value": "{{ osp_release_auto_content_rc.content | regex_search('tag: (.+)', '\\1') | first }}" }
-        - "key": "ceph_namespace"
-          "value":
-            "{{ registry_proxy }}/{{ (osp_release_auto_content_rc.content | regex_search('ceph[-_]namespace: (.+)', '\\1') | first).split('/', 1) | last }}"
-        - { "key": "ceph_image", "value": "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]image: (.+)', '\\1') | first }}" }
-        - { "key": "ceph_tag", "value": "{{ osp_release_auto_content_rc.content | regex_search('ceph[-_]tag: (.+)', '\\1') | first }}" }
-        - { "key": "release", "value": "{{ osp_release_auto_content_rc.content | regex_search('rhosp: (.+)', '\\1') | first }}" }
-        - { "key": "compose", "value": "{{ osp_release_auto_content_rc.content | regex_search('id: (.+)', '\\1') | first }}" }
-        - { "key": "rhel_version", "value": "{{ osp_release_auto_content_rc.content | regex_search('rhel_version: (.+)', '\\1') | first }}" }
+        - key: "namespace"
+          value: >-
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
+        - key: "prefix"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('prefix: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "name_prefix"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('name_prefix: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "tag"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('tag: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "ceph_namespace"
+          value: >-
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
+        - key: "ceph_image"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]image: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "ceph_tag"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]tag: (.+)', '\\1') | first | default(''))
+            | replace("'", '') | replace('"', '') | trim }}
+        - key: "release"
+          value: >-
+            {{ osp_release_auto_content_rc.content | regex_findall('rhosp: (.+)', '\\1') | first | default('') }}
+        - key: "compose"
+          value: >-
+            {{ osp_release_auto_content_rc.content | regex_findall('id: (.+)', '\\1') | first | default('') }}
+        - key: "rhel_version"
+          value: >-
+            {{ osp_release_auto_content_rc.content | regex_findall('rhel_version: (.+)', '\\1') | first | default('') }}
 
 - name: Add insecure registies to /etc/containers/registries.conf
   when: podman_insecure_registries is defined
