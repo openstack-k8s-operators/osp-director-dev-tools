@@ -6,11 +6,11 @@
 parameter_defaults:
 {% if containers_prepare_docker_insecure | default(False) %}
   DockerInsecureRegistryAddress:
-    - {{ registry_proxy }}
+    - {{ osp_release_auto.osp_release_auto.registry_proxy }}
     - registry.access.redhat.com
     - docker-registry.upshift.redhat.com
 {% endif %}
-{% if registry_credentials is defined and registry_credentials | selectattr('registry', 'equalto', registry_proxy) | list | length > 0 %}
+{% if registry_credentials is defined and registry_credentials | length > 0 %}
   ContainerImageRegistryLogin: true
   ContainerImageRegistryCredentials:
 {% for cred in registry_credentials %}
@@ -21,22 +21,44 @@ parameter_defaults:
   ContainerImagePrepare:
   - push_destination: false
     set:
-      namespace: {{ registry_proxy }}/rhosp-rhel8
+      tag: {{ osp.container_tag }}
+{% set container_date = osp.container_tag.split('_')[1] | default('99999999') %}
+{% if container_date < '20251006' %}
+      # old container tag content for dates before 20251006 == old registry
+      namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      name_prefix: rhosp16-openstack-
+      ceph_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_image: {{ osp.ceph_image }}
+      ceph_tag: {{ osp.ceph_tag }}
+      ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
+      ceph_alertmanager_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_alertmanager_tag: v4.1
+      ceph_grafana_image: rhceph-3-dashboard-rhel7
+      ceph_grafana_namespace: registry.access.redhat.com/rhceph
+      ceph_grafana_tag: 3
+      ceph_node_exporter_image: openshift-ose-prometheus-node-exporter
+      ceph_node_exporter_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_node_exporter_tag: v4.1
+      ceph_prometheus_image: openshift-ose-prometheus
+      ceph_prometheus_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_prometheus_tag: v4.1
+{% else %}
+      namespace: {{ osp_release_auto.registry_proxy }}/rhosp-rhel8
       prefix: 'openstack'
       name_prefix: 'openstack'
-      tag: {{ osp.container_tag }}
-      ceph_namespace: {{ registry_proxy }}/rhceph
+      ceph_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
       ceph_image: {{ osp.ceph_image }}
       ceph_tag: {{ osp.ceph_tag }}
       ceph_alertmanager_image: ose-prometheus-alertmanager
-      ceph_alertmanager_namespace: {{ registry_proxy }}/openshift4
+      ceph_alertmanager_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_alertmanager_tag: v4.6
       ceph_grafana_image: rhceph-3-dashboard-rhel7
-      ceph_grafana_namespace: {{ registry_proxy }}/rhceph
+      ceph_grafana_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
       ceph_grafana_tag: 3
       ceph_node_exporter_image: ose-prometheus-node-exporter
-      ceph_node_exporter_namespace: {{ registry_proxy }}/openshift4
+      ceph_node_exporter_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_node_exporter_tag: v4.6
       ceph_prometheus_image: ose-prometheus
-      ceph_prometheus_namespace: {{ registry_proxy }}/openshift4
+      ceph_prometheus_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_prometheus_tag: v4.6
+{% endif %}

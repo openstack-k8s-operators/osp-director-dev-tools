@@ -1,6 +1,8 @@
 ---
 enable_fencing: true
 
+osp_release_auto_compose: passed_phase2
+
 ocp_master_memory: 50000
 ocp_master_vcpu: 12
 ocp_num_workers: 0
@@ -31,5 +33,7 @@ osp_release_defaults:
           storage_class: host-nfs-storageclass
           storage_access_mode: ReadWriteMany
           storage_volume_mode: Filesystem
+  extrafeatures:
+    - reg_login_on_update
 
 workaround_jira18571: true

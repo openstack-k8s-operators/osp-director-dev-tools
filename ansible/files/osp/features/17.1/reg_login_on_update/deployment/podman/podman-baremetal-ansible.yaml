@@ -1,0 +1,283 @@
+heat_template_version: wallaby
+
+description: >
+  Configures podman on the host
+
+parameters:
+  DockerInsecureRegistryAddress:
+    description: Optional. The IP Address and Port of an insecure docker
+                 namespace that will be configured in /etc/sysconfig/docker.
+                 The value can be multiple addresses separated by commas.
+    type: comma_delimited_list
+    default: []
+  EndpointMap:
+    default: {}
+    description: Mapping of service endpoint -> protocol. Typically set
+                 via parameter_defaults in the resource registry.
+    type: json
+  ServiceData:
+    default: {}
+    description: Dictionary packing service data
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: Mapping of service_name -> network name. Typically set
+                 via parameter_defaults in the resource registry. Use
+                 parameter_merge_strategies to merge it with the defaults.
+    type: json
+  RoleName:
+    default: ''
+    description: Role name on which the service is applied
+    type: string
+  RoleParameters:
+    default: {}
+    description: Parameters specific to the role
+    type: json
+  ContainerImageRegistryLogin:
+    type: boolean
+    default: false
+    description: Flag to enable container registry login actions during the deployment.
+                 Setting this to true will cause login calls to be performed during the
+                 deployment.
+  ContainerImageRegistryCredentials:
+    type: json
+    hidden: true
+    default: {}
+    description: |
+      Mapping of image registry hosts to login credentials. Must be in the following example format
+
+        docker.io:
+          username: pa55word
+        '192.0.2.1:8787':
+          registry_username: password
+  ContainerDefaultPidsLimit:
+    type: number
+    default: 4096
+    description: Setting to configure the default pids_limit in /etc/container/container.conf.
+                 This is supported starting with podman 2.0.x
+  ContainerDefaultEventsLogger:
+    type: string
+    default: 'journald'
+    description: Setting to configure where podman logs its events. Uses journald by default
+                 as that will rotate data stored in tmpfs.
+    constraints:
+      - allowed_values: ['journald', 'file', 'none']
+  SystemdDropInDependencies:
+    default: true
+    description: tell the tripleo_container_manage to inject
+                 additional ordering dependencies for the systemd
+                 scopes associated to podman containers.
+    type: boolean
+  deployment_source_hosts:
+    default: 'Undercloud'
+    type: string
+    description: Host or hostgroup that runs the deployment
+
+conditions:
+  insecure_registry_is_empty: {equals : [{get_param: DockerInsecureRegistryAddress}, []]}
+  systemd_drop_in_dependencies_enabled: {get_param: SystemdDropInDependencies}
+
+outputs:
+  role_data:
+    description: Role data for the podman service
+    value:
+      service_name: podman
+      config_settings: {}
+      step_config: ''
+      host_prep_tasks:
+        - name: Install and configure Podman
+          block: &install_and_configure_podman
+            - name: Set login facts
+              no_log: true
+              set_fact:
+                container_registry_insecure_registries:
+                  if:
+                    - insecure_registry_is_empty
+                    - []
+                    - {get_param: DockerInsecureRegistryAddress}
+                container_registry_login: {get_param: ContainerImageRegistryLogin}
+                # default that is overwritten by the heat -> dict conversion
+                container_registry_logins: {}
+                container_registry_logins_json: {get_param: ContainerImageRegistryCredentials}
+                container_default_pids_limit: {get_param: ContainerDefaultPidsLimit}
+                container_events_logger_mechanism: {get_param: ContainerDefaultEventsLogger}
+
+            - name: Convert logins json to dict
+              no_log: true
+              set_fact:
+                container_registry_logins: "{{ container_registry_logins_json | from_json }}"
+              when:
+                - container_registry_logins_json is string
+                - container_registry_login | bool
+                - (container_registry_logins_json | length) > 0
+
+            - name: Set registry logins
+              no_log: true
+              set_fact:
+                container_registry_logins: "{{ container_registry_logins_json }}"
+              when:
+                - container_registry_logins_json is mapping
+                - container_registry_login | bool
+                - (container_registry_logins_json | length) > 0
+
+            - name: Run podman install
+              include_role:
+                name: tripleo_podman
+                tasks_from: tripleo_podman_install.yml
+              vars:
+                tripleo_container_registry_insecure_registries: "{{ container_registry_insecure_registries }}"
+                tripleo_container_default_pids_limit: "{{ container_default_pids_limit }}"
+                tripleo_container_events_logger_mechanism: "{{ container_events_logger_mechanism }}"
+
+            - name: Run podman login
+              include_role:
+                name: tripleo_podman
+                tasks_from: tripleo_podman_login.yml
+              vars:
+                tripleo_container_registry_logins: "{{ container_registry_logins }}"
+                tripleo_container_registry_login: "{{ container_registry_login | bool }}"
+
+        - if:
+          - systemd_drop_in_dependencies_enabled
+          - - name: Configure tripleo_container_manage to generate systemd drop-in dependencies
+              copy:
+                dest: /etc/sysconfig/podman_drop_in
+                content: |
+                  This file makes tripleo_container_manage generate additional systemd
+                  dependencies for containers that have special
+                  start/stop ordering constraints. It ensures that
+                  those constraints are enforced on reboot/shutdown.
+          - - name: Configure tripleo_container_manage to not generate drop-in dependencies
+              file:
+                path: /etc/sysconfig/podman_drop_in
+                state: absent
+
+      deploy_steps_tasks:
+        - when:
+            - (step|int) == 1
+          block: &podman_prefetch_images
+            # NOTE(mwhahaha): validate_certs is a misnomer because what it
+            # actually does is enable the --tls-verify flag which forces
+            # registries to only be over HTTPS. By default, podman will only
+            # use HTTPS registries but has a way to configure specific insecure
+            # and non-HTTPS registries. The --tls-verify flag prevents this
+            # fallback from functioning. We rely on this fallback for the
+            # undercloud registry.
+            - name: Pre-fetch all the containers
+              become: true
+              containers.podman.podman_image:
+                  name: "{{ prefetch_image }}"
+                  validate_certs: false
+                  force: true
+              register: result
+              until: result is succeeded
+              retries: 5
+              delay: 5
+              loop_control:
+                  loop_var: prefetch_image
+              loop: "{{ lookup('template', tripleo_role_name + '/docker_config.yaml', errors='ignore') | default('{}', True) | from_yaml | recursive_get_key_from_dict(key='image') | unique }}"
+
+      service_config_settings: {}
+
+      workaround_upgrade_tasks:
+        - name: Configure Podman registry
+          when:
+            - step|int == 0
+          tags:
+            - setup_packages
+          block:
+            - name: Make sure the Undercloud hostname is included in /etc/hosts
+              when:
+                - undercloud_hosts_entries is defined
+              lineinfile:
+                dest: /etc/hosts
+                line: "{{ undercloud_hosts_entries | join('') }}"
+                state: present
+        - name: Run podman install
+          tags:
+            - system_upgrade
+            - system_upgrade_run
+            - setup_packages
+          when:
+            - step|int == 0
+          block: *install_and_configure_podman
+        - name: Comment infra_image in container.conf
+          # NOTE (holser): It's enabled in RHEL 8.4 and disabled in RHEL 9.2
+          # Keeping it enabled removes ability to upgrade in environments
+          # disconnected from internet.
+          lineinfile:
+            dest: /usr/share/containers/containers.conf
+            regexp: '(?i)^(infra_image.*)'
+            line: '#\1'
+            backrefs: true
+            state: present
+          tags:
+            - setup_packages
+          when:
+            - step|int == 0
+
+      upgrade_tasks:
+        - name: Configure Podman registry
+          when:
+            - step|int == 1
+          block:
+            - name: Make sure the Undercloud hostname is included in /etc/hosts
+              when:
+                - undercloud_hosts_entries is defined
+              lineinfile:
+                dest: /etc/hosts
+                line: "{{ undercloud_hosts_entries | join('') }}"
+                state: present
+        - name: Run podman install
+          tags:
+            - system_upgrade
+            - system_upgrade_run
+          when:
+            - step|int == 1
+          block: *install_and_configure_podman
+
+      update_tasks:
+        - name: Run podman install and configure registry login
+          when:
+            - step|int == 1
+          block: *install_and_configure_podman
+        - name: Force pre-fetch of container images
+          when:
+            - (step|int) == 5
+          block: *podman_prefetch_images
+
+      post_upgrade_tasks:
+        # Podman purge tasks are disabled on the undercloud since the ephemeral
+        # Heat images need to be kept. When commit
+        # https://github.com/containers/podman/commit/a5ad36c65ea07d839fd9bf55a820c8cb9884eed1
+        # is available in the podman version used by TripleO, the ephemeral
+        # Heat images could be labeled in a way that they could be kept with
+        # --fitler, and these tasks could be re-enabled on the undercloud.
+        - name: Purge Podman
+          when:
+            - (step | int) == 3
+            - container_cli == 'podman'
+            - deployment_source_hosts not in group_names
+          include_role:
+            name: tripleo_podman
+            tasks_from: tripleo_podman_purge.yml
+          vars:
+            deployment_source_hosts: {get_param: deployment_source_hosts}
+
+      post_update_tasks:
+        # Podman purge tasks are disabled on the undercloud since the ephemeral
+        # Heat images need to be kept. When commit
+        # https://github.com/containers/podman/commit/a5ad36c65ea07d839fd9bf55a820c8cb9884eed1
+        # is available in the podman version used by TripleO, the ephemeral
+        # Heat images could be labeled in a way that they could be kept with
+        # --fitler, and these tasks could be re-enabled on the undercloud.
+        - name: Purge Podman
+          when:
+            - (step | int) == 3
+            - container_cli == 'podman'
+            - deployment_source_hosts not in group_names
+          include_role:
+            name: tripleo_podman
+            tasks_from: tripleo_podman_purge.yml
+          vars:
+            deployment_source_hosts: {get_param: deployment_source_hosts}
