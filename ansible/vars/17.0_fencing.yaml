@@ -36,3 +36,8 @@ ephemeral_heat:
   heat_engine_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-heat-engine:{{ osp_release_auto.tag }}"
   mariadb_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-mariadb:{{ osp_release_auto.tag }}"
   rabbit_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-rabbitmq:{{ osp_release_auto.tag }}"
+
+openstackclient_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto.tag }}"
+tempest_image: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp16-openstack-tempest:{{ osp_release_auto.tag }}"
+
+registry_proxy: registry-proxy.engineering.redhat.com

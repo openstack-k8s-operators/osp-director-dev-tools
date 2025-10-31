@@ -62,36 +62,39 @@
         osp_release_auto: "{{ osp_release_auto | default({}) | combine({item.key: item.value}) }}"
       with_items:
         - { "key": "debug", "value": "{{ osp_release_auto_content_rc.content }}" }
+        - key: "registry_proxy"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            .split('/') | first }}
         - key: "namespace"
           value: >-
-            {{ registry_proxy }}/{{
-            (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
-            .split('/', 1) | last }}
+            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            | trim("'") | trim }}
         - key: "prefix"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('prefix: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim }}
+        # Ensure name_prefix always ends with a dash for consistency
         - key: "name_prefix"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('name_prefix: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim | regex_replace('-*$', '') ~ '-' }}
         - key: "tag"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('tag: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            |trim("'") | trim }}
         - key: "ceph_namespace"
           value: >-
-            {{ registry_proxy }}/{{
-            (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
-            .split('/', 1) | last }}
+            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
+            | trim("'") | trim }}
         - key: "ceph_image"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]image: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim }}
         - key: "ceph_tag"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]tag: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim }}
         - key: "release"
           value: >-
             {{ osp_release_auto_content_rc.content | regex_findall('rhosp: (.+)', '\\1') | first | default('') }}
@@ -126,36 +129,39 @@
         osp_release_auto_rhel8: "{{ osp_release_auto_rhel8 | default({}) | combine({item.key: item.value}) }}"
       with_items:
         - { "key": "debug", "value": "{{ osp_release_auto_content_rc.content }}" }
+        - key: "registry_proxy"
+          value: >-
+            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            .split('/') | first }}
         - key: "namespace"
           value: >-
-            {{ registry_proxy }}/{{
-            (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
-            .split('/', 1) | last }}
+            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            | trim("'") | trim }}
         - key: "prefix"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('prefix: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim }}
+        # Ensure name_prefix always ends with a dash for consistency
         - key: "name_prefix"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('name_prefix: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim | regex_replace('-*$', '') ~ '-' }}
         - key: "tag"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('tag: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim }}
         - key: "ceph_namespace"
           value: >-
-            {{ registry_proxy }}/{{
-            (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
-            .split('/', 1) | last }}
+            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
+            | trim("'") | trim }}
         - key: "ceph_image"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]image: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim }}
         - key: "ceph_tag"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]tag: (.+)', '\\1') | first | default(''))
-            | replace("'", '') | replace('"', '') | trim }}
+            | trim("'") | trim }}
         - key: "release"
           value: >-
             {{ osp_release_auto_content_rc.content | regex_findall('rhosp: (.+)', '\\1') | first | default('') }}
