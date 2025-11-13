@@ -45,6 +45,32 @@ ocp_release_image: "quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.
 ocp_release_data_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}.{{ ocp_minor_version }}/release.txt"
 ocp_release_type: ga
 
+# If set to true:
+# - Uses Crucible to set up a local registry and mirror OCP images there
+# - Makes Crucible use the registry for OCP installation
+# - Mirrors NMState, CNV and SRIOV Operator images (aka the dependencies for
+#   OpenStack Director Operator) and makes OLM use them instead of the
+#   remote versions
+# - Also mirrors OpenStack Director Operator images and makes OLM use them
+#   instead of the remote versions
+# - Does NOT currently mirror OpenStack images nor, therefore, modify the
+#   actual overcloud deployment to use an offline install
+#
+# NOTE: Does not work with dev-scripts installs.  Furthermore, the index
+#       image used for OpenStack Director Operator (which is stored here in
+#       the variables here under "director_operator_image") must have been
+#       built such that the bundle was added to it by a SHA instead of a tag,
+#       i.e.
+#
+#       opm index add --bundles $(skopeo inspect docker://<bundle image> | jq '.Digest' -r) ...
+ocp_disconnected_install: false
+ocp_mirror_tool_url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-{{ ocp_version }}/oc-mirror.tar.gz
+ocp_mirror_extra_operators: []
+#  - openshift-cert-manager-operator
+#  - metallb-operator
+#  - local-storage-operator
+#  - lvms-operator
+
 # OCP cluster wide proxy settings `oc get proxy/cluster`
 enable_ocp_cluster_wide_proxy: false
 ocp_http_proxy: "http://squid.corp.redhat.com:3128"
