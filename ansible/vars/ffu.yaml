@@ -1,7 +1,4 @@
 ---
 osp_release_auto_version_rhel8: 17.1-RHEL-8
 ceph_5_tag: 5-404
-openstackclient_image_rhel8: "rhos-qe-mirror-rdu2.usersys.redhat.com:5002/rh-osbs/rhosp17-openstack-tripleoclient:{{ osp_release_auto_rhel8.tag }}"
-
-# override the registry_proxy for older releases to the no stage registry
-registry_proxy: registry-proxy.engineering.redhat.com
+openstackclient_image_rhel8: "registry.stage.redhat.io/rhosp-rhel8/openstack-tripleoclient:{{ osp_release_auto_rhel8.tag }}"

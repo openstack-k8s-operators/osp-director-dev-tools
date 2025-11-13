@@ -1,7 +1,8 @@
 ---
 enable_fencing: true
-csv_version: latest-17.1
+
 osp_release_auto_version: 17.1-RHEL-9
+osp_release_auto_compose: passed_phase2
 
 ocp_master_memory: 50000
 ocp_master_vcpu: 12
@@ -35,12 +36,5 @@ osp_release_defaults:
           storage_class: host-nfs-storageclass
           storage_access_mode: ReadWriteMany
           storage_volume_mode: Filesystem
-
-# (mschuppert) can be deleted when released
-openstackclient_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-tripleoclient:{{ osp_release_auto.tag }}"
-
-ephemeral_heat:
-  heat_api_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-heat-api:{{ osp_release_auto.tag }}"
-  heat_engine_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-heat-engine:{{ osp_release_auto.tag }}"
-  mariadb_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-mariadb:{{ osp_release_auto.tag }}"
-  rabbit_image: "registry.stage.redhat.io/rhosp-rhel9/openstack-rabbitmq:{{ osp_release_auto.tag }}"
+  extrafeatures:
+    - reg_login_on_update

@@ -6,11 +6,11 @@
 parameter_defaults:
 {% if containers_prepare_docker_insecure | default(False) %}
   DockerInsecureRegistryAddress:
-    - {{ registry_proxy }}
+    - {{ osp_release_auto.registry_proxy }}
     - registry.access.redhat.com
     - docker-registry.upshift.redhat.com
 {% endif %}
-{% if registry_credentials is defined and registry_credentials | selectattr('registry', 'equalto', registry_proxy) | list | length > 0 %}
+{% if registry_credentials is defined and registry_credentials | length > 0 %}
   ContainerImageRegistryLogin: true
   ContainerImageRegistryCredentials:
 {% for cred in registry_credentials %}
@@ -22,45 +22,68 @@ parameter_defaults:
   - push_destination: false
     set:
       tag: {{ osp.container_tag }}
-      prefix: openstack
-      name_prefix: openstack
-      namespace: {{ registry_proxy }}/rhosp-rhel9
-      ceph_namespace: {{ registry_proxy }}/rhceph
+{% set container_date = osp.container_tag.split('_')[1] | default('99999999') %}
+{% if container_date < '20251006' %}
+      # old container tag content for dates before 20251006 == old registry
+      name_prefix: rhosp17-openstack-
+      namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
       ceph_image: {{ ceph_image_override | default(osp.ceph_image) }}
       ceph_tag: {{ ceph_tag_override | default(osp.ceph_tag) }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
-      ceph_alertmanager_namespace: {{ registry_proxy }}/openshift4
+      ceph_alertmanager_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_alertmanager_tag: v4.10
+      ceph_grafana_image: rhceph-3-dashboard-rhel7
+      ceph_grafana_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
+      ceph_grafana_tag: latest
+      ceph_node_exporter_image: openshift-ose-prometheus-node-exporter
+      ceph_node_exporter_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_node_exporter_tag: v4.10
+      ceph_prometheus_image: openshift-ose-prometheus
+      ceph_prometheus_namespace: {{ osp_release_auto.registry_proxy }}/rh-osbs
+      ceph_prometheus_tag: v4.10
+{% else %}
+      prefix: openstack
+      name_prefix: openstack
+      namespace: {{ osp_release_auto.registry_proxy }}/rhosp-rhel9
+      ceph_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
+      ceph_image: {{ ceph_image_override | default(osp.ceph_image) }}
+      ceph_tag: {{ ceph_tag_override | default(osp.ceph_tag) }}
+      ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
+      ceph_alertmanager_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_alertmanager_tag: v4.10
       ceph_grafana_image: rhceph-6-dashboard-rhel9
-      ceph_grafana_namespace: {{ registry_proxy }}/rhceph
+      ceph_grafana_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
       ceph_grafana_tag: latest
       ceph_node_exporter_image: ose-prometheus-node-exporter
-      ceph_node_exporter_namespace: {{ registry_proxy }}/openshift4
+      ceph_node_exporter_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_node_exporter_tag: v4.10
       ceph_prometheus_image: ose-prometheus
-      ceph_prometheus_namespace: {{ registry_proxy }}/openshift4
+      ceph_prometheus_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_prometheus_tag: v4.10
+{% endif %}
 {% if custom_config_action | default('deploy') in ("upgrade", "system-upgrade") and custom_config_rhel8_roles | default(False) %}
   ContainerImagePrepareRhel8: &container_image_prepare_rhel8
   - push_destination: false
     set:
       tag: {{ osp.container_tag }}
-      name_prefix: rhosp17-openstack-
-      namespace: {{ registry_proxy }}/rh-osbs
-      ceph_namespace: {{ registry_proxy }}/rh-osbs
+      prefix: openstack
+      name_prefix: openstack
+      namespace: {{ osp_release_auto.registry_proxy }}/rhosp-rhel9
+      ceph_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
       ceph_image: {{ ceph_image_override | default(osp.ceph_image) }}
       ceph_tag: {{ ceph_tag_override | default(osp.ceph_tag) }}
       ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
-      ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_alertmanager_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_alertmanager_tag: v4.10
-      ceph_grafana_image: rhceph-3-dashboard-rhel7
-      ceph_grafana_namespace: {{ registry_proxy }}/rhceph
+      ceph_grafana_image: rhceph-6-dashboard-rhel9
+      ceph_grafana_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
       ceph_grafana_tag: latest
-      ceph_node_exporter_image: openshift-ose-prometheus-node-exporter
-      ceph_node_exporter_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_node_exporter_image: ose-prometheus-node-exporter
+      ceph_node_exporter_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_node_exporter_tag: v4.10
-      ceph_prometheus_image: openshift-ose-prometheus
-      ceph_prometheus_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_prometheus_image: ose-prometheus
+      ceph_prometheus_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_prometheus_tag: v4.10
     excludes:
     - collectd
@@ -68,22 +91,23 @@ parameter_defaults:
   - push_destination: false
     set:
       tag: {{ osp_release_auto_rhel8.tag }}
-      name_prefix: rhosp17-openstack-
-      namespace: {{ registry_proxy }}/rh-osbs
-      ceph_namespace: {{ registry_proxy }}/rh-osbs
+      prefix: openstack
+      name_prefix: openstack
+      namespace: {{ osp_release_auto.registry_proxy }}/rhosp-rhel8
+      ceph_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
       ceph_image: {{ ceph_image_override | default(osp.ceph_image) }}
       ceph_tag: {{ ceph_tag_override | default(osp.ceph_tag) }}
-      ceph_alertmanager_image: openshift-ose-prometheus-alertmanager
-      ceph_alertmanager_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_alertmanager_image: ose-prometheus-alertmanager
+      ceph_alertmanager_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_alertmanager_tag: v4.10
-      ceph_grafana_image: rhceph-3-dashboard-rhel7
-      ceph_grafana_namespace: {{ registry_proxy }}/rhceph
+      ceph_grafana_image: rhceph-6-dashboard-rhel9
+      ceph_grafana_namespace: {{ osp_release_auto.registry_proxy }}/rhceph
       ceph_grafana_tag: latest
-      ceph_node_exporter_image: openshift-ose-prometheus-node-exporter
-      ceph_node_exporter_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_node_exporter_image: ose-prometheus-node-exporter
+      ceph_node_exporter_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_node_exporter_tag: v4.10
-      ceph_prometheus_image: openshift-ose-prometheus
-      ceph_prometheus_namespace: {{ registry_proxy }}/rh-osbs
+      ceph_prometheus_image: ose-prometheus
+      ceph_prometheus_namespace: {{ osp_release_auto.registry_proxy }}/openshift4
       ceph_prometheus_tag: v4.10
     includes:
     - collectd

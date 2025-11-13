@@ -16,25 +16,20 @@ site_location: "{{
 # Site specific settings, local mirrors etc...
 site_settings:
   default:
-    registry_proxy_mirror: registry.stage.redhat.io
-    rhos_release_mirror: rhos-qe-mirror-rdu2.usersys.redhat.com
+    rhos_release_mirror: rhos-qe-mirror.lab.eng.rdu2.redhat.com
     dns_servers:
       - 10.11.5.19
       - 10.2.32.1
   brq:
-    registry_proxy_mirror: registry.stage.redhat.io
-    rhos_release_mirror: rhos-qe-mirror-brq.usersys.redhat.com
+    rhos_release_mirror: rhos-qe-mirror.lab.eng.brq2.redhat.com
     dns_servers:
       - 10.45.248.15
       - 10.38.5.26
   tlv:
-    registry_proxy_mirror: registry.stage.redhat.io
-    rhos_release_mirror: rhos-qe-mirror-tlv.usersys.redhat.com
+    rhos_release_mirror: rhos-qe-mirror.lab.eng.tlv2.redhat.com
     dns_servers:
       - 10.47.242.10
       - 10.38.5.26
-
-registry_proxy: "{{ site_settings[site_location]['registry_proxy_mirror'] }}"
 
 base_domain_name: test.metalkube.org
 
@@ -282,7 +277,7 @@ ocp_network_type: OVNKubernetes
 sts_repo_url: https://gitlab.cee.redhat.com/openstack-pidone-qe1/openstack-pidone-qe.git
 
 # image used to run tempest
-tempest_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}-tempest:{{ osp_defaults.container_tag }}"
+tempest_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tempest:{{ osp_defaults.container_tag }}"
 
 # tempest timeout in seconds
 tempest_timeout: 3600
@@ -365,7 +360,7 @@ osp_release_auto_compose: latest_cdn
 osp_release_auto_url: https://download.devel.redhat.com/rcm-guest/puddles/OpenStack
 
 # openstackclient container image
-openstackclient_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}-tripleoclient:{{ osp_defaults.container_tag }}"
+openstackclient_image: "{{ osp_release_auto.namespace }}/{{ osp_release_auto.name_prefix }}tripleoclient:{{ osp_defaults.container_tag }}"
 
 openstackclient_storage_class: host-nfs-storageclass
 openstackclient_networks:

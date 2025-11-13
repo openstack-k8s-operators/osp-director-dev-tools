@@ -1,4 +1,5 @@
 ---
+csv_version: 16.2-z6
 osp_release_auto_compose: z6-async3
 
 enable_fencing: true
