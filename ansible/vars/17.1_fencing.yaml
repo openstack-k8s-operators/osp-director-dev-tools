@@ -1,6 +1,6 @@
 ---
 enable_fencing: true
-
+csv_version: 17.1-qe
 osp_release_auto_version: 17.1-RHEL-9
 osp_release_auto_compose: passed_phase2
 
