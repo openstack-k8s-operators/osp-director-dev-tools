@@ -28,9 +28,10 @@ ocp_ai_cli_lib_version: "2.3.0.post43"
 # WARNING: Changing these will likely break installation, so proceed with caution
 # Pin AI version based on ocp_version
 ocp_ai_version: "{{
-   'v2.33.1' if ocp_version | string is version('4.15', '>=') else
-   'v2.20.0' if ocp_version | string is version('4.12', '>=') else
-   'v2.12.1'
+  'v2.52.1' if ocp_version | string is version('4.19', '>=') else
+  'v2.33.1' if ocp_version | string is version('4.15', '>=') else
+  'v2.20.0' if ocp_version | string is version('4.12', '>=') else
+  'v2.12.1'
   }}"
 # These improve the speed of the spin-up of the image service container and thus reduce the
 # overall deployment time
@@ -56,6 +57,13 @@ ocp_ai_image_hashes:
     installer: sha256:aba8e94044bfa46f182ea55c99e56ff1429e3742798c0bdb543ad7cf40639d3a
     installer_agent: sha256:7242477abd7791f0aa3cc587b0bb3b4be94bff5807ef8bb1a7a45a88b639a10f
     service: sha256:eda8876d41ff5eb300e18145bb9d6a6a5d44815fcf2ea4968837aecf7588c2e1
+  v2.52.1:
+    controller: sha256:39c7fb6165df9e20133d53bfdd8d208717cab310ae1804f5ec7a41fab882354f
+    gui: sha256:4c52d60ab575c7fcf452095cae0d4078ddd22e1ee0dc08a62a677046ab80d3da
+    image_service: sha256:bf93dd9e9de7873dec536c1953778690fa822af8da88769ec2589fdce25e110a
+    installer: sha256:474d0bc5e6f4b6bf948b6fb9d496f2e55e838c9d6f05bb0f54be6d5c530c1bf9
+    installer_agent: sha256:c588a30fa35ceafcfbcce531dbe3c532ad7304b65b09812b008af09c12d1518f
+    service: sha256:41f98ce1e69c421c3781f9fd2d3f7bb64557e9d495c449c64021d48016fb0dc4
 
 # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
 # ocp_ai_ansible_collection_repo: defaults to "https://github.com/openstack-k8s-operators/ansible-collection-redhatci-ocp.git"
