@@ -89,7 +89,7 @@ all:
     os_images:
     - openshift_version: '{{ ocp_version }}'
       cpu_architecture: x86_64
-      url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live.x86_64.iso
+      url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live{{ '-iso' if ocp_version | string is version('4.19', '>=') }}.x86_64.iso
       rootfs_url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp_version }}/latest/rhcos-live-rootfs.x86_64.img
       version: {{ rhcos_image_version }}
 
