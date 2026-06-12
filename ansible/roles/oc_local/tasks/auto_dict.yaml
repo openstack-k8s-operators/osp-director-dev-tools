@@ -63,13 +63,12 @@
       with_items:
         - { "key": "debug", "value": "{{ osp_release_auto_content_rc.content }}" }
         - key: "registry_proxy"
-          value: >-
-            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
-            .split('/') | first }}
+          value: "{{ registry_proxy }}"
         - key: "namespace"
           value: >-
-            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
-            | trim("'") | trim }}
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
         - key: "prefix"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('prefix: (.+)', '\\1') | first | default(''))
@@ -85,8 +84,9 @@
             |trim("'") | trim }}
         - key: "ceph_namespace"
           value: >-
-            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
-            | trim("'") | trim }}
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
         - key: "ceph_image"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]image: (.+)', '\\1') | first | default(''))
@@ -104,6 +104,22 @@
         - key: "rhel_version"
           value: >-
             {{ osp_release_auto_content_rc.content | regex_findall('rhel_version: (.+)', '\\1') | first | default('') }}
+
+    - name: Use registry mirror for new containers
+      when:
+        - registry_proxy_new is defined
+        - (osp_release_auto.tag.split('_')[1] | default('99999999')) >= '20251006'
+      ansible.builtin.set_fact:
+        osp_release_auto: "{{ osp_release_auto | combine({item.key: item.value}) }}"
+      with_items:
+        - key: "registry_proxy"
+          value: "{{ registry_proxy_new }}"
+        - key: "namespace"
+          value: >-
+            {{ registry_proxy_new }}/{{ osp_release_auto.namespace.split('/', 1) | last }}
+        - key: "ceph_namespace"
+          value: >-
+            {{ registry_proxy_new }}/{{ osp_release_auto.ceph_namespace.split('/', 1) | last }}
 
 - name: Create osp_release_auto_rhel8 dict
   when: osp_release_auto_version_rhel8 | default('')
@@ -130,13 +146,12 @@
       with_items:
         - { "key": "debug", "value": "{{ osp_release_auto_content_rc.content }}" }
         - key: "registry_proxy"
-          value: >-
-            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
-            .split('/') | first }}
+          value: "{{ registry_proxy }}"
         - key: "namespace"
           value: >-
-            {{ (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
-            | trim("'") | trim }}
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
         - key: "prefix"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('prefix: (.+)', '\\1') | first | default(''))
@@ -152,8 +167,9 @@
             | trim("'") | trim }}
         - key: "ceph_namespace"
           value: >-
-            {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
-            | trim("'") | trim }}
+            {{ registry_proxy }}/{{
+            (osp_release_auto_content_rc.content | regex_findall('ceph[-_]namespace: (.+)', '\\1') | first | default(''))
+            .split('/', 1) | last }}
         - key: "ceph_image"
           value: >-
             {{ (osp_release_auto_content_rc.content | regex_findall('ceph[-_]image: (.+)', '\\1') | first | default(''))
@@ -171,6 +187,22 @@
         - key: "rhel_version"
           value: >-
             {{ osp_release_auto_content_rc.content | regex_findall('rhel_version: (.+)', '\\1') | first | default('') }}
+
+    - name: Use registry mirror for new rhel8 containers
+      when:
+        - registry_proxy_new is defined
+        - (osp_release_auto_rhel8.tag.split('_')[1] | default('99999999')) >= '20251006'
+      ansible.builtin.set_fact:
+        osp_release_auto_rhel8: "{{ osp_release_auto_rhel8 | combine({item.key: item.value}) }}"
+      with_items:
+        - key: "registry_proxy"
+          value: "{{ registry_proxy_new }}"
+        - key: "namespace"
+          value: >-
+            {{ registry_proxy_new }}/{{ osp_release_auto_rhel8.namespace.split('/', 1) | last }}
+        - key: "ceph_namespace"
+          value: >-
+            {{ registry_proxy_new }}/{{ osp_release_auto_rhel8.ceph_namespace.split('/', 1) | last }}
 
 - name: Add insecure registies to /etc/containers/registries.conf
   when: podman_insecure_registries is defined
