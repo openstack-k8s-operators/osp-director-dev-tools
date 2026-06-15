@@ -16,20 +16,26 @@ site_location: "{{
 # Site specific settings, local mirrors etc...
 site_settings:
   default:
+    registry_proxy_mirror: rhos-qe-mirror.lab.eng.rdu2.redhat.com:5002
     rhos_release_mirror: rhos-qe-mirror.lab.eng.rdu2.redhat.com
     dns_servers:
       - 10.11.5.19
       - 10.2.32.1
   brq:
+    registry_proxy_mirror: rhos-qe-mirror.lab.eng.brq2.redhat.com:5002
     rhos_release_mirror: rhos-qe-mirror.lab.eng.brq2.redhat.com
     dns_servers:
       - 10.45.248.15
       - 10.38.5.26
   tlv:
+    registry_proxy_mirror: rhos-qe-mirror.lab.eng.tlv2.redhat.com:5002
     rhos_release_mirror: rhos-qe-mirror.lab.eng.tlv2.redhat.com
     dns_servers:
       - 10.47.242.10
       - 10.38.5.26
+
+registry_proxy: "{{ site_settings[site_location]['registry_proxy_mirror'] }}"
+registry_proxy_new: registry.stage.redhat.io
 
 base_domain_name: test.metalkube.org
 
