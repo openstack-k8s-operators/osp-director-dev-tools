@@ -550,8 +550,9 @@ no_proxy: ""
 
 # Configure freeipa and use for base_domain_name DNS (required for internal TLS)
 enable_freeipa: false
-freeipa_admin_password: abcd4321
-freeipa_directory_manager_password: dcba1234
+freeipa_admin_password: "{{ lookup('ansible.builtin.password', working_vars_dir + '/freeipa_admin_password length=24 chars=ascii_letters,digits') }}"
+freeipa_directory_manager_password: "{{ lookup('ansible.builtin.password', working_vars_dir + '/freeipa_dm_password length=24 chars=ascii_letters,digits') }}"
+node_root_password: "{{ lookup('ansible.builtin.password', working_vars_dir + '/node_root_password length=24 chars=ascii_letters,digits') }}"
 freeipa_image_url: quay.io/freeipa/freeipa-server:centos-9-stream
 # must-gather image
 must_gather_image: quay.io/openstack-k8s-operators/must-gather:latest
