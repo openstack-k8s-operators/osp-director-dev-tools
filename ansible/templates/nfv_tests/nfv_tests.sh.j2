@@ -9,7 +9,7 @@ function wait_for_sshping_vms () {
 
     while true; do
         echo "  [$(date)] Trying to sshping between to ${1} and ${2}"
-        sshpass -p 12345678 ssh root@${1} ping -c 3 ${2}
+        sshpass -p {{ node_root_password }} ssh root@${1} ping -c 3 ${2}
 
 
         if [[ ${?} -eq 0 ]]; then
@@ -59,7 +59,7 @@ openstack flavor create --vcpus 1         --ram 1024         --disk 20         -
 cat >user_data<<EOF
 #cloud-config
 user: root
-password: 12345678
+password: {{ node_root_password }}
 chpasswd:
     expire: false
 ssh_pwauth: True
@@ -92,7 +92,7 @@ wait_for_sshping_vms $sriov_vm_ip_0 $sriov_vm_ip_1
 # #manual check, if macs are the same , meaning the vm is using the same mac
 # #as the passthrough (vfio) nic, pci:
 # virsh dumpxml $vm_name0|grep -C 3 vfio|grep 'mac address'
-# sshpass -p 12345678 ssh root@${sriov_vm_ip_0} ip link show eth0|grep link
+# sshpass -p {{ node_root_password }} ssh root@${sriov_vm_ip_0} ip link show eth0|grep link
 
 
 ##############################################
@@ -129,7 +129,7 @@ openstack flavor create --vcpus 1  --ram 1024 --disk 20 --swap 1024 --property h
 #cat >user_data<<EOF
 ##cloud-config
 #user: root
-#password: 12345678
+#password: {{ node_root_password }}
 #chpasswd:
 #    expire: false
 #ssh_pwauth: True
