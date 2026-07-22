@@ -4,3 +4,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "ansible/ansible-lint"
+        update-types: ["version-update:semver-major"]
