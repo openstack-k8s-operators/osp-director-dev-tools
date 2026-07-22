@@ -531,10 +531,3 @@ get_logs: hosts local-defaults.yaml ## collect data from overcloud nodes
 	-e @vars/${OSP_RELEASE}.yaml \
 	-e @local-defaults.yaml \
 	get_logs.yaml
-
-demo: hosts
-	ANSIBLE_FORCE_COLOR=true ansible-playbook \
-	-i hosts \
-	-e @vars/${OSP_RELEASE}.yaml \
-	-e @local-defaults.yaml \
-	demo.yaml
