@@ -229,7 +229,6 @@ ocp_domain_name: "{{ base_domain_name }}"
 opm_version: v1.30.0
 
 # operator-sdk version to use (must be specific version)
-# sdk_version: v0.19.2 - cnosp is right now based on that version
 sdk_version: v1.20.0
 
 # kuttl version
@@ -559,8 +558,6 @@ must_gather_image: quay.io/openstack-k8s-operators/must-gather:latest
 # Optional directory to save must-gather information, defaults to "{{ working_log_dir }}"
 # must_gather_directory: "{{ working_log_dir }}"
 must_gather_compress_logs: false
-
-cnosp_csv_version: 0.0.1
 
 rhel_repos:
   8:
