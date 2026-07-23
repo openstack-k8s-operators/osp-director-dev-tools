@@ -27,12 +27,50 @@
         - operatorgroup.yaml
         - subscription.yaml
 
+    - name: Handle disconnected install concerns
+      when: (ocp_disconnected_install | bool)
+      block:
+      - name: Inspect OpenStack Director Operator index image to get digest
+        shell: |
+          skopeo inspect --authfile {{ secrets_repo_path }}/pull-secret docker://{{ director_operator_image }}-index:{{ csv_version }}
+        register: ospdo_inspect_result
+        vars:
+          secrets_repo_path: "{{ base_path if secrets_repo is undefined else base_path + '/' + (secrets_repo | urlsplit('hostname')) + '/' + (secrets_repo | urlsplit('path') | splitext)[0] }}"
+
+      - name: Mirror OpenStack Director Operator images using digest
+        shell: |
+          oc adm catalog mirror {{ director_operator_image }}-index@{{ ospdo_inspect_result.stdout | from_json | json_query('Digest') }} registry.example.lab:5000 --insecure --index-filter-by-os='Linux/x86_64' --to-manifests={{ yaml_dir }}
+        register: mirror_result
+        environment: &oc_env
+          PATH: "{{ oc_env_path }}"
+          KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
+
+      - name: Fail if there were warnings about skipped images
+        fail:
+          msg: |
+            The OpenStack Operator index image and/or the embedded bundle's CSV is using tags instead of SHAs (digests), which will not work for disconnected installs.  Please see this log for more inforation: {{ mirror_result.stdout }}
+        when: "'no digest mapping available' in mirror_result.stdout"
+
+      - name: Apply the generated ImageContentSourcePolicy CR
+        shell: |
+          oc apply -f "{{ yaml_dir }}/imageContentSourcePolicy.yaml"
+      - name: Overwrite the catalogsource with the generated disconnected version
+        copy:
+          src: "{{ yaml_dir }}/catalogSource.yaml"
+          dest: "{{ yaml_dir }}/catalogsource.yaml"
+          mode: '0644'
+
+      - name: Replace namespace in catalogsource
+        replace:
+          path: "{{ yaml_dir }}/catalogsource.yaml"
+          regexp: 'namespace:\sopenshift-marketplace'
+          replace: 'namespace: {{ namespace }}'
+
     - name: Deploy the catalogsource
       ansible.builtin.shell: |
         oc apply -f "{{ yaml_dir }}/catalogsource.yaml"
-      environment: &oc_env
-        PATH: "{{ oc_env_path }}"
-        KUBECONFIG: "{{ kubeconfig }}"
+      environment:
+        <<: *oc_env
 
     - name: Waiting for packagemanifest 'osp-director-operator' to be created
       ansible.builtin.shell: |
