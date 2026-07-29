@@ -33,7 +33,7 @@
       ansible.builtin.shell: |
         #!/bin/bash
         oc exec -n openstack openstackclient -- bash -c " \
-          curl --insecure  {{ devtools_stf_jumphost_key_url }} --output /home/cloud-admin/playbooks/jumphost.key; \
+          curl {{ devtools_stf_jumphost_key_url }} --output /home/cloud-admin/playbooks/jumphost.key; \
           chmod 600 /home/cloud-admin/playbooks/jumphost.key \
         "
       environment:
