@@ -30,6 +30,9 @@
     dest: "{{ lookup('env', 'HOME') }}/bin/opm"
     mode: "0755"
     timeout: 30
+    checksum: >-
+      sha256:https://github.com/operator-framework/operator-registry/releases/{{
+      opm_url_suffix }}/checksums.txt
 
 - name: Get version from sdk_version
   ansible.builtin.set_fact:
@@ -51,12 +54,32 @@
     mode: "0755"
     force: true
     timeout: 30
+    checksum: >-
+      sha256:https://github.com/operator-framework/operator-sdk/releases/download/{{
+      sdk_version }}/checksums.txt
 
-- name: Download and extract kustomize
+- name: Download kustomize archive
+  ansible.builtin.get_url:
+    url: >-
+      https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{
+      kustomize_version }}/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz
+    dest: "/tmp/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz"
+    mode: "0644"
+    timeout: 30
+    checksum: >-
+      sha256:https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{
+      kustomize_version }}/checksums.txt
+
+- name: Extract kustomize
   ansible.builtin.unarchive:
-    src: https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{ kustomize_version }}/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz
+    src: "/tmp/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz"
     dest: "{{ lookup('env', 'HOME') }}/bin/"
     remote_src: true
+
+- name: Remove kustomize archive
+  ansible.builtin.file:
+    path: "/tmp/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz"
+    state: absent
 
 - name: Download kuttl
   ansible.builtin.get_url:
@@ -64,6 +87,9 @@
     dest: "{{ lookup('env', 'HOME') }}/bin/kubectl-kuttl"
     mode: "0755"
     timeout: 30
+    checksum: >-
+      sha256:https://github.com/kudobuilder/kuttl/releases/download/v{{
+      kuttl_version }}/checksums.txt
 
 - name: Set proper golang on the system
   become: true
@@ -88,9 +114,18 @@
         - /usr/local/bin/go
         - /usr/local/bin/gofmt
 
-    - name: Download and extract golang
+    - name: Download golang archive
+      ansible.builtin.get_url:
+        url: "https://golang.org/dl/go{{ go_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+        mode: "0644"
+        timeout: 60
+        checksum: >-
+          sha256:https://dl.google.com/go/go{{ go_version }}.linux-amd64.tar.gz.sha256
+
+    - name: Extract golang
       ansible.builtin.unarchive:
-        src: "https://golang.org/dl/go{{ go_version }}.linux-amd64.tar.gz"
+        src: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
         dest: "/usr/local"
         remote_src: true
         extra_opts:
@@ -100,6 +135,11 @@
           - "go/pkg/linux_amd64_race"
           - "--exclude"
           - "go/test"
+
+    - name: Remove golang archive
+      ansible.builtin.file:
+        path: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+        state: absent
 
     - name: Set alternatives link to installed go version
       ansible.builtin.shell: |
