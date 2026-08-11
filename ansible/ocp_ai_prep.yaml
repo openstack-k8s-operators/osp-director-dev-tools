@@ -616,10 +616,10 @@
 
         - name: Clone the assisted installer playbooks repo
           ansible.builtin.git:
-            repo: "{{ ocp_ai_ansible_repo | default('https://github.com/openstack-k8s-operators/crucible.git', true) }}"
+            repo: "{{ ocp_ai_ansible_repo }}"
             dest: "{{ base_path }}/crucible"
             force: true
-            version: "{{ ocp_ai_ansible_branch | default('82801743b9510192d3f737b47fffeb53af80e0bb', true) }}"
+            version: "{{ ocp_ai_ansible_branch }}"
 
         # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
         - name: Clone the assisted installer Ansible collection repo

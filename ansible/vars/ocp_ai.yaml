@@ -2,8 +2,8 @@
 # this address needs to be reachable from IPMI/iDRAC if BM worker is used
 ocp_ai_discovery_iso_server: 192.168.111.1
 
-# ocp_ai_ansible_repo: defaults to "https://github.com/openstack-k8s-operators/crucible.git"
-# ocp_ai_ansible_branch: defaults to "82801743b9510192d3f737b47fffeb53af80e0bb"
+# ocp_ai_ansible_repo: must be explicitly provided (e.g. "https://github.com/<some repo>/crucible.git")
+# ocp_ai_ansible_branch: must be explicitly provided (e.g. "main" or a commit SHA)
 
 ocp_ai_bm_bridge_master_mac_prefix: 3c:fd:fe:78:ab:0
 ocp_ai_bm_bridge_worker_mac_prefix: 3c:fd:fe:78:ab:1
