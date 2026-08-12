@@ -685,6 +685,18 @@
                 msg: "Unable to determine RHCOS version for OCP version {{ ocp_version }}.{{ ocp_minor_version }}"
               when: rhcos_image_version == ""
 
+        - name: Get release image hash when requesting local mirror install
+          when: (ocp_disconnected_install | bool)
+          block:
+          - name: Get release image hash
+            shell: |
+              skopeo inspect --authfile {{ secrets_repo_path }}/pull-secret docker://quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}.{{ ocp_minor_version}}-x86_64
+            register: release_inspect_result
+
+          - name: Create variable for release image hash
+            set_fact:
+              disconnected_install_release_hash: "{'release_{{ ocp_version}}.{{ ocp_minor_version }}_x86_64': '{{ release_inspect_result.stdout | from_json | json_query('Digest') }}'}"
+
         - name: Configure inventory variables
           ansible.builtin.template:
             src: ai/crucible/inventory.ospd.yml.j2
@@ -717,6 +729,43 @@
     #     ansible-galaxy collection install -r requirements.yml
     #   args:
     #     chdir: "{{ base_path }}/crucible"
+
+        - name: Setup and deploy mirror registry, if requested
+          when: (ocp_disconnected_install | bool)
+          block:
+          - name: Get current pull-secret JSON
+            include_vars:
+              file: "{{ secrets_repo_path }}/pull-secret"
+              name: pull_secret_config
+
+          - name: Add mirror registry credentials to pull-secret JSON
+            set_fact:
+              pull_secret_config: "{{ pull_secret_config | combine({ 'auths': {'registry.example.lab:5000': {'auth': 'VVNFUjpQQVNTV09SRA=='}} }, recursive=true) }}"
+
+          - name: Write modified pull-secret JSON back out
+            copy:
+              content: "{{ pull_secret_config | to_nice_json }}"
+              dest: "{{ secrets_repo_path }}/pull-secret"
+
+          - name: Create assisted installer mirror registry script
+            template:
+              src: ai/crucible/deploy_mirror_registry.sh.j2
+              dest: "{{ base_path }}/crucible/deploy_mirror_registry.sh"
+              mode: '0755'
+
+          - name: Show mirror registry info
+            debug:
+              msg: |
+                Deploying the mirror registry. You can tail the logs at {{ base_path }}/ai_mirror_registry.log on
+                the host for progress.
+
+          - name: Deploy the mirror registry
+            shell: |
+              ./deploy_mirror_registry.sh
+            args:
+              chdir: "{{ base_path }}/crucible"
+            environment:
+              ANSIBLE_HOST_KEY_CHECKING: false
 
         - name: Show assisted service info
           ansible.builtin.debug:
