@@ -39,6 +39,17 @@
           ansible.builtin.fail:
             msg: "OCP version {{ ocp_version }} is not allowed.  Only OCP greater than 4.6 is currently supported for assisted installer deployments."
           when: ocp_version is version('4.6', 'le', strict=True)
+
+        - name: Fail if ocp_ai_ansible_repo is not provided
+          ansible.builtin.fail:
+            msg: "ocp_ai_ansible_repo must be explicitly provided (e.g. in local-defaults.yaml)"
+          when: ocp_ai_ansible_repo is not defined or ocp_ai_ansible_repo | length == 0
+
+        - name: Fail if ocp_ai_ansible_branch is not provided
+          ansible.builtin.fail:
+            msg: "ocp_ai_ansible_branch must be explicitly provided (e.g. in local-defaults.yaml)"
+          when: ocp_ai_ansible_branch is not defined or ocp_ai_ansible_branch | length == 0
+
     - name: OCS validation checks
       when: (enable_ocs | bool)
       block:
