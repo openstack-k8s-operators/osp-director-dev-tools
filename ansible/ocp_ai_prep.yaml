@@ -639,7 +639,7 @@
         # FIXME: Remove once https://github.com/redhatci/ansible-collection-redhatci-ocp/pull/371 merges
         - name: Install the assisted installer Ansible collection
           ansible.builtin.shell: |
-            ansible-galaxy collection install {{ base_path }}/ansible-collection-redhatci-ocp/redhatci-ocp-0.15.0.tar.gz
+            ansible-galaxy collection install {{ base_path }}/ansible-collection-redhatci-ocp/redhatci-ocp-0.15.0.tar.gz --timeout {{ default_timeout }}
           args:
             chdir: "{{ base_path }}/crucible"
 
