@@ -32,7 +32,7 @@
     # Note: the CentOS image right now has some ifcfg configs, lets make sure they are deleted
     - name: Get RHEL/CentOS guest base image
       become: true
-      become_user: ocp
+      become_user: root
       when: not stat_result.stat.exists
       block:
         - name: Download RHEL/CentOS guest image {{ osp.base_image_url }}

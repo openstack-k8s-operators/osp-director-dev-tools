@@ -296,7 +296,9 @@
           ansible.builtin.file:
             path: /opt/http_store/data/images
             state: directory
-            mode: "0777"
+            owner: 1001
+            group: 0
+            mode: "0750"
 
         - name: Start httpd container
           containers.podman.podman_container:
