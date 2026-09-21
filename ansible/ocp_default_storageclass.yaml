@@ -52,9 +52,9 @@
                 mount "$mountpoint"
             fi
 
-            # Make the mount world readable
-            chown nobody.nobody "$mountpoint"
-            chmod 0777 "$mountpoint"
+            # Make the mount accessible to the NFS service owner/group
+            chown nobody:107 "$mountpoint"
+            chmod 0770 "$mountpoint"
 
             # Add the export to the relevant file in exports
             if ! grep -qs "$mountpoint " "$exports"; then

@@ -173,8 +173,8 @@
       ansible.builtin.file:
         path: "/home/nfs/{{ item }}"
         state: directory
-        mode: "0777"
-        group: nobody
+        mode: "0770"
+        group: 107
         owner: nobody
       with_items:
         - glance
