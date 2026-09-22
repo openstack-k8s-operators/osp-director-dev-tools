@@ -25,6 +25,8 @@
     # the provision server (openstackbaremetalsets). This avoids downloading
     # the same image twice.
     - name: Check if {{ osp.base_image_url | basename }} already exist
+      become: true
+      become_user: root
       ansible.builtin.stat:
         path: "{{ osp_base_image_url_path }}"
       register: stat_result
