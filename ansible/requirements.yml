@@ -2,12 +2,16 @@
 roles:
   - name: chrony
     src: https://github.com/openstack/ansible-role-chrony.git
-    version: 1.0.1
+    version: 71b73d6406af8020f8202a6b2cd6431eb3e2915f
 
 collections:
   - name: ansible.posix
+    version: "==1.5.4"
   - name: ansible.netcommon
+    version: "==8.6.0"
   - name: containers.podman
+    version: "==1.20.2"
   - name: community.general
-    version: "<5.0.0"
+    version: "==4.8.11"
   - name: community.libvirt
+    version: "==2.3.0"
