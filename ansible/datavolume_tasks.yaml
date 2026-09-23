@@ -20,6 +20,8 @@
 
 - name: Deploy the datavolume {{ _datavolume }}
   when: datavolume_switch.rc == 1
+  become: true
+  become_user: root
   environment:
     <<: *oc_env
   block:

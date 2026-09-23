@@ -17,7 +17,32 @@
         state: absent
       with_fileglob:
         - "{{ base_path }}/ironic/html/images/*.qcow2"
-        - "/opt/http_store/data/images/*.qcow2"
+
+    - name: Check assisted installer image directory
+      become: true
+      become_user: root
+      ansible.builtin.stat:
+        path: /opt/http_store/data/images
+      register: assisted_installer_image_dir
+
+    - name: Find assisted installer base images
+      become: true
+      become_user: root
+      when: assisted_installer_image_dir.stat.exists
+      ansible.builtin.find:
+        paths: /opt/http_store/data/images
+        patterns: "*.qcow2"
+        file_type: file
+        recurse: false
+      register: assisted_installer_images
+
+    - name: Delete assisted installer base images
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ assisted_installer_images.files | default([]) }}"
 
     - name: Delete all datavolumes and base image PVC
       ansible.builtin.shell: |
