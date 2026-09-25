@@ -18,6 +18,187 @@
             PATH: "{{ oc_env_path }}"
             KUBECONFIG: "{{ base_path }}/crucible/kubeconfig.{{ ocp_cluster_name }}"
 
+    ### DISCONNECTED INSTALL FOLLOW-UP (if needed)
+
+    - name: Install Update Service Operator, and download and configure oc-mirror, if needed
+      when: (ocp_disconnected_install | bool)
+      block:
+        - name: Download oc-mirror from OpenShift mirror
+          ansible.builtin.get_url:
+            url: "{{ ocp_mirror_tool_url }}"
+            dest: "{{ working_bin_dir }}"
+
+        - name: Decompress oc-mirror.tar.gz
+          ansible.builtin.unarchive:
+            src: "{{ working_bin_dir }}/oc-mirror.tar.gz"
+            dest: "{{ working_bin_dir }}"
+
+        - name: Copy oc-mirror binary to /usr/local/bin
+          become: true
+          become_user: root
+          copy:
+            src: "{{ working_bin_dir }}/oc-mirror"
+            dest: /usr/local/bin/
+            mode: '0755'
+
+        - name: Verify that oc-mirror has been properly set up
+          ansible.builtin.command: oc-mirror --help
+          register: oc_mirror_result
+          failed_when:
+            - oc_mirror_result.rc != 0
+            - '"Create and publish user-configured mirrors" in oc_mirror_result.stdout'
+
+        - name: Set directory for storing disconnected yaml files
+          set_fact:
+            disconnected_yaml_dir: "{{ working_yamls_dir }}/disconnected"
+
+        - name: Clear local yaml dir for disconnected CRs
+          file:
+            path: "{{ disconnected_yaml_dir }}"
+            state: absent
+            mode: '0755'
+
+        - name: Create local yaml dir for disconnected CRs
+          file:
+            path: "{{ disconnected_yaml_dir }}"
+            state: directory
+            mode: '0755'
+
+        - name: Handle OpenShift Update Service Operator installation
+          ansible.builtin.import_tasks:
+            file: ocp_update_service.yaml
+
+        - name: Create ImageSetConfig for NMState, CNV and SRIOV operators (and any additionally-specified operators)
+          ansible.builtin.template:
+            src: disconnected/imagesetconfig.yaml.j2
+            dest: "{{ disconnected_yaml_dir }}/imagesetconfig.yaml"
+            mode: '0664'
+
+        - name: Create Docker auth config path, if needed
+          file:
+            path: "{{ ansible_env.HOME }}/.docker/config.json"
+            state: file
+            mode: '0644'
+
+        - name: Get current Docker auth config JSON
+          include_vars:
+            file: "{{ ansible_env.HOME }}/.docker/config.json"
+            name: docker_auth_config
+
+        - name: Get current pull-secret JSON to find registry.redhat.io credentials
+          include_vars:
+            file: "{{ secrets_repo_path }}/pull-secret"
+            name: pull_secret_config
+          vars:
+            secrets_repo_path: "{{ base_path if secrets_repo is undefined else base_path + '/' + (secrets_repo | urlsplit('hostname')) + '/' + (secrets_repo | urlsplit('path') | splitext)[0] }}"
+
+        - name: Add mirror registry credentials to Docker auth config JSON
+          set_fact:
+            docker_auth_config: "{{ docker_auth_config | default({}) | combine({ 'auths': {'registry.example.lab:5000': {'auth': 'VVNFUjpQQVNTV09SRA=='}} }, recursive=true) }}"
+
+        - name: Get registry.redhat.io credentials from pull-secret JSON
+          set_fact:
+            redhat_registry_auth:
+              auths:
+                registry.redhat.io:
+                  auth: "{{ pull_secret_config.auths['registry.redhat.io'].auth }}"
+
+        - name: Add registry.redhat.io credentials to Docker auth config JSON
+          set_fact:
+            docker_auth_config: "{{ docker_auth_config | combine(redhat_registry_auth, recursive=true) }}"
+
+        - name: Write modified Docker auth config JSON back out
+          copy:
+            content: "{{ docker_auth_config | to_nice_json }}"
+            dest: "{{ ansible_env.HOME }}/.docker/config.json"
+
+        - name: Write modified Docker auth config JSON to container runtime config
+          copy:
+            content: "{{ docker_auth_config | to_nice_json }}"
+            dest: "{{ ansible_env.XDG_RUNTIME_DIR }}/containers/auth.json"
+
+        - name: Copy container images to disk according to ImageSetConfig
+          args:
+            chdir: '{{ disconnected_yaml_dir }}'
+          ansible.builtin.command: oc-mirror --v2 --config "{{ disconnected_yaml_dir }}/imagesetconfig.yaml" "file://{{ disconnected_yaml_dir }}"
+          register: oc_mirror_disk_result
+          failed_when:
+            - oc_mirror_disk_result.rc != 0
+            - '"info: Mirroring completed" not in oc_mirror_disk_result.stdout'
+
+        - name: Save oc-mirror disk output logs
+          ansible.builtin.copy:
+            content: "{{ oc_mirror_disk_result.stdout }}"
+            dest: "/tmp/oc_mirror_disk.log"
+
+        - name: Add NMState, CNV and SRIOV operators (and any additionally-specified) to mirror registry via oc-mirror of disk image
+          args:
+            chdir: '{{ disconnected_yaml_dir }}'
+          ansible.builtin.command: oc-mirror --v2 --config "{{ disconnected_yaml_dir }}/imagesetconfig.yaml" --from "file://{{ disconnected_yaml_dir }}" docker://registry.example.lab:5000
+          register: oc_mirror_config_result
+          failed_when:
+            - oc_mirror_config_result.rc != 0
+            - '"info: Mirroring completed" not in oc_mirror_config_result.stdout'
+
+        - name: Save oc-mirror output logs
+          ansible.builtin.copy:
+            content: "{{ oc_mirror_config_result.stdout }}"
+            dest: "/tmp/oc_mirror.log"
+
+        - name: Check that NMState, CNV and SRIOV operators are available in the mirror registry
+          ansible.builtin.uri:
+            url: https://registry.example.lab:5000/v2/_catalog
+            user: USER
+            password: PASSWORD
+            validate_certs: false
+          register: registry_response
+          failed_when:
+            - 'registry_response.status != 200'
+            - 'registry.example.lab:5000/v2/_catalog not in registry_response.url'
+            - 'openshift4/ose-sriov-network-operator not in registry_response.json.repositories[0]'
+            - 'openshift4/kubernetes-nmstate not in registry_response.json.repositories[0]'
+            - 'container-native-virtualization/virt-operator not in registry_response.json.repositories[0]'
+
+        - name: Find the catalog source YAML file in the {{ disconnected_yaml_dir }} directory
+          find:
+            paths: "{{ disconnected_yaml_dir }}/working-dir/cluster-resources"
+            contains: '\s\sname:\s\w\w-redhat-operator-index'
+            patterns: "*.yaml"
+            recurse: true
+          register: oc_mirror_catalog_sources
+
+        - name: Replace name in catalog source YAML file in the {{ disconnected_yaml_dir }} directory
+          replace:
+            path: "{{ item.path }}"
+            regexp: '\s\sname:\s\w\w-redhat-operator-index-.*'
+            replace: '  name: redhat-operators'
+          with_items: "{{ oc_mirror_catalog_sources.files }}"
+
+        - name: Disable default operator catalogs in the cluster
+          shell: |
+            oc patch OperatorHub cluster --type json -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
+          environment:
+            <<: *oc_env
+
+        - name: Ensure old catalog source is gone
+          shell: |
+            oc delete -n openshift-marketplace catalogsource redhat-operators --ignore-not-found
+          environment:
+            <<: *oc_env
+
+        - name: Wait until default catalog source is gone
+          shell: |
+            oc wait -n openshift-marketplace catalogsource redhat-operators --for=delete --timeout={{ default_timeout }}s
+          environment:
+            <<: *oc_env
+
+        - name: Apply the resultant oc-mirror cluster resources
+          shell: |
+            oc apply -f {{ disconnected_yaml_dir }}/working-dir/cluster-resources
+          environment:
+            <<: *oc_env
+
+
     ### UN-SCHEDULABLE MASTERS
 
         - name: Unschedulable masters for AI

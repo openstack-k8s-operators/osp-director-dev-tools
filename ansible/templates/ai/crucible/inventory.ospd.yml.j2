@@ -83,7 +83,7 @@ all:
     ai_version: {{ ocp_ai_version }}
 
 {% if ocp_ai_version in ocp_ai_image_hashes %}
-    image_hashes: {{ ocp_ai_image_hashes[ocp_ai_version] }}
+    image_hashes: {{ ocp_ai_image_hashes[ocp_ai_version] | combine(disconnected_install_release_hash | default({})) }}
 {% endif %}
 
     os_images:
@@ -109,7 +109,7 @@ all:
     # You will need to ensure alternatives are available for anything that will not be automatically set up
     setup_ntp_service: false
     setup_dns_service: false
-    setup_registry_service: false # Only required for a Restricted Network installation
+    setup_registry_service: {{ ocp_disconnected_install }} # Only required for a Restricted Network installation
     setup_http_store_service: false
     setup_assisted_installer: true # default is true you may wish to turn it off if multiple users are using the same instance.
     setup_sushy_tools: false
@@ -128,7 +128,7 @@ all:
 
     # use_local_mirror_registry controls if the install process uses a local container registry (mirror_registry) or not.
     # Set this to true to use the mirror registry service set up when `setup_registry_service` is true.
-    use_local_mirror_registry: false
+    use_local_mirror_registry: {{ ocp_disconnected_install }}
 
     # HTTP Store Configuration
     # ISO name must include the `discovery` directory if you have a SuperMicro machine
