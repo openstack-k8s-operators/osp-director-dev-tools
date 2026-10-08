@@ -171,17 +171,27 @@
       become: true
       become_user: root
       ansible.builtin.file:
-        path: "/home/nfs/{{ item }}"
+        path: "/home/nfs/{{ item.name }}"
         state: directory
         mode: "0770"
-        group: 107
+        group: "{{ item.group }}"
         owner: nobody
-      with_items:
-        - glance
-        - glance-staging
-        - nova
-        - cinder
-        - cinder_image_conversion
+      loop:
+        - { name: glance, group: 42415 }
+        - { name: glance-staging, group: 42415 }
+        - { name: nova, group: 107 }
+        - { name: cinder, group: 42407 }
+        - { name: cinder_image_conversion, group: 42407 }
+
+    - name: Preserve qemu group access to the Cinder NFS share
+      become: true
+      become_user: root
+      ansible.posix.acl:
+        path: /home/nfs/cinder
+        entity: "107"
+        etype: group
+        permissions: rwx
+        state: present
 
     - name: Configure overcloud export
       become: true
