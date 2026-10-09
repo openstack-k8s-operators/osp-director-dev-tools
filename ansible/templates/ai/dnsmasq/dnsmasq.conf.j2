@@ -27,6 +27,10 @@ dhcp-option=option:router,192.168.111.1
 dhcp-option=option:dns-server,192.168.111.1
 dhcp-option=option:ntp-server,192.168.111.1
 
+{% if ocp_disconnected_install %}
+# Local registry
+address=/registry.example.lab/192.168.111.1
+{% endif %}
 
 # Provisioning node
 address=/provisioning.{{ ocp_ai_full_cluster_name }}/192.168.111.1
