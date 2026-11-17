@@ -1,4 +1,8 @@
 ---
+# create the ocp user first so /home/ocp (base_path) is owned by it, not root
+- name: OpenShift User
+  import_playbook: ocp_user.yaml
+
 - name: Host Prep
   hosts: convergence_base
   become: true
@@ -140,6 +144,12 @@
                     version: "{{ secrets_branch | default('HEAD', true) }}"
                   environment:
                     GIT_SSL_NO_VERIFY: "true"
+                - name: Make ocp the owner of the cloned secrets_repo
+                  ansible.builtin.file:
+                    path: "{{ base_path }}/{{ secrets_repo | urlsplit('hostname') }}"
+                    owner: ocp
+                    group: ocp
+                    recurse: true
             - name: Include rhel-subscription info
               ansible.builtin.include_vars: "{{ secrets_repo_path }}/rhel-subscription.yaml"
           rescue:
