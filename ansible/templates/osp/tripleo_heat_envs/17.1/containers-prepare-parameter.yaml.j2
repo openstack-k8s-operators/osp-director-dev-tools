@@ -22,6 +22,9 @@ parameter_defaults:
   - push_destination: false
     set:
       tag: {{ osp.container_tag }}
+{% if osp.neutron_driver is defined %}
+      neutron_driver: {{ osp.neutron_driver }}
+{% endif %}
 {% set container_date = osp.container_tag.split('_')[1] | default('99999999') %}
 {% if container_date < '20251006' %}
       # old container tag content for dates before 20251006 == old registry

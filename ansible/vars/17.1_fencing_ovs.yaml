@@ -1,0 +1,44 @@
+---
+enable_fencing: true
+csv_version: 17.1-qe
+osp_release_auto_version: 17.1-RHEL-9
+osp_release_auto_compose: latest_cdn
+
+ocp_master_memory: 50000
+ocp_master_vcpu: 12
+ocp_num_workers: 0
+ocp_worker_memory: 20000
+ocp_worker_disk: 20
+
+osp_extra_env_files:
+  - services/neutron-ovs.yaml
+
+osp_release_defaults:
+  neutron_driver: ovs
+  base_image_url:
+    https://download.devel.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/images/rhel-guest-image-9.2-20230414.17.x86_64.qcow2
+  vmset:
+    Controller:
+      count: 3
+      cores: 6
+      memory: 30
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      root_disk:
+        disk_size: 40
+        storage_class: host-nfs-storageclass
+        storage_access_mode: ReadWriteMany
+        storage_volume_mode: Filesystem
+      additional_disks:
+        - name: datadisk
+          disk_size: 1
+          storage_class: host-nfs-storageclass
+          storage_access_mode: ReadWriteMany
+          storage_volume_mode: Filesystem
+  extrafeatures:
+    - reg_login_on_update

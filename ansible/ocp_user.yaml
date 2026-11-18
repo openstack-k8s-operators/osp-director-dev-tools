@@ -18,8 +18,10 @@
         group: ocp
         groups: wheel
 
-    - name: Make sure /home/ocp is world readable
+    - name: Make sure /home/ocp is owned by ocp and world readable
       ansible.builtin.file:
         path: /home/ocp
         state: directory
+        owner: ocp
+        group: ocp
         mode: "0755"
